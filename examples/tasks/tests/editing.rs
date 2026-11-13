@@ -82,3 +82,43 @@ fn a_day_picked_from_the_calendar_is_saved() {
         .unwrap();
     assert_eq!(task.due, Some(Day::parse("2026-11-20").unwrap().0));
 }
+
+#[test]
+fn a_character_typed_on_the_active_cell_opens_it_on_that_character() {
+    let mut harness = app(|_| {});
+    // the title cell made active by a press, then a key typed
+    harness.state_mut().table.edit(0, 1);
+    harness.run();
+    harness.key_press(Key::Escape);
+    harness.run();
+    harness.event(egui::Event::Text("N".into()));
+    harness.run();
+    harness.event(egui::Event::Text("ew title".into()));
+    harness.run();
+    harness.key_press(Key::Enter);
+    harness.run();
+    assert!(titled(&harness, "New title"));
+}
+
+#[test]
+fn the_calendar_moves_by_its_keys_and_enter_picks() {
+    let mut harness = app(|app| app.table.edit(0, 2));
+    harness.get_by_label("Choose a date").click();
+    harness.run();
+    // from Nov 15: a week on, then a day on
+    harness.key_press(Key::ArrowDown);
+    harness.run();
+    harness.key_press(Key::ArrowRight);
+    harness.run();
+    harness.key_press(Key::Enter);
+    harness.run();
+    harness.key_press(Key::Enter);
+    harness.run();
+    let task = harness
+        .state()
+        .tasks
+        .iter()
+        .find(|task| task.title == "Rerun nightly-export for last week")
+        .unwrap();
+    assert_eq!(task.due, Some(Day::parse("2026-11-23").unwrap().0));
+}

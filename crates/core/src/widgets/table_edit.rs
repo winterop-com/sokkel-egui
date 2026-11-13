@@ -51,6 +51,10 @@ pub(crate) struct OpenCell {
     pub calendar: bool,
     /// The option a select's list marks, moved by the arrows.
     pub highlight: usize,
+    /// The text starts selected; after a key that opened the cell, the caret follows what it typed.
+    pub select_all: bool,
+    /// The day the open calendar's keys move and Enter picks.
+    pub focus_day: Option<Day>,
 }
 
 /// What a key, a press or a choice in an open editor asks.
@@ -105,7 +109,15 @@ fn pressed_outside(ui: &Ui, inside: &[Rect]) -> bool {
 }
 
 /// A text field without a frame in `rect`, its text selected on the editor's first frame.
-fn bare_field(ui: &mut Ui, t: &Tokens, rect: Rect, draft: &mut String, id: Id, fresh: bool) -> egui::Response {
+fn bare_field(
+    ui: &mut Ui,
+    t: &Tokens,
+    rect: Rect,
+    draft: &mut String,
+    id: Id,
+    fresh: bool,
+    select_all: bool,
+) -> egui::Response {
     let mut child = ui.new_child(
         UiBuilder::new()
             .max_rect(rect)
@@ -123,11 +135,14 @@ fn bare_field(ui: &mut Ui, t: &Tokens, rect: Rect, draft: &mut String, id: Id, f
     if fresh {
         response.request_focus();
         let mut state = egui::text_edit::TextEditState::load(ui.ctx(), id).unwrap_or_default();
-        // every character selected, the caret at the start so the field shows the text's start
-        let all = egui::text::CCursorRange::two(
-            egui::text::CCursor::new(draft.chars().count()),
-            egui::text::CCursor::new(0),
-        );
+        // every character selected with the caret at the start, so the field shows the text's
+        // start; or, opened by a key, the caret after what it typed
+        let end = egui::text::CCursor::new(draft.chars().count());
+        let all = if select_all {
+            egui::text::CCursorRange::two(end, egui::text::CCursor::new(0))
+        } else {
+            egui::text::CCursorRange::one(end)
+        };
         state.cursor.set_char_range(Some(all));
         state.store(ui.ctx(), id);
     }
@@ -144,7 +159,7 @@ pub(crate) fn text(ui: &mut Ui, cell: Rect, open: &mut OpenCell, id: Id) -> Edit
         pos2(cell.left() + 12.0, cell.top()),
         pos2(cell.right() - 12.0, cell.bottom()),
     );
-    if bare_field(ui, &t, inner, &mut open.draft, id, fresh).changed() {
+    if bare_field(ui, &t, inner, &mut open.draft, id, fresh, open.select_all).changed() {
         open.error = None;
     }
     underline(ui, &t, cell, open.error.is_some());
@@ -193,8 +208,30 @@ pub(crate) fn date(
     let fresh = std::mem::take(&mut open.fresh);
     ui.painter().rect_filled(cell, CornerRadius::ZERO, t.color("field"));
     let moved = if open.calendar {
-        // the calendar's own Escape closes it and leaves the field open
-        if ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, Key::Escape)) {
+        // the calendar's own keys: Escape closes it and leaves the field open, the arrows move its
+        // focused day a day or a week, and Enter picks it
+        let none = egui::Modifiers::NONE;
+        let (escape, enter, step) = ui.input_mut(|i| {
+            let step = if i.consume_key(none, Key::ArrowLeft) {
+                -1
+            } else if i.consume_key(none, Key::ArrowRight) {
+                1
+            } else if i.consume_key(none, Key::ArrowUp) {
+                -7
+            } else if i.consume_key(none, Key::ArrowDown) {
+                7
+            } else {
+                0
+            };
+            (i.consume_key(none, Key::Escape), i.consume_key(none, Key::Enter), step)
+        });
+        let focused = open.focus_day.or(Day::parse(open.draft.trim())).unwrap_or(today);
+        open.focus_day = Some(focused.plus(step));
+        if escape {
+            open.calendar = false;
+        } else if enter && let Some(day) = open.focus_day {
+            open.draft = day.to_string();
+            open.error = None;
             open.calendar = false;
         }
         EditMove::Stay
@@ -208,7 +245,7 @@ pub(crate) fn date(
         pos2(cell.left() + 12.0, cell.top()),
         pos2(clear.left() - 4.0, cell.bottom()),
     );
-    if bare_field(ui, &t, inner, &mut open.draft, id.with("field"), fresh).changed() {
+    if bare_field(ui, &t, inner, &mut open.draft, id.with("field"), fresh, open.select_all).changed() {
         open.error = None;
     }
     for (place, icon, label, which) in [
@@ -235,6 +272,7 @@ pub(crate) fn date(
                 open.calendar = !open.calendar;
                 if open.calendar {
                     calendar_forget(ui.ctx(), id.with("calendar"));
+                    open.focus_day = None;
                 }
             }
         }
@@ -252,7 +290,11 @@ pub(crate) fn date(
             .show(ui.ctx(), |ui| {
                 frame
                     .show(ui, |ui| {
-                        ui.add(Calendar::new(id.with("calendar"), &mut chosen, today).week_start(week_start))
+                        ui.add(
+                            Calendar::new(id.with("calendar"), &mut chosen, today)
+                                .week_start(week_start)
+                                .focused(open.focus_day),
+                        )
                     })
                     .inner
             });

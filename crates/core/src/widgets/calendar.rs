@@ -62,6 +62,7 @@ pub struct Calendar<'a> {
     today: Day,
     week_start: WeekStart,
     words: CalendarWords,
+    focused: Option<Day>,
 }
 
 impl<'a> Calendar<'a> {
@@ -72,11 +73,18 @@ impl<'a> Calendar<'a> {
             today,
             week_start: WeekStart::Monday,
             words: CalendarWords::default(),
+            focused: None,
         }
     }
 
     pub fn week_start(mut self, week_start: WeekStart) -> Self {
         self.week_start = week_start;
+        self
+    }
+
+    /// The day the keyboard is on: ringed, and its month shown.
+    pub fn focused(mut self, day: Option<Day>) -> Self {
+        self.focused = day;
         self
     }
 
@@ -100,13 +108,26 @@ impl Widget for Calendar<'_> {
         let (rect, mut response) = ui.allocate_exact_size(Self::size(), Sense::hover());
         // the month shown: kept while the calendar is open, starting at the chosen day's or today's
         let month_id = self.id.with("month");
-        let (year, month) = ui
-            .ctx()
-            .data(|d| d.get_temp::<(i32, u32)>(month_id))
-            .unwrap_or_else(|| {
+        let kept = ui.ctx().data(|d| d.get_temp::<(i32, u32)>(month_id));
+        // the keyboard's day brings its month as it moves; the month's arrows leave it where it is
+        let last_id = self.id.with("focused");
+        let moved = self
+            .focused
+            .filter(|day| ui.ctx().data(|d| d.get_temp::<Day>(last_id)) != Some(*day));
+        if let Some(day) = self.focused {
+            ui.ctx().data_mut(|d| d.insert_temp(last_id, day));
+        }
+        let (year, month) = match (moved, kept) {
+            (Some(day), _) => {
+                let (y, m, _) = day.ymd();
+                (y, m)
+            }
+            (None, Some(kept)) => kept,
+            (None, None) => {
                 let (y, m, _) = self.chosen.unwrap_or(self.today).ymd();
                 (y, m)
-            });
+            }
+        };
         let painter = ui.painter().clone();
         let left = rect.left() + PAD;
         let column = |c: usize| left + c as f32 * CELL + CELL / 2.0;
@@ -201,6 +222,14 @@ impl Widget for Calendar<'_> {
                     TextRole::Body.font(&t),
                 );
                 painter.galley(place.center() - galley.size() / 2.0, galley, ink);
+                if self.focused == Some(day) {
+                    painter.rect_stroke(
+                        place.expand(2.0),
+                        egui::CornerRadius::from(radius.nw.saturating_add(2)),
+                        egui::Stroke::new(2.0, t.color("ring")),
+                        egui::StrokeKind::Outside,
+                    );
+                }
                 if hit.clicked() && !chosen {
                     *self.chosen = Some(day);
                     response.mark_changed();

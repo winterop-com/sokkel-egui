@@ -851,7 +851,29 @@ impl<'a> DataTable<'a> {
                 )
             });
             let last = self.columns.len().saturating_sub(1);
-            if enter && self.columns.get(column).is_some_and(|c| c.edit.is_some()) {
+            // a character typed opens a text cell on it; Backspace or Delete opens a text or a date
+            // cell empty
+            let editor = self.columns.get(column).and_then(|c| c.edit.clone());
+            let typed = match editor {
+                Some(Editor::Text) => ui.input_mut(|i| {
+                    let text = i.events.iter().find_map(|e| match e {
+                        egui::Event::Text(text) if !text.is_empty() => Some(text.clone()),
+                        _ => None,
+                    });
+                    i.events.retain(|e| !matches!(e, egui::Event::Text(_)));
+                    text.or_else(|| erased(i))
+                }),
+                Some(Editor::Date(_)) => ui.input_mut(erased),
+                _ => None,
+            };
+            if let Some(draft) = typed {
+                open_cell(self.state, self.rows, (row, column));
+                if let Some(open) = &mut self.state.open {
+                    open.draft = draft;
+                    open.error = None;
+                    open.select_all = false;
+                }
+            } else if enter && editor.is_some() {
                 open_cell(self.state, self.rows, (row, column));
             } else if left {
                 self.state.active = Some((row, column.saturating_sub(1)));
@@ -970,7 +992,15 @@ fn open_cell(state: &mut TableState, rows: &[Vec<Cell>], at: (usize, usize)) {
         fresh: true,
         calendar: false,
         highlight: 0,
+        select_all: true,
+        focus_day: None,
     });
+}
+
+/// Backspace or Delete pressed, consumed: the cell opens empty.
+fn erased(input: &mut egui::InputState) -> Option<String> {
+    let none = egui::Modifiers::NONE;
+    (input.consume_key(none, egui::Key::Backspace) || input.consume_key(none, egui::Key::Delete)).then(String::new)
 }
 
 /// What an open editor's move does: keep it open, drop it, or save its draft (unchanged, refused or
