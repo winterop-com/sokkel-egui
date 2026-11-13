@@ -7,6 +7,7 @@ mod display;
 mod frame;
 mod page;
 mod switch;
+mod table;
 mod text_field;
 
 pub use button::{Button, ButtonSize, ButtonVariant};
@@ -16,6 +17,7 @@ pub use display::{Alert, Badge, BadgeVariant, Card, Separator, Skeleton};
 pub use frame::{Rail, RailEntry, RailGroup, Shell, ShellPart, StatusLine, StatusTone, TopBar};
 pub use page::{PageHeader, PageState, PageStateTone, PageStateWords};
 pub use switch::Switch;
+pub use table::{Cell, Column, DataTable, TableState, TableVariant, TableWords};
 pub use text_field::{Input, TextField};
 
 use egui::{Color32, CornerRadius, Painter, Rect, Response, Stroke, StrokeKind, Ui};

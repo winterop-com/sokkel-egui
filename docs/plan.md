@@ -80,7 +80,7 @@ with the component screenshots.
 | `crates/core` (`sokkel-ui-egui`) | `Appearance` (theme, scheme, density), `install(ctx, &appearance)`, `tokens(ctx)`, `TextRole`, and `Button` (6 variants, 4 sizes, busy, a disabling reason), `Chip` (tones, selected), `TextField` (label, help, error), `Switch`. |
 | `crates/charts` (`sokkel-ui-egui-charts`) | The first add-on, on the core by name: `LineChart` (series, an area, a shaded band), `BarChart` (side by side or stacked), `Sparkline` and `legend`, drawn with the painter in the `chart-*` tokens, with a guide and a tooltip under the pointer. |
 | `crates/maps` (`sokkel-ui-egui-maps`) | The second add-on: `MapView` on walkers 0.60 with OpenStreetMap tiles (an identifying user agent and a tile cache), `Marker` and `Route` in the chart colors, zoom buttons, the OSM credit; without tiles it draws the `canvas` ground and a graticule, which the snapshots show. |
-| `examples/storybook` | The storybook: a sidebar of stories grouped as sokkel-ui's are, a toolbar for theme, scheme and density, and the story's canvas. Foundations (Colors, Typography, Corners, Density, Icons, Code colors), Themes (All themes, Sample), Actions/Button, Display (Alert, Badge, Card, Separator, Skeleton), Inputs (Checkbox, Field, Input, Switch), Navigation/Tabs, Patterns (Chip, Page header, Page state, Segmented, Shell), Charts (Line, Bars, Sparkline), Maps/Map. |
+| `examples/storybook` | The storybook: a sidebar of stories grouped as sokkel-ui's are, a toolbar for theme, scheme and density, and the story's canvas. Foundations (Colors, Typography, Corners, Density, Icons, Code colors), Themes (All themes, Sample), Actions/Button, Display (Alert, Badge, Card, Separator, Skeleton), Inputs (Checkbox, Field, Input, Switch), Navigation/Tabs, Patterns (Chip, Data table, Page header, Page state, Segmented, Shell), Charts (Line, Bars, Sparkline), Maps/Map. |
 | `examples/storybook/tests/snapshots/` | Every story in tidevann light, the foundations in tidevann dark, the sample in steel; and a test that draws every color of every theme in both schemes. |
 
 **Theme scopes.** `scope(ui, theme, dark, |ui| ...)` draws a part in another theme or scheme, as
@@ -98,6 +98,13 @@ panicking on a missing family.
 (Card, Alert, a theme tile) sets its own top-down layout rather than trusting its parent's. A frame
 part a theme leaves as `currentcolor` (`section-head-ink` in tidevann) has no resolved color;
 `Tokens::color_or` takes the color the part drew before.
+
+**The table.** `DataTable` follows sokkel-design's table spec: rows at `density.row` and only those in
+view drawn (`ScrollArea::show_rows`), heads in the `table-head-*` tokens that sort (ascending,
+descending, as given) and resize by their edge, check boxes with the selection bar, an opened row on
+`secondary`, zebra from `table-zebra`, and its words as fields. A cell's widgets are drawn in a child
+`Ui` that takes no room in the row (`Ui::new_child`), or painted outright (chips): `ui.put` takes
+room in the scroll content and shifted every row after it.
 
 **Seeds from egui-demos.** Two pieces were reshaped to read only tokens:
 - the palette-to-`Visuals` mapping (`src/theme.rs`);

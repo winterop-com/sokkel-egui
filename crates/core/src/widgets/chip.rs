@@ -1,6 +1,6 @@
 use egui::{Color32, Response, Sense, Stroke, StrokeKind, TextWrapMode, Ui, Widget, WidgetText, pos2, vec2};
 
-use crate::{TextRole, tokens};
+use crate::{TextRole, Tokens, tokens};
 
 /// How a chip says what it says, as sokkel-ui's `Chip` `tone`.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -46,30 +46,6 @@ impl Chip {
 impl Widget for Chip {
     fn ui(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
-        let (wash, rest, chosen, ink) = match self.tone {
-            ChipTone::Neutral => (
-                "faint",
-                0.15,
-                0.35,
-                if self.selected {
-                    "foreground"
-                } else {
-                    "muted-foreground"
-                },
-            ),
-            ChipTone::Good => ("good", 0.15, 0.3, "good-ink"),
-            ChipTone::Critical => ("critical", 0.15, 0.3, "critical-ink"),
-            ChipTone::Warning => ("warning", 0.15, 0.3, "warning-ink"),
-            ChipTone::Info => ("info", 0.15, 0.3, "info-ink"),
-            ChipTone::Outline => ("faint", 0.0, 0.25, "foreground"),
-        };
-        let ink = t.color(ink);
-        let fill = t.color_at(wash, if self.selected { chosen } else { rest });
-        let border = match (self.selected, self.tone) {
-            (true, _) => ink,
-            (false, ChipTone::Outline) => t.color("border"),
-            (false, _) => Color32::TRANSPARENT,
-        };
         let role = TextRole::Badge;
         let galley = WidgetText::from(role.rich(&t, &self.label)).into_galley(
             ui,
@@ -80,15 +56,62 @@ impl Widget for Chip {
         let (rect, response) = ui.allocate_exact_size(vec2(galley.size().x + 12.0, 20.0), Sense::hover());
         response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, &self.label));
         if ui.is_rect_visible(rect) {
-            let radius = t.radius("chip");
-            let painter = ui.painter();
-            painter.rect(rect, radius, fill, Stroke::new(1.0, border), StrokeKind::Inside);
-            painter.galley(
-                pos2(rect.left() + 6.0, rect.center().y - galley.size().y / 2.0),
-                galley,
-                ink,
-            );
+            paint(ui.painter(), &t, rect, galley, self.tone, self.selected);
         }
         response
     }
+}
+
+/// A chip's colors: its wash, its ink and its edge, by tone and whether it is chosen.
+fn colors(t: &Tokens, tone: ChipTone, selected: bool) -> (Color32, Color32, Color32) {
+    let (wash, rest, chosen, ink) = match tone {
+        ChipTone::Neutral => (
+            "faint",
+            0.15,
+            0.35,
+            if selected { "foreground" } else { "muted-foreground" },
+        ),
+        ChipTone::Good => ("good", 0.15, 0.3, "good-ink"),
+        ChipTone::Critical => ("critical", 0.15, 0.3, "critical-ink"),
+        ChipTone::Warning => ("warning", 0.15, 0.3, "warning-ink"),
+        ChipTone::Info => ("info", 0.15, 0.3, "info-ink"),
+        ChipTone::Outline => ("faint", 0.0, 0.25, "foreground"),
+    };
+    let ink = t.color(ink);
+    let fill = t.color_at(wash, if selected { chosen } else { rest });
+    let edge = match (selected, tone) {
+        (true, _) => ink,
+        (false, ChipTone::Outline) => t.color("border"),
+        (false, _) => Color32::TRANSPARENT,
+    };
+    (fill, ink, edge)
+}
+
+fn paint(
+    painter: &egui::Painter,
+    t: &Tokens,
+    rect: egui::Rect,
+    galley: std::sync::Arc<egui::Galley>,
+    tone: ChipTone,
+    selected: bool,
+) {
+    let (fill, ink, edge) = colors(t, tone, selected);
+    painter.rect(rect, t.radius("chip"), fill, Stroke::new(1.0, edge), StrokeKind::Inside);
+    painter.galley(
+        pos2(rect.left() + 6.0, rect.center().y - galley.size().y / 2.0),
+        galley,
+        ink,
+    );
+}
+
+/// Paint a chip with its start at `left` on the line through `center_y`, with no widget of its own,
+/// for a part that draws many (a table's cells); returns its width.
+pub(crate) fn paint_at(ui: &Ui, left: f32, center_y: f32, text: &str, tone: ChipTone) -> f32 {
+    let t = tokens(ui.ctx());
+    let role = TextRole::Badge;
+    let galley =
+        WidgetText::from(role.rich(&t, text)).into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, role.font(&t));
+    let rect = egui::Rect::from_min_size(pos2(left, center_y - 10.0), vec2(galley.size().x + 12.0, 20.0));
+    paint(ui.painter(), &t, rect, galley, tone, false);
+    rect.width()
 }

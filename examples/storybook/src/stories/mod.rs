@@ -13,6 +13,7 @@ mod inputs;
 mod maps;
 mod page;
 mod primitives;
+mod table;
 mod themes;
 
 pub struct Story {
@@ -35,6 +36,8 @@ pub struct State {
     pub period: usize,
     pub map: sokkel_ui_egui_maps::MapView,
     pub place: String,
+    pub runs: sokkel_ui_egui::TableState,
+    pub jobs: sokkel_ui_egui::TableState,
 }
 
 impl Default for State {
@@ -52,6 +55,8 @@ impl Default for State {
             period: 1,
             map: sokkel_ui_egui_maps::MapView::new(60.4, 11.5, 5.0),
             place: "runs".into(),
+            runs: sokkel_ui_egui::TableState::sorted(5, false),
+            jobs: sokkel_ui_egui::TableState::default(),
         }
     }
 }
@@ -156,6 +161,11 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Chip",
         doc: "The tones a chip says a state in, and a chosen chip's stronger wash and edge.",
         show: primitives::chip,
+    },
+    Story {
+        path: "Patterns/Data table",
+        doc: "The one table: forty runs sorted by rows, with check boxes and the selection bar; a list; and an empty table. Press a head to sort, drag its edge to resize, press a row to open it.",
+        show: table::data_table,
     },
     Story {
         path: "Patterns/Shell",
