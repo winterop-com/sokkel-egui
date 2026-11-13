@@ -48,19 +48,45 @@ impl PageHeader {
         let ink = t.color_or("page-title-ink", t.color("foreground"));
         ui.horizontal_top(|ui| {
             ui.vertical(|ui| {
-                ui.spacing_mut().item_spacing.y = 4.0;
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 8.0;
-                    ui.label(TextRole::PageTitle.rich(&t, &self.title).color(ink));
-                    if let Some(count) = &self.count {
-                        ui.label(TextRole::Help.rich(&t, count).color(t.color("muted-foreground")));
-                    }
+                // the code right under the title, the description 4 under what is over it
+                ui.spacing_mut().item_spacing.y = 0.0;
+                // the title, and the count 8 after it standing on the title's baseline
+                let title = egui::WidgetText::from(TextRole::PageTitle.rich(&t, &self.title)).into_galley(
+                    ui,
+                    Some(egui::TextWrapMode::Wrap),
+                    ui.available_width(),
+                    TextRole::PageTitle.font(&t),
+                );
+                let count = self.count.as_ref().map(|count| {
+                    egui::WidgetText::from(TextRole::Help.rich(&t, count)).into_galley(
+                        ui,
+                        Some(egui::TextWrapMode::Extend),
+                        f32::INFINITY,
+                        TextRole::Help.font(&t),
+                    )
                 });
+                let width = title.size().x + count.as_ref().map_or(0.0, |c| 8.0 + c.size().x);
+                let (row, _) = ui.allocate_exact_size(egui::vec2(width, title.size().y), egui::Sense::hover());
+                let baseline = |galley: &egui::Galley| {
+                    galley
+                        .rows
+                        .first()
+                        .and_then(|r| r.glyphs.first().map(|g| r.pos.y + g.pos.y))
+                        .unwrap_or(galley.size().y)
+                };
+                let line = baseline(&title);
+                let title_width = title.size().x;
+                if let Some(count) = count {
+                    let at = egui::pos2(row.left() + title_width + 8.0, row.top() + line - baseline(&count));
+                    ui.painter().galley(at, count, t.color("muted-foreground"));
+                }
+                ui.painter().galley(row.min, title, ink);
                 if let Some(code) = &self.code {
                     let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
                     ui.label(egui::RichText::new(code).font(mono).color(t.color("muted-foreground")));
                 }
                 if let Some(description) = &self.description {
+                    ui.add_space(4.0);
                     ui.set_max_width(640.0);
                     ui.label(TextRole::Body.rich(&t, description).color(t.color("muted-foreground")));
                 }

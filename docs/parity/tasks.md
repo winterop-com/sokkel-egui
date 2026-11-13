@@ -34,7 +34,7 @@ counterpart.
 
 | Screen | State |
 |---|---|
-| inbox, today, upcoming, project | Within a point or two of the web; the frame follows sokkel-design's rail, top bar and status line specs (814e3af). Frame, rail, top bar, toolbar, all five columns, the grip, due tones, avatars, the row's action and the status line all line up. |
+| inbox, today, upcoming, project | Within a point or two of the web; the frame follows sokkel-design's rail, top bar and status line specs (814e3af), and the page header its spec (689452c): the count on the title's baseline. Frame, rail, top bar, toolbar, all five columns, the grip, due tones, avatars, the row's action and the status line all line up. |
 | today_empty | `Empty` in the table's frame without its heads: the list's icon, "Nothing in Today", the count of hidden done tasks in balanced lines, and Show done. |
 | inbox_dark | The same, in the dark scheme. |
 | board | Columns, heads, counts and cards match, the cards' feet included. egui breaks a title only at spaces, where the web also breaks after a hyphen ("send-" / "digest"). |
@@ -48,12 +48,9 @@ counterpart.
 
 ## What is left, largest first
 
-1. **The page header's count**, on every list screen: the web sets "11 open" on the title's
-   baseline (ink 86 to 96), egui centers it (80 to 91). sokkel-design's page header spec also has
-   the code right under the title, the description 4 down and the meta 6 down.
-2. **A save's spinner** while editing in place: an egui save is done when the app's handler
+1. **A save's spinner** while editing in place: an egui save is done when the app's handler
    returns, so there is nothing to wait on yet; a typed character, Backspace and Delete open a
    cell, and the calendar moves by its keys, as the web's do.
-3. **Behavior the screens do not show**: the account menu's scheme, keyboard shortcuts, and the
+2. **Behavior the screens do not show**: the account menu's scheme, keyboard shortcuts, and the
    drawer and stacked rows below 768.
-4. **The live dot's pulse** in the status line (sokkel-design's status line spec); ours is still.
+3. **The live dot's pulse** in the status line (sokkel-design's status line spec); ours is still.
