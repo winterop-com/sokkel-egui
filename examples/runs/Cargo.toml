@@ -1,0 +1,15 @@
+[package]
+name = "runs"
+description = "Tidevann's runs: a working app on sokkel-ui-egui's frame, its data simulated."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-ui-egui.workspace = true
+sokkel-ui-egui-charts.workspace = true
+eframe.workspace = true
+
+[dev-dependencies]
+egui_kittest.workspace = true

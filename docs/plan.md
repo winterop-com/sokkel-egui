@@ -80,6 +80,7 @@ with the component screenshots.
 | `crates/core` (`sokkel-ui-egui`) | `Appearance` (theme, scheme, density), `install(ctx, &appearance)`, `tokens(ctx)`, `TextRole`, and `Button` (6 variants, 4 sizes, busy, a disabling reason), `Chip` (tones, selected), `TextField` (label, help, error), `Switch`. |
 | `crates/charts` (`sokkel-ui-egui-charts`) | The first add-on, on the core by name: `LineChart` (series, an area, a shaded band), `BarChart` (side by side or stacked), `Sparkline` and `legend`, drawn with the painter in the `chart-*` tokens, with a guide and a tooltip under the pointer. |
 | `crates/maps` (`sokkel-ui-egui-maps`) | The second add-on: `MapView` on walkers 0.60 with OpenStreetMap tiles (an identifying user agent and a tile cache), `Marker` and `Route` in the chart colors, zoom buttons, the OSM credit; without tiles it draws the `canvas` ground and a graticule, which the snapshots show. |
+| `examples/runs` | A working app on the frame, the egui counterpart of sokkel-ui's runs example: Overview (stat cards with sparklines, a line chart), Runs (the table with selection, a run opened in a card beside it), Schedules and Jobs (lists), Settings over the page on Mod+comma or the rail, the palette on Mod+K, the status line. Every part is the library's; the app holds its simulated data and where it is. `make runs` runs it; `tests/pages.rs` snapshots every page. |
 | `examples/storybook` | The storybook: a sidebar of stories grouped as sokkel-ui's are, a toolbar for theme, scheme and density, and the story's canvas. Foundations (Colors, Typography, Corners, Density, Icons, Code colors), Themes (All themes, Sample), Actions/Button, Display (Alert, Badge, Card, Separator, Skeleton), Inputs (Checkbox, Field, Input, Select, Switch), Overlays (Dialog, Tooltip), Menus/Dropdown menu, Navigation/Tabs, Patterns (Chip, Command palette, Data table, Page header, Page state, Segmented, Settings dialog, Shell), Charts (Line, Bars, Sparkline), Maps/Map. |
 | `examples/storybook/tests/snapshots/` | Every story in tidevann light, the foundations in tidevann dark, the sample in steel; and a test that draws every color of every theme in both schemes. |
 
@@ -95,7 +96,8 @@ applies fonts a frame after they are set, so `icons::paint` skips the first fram
 panicking on a missing family.
 
 **Layout inside parts.** egui hands a child the layout of the row around it, so a part that stacks
-(Card, Alert, a theme tile) sets its own top-down layout rather than trusting its parent's. A frame
+(Card, Alert, DataTable, a theme tile) sets its own top-down layout rather than trusting its parent's;
+the runs app found DataTable's case, a table beside a detail card laying its rows out sideways. A frame
 part a theme leaves as `currentcolor` (`section-head-ink` in tidevann) has no resolved color;
 `Tokens::color_or` takes the color the part drew before.
 
@@ -137,7 +139,7 @@ matches with no scroll area: a scroll area there sized itself from an earlier fr
 
 1. More primitives, chosen by what the frame needs: Section, the account menu in the rail's foot, keyboard shortcuts (`?`, `/`),
    Callout.
-2. The frame: Shell, Rail, TopBar and StatusLine are in (`Shell::show` asks one closure for each part, so an app's state is borrowed once); PageHeader and PageState (loading, refused, missing, not answering, a part refused, empty, with the words as fields) followed; next are the rail's resize and collapse by drag, and a port of the `tasks` example's screens.
+2. The frame: Shell, Rail, TopBar and StatusLine are in, and `examples/runs` is an app on them (`Shell::show` asks one closure for each part, so an app's state is borrowed once); PageHeader and PageState (loading, refused, missing, not answering, a part refused, empty, with the words as fields) followed; next are the rail's resize and collapse by drag, and a port of the `tasks` example's screens.
 - The add-on crates after the core, one engine each as in sokkel-ui:
   - `sokkel-ui-egui-maps`: started (markers, routes, zoom, tiles); next are areas (GeoJSON
     polygons) and a legend.

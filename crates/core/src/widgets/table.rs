@@ -191,7 +191,13 @@ impl<'a> DataTable<'a> {
         order
     }
 
+    /// Draw the table, stacked top to bottom whatever layout the row around it has.
     pub fn show(self, ui: &mut Ui) -> Response {
+        ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| self.show_stacked(ui))
+            .inner
+    }
+
+    fn show_stacked(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
         if self.state.widths.len() != self.columns.len() {
             self.state.widths = self.columns.iter().map(|c| c.width).collect();

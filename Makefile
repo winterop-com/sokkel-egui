@@ -4,7 +4,7 @@ SOKKEL_UI ?= ../sokkel-ui
 SOKKEL_UI_REF ?= origin/main
 export SOKKEL_UI SOKKEL_UI_REF
 
-.PHONY: help tokens tokens-check verify-colors fmt fmt-check check test snapshots storybook all
+.PHONY: help tokens tokens-check verify-colors fmt fmt-check check test snapshots storybook runs all
 
 help:
 	@echo "make tokens        resolve the tokens of $(SOKKEL_UI) into plain values"
@@ -15,6 +15,7 @@ help:
 	@echo "make test          every test, snapshots included"
 	@echo "make snapshots     record the snapshots again (look at them before committing)"
 	@echo "make storybook     run the storybook"
+	@echo "make runs          run the example app"
 	@echo "make all           fmt-check, check and test"
 
 tokens:
@@ -43,5 +44,8 @@ snapshots:
 
 storybook:
 	cargo run -p storybook
+
+runs:
+	cargo run -p runs
 
 all: fmt-check check test
