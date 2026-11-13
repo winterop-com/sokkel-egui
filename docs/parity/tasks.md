@@ -48,9 +48,12 @@ counterpart.
 
 ## What is left, largest first
 
-1. **A save's spinner** while editing in place: an egui save is done when the app's handler
+1. **The page header's count**, on every list screen: the web sets "11 open" on the title's
+   baseline (ink 86 to 96), egui centers it (80 to 91). sokkel-design's page header spec also has
+   the code right under the title, the description 4 down and the meta 6 down.
+2. **A save's spinner** while editing in place: an egui save is done when the app's handler
    returns, so there is nothing to wait on yet; a typed character, Backspace and Delete open a
    cell, and the calendar moves by its keys, as the web's do.
-2. **Behavior the screens do not show**: the account menu's scheme, keyboard shortcuts, and the
+3. **Behavior the screens do not show**: the account menu's scheme, keyboard shortcuts, and the
    drawer and stacked rows below 768.
-3. **The live dot's pulse** in the status line (sokkel-design's status line spec); ours is still.
+4. **The live dot's pulse** in the status line (sokkel-design's status line spec); ours is still.
