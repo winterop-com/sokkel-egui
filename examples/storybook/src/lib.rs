@@ -13,6 +13,7 @@ const STORY_KEY: &str = "sokkel-ui-egui/story";
 
 pub struct Storybook {
     pub appearance: Appearance,
+    settings: Option<String>,
     story: usize,
     search: String,
     state: State,
@@ -40,6 +41,7 @@ impl Storybook {
     pub fn with(appearance: Appearance) -> Self {
         Self {
             appearance,
+            settings: None,
             story: 0,
             search: String::new(),
             state: State::default(),
@@ -86,6 +88,20 @@ impl Storybook {
                     .inner_margin(Margin::symmetric(16, 8)),
             )
             .show(ui, |ui| self.toolbar(ui));
+        // the storybook's own settings, on its real appearance
+        if let Some(mut active) = self.settings.take() {
+            let sections = stories::settings::sections();
+            let outcome = sokkel_ui_egui::SettingsDialog::new("storybook-settings", &sections, &mut active)
+                .show(ui.ctx(), |section, ui| {
+                    stories::settings::rows(&mut self.state, &mut self.appearance, section, ui)
+                });
+            if outcome.reset && active == "appearance" {
+                self.appearance = Appearance::default();
+            }
+            if !outcome.close {
+                self.settings = Some(active);
+            }
+        }
         egui::CentralPanel::default()
             .frame(Frame::new().fill(t.color("background")))
             .show(ui, |ui| {
@@ -166,6 +182,15 @@ impl Storybook {
                     .color(t.color("muted-foreground")),
             );
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                let gear = ui.add(
+                    sokkel_ui_egui::Button::new("Settings")
+                        .icon(sokkel_ui_egui::Icon::Settings)
+                        .variant(sokkel_ui_egui::ButtonVariant::Ghost)
+                        .size(sokkel_ui_egui::ButtonSize::Sm),
+                );
+                if gear.clicked() {
+                    self.settings = Some("appearance".into());
+                }
                 ComboBox::from_id_salt("density")
                     .selected_text(self.appearance.density.clone())
                     .show_ui(ui, |ui| {

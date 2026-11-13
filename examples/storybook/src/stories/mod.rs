@@ -14,6 +14,7 @@ mod maps;
 mod overlays;
 mod page;
 mod primitives;
+pub mod settings;
 mod table;
 mod themes;
 
@@ -41,6 +42,9 @@ pub struct State {
     pub jobs: sokkel_ui_egui::TableState,
     pub dialog_open: bool,
     pub service: usize,
+    pub settings_open: bool,
+    pub settings_section: String,
+    pub settings_appearance: sokkel_ui_egui::Appearance,
 }
 
 impl Default for State {
@@ -62,6 +66,12 @@ impl Default for State {
             jobs: sokkel_ui_egui::TableState::default(),
             dialog_open: true,
             service: 1,
+            settings_open: true,
+            settings_section: "appearance".into(),
+            settings_appearance: sokkel_ui_egui::Appearance {
+                scheme: sokkel_ui_egui::Scheme::Light,
+                ..Default::default()
+            },
         }
     }
 }
@@ -186,6 +196,11 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Data table",
         doc: "The one table: forty runs sorted by rows, with check boxes and the selection bar; a list; and an empty table. Press a head to sort, drag its edge to resize, press a row to open it.",
         show: table::data_table,
+    },
+    Story {
+        path: "Patterns/Settings dialog",
+        doc: "The settings every app has, as one dialog over the page, open with the story: its sections, the appearance rows every app shares, and the footer that resets a section and closes.",
+        show: settings::settings_dialog,
     },
     Story {
         path: "Patterns/Shell",

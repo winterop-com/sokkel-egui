@@ -80,7 +80,7 @@ with the component screenshots.
 | `crates/core` (`sokkel-ui-egui`) | `Appearance` (theme, scheme, density), `install(ctx, &appearance)`, `tokens(ctx)`, `TextRole`, and `Button` (6 variants, 4 sizes, busy, a disabling reason), `Chip` (tones, selected), `TextField` (label, help, error), `Switch`. |
 | `crates/charts` (`sokkel-ui-egui-charts`) | The first add-on, on the core by name: `LineChart` (series, an area, a shaded band), `BarChart` (side by side or stacked), `Sparkline` and `legend`, drawn with the painter in the `chart-*` tokens, with a guide and a tooltip under the pointer. |
 | `crates/maps` (`sokkel-ui-egui-maps`) | The second add-on: `MapView` on walkers 0.60 with OpenStreetMap tiles (an identifying user agent and a tile cache), `Marker` and `Route` in the chart colors, zoom buttons, the OSM credit; without tiles it draws the `canvas` ground and a graticule, which the snapshots show. |
-| `examples/storybook` | The storybook: a sidebar of stories grouped as sokkel-ui's are, a toolbar for theme, scheme and density, and the story's canvas. Foundations (Colors, Typography, Corners, Density, Icons, Code colors), Themes (All themes, Sample), Actions/Button, Display (Alert, Badge, Card, Separator, Skeleton), Inputs (Checkbox, Field, Input, Select, Switch), Overlays (Dialog, Tooltip), Navigation/Tabs, Patterns (Chip, Data table, Page header, Page state, Segmented, Shell), Charts (Line, Bars, Sparkline), Maps/Map. |
+| `examples/storybook` | The storybook: a sidebar of stories grouped as sokkel-ui's are, a toolbar for theme, scheme and density, and the story's canvas. Foundations (Colors, Typography, Corners, Density, Icons, Code colors), Themes (All themes, Sample), Actions/Button, Display (Alert, Badge, Card, Separator, Skeleton), Inputs (Checkbox, Field, Input, Select, Switch), Overlays (Dialog, Tooltip), Navigation/Tabs, Patterns (Chip, Data table, Page header, Page state, Segmented, Settings dialog, Shell), Charts (Line, Bars, Sparkline), Maps/Map. |
 | `examples/storybook/tests/snapshots/` | Every story in tidevann light, the foundations in tidevann dark, the sample in steel; and a test that draws every color of every theme in both schemes. |
 
 **Theme scopes.** `scope(ui, theme, dark, |ui| ...)` draws a part in another theme or scheme, as
@@ -112,6 +112,11 @@ tooltip inverted, foreground ground and background ink, after a half-second rest
 story shows them open without interaction (`dialog_open` starts true, `Select::default_open`,
 `tooltip_shown`), as sokkel-ui's stories open overlays with `defaultOpen`.
 
+**Settings.** `SettingsDialog` has its sections in a column, the chosen one's rows, and a footer
+with Reset to defaults and Done; `setting_row` lays a setting out, and `appearance_settings` is the
+theme, scheme and density rows every app shares, in the library rather than in each app. The
+storybook's own toolbar opens it on its real appearance.
+
 **Seeds from egui-demos.** Two pieces were reshaped to read only tokens:
 - the palette-to-`Visuals` mapping (`src/theme.rs`);
 - the shadcn-style widget painting (`examples/ui_kit_gallery/widgets.rs`).
@@ -124,7 +129,7 @@ story shows them open without interaction (`dialog_open` starts true, `Select::d
 
 ## Next
 
-1. More primitives, chosen by what the frame needs: the settings dialog on its route, a dropdown menu (the account menu), the command palette, Section,
+1. More primitives, chosen by what the frame needs: a dropdown menu (the account menu), the command palette, Section,
    Callout.
 2. The frame: Shell, Rail, TopBar and StatusLine are in (`Shell::show` asks one closure for each part, so an app's state is borrowed once); PageHeader and PageState (loading, refused, missing, not answering, a part refused, empty, with the words as fields) followed; next are the rail's resize and collapse by drag, and a port of the `tasks` example's screens.
 - The add-on crates after the core, one engine each as in sokkel-ui:
