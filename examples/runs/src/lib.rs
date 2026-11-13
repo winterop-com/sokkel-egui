@@ -125,6 +125,7 @@ impl RunsApp {
                 let running = self.runs.iter().filter(|r| r.state == 2).count();
                 let line = StatusLine::new(format!("{running} runs running"))
                     .tone(StatusTone::Live)
+                    .live(true)
                     .fact("api, worker, scheduler")
                     .fact("v2.4.0");
                 ui.add(line);

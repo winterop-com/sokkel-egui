@@ -161,12 +161,13 @@ impl Widget for Rail<'_> {
                 // line 20 tall, then 6 (`pb-1.5`) and the group's 4 to its entries
                 y += 12.0;
                 if self.collapsed {
+                    // the title's room kept, its rule centered in the title's 20 line
                     painter.hline(
                         rect.left() + 16.0..=rect.right() - 16.0,
-                        y + 4.0,
+                        y + 10.0,
                         Stroke::new(1.0, t.color("border-strong")),
                     );
-                    y += 10.0;
+                    y += 30.0;
                 } else {
                     // upper case, tracked, at 500, in faint
                     let spec = t.text("help");
@@ -199,20 +200,20 @@ impl Widget for Rail<'_> {
                     *self.active = entry.id.clone();
                 }
                 let hit = if self.collapsed {
-                    hit.on_hover_text(&entry.label)
+                    super::tooltip(hit, entry.label.clone())
                 } else {
                     hit
                 };
+                // the start corners `radius-sm`, the end `radius-md`, in every state
+                let (sm, md) = (t.radius("sm").nw, t.radius("md").nw);
+                let row_corners = CornerRadius {
+                    nw: sm,
+                    sw: sm,
+                    ne: md,
+                    se: md,
+                };
                 if active {
-                    let corners = if self.collapsed {
-                        t.radius("md")
-                    } else {
-                        CornerRadius {
-                            nw: 2,
-                            sw: 2,
-                            ..t.radius("md")
-                        }
-                    };
+                    let corners = if self.collapsed { t.radius("md") } else { row_corners };
                     painter.rect_filled(bounds, corners, t.color("sidebar-accent"));
                     if !self.collapsed {
                         let edge = Rect::from_min_size(bounds.min, vec2(2.0, bounds.height()));
@@ -228,7 +229,16 @@ impl Widget for Rail<'_> {
                         );
                     }
                 } else if hit.hovered() {
-                    painter.rect_filled(bounds, t.radius("md"), t.color("hover"));
+                    let corners = if self.collapsed { t.radius("md") } else { row_corners };
+                    painter.rect_filled(bounds, corners, t.color("hover"));
+                }
+                if hit.has_focus() {
+                    painter.rect_stroke(
+                        bounds,
+                        t.radius("md"),
+                        Stroke::new(2.0, t.color_at("ring", 0.5)),
+                        egui::StrokeKind::Outside,
+                    );
                 }
                 let ink = if active {
                     t.color("sidebar-accent-foreground")
@@ -242,7 +252,7 @@ impl Widget for Rail<'_> {
                 } else {
                     icons::paint(
                         &painter,
-                        pos2(bounds.left() + 10.0 + 8.0, bounds.center().y),
+                        pos2(bounds.left() + 12.0 + 8.0, bounds.center().y),
                         entry.icon,
                         16.0,
                         ink,
@@ -250,12 +260,19 @@ impl Widget for Rail<'_> {
                     let role = if active { TextRole::Action } else { TextRole::Body };
                     let label = galley(ui, role, &entry.label, bounds.width() - 80.0);
                     painter.galley(
-                        pos2(bounds.left() + 38.0, bounds.center().y - label.size().y / 2.0),
+                        pos2(bounds.left() + 40.0, bounds.center().y - label.size().y / 2.0),
                         label,
                         ink,
                     );
                     if let Some(count) = entry.count {
-                        let figure = galley(ui, TextRole::Badge, &count.to_string(), 60.0);
+                        // the count at 600
+                        let rich = TextRole::Badge.rich(&t, count.to_string()).variation("wght", 600.0);
+                        let figure = WidgetText::from(rich).into_galley(
+                            ui,
+                            Some(TextWrapMode::Truncate),
+                            60.0,
+                            TextRole::Badge.font(&t),
+                        );
                         let at = pos2(
                             bounds.right() - 12.0 - figure.size().x,
                             bounds.center().y - figure.size().y / 2.0,
@@ -318,16 +335,17 @@ impl<'a> TopBar<'a> {
                 .max_rect(inner)
                 .layout(Layout::left_to_right(Align::Center)),
             |ui| {
-                ui.spacing_mut().item_spacing.x = 6.0;
+                // crumbs and chevrons 4 apart
+                ui.spacing_mut().item_spacing.x = 4.0;
                 let last = self.trail.len().saturating_sub(1);
                 for (i, crumb) in self.trail.iter().enumerate() {
                     if i > 0 {
-                        let (chevron, _) = ui.allocate_exact_size(vec2(12.0, 12.0), Sense::hover());
+                        let (chevron, _) = ui.allocate_exact_size(vec2(14.0, 14.0), Sense::hover());
                         icons::paint(
                             ui.painter(),
                             chevron.center(),
                             Icon::ChevronRight,
-                            12.0,
+                            14.0,
                             t.color("faint"),
                         );
                     }
@@ -338,11 +356,17 @@ impl<'a> TopBar<'a> {
                     };
                     ui.label(role.rich(&t, *crumb).color(ink));
                 }
+                // from the end: the actions last, 6 apart, then the palette's button 12 before them
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.spacing_mut().item_spacing.x = 6.0;
+                    let before = ui.cursor().right();
+                    actions(ui);
+                    if ui.cursor().right() < before {
+                        ui.add_space(6.0);
+                    }
                     if let Some((word, keys)) = &self.search {
                         searched = search_button(ui, word, keys).clicked();
                     }
-                    actions(ui);
                 });
             },
         );
@@ -360,8 +384,11 @@ fn search_button(ui: &mut Ui, word: &str, keys: &str) -> Response {
     let (rect, response) = ui.allocate_exact_size(vec2(224.0, t.density("control")), Sense::click());
     response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, word));
     let hot = response.hovered();
+    let focused = response.has_focus();
     let painter = ui.painter();
-    let edge = if hot {
+    let edge = if focused {
+        t.color("ring")
+    } else if hot {
         t.color("border-strong")
     } else {
         t.color("border")
@@ -403,7 +430,15 @@ fn search_button(ui: &mut Ui, word: &str, keys: &str) -> Response {
         cap_text,
         t.color("muted-foreground"),
     );
-    super::focus_ring(painter, &t, rect, t.radius("control"), &response);
+    // keyboard focus: the edge in the ring's color and a 1px ring around it
+    if focused {
+        painter.rect_stroke(
+            rect,
+            t.radius("control"),
+            Stroke::new(1.0, t.color("ring")),
+            egui::StrokeKind::Outside,
+        );
+    }
     response
 }
 
@@ -423,8 +458,10 @@ pub enum StatusTone {
 pub struct StatusLine {
     note: String,
     tone: StatusTone,
+    live: bool,
     facts: Vec<String>,
-    items: Vec<(String, String)>,
+    /// A labelled value, and whether the value is code.
+    items: Vec<(String, String, bool)>,
 }
 
 impl StatusLine {
@@ -432,6 +469,7 @@ impl StatusLine {
         Self {
             note: note.into(),
             tone: StatusTone::Quiet,
+            live: false,
             facts: Vec::new(),
             items: Vec::new(),
         }
@@ -442,9 +480,21 @@ impl StatusLine {
         self
     }
 
-    /// A labelled figure at the end: the label faint, the value in the foreground, as `StatusItem`.
+    /// The note says something happening now: a dot in its ink before it.
+    pub fn live(mut self, live: bool) -> Self {
+        self.live = live;
+        self
+    }
+
+    /// A labelled value at the end, as `StatusItem`: the label faint, the value in the foot's ink.
     pub fn item(mut self, label: impl Into<String>, value: impl ToString) -> Self {
-        self.items.push((label.into(), value.to_string()));
+        self.items.push((label.into(), value.to_string(), false));
+        self
+    }
+
+    /// A labelled value that is code, such as a version: the value in the foreground's code face.
+    pub fn item_code(mut self, label: impl Into<String>, value: impl ToString) -> Self {
+        self.items.push((label.into(), value.to_string(), true));
         self
     }
 
@@ -471,23 +521,18 @@ impl Widget for StatusLine {
             StatusTone::Warn => t.color("warning"),
             StatusTone::Error => t.color("destructive"),
         };
-        let mut x = rect.left() + 16.0;
-        if self.tone != StatusTone::Quiet {
-            painter.circle_filled(pos2(x + 4.0, rect.center().y), 4.0, ink);
-            x += 16.0;
-        }
-        let note = galley(ui, TextRole::Help, &self.note, rect.width() / 2.0);
-        painter.galley(pos2(x, rect.center().y - note.size().y / 2.0), note, ink);
-        let mut right = rect.right() - 16.0;
-        // the items at the very end, each its label faint and its value in the foreground
-        for (label, value) in self.items.iter().rev() {
-            let value = galley(ui, TextRole::Help, value, 120.0);
+        // the facts first, from the end, 12 in and 12 apart; the note takes what they leave
+        let mut right = rect.right() - 12.0;
+        for (label, value, code) in self.items.iter().rev() {
+            let value = if *code {
+                let rich = egui::RichText::new(value).font(egui::FontId::monospace(TextRole::Help.font(&t).size));
+                WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), 120.0, TextRole::Help.font(&t))
+            } else {
+                galley(ui, TextRole::Help, value, 120.0)
+            };
             right -= value.size().x;
-            painter.galley(
-                pos2(right, rect.center().y - value.size().y / 2.0),
-                value,
-                t.color("foreground"),
-            );
+            let value_ink = if *code { t.color("foreground") } else { quiet };
+            painter.galley(pos2(right, rect.center().y - value.size().y / 2.0), value, value_ink);
             let label = galley(ui, TextRole::Help, label, 160.0);
             right -= 6.0 + label.size().x;
             painter.galley(
@@ -495,14 +540,21 @@ impl Widget for StatusLine {
                 label,
                 t.color("faint"),
             );
-            right -= 16.0;
+            right -= 12.0;
         }
         for fact in self.facts.iter().rev() {
             let text = galley(ui, TextRole::Help, fact, 240.0);
             right -= text.size().x;
             painter.galley(pos2(right, rect.center().y - text.size().y / 2.0), text, quiet);
-            right -= 16.0;
+            right -= 12.0;
         }
+        let mut x = rect.left() + 12.0;
+        if self.live {
+            painter.circle_filled(pos2(x + 4.0, rect.center().y), 4.0, ink);
+            x += 16.0;
+        }
+        let note = galley(ui, TextRole::Help, &self.note, (right - x).max(1.0));
+        painter.galley(pos2(x, rect.center().y - note.size().y / 2.0), note, ink);
         response
     }
 }

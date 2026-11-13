@@ -34,7 +34,7 @@ counterpart.
 
 | Screen | State |
 |---|---|
-| inbox, today, upcoming, project | Within a point or two of the web. Frame, rail, top bar, toolbar, all five columns, the grip, due tones, avatars, the row's action and the status line all line up. |
+| inbox, today, upcoming, project | Within a point or two of the web; the frame follows sokkel-design's rail, top bar and status line specs (814e3af). Frame, rail, top bar, toolbar, all five columns, the grip, due tones, avatars, the row's action and the status line all line up. |
 | today_empty | `Empty` in the table's frame without its heads: the list's icon, "Nothing in Today", the count of hidden done tasks in balanced lines, and Show done. |
 | inbox_dark | The same, in the dark scheme. |
 | board | Columns, heads, counts and cards match, the cards' feet included. egui breaks a title only at spaces, where the web also breaks after a hyphen ("send-" / "digest"). |
@@ -47,12 +47,8 @@ counterpart.
 
 ## What is left, largest first
 
-1. **The frame's drift**, measured on every screen and named in sokkel-design's rail and status
-   line specs: the rail's icons and labels 2 short of the web's (10/38 where it has 12/40), the
-   status line padded 16 where the web pads 12, and a collapsed entry's name in egui's own hover text
-   rather than the library's tooltip.
-2. **The rest of editing in place**: a typed character opening a text cell on what was typed, the
+1. **The rest of editing in place**: a typed character opening a text cell on what was typed, the
    calendar's own keys, and a save's spinner (an egui save is done when it returns).
-3. **Behavior the screens do not show**: the palette's groups as the web builds them
+2. **Behavior the screens do not show**: the palette's groups as the web builds them
    (`placeCommands`), the account menu's scheme, keyboard shortcuts, and the drawer and stacked rows
    below 768.

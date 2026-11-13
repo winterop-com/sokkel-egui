@@ -85,6 +85,7 @@ fn frame(state: &mut State, ui: &mut Ui, size: eframe::egui::Vec2, collapsed: bo
                 ui.add(
                     StatusLine::new("sync-inventory is running")
                         .tone(StatusTone::Live)
+                        .live(true)
                         .fact("api, worker, scheduler")
                         .fact("v2.4.0"),
                 );
