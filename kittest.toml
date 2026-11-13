@@ -1,0 +1,4 @@
+# Snapshots are recorded on macOS; other platforms render text slightly differently.
+[linux]
+threshold = 5.0
+max_failed_pixels = 8

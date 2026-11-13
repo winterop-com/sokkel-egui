@@ -1,0 +1,11 @@
+[package]
+name = "sokkel-ui-egui-charts"
+description = "sokkel-ui-egui's charts, drawn with egui's painter in the chart tokens."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-ui-egui.workspace = true
+egui.workspace = true

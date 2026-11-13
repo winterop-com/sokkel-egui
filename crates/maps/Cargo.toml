@@ -1,0 +1,12 @@
+[package]
+name = "sokkel-ui-egui-maps"
+description = "sokkel-ui-egui's maps: walkers under the tokens, with markers and routes."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-ui-egui.workspace = true
+egui.workspace = true
+walkers.workspace = true

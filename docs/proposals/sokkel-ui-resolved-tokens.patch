@@ -1,0 +1,109 @@
+diff --git a/docs/plan.md b/docs/plan.md
+index d0ce8a3f..e61862ab 100644
+--- a/docs/plan.md
++++ b/docs/plan.md
+@@ -131,6 +131,9 @@ scope first takes tidevann's whole set from `tokens.css`, at no specificity, so
+ never shows through a scope of another. An app imports the files of the
+ themes it offers and sets one on `<html data-theme>`, so its CSS carries no theme it never shows.
+ Storybook imports `themes.css`, so its toolbar offers every theme.
++For a renderer that reads no CSS, the same script writes `tokens/tokens.resolved.json`, exported as
++`@winterop-com/sokkel-ui/tokens.resolved.json`: every theme in light and dark and every density level
++as a browser computes them, colors as sRGB hex and lengths in px (`scripts/resolve-tokens.ts`).
+ 
+ Beyond its colors a theme can give the frame's parts a look of their own, through tokens the parts
+ read (`$parts` in `tokens.json` lists them): the heading face, a section head's ground, rule and
+diff --git a/packages/core/package.json b/packages/core/package.json
+index c0092042..576c50de 100644
+--- a/packages/core/package.json
++++ b/packages/core/package.json
+@@ -41,6 +41,7 @@
+         "./motion.css": "./src/styles/motion.css",
+         "./typography.css": "./src/styles/typography.css",
+         "./tokens.json": "./tokens/tokens.json",
++        "./tokens.resolved.json": "./tokens/tokens.resolved.json",
+         "./appearance.js": "./dist/appearance.js",
+         "./AccountMenu": {
+             "types": "./dist/components/AccountMenu.d.ts",
+diff --git a/scripts/build-tokens.ts b/scripts/build-tokens.ts
+index e74e8443..02538c37 100644
+--- a/scripts/build-tokens.ts
++++ b/scripts/build-tokens.ts
+@@ -6,6 +6,7 @@
+  *   src/styles/themes/<name>.css    every other theme, one file each, so an app carries only the themes it imports
+  *   src/styles/themes.css           every theme's file, for an app that offers them all
+  *   src/lib/theme-list.ts           every theme's name and label, for a theme picker
++ *   tokens/tokens.resolved.json     every theme and density level as plain values, for a renderer that reads no CSS
+  *
+  * `tidevann`, the base theme, answers on `:root` and `.dark`, so a page with no `data-theme` wears
+  * it, and so do `html[data-theme='tidevann']` and `[data-theme-scope='tidevann']`. Every other theme
+@@ -27,6 +28,8 @@
+ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+ import { join } from 'node:path'
+ 
++import { resolveTokens } from './resolve-tokens.ts'
++
+ type Vars = Record<string, string>
+ interface Tokens {
+     theme: Vars
+@@ -128,6 +131,8 @@ files.set(
+     ].join('\n'),
+ )
+ 
++files.set(join(CORE, 'tokens', 'tokens.resolved.json'), `${JSON.stringify(resolveTokens(tokens, BASE), null, 4)}\n`)
++
+ /** Theme files no theme in the tokens makes any more. */
+ const stale = existsSync(THEMES)
+     ? readdirSync(THEMES)
+@@ -147,6 +152,6 @@ if (process.argv.includes('--check')) {
+     for (const [path, css] of files) writeFileSync(path, css)
+     for (const path of stale) rmSync(path)
+     console.log(
+-        `wrote the token CSS: tokens.css, themes.css and ${others.length} themes, with ${levels.length} density levels, and the theme list`,
++        `wrote the token CSS: tokens.css, themes.css and ${others.length} themes, with ${levels.length} density levels, the theme list and the resolved tokens`,
+     )
+ }
+diff --git a/src/tokens.test.ts b/src/tokens.test.ts
+index b022eccf..84dd9792 100644
+--- a/src/tokens.test.ts
++++ b/src/tokens.test.ts
+@@ -4,6 +4,8 @@ import { join } from 'node:path'
+ 
+ import { describe, expect, it } from 'vitest'
+ 
++import { hex, mix, oklch, type ResolvedTokens } from '../scripts/resolve-tokens'
++
+ interface Tokens {
+     themes: Record<string, { light?: Record<string, string>; dark?: Record<string, string> }>
+ }
+@@ -142,3 +144,31 @@ describe('the theme files', () => {
+         expect(resolve('@winterop-com/sokkel-ui/themes.css')).toBe(join(styles, 'themes.css'))
+     })
+ })
++
++describe('the resolved tokens', () => {
++    const resolved = JSON.parse(
++        readFileSync(join(__dirname, '..', 'packages', 'core', 'tokens', 'tokens.resolved.json'), 'utf8'),
++    ) as ResolvedTokens
++    it('turn oklch into the sRGB a browser draws', () => {
++        expect(hex(oklch(0.5, 0.12, 240))).toBe('#006aa0')
++        expect(hex(oklch(0.985, 0.002, 255))).toBe('#f9fafb')
++    })
++    it('mix with transparent as CSS does, keeping the color and scaling its alpha', () => {
++        expect(hex(mix('oklch', oklch(0.5, 0.12, 240), 0.08, { l: 0, a: 0, b: 0, alpha: 0 }, null))).toBe('#006aa014')
++    })
++    it('settle every theme in light and dark, with no CSS left in a value', () => {
++        expect(Object.keys(resolved.themes)).toEqual(Object.keys(tokens.themes))
++        for (const theme of Object.values(resolved.themes)) {
++            for (const scheme of [theme.light, theme.dark]) {
++                expect(Object.keys(scheme.colors).length).toBeGreaterThan(100)
++                for (const value of Object.values(scheme.colors)) expect(value).toMatch(/^#[0-9a-f]{6}([0-9a-f]{2})?$/)
++                for (const value of Object.values(scheme.words)) expect(value).not.toMatch(/var\(|oklch\(|color-mix\(/)
++            }
++        }
++    })
++    it('export the resolved tokens as tokens.resolved.json', () => {
++        expect(createRequire(import.meta.url).resolve('@winterop-com/sokkel-ui/tokens.resolved.json')).toBe(
++            join(__dirname, '..', 'packages', 'core', 'tokens', 'tokens.resolved.json'),
++        )
++    })
++})
