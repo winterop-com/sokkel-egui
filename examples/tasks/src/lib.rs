@@ -5,11 +5,12 @@
 
 use eframe::egui::{self, Color32, Ui};
 use sokkel_ui_egui::{
-    AccountAction, AccountMenu, Appearance, Board, BoardCard, BoardColumn, BoardMove, Cell, Column, CommandGroup,
-    CommandPalette, ConfirmAnswer, ConfirmDialog, DataTable, Day, Editor, Empty, Icon, MenuItem, PageHeader, QuickAdd,
-    Rail, RailEntry, RailGroup, Segmented, SegmentedVariant, Select, SettingsDialog, SettingsSection, Shell, ShellPart,
-    StatusLine, Switch, SwitchField, TableState, TableVariant, ThemeWords, TopBar, install, palette_shortcut,
-    setting_row, theme_settings, tokens, toolbar,
+    AccountAction, AccountMenu, Appearance, AppearanceCommandWords, Board, BoardCard, BoardColumn, BoardMove, Cell,
+    Column, CommandGroup, CommandPalette, ConfirmAnswer, ConfirmDialog, DataTable, Day, Editor, Empty, Icon, MenuItem,
+    PageHeader, QuickAdd, Rail, RailEntry, RailGroup, Segmented, SegmentedVariant, Select, SettingsDialog,
+    SettingsSection, Shell, ShellPart, StatusLine, Switch, SwitchField, TableState, TableVariant, ThemeWords, TopBar,
+    appearance_commands, install, palette_shortcut, place_commands, place_of, run_appearance_command, setting_row,
+    theme_settings, tokens, toolbar,
 };
 
 mod data;
@@ -683,22 +684,49 @@ impl TasksApp {
         let Some((mut query, mut highlight)) = self.palette.take() else {
             return;
         };
-        let groups = [
-            CommandGroup::new("Tasks", [MenuItem::action("New task").icon(Icon::Plus)]),
-            CommandGroup::new(
-                "Lists",
-                LISTS.iter().map(|list| MenuItem::action(list.label).icon(list.icon)),
-            ),
-            CommandGroup::new("System", [MenuItem::action("Settings").icon(Icon::Settings)]),
-        ];
+        // as the web builds it: its own group, the rail's places (the lists, then the rest), the look,
+        // and putting the demo data back
+        let rail = self.groups();
+        let mut groups = vec![CommandGroup::new(
+            "Tasks",
+            [MenuItem::action("New task").icon(Icon::Plus).id("task-new")],
+        )];
+        groups.extend(place_commands(&rail[..2], "Lists"));
+        groups.extend(place_commands(&rail[2..], "Go to"));
+        let themes: Vec<_> = sokkel_ui_egui::themes()
+            .filter(|theme| theme.name == "tidevann")
+            .collect();
+        groups.extend(appearance_commands(
+            &self.appearance,
+            &themes,
+            &AppearanceCommandWords::default(),
+        ));
+        groups.push(CommandGroup::new(
+            "Demo",
+            [MenuItem::action("Reset demo data")
+                .icon(Icon::RotateCcw)
+                .id("demo-reset")],
+        ));
         let outcome = CommandPalette::new("palette", &groups, &mut query, &mut highlight).show(ui.ctx());
-        match outcome.run {
-            Some((0, _)) => ui
+        let command = outcome
+            .run
+            .and_then(|(g, i)| groups[g].items[i].command_id().map(str::to_owned));
+        match command.as_deref() {
+            Some("task-new") => ui
                 .ctx()
                 .memory_mut(|m| m.request_focus(QuickAdd::field_id("quick-add"))),
-            Some((1, index)) => self.go(LISTS[index].id),
-            Some((2, _)) => self.go("settings"),
-            _ => {}
+            Some("demo-reset") => {
+                self.settings = Some("demo".into());
+                self.resetting = true;
+            }
+            Some(command) => {
+                if let Some(place) = place_of(command) {
+                    self.go(place);
+                } else {
+                    run_appearance_command(&mut self.appearance, command);
+                }
+            }
+            None => {}
         }
         if !outcome.close {
             self.palette = Some((query, highlight));

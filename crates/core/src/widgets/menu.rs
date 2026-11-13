@@ -21,6 +21,12 @@ pub enum MenuItem {
         disabled: bool,
         /// The icon's own color, as a board column's state icon; the muted ink when `None`.
         tint: Option<egui::Color32>,
+        /// What the app knows the command by, for a palette built from parts of its own.
+        id: Option<String>,
+        /// A word at the row's end, muted, such as "in use".
+        hint: Option<String>,
+        /// Other words a palette's search finds it by.
+        keywords: Vec<String>,
     },
     /// A label over the items after it.
     Label(String),
@@ -36,6 +42,41 @@ impl MenuItem {
             destructive: false,
             disabled: false,
             tint: None,
+            id: None,
+            hint: None,
+            keywords: Vec::new(),
+        }
+    }
+
+    /// The id the app knows the command by.
+    pub fn id(mut self, command: impl Into<String>) -> Self {
+        if let MenuItem::Action { id, .. } = &mut self {
+            *id = Some(command.into());
+        }
+        self
+    }
+
+    /// A muted word at the row's end.
+    pub fn hint(mut self, word: impl Into<String>) -> Self {
+        if let MenuItem::Action { hint, .. } = &mut self {
+            *hint = Some(word.into());
+        }
+        self
+    }
+
+    /// Other words the palette's search finds the command by.
+    pub fn keywords(mut self, words: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        if let MenuItem::Action { keywords, .. } = &mut self {
+            keywords.extend(words.into_iter().map(Into::into));
+        }
+        self
+    }
+
+    /// The command's id, if it was given one.
+    pub fn command_id(&self) -> Option<&str> {
+        match self {
+            MenuItem::Action { id, .. } => id.as_deref(),
+            _ => None,
         }
     }
 
@@ -94,7 +135,7 @@ fn popover_frame(t: &Tokens) -> Frame {
 
 /// Draw one action row; true when it was pressed.
 /// How a row of actions is drawn: a dropdown menu's (30 tall, 6 in, lit in the accent) or the
-/// palette's (32 tall, 8 in, lit in the hover wash).
+/// palette's (34 tall, 8 in, lit in the muted ground).
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum RowLook {
     Menu,
@@ -109,13 +150,15 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
         destructive,
         disabled,
         tint,
+        hint,
+        ..
     } = item
     else {
         unreachable!()
     };
     let (height, pad) = match look {
         RowLook::Menu => (30.0, 6.0),
-        RowLook::Palette => (32.0, 8.0),
+        RowLook::Palette => (34.0, 8.0),
     };
     let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
     let sense = if *disabled { Sense::hover() } else { Sense::click() };
@@ -132,7 +175,7 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
             } else if look == RowLook::Menu {
                 t.color("accent")
             } else {
-                t.color("hover")
+                t.color("muted")
             },
         );
     }
@@ -166,11 +209,14 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
         );
         x += if look == RowLook::Menu { 22.0 } else { 24.0 };
     }
-    // the shortcut first, so the label takes only the room it leaves
-    let keys = shortcut.as_ref().map(|keys| {
-        let rich = TextRole::Help.rich(t, keys).extra_letter_spacing(1.0);
-        WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Help.font(t))
-    });
+    // the shortcut (or the hint) first, so the label takes only the room it leaves
+    let keys = shortcut
+        .as_ref()
+        .map(|keys| TextRole::Help.rich(t, keys).extra_letter_spacing(1.0))
+        .or_else(|| hint.as_ref().map(|hint| TextRole::Help.rich(t, hint)))
+        .map(|rich| {
+            WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Help.font(t))
+        });
     let room = row.right() - 8.0 - x - keys.as_ref().map_or(0.0, |k| k.size().x + 16.0);
     let galley = WidgetText::from(TextRole::Body.rich(t, label)).into_galley(
         ui,
@@ -348,8 +394,8 @@ pub struct PaletteWords {
 impl Default for PaletteWords {
     fn default() -> Self {
         Self {
-            placeholder: "Type a command or search".into(),
-            no_match: "Nothing matches".into(),
+            placeholder: "Search or run a command".into(),
+            no_match: "No command matches.".into(),
         }
     }
 }
@@ -401,7 +447,12 @@ impl<'a> CommandPalette<'a> {
             .flat_map(|(g, group)| {
                 let needle = needle.clone();
                 group.items.iter().enumerate().filter_map(move |(i, item)| match item {
-                    MenuItem::Action { label, .. } if label.to_lowercase().contains(&needle) => Some((g, i)),
+                    MenuItem::Action { label, keywords, .. }
+                        if label.to_lowercase().contains(&needle)
+                            || keywords.iter().any(|k| k.to_lowercase().contains(&needle)) =>
+                    {
+                        Some((g, i))
+                    }
                     _ => None,
                 })
             })
@@ -428,91 +479,135 @@ impl<'a> CommandPalette<'a> {
         if enter && let Some(choice) = shown.get(*self.highlight) {
             outcome.run = Some(*choice);
         }
-        let width = 560.0;
-        let area = egui::Area::new(self.id.with("area")).anchor(egui::Align2::CENTER_TOP, vec2(0.0, 96.0));
+        // a dialog a third of the way down the window, as wide as `max-w-sm`
+        let window = ctx.content_rect();
+        let width = 384.0_f32.min(window.width() - 32.0);
+        let inset = t.length("palette-inset");
+        let row_x = t.length("palette-row-inset-x");
+        let area = egui::Area::new(self.id.with("area"))
+            .anchor(egui::Align2::CENTER_TOP, vec2(0.0, (window.height() / 3.0).round()));
+        let moved = down || up;
         let response = egui::Modal::new(self.id)
             .area(area)
             .backdrop_color(t.color_at("shade", 0.1))
-            .frame(popover_frame(&t).inner_margin(Margin::same(t.length("palette-inset") as i8)))
+            .frame(popover_frame(&t).inner_margin(Margin::same(inset as i8)))
             .show(ctx, |ui| {
-                ui.set_width(width);
+                let inner = width - 2.0 - 2.0 * inset;
+                ui.set_width(inner);
                 ui.spacing_mut().item_spacing.y = 0.0;
-                ui.horizontal(|ui| {
-                    ui.add_space(8.0);
-                    let (glass, _) = ui.allocate_exact_size(vec2(16.0, 40.0), Sense::hover());
-                    icons::paint(
-                        ui.painter(),
-                        glass.center(),
-                        Icon::Search,
-                        16.0,
-                        t.color("muted-foreground"),
-                    );
-                    let edit = TextEdit::singleline(self.query)
-                        .frame(Frame::NONE)
-                        .font(TextRole::Body.font(&t))
-                        .text_color(t.color("popover-foreground"))
-                        .hint_text(
-                            TextRole::Body
-                                .rich(&t, &self.words.placeholder)
-                                .color(t.color("muted-foreground")),
-                        )
-                        .desired_width(f32::INFINITY);
-                    let field = ui.add(edit);
-                    field.request_focus();
-                });
-                let rect = ui.available_rect_before_wrap();
-                ui.painter()
-                    .hline(rect.x_range(), rect.top(), Stroke::new(1.0, t.color("border")));
+                // the search: a field on the input's tint, 4 in from the palette's own inset
                 ui.add_space(4.0);
+                let (field, _) = ui.allocate_exact_size(vec2(inner, t.density("control")), Sense::hover());
+                let field = field.shrink2(vec2(4.0, 0.0));
+                ui.painter().rect(
+                    field,
+                    t.radius("control"),
+                    t.color_at("input", 0.3),
+                    Stroke::new(1.0, t.color_at("input", 0.3)),
+                    egui::StrokeKind::Inside,
+                );
+                icons::paint(
+                    ui.painter(),
+                    pos2(field.left() + 16.0, field.center().y),
+                    Icon::Search,
+                    16.0,
+                    t.color_at("popover-foreground", 0.5),
+                );
+                let text = egui::Rect::from_min_max(pos2(field.left() + 31.0, field.top()), field.max - vec2(8.0, 0.0));
+                let mut child = ui.new_child(
+                    egui::UiBuilder::new()
+                        .max_rect(text)
+                        .layout(egui::Layout::left_to_right(egui::Align::Center)),
+                );
+                let edit = TextEdit::singleline(self.query)
+                    .frame(Frame::NONE)
+                    .margin(Margin::ZERO)
+                    .font(TextRole::Body.font(&t))
+                    .text_color(t.color("popover-foreground"))
+                    .hint_text(
+                        TextRole::Body
+                            .rich(&t, &self.words.placeholder)
+                            .color(t.color("muted-foreground")),
+                    )
+                    .desired_width(text.width());
+                child.add(edit).request_focus();
                 if shown.is_empty() {
-                    ui.add_space(12.0);
-                    ui.horizontal(|ui| {
-                        ui.add_space(10.0);
+                    ui.add_space(24.0);
+                    ui.vertical_centered(|ui| {
                         ui.label(
                             TextRole::Body
                                 .rich(&t, &self.words.no_match)
                                 .color(t.color("muted-foreground")),
                         );
                     });
-                    ui.add_space(12.0);
+                    ui.add_space(24.0);
                     return;
                 }
-                {
-                    {
+                // the groups, scrolling past 384: each 4 in, its title 32 tall, a rule between them
+                egui::ScrollArea::vertical()
+                    .id_salt(self.id.with("list"))
+                    .max_height(384.0)
+                    .min_scrolled_height(384.0)
+                    .auto_shrink([false, true])
+                    .show(ui, |ui| {
+                        ui.spacing_mut().item_spacing.y = 0.0;
                         let mut last_group = None;
-                        // the first matches, at most a dozen: typing narrows the rest
-                        for (position, (g, i)) in shown.iter().enumerate().take(12) {
+                        for (position, (g, i)) in shown.iter().enumerate() {
                             if last_group != Some(*g) {
-                                ui.add_space(6.0);
-                                ui.horizontal(|ui| {
-                                    ui.add_space(8.0);
-                                    ui.label(
-                                        TextRole::Badge
-                                            .rich(&t, &self.groups[*g].title)
-                                            .color(t.color("muted-foreground")),
+                                if last_group.is_some() {
+                                    ui.add_space(4.0);
+                                    let (rule, _) = ui.allocate_exact_size(vec2(inner, 1.0), Sense::hover());
+                                    ui.painter().hline(
+                                        (rule.left() - inset)..=(rule.right() + inset),
+                                        rule.center().y,
+                                        Stroke::new(1.0, t.color("border")),
                                     );
-                                });
+                                }
                                 ui.add_space(4.0);
+                                let (head, _) = ui.allocate_exact_size(vec2(inner, 32.0), Sense::hover());
+                                let title = WidgetText::from(TextRole::Badge.rich(&t, &self.groups[*g].title))
+                                    .into_galley(
+                                        ui,
+                                        Some(TextWrapMode::Truncate),
+                                        inner - 2.0 * row_x,
+                                        TextRole::Badge.font(&t),
+                                    );
+                                ui.painter().galley(
+                                    pos2(head.left() + 4.0 + row_x, head.center().y - title.size().y / 2.0),
+                                    title,
+                                    t.color("muted-foreground"),
+                                );
                                 last_group = Some(*g);
                             }
                             let item = &self.groups[*g].items[*i];
-                            let (hit, clicked) = action_row(
-                                ui,
-                                &t,
-                                self.id.with((g, i)),
-                                item,
-                                position == *self.highlight,
-                                RowLook::Palette,
-                            );
-                            if hit.hovered() {
+                            let (hit, clicked) = ui
+                                .horizontal(|ui| {
+                                    ui.add_space(4.0);
+                                    ui.allocate_ui(vec2(inner - 8.0, 34.0), |ui| {
+                                        action_row(
+                                            ui,
+                                            &t,
+                                            self.id.with((g, i)),
+                                            item,
+                                            position == *self.highlight,
+                                            RowLook::Palette,
+                                        )
+                                    })
+                                    .inner
+                                })
+                                .inner;
+                            if position == *self.highlight && moved {
+                                hit.scroll_to_me(None);
+                            }
+                            if hit.hovered() && ui.input(|i| i.pointer.delta() != egui::Vec2::ZERO) {
                                 *self.highlight = position;
                             }
                             if clicked {
                                 outcome.run = Some((*g, *i));
                             }
                         }
-                    }
-                }
+                        ui.add_space(4.0);
+                    });
             });
         outcome.close = response.should_close() || outcome.run.is_some();
         outcome

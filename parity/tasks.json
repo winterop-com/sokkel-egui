@@ -24,7 +24,7 @@
         "@winterop-com/sokkel-ui/hooks/use-overlay-route": "app state (egui has no URL)",
         "@winterop-com/sokkel-ui/Layout": "egui layout",
         "@winterop-com/sokkel-ui/lib/appearance": "Appearance, Motion, swatch",
-        "@winterop-com/sokkel-ui/lib/commands": "CommandGroup",
+        "@winterop-com/sokkel-ui/lib/commands": "CommandGroup, place_commands, appearance_commands",
         "@winterop-com/sokkel-ui/lib/reorder": "DataTable::reorder (TableOutput::reordered)",
         "@winterop-com/sokkel-ui/PageHeader": "PageHeader",
         "@winterop-com/sokkel-ui/PageState": "PageState",
@@ -120,6 +120,13 @@
             ]
         },
         {
+            "name": "palette",
+            "route": "inbox",
+            "steps": [
+                "key:ControlOrMeta+k"
+            ]
+        },
+        {
             "name": "settings",
             "route": "settings"
         },
@@ -151,5 +158,5 @@
             "scheme": "dark"
         }
     ],
-    "shot": "7490919c99ff437593c1fbcba4c1a8fa5a29a6d2"
+    "shot": "d70448b8ae752bf900e85706a0afb2ed61b0a316"
 }

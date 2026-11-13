@@ -1,6 +1,7 @@
 //! The screens parity/tasks.json lists, drawn as the web example's are shot: 1280 by 800, on
 //! 2026-11-16, fresh data. `make parity` puts them beside the web's.
 
+use eframe::egui;
 use egui_kittest::kittest::Queryable;
 use egui_kittest::{Harness, SnapshotResults};
 use sokkel_ui_egui::{Appearance, Day, Scheme};
@@ -82,4 +83,10 @@ fn every_screen() {
     harness.get_all_by_label("More actions").next().unwrap().click();
     harness.run_steps(3);
     results.add(harness.try_snapshot("board_menu"));
+
+    // the command palette, opened by its keys
+    let mut harness = render(Scheme::System, |_| {});
+    harness.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::K);
+    harness.run_steps(3);
+    results.add(harness.try_snapshot("palette"));
 }

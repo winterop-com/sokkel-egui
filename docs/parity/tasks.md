@@ -40,6 +40,7 @@ counterpart.
 | board | Columns, heads, counts and cards match, the cards' feet included. egui breaks a title only at spaces, where the web also breaks after a hyphen ("send-" / "digest"). |
 | board_menu | A card's menu from its button, shown with the grip while the card is hovered: Move to with each column's icon (the card's own disabled), then Delete. Cards drag between and within columns (`Board`); where the web's other cards slide aside, ours show a line where the card lands. |
 | edit_title, edit_due, edit_due_calendar, edit_assignee | Editing in place (`Column::editable`): the text editor over its cell with its line under it, the date typed with Clear and a calendar under the cell, and the select's list over the cell with the chosen option where the value was. Selected text keeps its ink as the browser's does, on our token ground rather than the browser's own blue (sokkel-ui has no selection token). The web's calendar rings the chosen day as it takes the focus; ours does not. |
+| palette | The palette a third down the window, 384 wide, its search on the input's tint, and the web's groups: Tasks, Lists and Go to from the rail (`place_commands`), Scheme, Density and Theme with the one in use hinted (`appearance_commands`), and Demo. |
 | settings | The dialog's size, head, column, search (filtering every section), group titles, rows and footer line up. The web blurs the page behind it; egui cannot blur, so ours only dims. |
 | settings_appearance | `theme_settings` as the web's `themeSettings`: the theme select with each theme's sample, scheme, density and motion, the options as wide as the widest. |
 | settings_demo | The section has no Reset to defaults (`SettingsSection::reset(false)`). |
@@ -49,6 +50,6 @@ counterpart.
 
 1. **The rest of editing in place**: a typed character opening a text cell on what was typed, the
    calendar's own keys, and a save's spinner (an egui save is done when it returns).
-2. **Behavior the screens do not show**: the palette's groups as the web builds them
-   (`placeCommands`), the account menu's scheme, keyboard shortcuts, and the drawer and stacked rows
-   below 768.
+2. **Behavior the screens do not show**: the account menu's scheme, keyboard shortcuts, and the
+   drawer and stacked rows below 768.
+3. **The live dot's pulse** in the status line (sokkel-design's status line spec); ours is still.
