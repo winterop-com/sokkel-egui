@@ -5,11 +5,11 @@
 
 use eframe::egui::{self, Color32, Ui};
 use sokkel_ui_egui::{
-    AccountAction, AccountMenu, Appearance, BoardCard, BoardColumn, Cell, Column, CommandGroup, CommandPalette,
-    ConfirmAnswer, ConfirmDialog, DataTable, Day, Editor, Icon, MenuItem, PageHeader, QuickAdd, Rail, RailEntry,
-    RailGroup, Segmented, SegmentedVariant, Select, SettingsDialog, SettingsSection, Shell, ShellPart, StatusLine,
-    Switch, SwitchField, TableState, TableVariant, ThemeWords, TopBar, install, palette_shortcut, setting_row,
-    theme_settings, tokens, toolbar,
+    AccountAction, AccountMenu, Appearance, Board, BoardCard, BoardColumn, BoardMove, Cell, Column, CommandGroup,
+    CommandPalette, ConfirmAnswer, ConfirmDialog, DataTable, Day, Editor, Icon, MenuItem, PageHeader, QuickAdd, Rail,
+    RailEntry, RailGroup, Segmented, SegmentedVariant, Select, SettingsDialog, SettingsSection, Shell, ShellPart,
+    StatusLine, Switch, SwitchField, TableState, TableVariant, ThemeWords, TopBar, install, palette_shortcut,
+    setting_row, theme_settings, tokens, toolbar,
 };
 
 mod data;
@@ -102,6 +102,15 @@ fn by_rank(a: &Task, b: &Task) -> std::cmp::Ordering {
 }
 
 /// The board's columns: their title and the icon and ink of each state.
+/// A state's column id, as the web example names its columns.
+fn state_id(state: TaskState) -> &'static str {
+    match state {
+        TaskState::Todo => "todo",
+        TaskState::Doing => "doing",
+        TaskState::Done => "done",
+    }
+}
+
 fn column_of(state: TaskState, t: &sokkel_ui_egui::Tokens) -> (&'static str, Icon, Color32) {
     match state {
         TaskState::Todo => ("To do", Icon::Circle, t.color("muted-foreground")),
@@ -457,25 +466,75 @@ impl TasksApp {
             .filter(|task| holds(&self.list, task, self.today))
             .cloned()
             .collect();
-        ui.horizontal_top(|ui| {
-            ui.spacing_mut().item_spacing.x = 12.0;
+        let mut chosen: Option<(String, usize)> = None;
+        let moved = Board::new(("board", &self.list)).show(ui, |ui| {
             for state in STATES {
                 let mut held: Vec<&Task> = in_list.iter().filter(|task| task.state == state).collect();
                 held.sort_by(|a, b| by_rank(a, b));
                 let (title, icon, ink) = column_of(state, &t);
                 BoardColumn::new(title, held.len())
+                    .id(state_id(state))
                     .icon(icon, ink)
                     .show(ui, height, |ui| {
                         for task in &held {
-                            BoardCard::new(&task.title)
+                            // the card's menu: the columns it can move to, then delete
+                            let mut menu = vec![MenuItem::Label("Move to".into())];
+                            for other in STATES {
+                                let (title, icon, ink) = column_of(other, &t);
+                                menu.push(
+                                    MenuItem::action(title)
+                                        .icon(icon)
+                                        .tint(ink)
+                                        .disabled(other == task.state),
+                                );
+                            }
+                            menu.push(MenuItem::Separator);
+                            menu.push(MenuItem::action("Delete").icon(Icon::Trash2).destructive());
+                            let card = BoardCard::new(&task.title)
+                                .id(&task.id)
                                 .assignee(&task.assignee)
                                 .due(task.due(), now)
                                 .done(task.done())
+                                .menu(menu)
                                 .show(ui);
+                            if let Some(index) = card.chosen {
+                                chosen = Some((task.id.clone(), index));
+                            }
                         }
                     });
             }
         });
+        // a card dropped in a column: its state, and a rank between the cards it lands beside
+        if let Some(BoardMove { card, to, index }) = moved
+            && let Some(state) = STATES.into_iter().find(|s| state_id(*s) == to)
+        {
+            let mut others: Vec<Task> = in_list
+                .iter()
+                .filter(|task| task.state == state && task.id != card)
+                .cloned()
+                .collect();
+            others.sort_by(by_rank);
+            let rank = rank_between(index.checked_sub(1).and_then(|i| others.get(i)), others.get(index));
+            self.change(&card, |task| {
+                task.state = state;
+                task.rank = rank;
+            });
+        }
+        match chosen {
+            // Move to: the end of that column
+            Some((id, index @ 1..=3)) => {
+                let state = STATES[index - 1];
+                let mut others: Vec<Task> = in_list.iter().filter(|task| task.state == state).cloned().collect();
+                others.sort_by(by_rank);
+                let rank = rank_between(others.last(), None);
+                self.change(&id, |task| {
+                    task.state = state;
+                    task.rank = rank;
+                });
+            }
+            Some((id, 5)) => self.tasks.retain(|task| task.id != id),
+            _ => {}
+        }
     }
 
     fn settings_dialog(&mut self, ui: &mut Ui) {

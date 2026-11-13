@@ -36,7 +36,8 @@ egui counterpart.
 |---|---|
 | inbox, today, upcoming, project | Within a point or two of the web. Frame, rail, top bar, toolbar, all five columns, the grip, due tones, avatars, the row's action and the status line all line up. |
 | inbox_dark | The same, in the dark scheme. |
-| board | Columns, heads, counts and cards match. A card's title-to-date gap is about 6 taller than the web's. |
+| board | Columns, heads, counts and cards match, the cards' feet included. egui breaks a title only at spaces, where the web also breaks after a hyphen ("send-" / "digest"). |
+| board_menu | A card's menu from its button, shown with the grip while the card is hovered: Move to with each column's icon (the card's own disabled), then Delete. Cards drag between and within columns (`Board`); where the web's other cards slide aside, ours show a line where the card lands. |
 | edit_title, edit_due, edit_due_calendar, edit_assignee | Editing in place (`Column::editable`): the text editor over its cell with its line under it, the date typed with Clear and a calendar under the cell, and the select's list over the cell with the chosen option where the value was. Selected text keeps its ink as the browser's does, on our token ground rather than the browser's own blue (sokkel-ui has no selection token). The web's calendar rings the chosen day as it takes the focus; ours does not. |
 | settings | The dialog's size, head, column, search (filtering every section), group titles, rows and footer line up. The web blurs the page behind it; egui cannot blur, so ours only dims. |
 | settings_appearance | `theme_settings` as the web's `themeSettings`: the theme select with each theme's sample, scheme, density and motion, the options as wide as the widest. |
@@ -45,12 +46,10 @@ egui counterpart.
 
 ## What is left, largest first
 
-1. **The board's drag**: cards moved between columns and within one, and a card's menu (Move to,
-   Delete).
+1. **The empty list** (`primitives/empty`): its icon, title, the count of hidden done tasks, and Show
+   done.
 2. **The rest of editing in place**: a typed character opening a text cell on what was typed, the
    calendar's own keys, and a save's spinner (an egui save is done when it returns).
-3. **The empty list** (`primitives/empty`): its icon, title, the count of hidden done tasks, and Show
-   done.
-4. **Behavior the screens do not show**: the palette's groups as the web builds them
+3. **Behavior the screens do not show**: the palette's groups as the web builds them
    (`placeCommands`), the account menu's scheme, keyboard shortcuts, and the drawer and stacked rows
    below 768.

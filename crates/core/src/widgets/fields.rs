@@ -245,6 +245,7 @@ pub struct DueText {
     done: bool,
     icon: bool,
     none: String,
+    role: TextRole,
 }
 
 impl DueText {
@@ -255,7 +256,14 @@ impl DueText {
             done: false,
             icon: false,
             none: "None".into(),
+            role: TextRole::Body,
         }
+    }
+
+    /// The text role it is set in: the body's by default, the help's on a board's card.
+    pub fn role(mut self, role: TextRole) -> Self {
+        self.role = role;
+        self
     }
 
     pub fn done(mut self, done: bool) -> Self {
@@ -280,7 +288,7 @@ impl DueText {
             DueState::Near => (t.color("warning-ink"), 500.0),
             DueState::Later => (t.color("muted-foreground"), 400.0),
         };
-        (TextRole::Body.rich(t, text).variation("wght", weight).color(ink), ink)
+        (self.role.rich(t, text).variation("wght", weight).color(ink), ink)
     }
 }
 
@@ -288,26 +296,32 @@ impl Widget for DueText {
     fn ui(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
         let (rich, ink) = self.rich(&t);
-        ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 4.0;
-            if self.icon {
-                let (rect, _) = ui.allocate_exact_size(vec2(14.0, 14.0), Sense::hover());
-                icons::paint(ui.painter(), rect.center(), Icon::CalendarDays, 14.0, ink);
-            }
-            let response = ui.label(rich);
-            match self.date {
-                Some(date) => response.on_hover_text(format!(
-                    "{} {}",
-                    if due_state(date, self.now, 0) == DueState::Overdue && !self.done {
-                        "Overdue, was due"
-                    } else {
-                        "Due"
-                    },
-                    date.long()
-                )),
-                None => response,
-            }
-        })
+        // a row as tall as its line, not a control's height
+        let line = t.text(self.role.key()).line_height;
+        ui.allocate_ui_with_layout(
+            vec2(ui.available_width(), line),
+            egui::Layout::left_to_right(egui::Align::Center),
+            |ui| {
+                ui.spacing_mut().item_spacing.x = 4.0;
+                if self.icon {
+                    let (rect, _) = ui.allocate_exact_size(vec2(14.0, 14.0), Sense::hover());
+                    icons::paint(ui.painter(), rect.center(), Icon::CalendarDays, 14.0, ink);
+                }
+                let response = ui.label(rich);
+                match self.date {
+                    Some(date) => response.on_hover_text(format!(
+                        "{} {}",
+                        if due_state(date, self.now, 0) == DueState::Overdue && !self.done {
+                            "Overdue, was due"
+                        } else {
+                            "Due"
+                        },
+                        date.long()
+                    )),
+                    None => response,
+                }
+            },
+        )
         .inner
     }
 }

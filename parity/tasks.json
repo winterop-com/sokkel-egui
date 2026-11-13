@@ -14,8 +14,8 @@
     },
     "parts": {
         "@winterop-com/sokkel-ui/AccountMenu": "AccountMenu",
-        "@winterop-com/sokkel-ui/board/Board": "egui row of BoardColumn (drag not yet)",
-        "@winterop-com/sokkel-ui/board/BoardCard": "BoardCard",
+        "@winterop-com/sokkel-ui/board/Board": "Board (drag between and within columns, BoardMove)",
+        "@winterop-com/sokkel-ui/board/BoardCard": "BoardCard (id, menu)",
         "@winterop-com/sokkel-ui/board/BoardColumn": "BoardColumn",
         "@winterop-com/sokkel-ui/CommandPalette": "CommandPalette",
         "@winterop-com/sokkel-ui/DataTable": "DataTable",
@@ -102,6 +102,14 @@
             ]
         },
         {
+            "name": "board_menu",
+            "route": "inbox",
+            "steps": [
+                "button:Board",
+                "button:More actions"
+            ]
+        },
+        {
             "name": "settings",
             "route": "settings"
         },
@@ -133,5 +141,5 @@
             "scheme": "dark"
         }
     ],
-    "shot": "9d95e082e5c6e19b4a3143e50f4c6521710c74c6"
+    "shot": "5e9c791f0c647ba3f53610f39d6c10a6d4379efe"
 }

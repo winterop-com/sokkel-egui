@@ -18,7 +18,7 @@ mod table;
 mod table_edit;
 mod text_field;
 
-pub use board::{BOARD_COLUMN, BoardCard, BoardColumn};
+pub use board::{BOARD_COLUMN, Board, BoardCard, BoardColumn, BoardMove, CardResponse};
 pub use button::{Button, ButtonSize, ButtonVariant};
 pub use calendar::{Calendar, CalendarWords, WeekStart, calendar_forget};
 pub use chip::{Chip, ChipTone};

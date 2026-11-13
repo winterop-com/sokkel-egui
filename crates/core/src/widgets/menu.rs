@@ -17,6 +17,10 @@ pub enum MenuItem {
         icon: Option<Icon>,
         shortcut: Option<String>,
         destructive: bool,
+        /// Shown but not chosen, dimmed.
+        disabled: bool,
+        /// The icon's own color, as a board column's state icon; the muted ink when `None`.
+        tint: Option<egui::Color32>,
     },
     /// A label over the items after it.
     Label(String),
@@ -30,7 +34,25 @@ impl MenuItem {
             icon: None,
             shortcut: None,
             destructive: false,
+            disabled: false,
+            tint: None,
         }
+    }
+
+    /// An action shown dimmed that cannot be chosen, as the column a card is already in.
+    pub fn disabled(mut self, off: bool) -> Self {
+        if let MenuItem::Action { disabled, .. } = &mut self {
+            *disabled = off;
+        }
+        self
+    }
+
+    /// The icon in a color of its own.
+    pub fn tint(mut self, color: egui::Color32) -> Self {
+        if let MenuItem::Action { tint, .. } = &mut self {
+            *tint = Some(color);
+        }
+        self
     }
 
     pub fn icon(mut self, glyph: Icon) -> Self {
@@ -71,47 +93,78 @@ fn popover_frame(t: &Tokens) -> Frame {
 }
 
 /// Draw one action row; true when it was pressed.
-fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: bool) -> (Response, bool) {
+/// How a row of actions is drawn: a dropdown menu's (30 tall, 6 in, lit in the accent) or the
+/// palette's (32 tall, 8 in, lit in the hover wash).
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum RowLook {
+    Menu,
+    Palette,
+}
+
+fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: bool, look: RowLook) -> (Response, bool) {
     let MenuItem::Action {
         label,
         icon,
         shortcut,
         destructive,
+        disabled,
+        tint,
     } = item
     else {
         unreachable!()
     };
-    let height = 32.0;
+    let (height, pad) = match look {
+        RowLook::Menu => (30.0, 6.0),
+        RowLook::Palette => (32.0, 8.0),
+    };
     let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
-    let hit = ui.interact(row, id, Sense::click()).union(hit);
-    hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, label));
+    let sense = if *disabled { Sense::hover() } else { Sense::click() };
+    let hit = ui.interact(row, id, sense).union(hit);
+    hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, !*disabled, label));
     let painter = ui.painter();
-    if highlighted || hit.hovered() || hit.has_focus() {
+    let lit = !*disabled && (highlighted || hit.hovered() || hit.has_focus());
+    if lit {
         painter.rect_filled(
             row,
             t.radius("md"),
             if *destructive {
                 t.color_at("destructive", 0.1)
+            } else if look == RowLook::Menu {
+                t.color("accent")
             } else {
                 t.color("hover")
             },
         );
     }
-    let ink = if *destructive {
-        t.color("destructive")
-    } else {
-        t.color("popover-foreground")
-    };
-    let mut x = row.left() + 8.0;
+    // a lit menu row's text and icon take the accent's ink
+    let accent_ink = lit && look == RowLook::Menu && !*destructive;
+    let ink = super::dim(
+        if *destructive {
+            t.color("destructive")
+        } else if accent_ink {
+            t.color("accent-foreground")
+        } else {
+            t.color("popover-foreground")
+        },
+        !*disabled,
+    );
+    let mut x = row.left() + pad;
     if let Some(glyph) = icon {
         icons::paint(
             painter,
             pos2(x + 8.0, row.center().y),
             *glyph,
             16.0,
-            if *destructive { ink } else { t.color("muted-foreground") },
+            super::dim(
+                if *destructive || accent_ink {
+                    ink
+                } else {
+                    tint.unwrap_or(t.color("muted-foreground"))
+                },
+                !*disabled,
+            ),
         );
-        x += 24.0;
+        x += if look == RowLook::Menu { 22.0 } else { 24.0 };
     }
     // the shortcut first, so the label takes only the room it leaves
     let keys = shortcut.as_ref().map(|keys| {
@@ -141,6 +194,7 @@ pub struct DropdownMenu<'a> {
     items: &'a [MenuItem],
     width: f32,
     default_open: bool,
+    end: bool,
 }
 
 impl<'a> DropdownMenu<'a> {
@@ -149,7 +203,14 @@ impl<'a> DropdownMenu<'a> {
             items,
             width: 220.0,
             default_open: false,
+            end: false,
         }
+    }
+
+    /// Line the menu's end up with its trigger's, as `align="end"` does.
+    pub fn end(mut self, end: bool) -> Self {
+        self.end = end;
+        self
     }
 
     /// At least this wide; by default the menu fits its widest entry.
@@ -206,6 +267,11 @@ impl<'a> DropdownMenu<'a> {
         let mut pressed = None;
         Popup::menu(trigger)
             .id(popup_id)
+            .align(if self.end {
+                egui::RectAlign::BOTTOM_END
+            } else {
+                egui::RectAlign::BOTTOM_START
+            })
             .frame(popover_frame(&t))
             .gap(4.0)
             .width(width)
@@ -234,7 +300,7 @@ impl<'a> DropdownMenu<'a> {
                             ui.add_space(4.0);
                         }
                         action => {
-                            let (_, clicked) = action_row(ui, &t, popup_id.with(index), action, false);
+                            let (_, clicked) = action_row(ui, &t, popup_id.with(index), action, false, RowLook::Menu);
                             if clicked {
                                 pressed = Some(index);
                                 ui.close();
@@ -430,8 +496,14 @@ impl<'a> CommandPalette<'a> {
                                 last_group = Some(*g);
                             }
                             let item = &self.groups[*g].items[*i];
-                            let (hit, clicked) =
-                                action_row(ui, &t, self.id.with((g, i)), item, position == *self.highlight);
+                            let (hit, clicked) = action_row(
+                                ui,
+                                &t,
+                                self.id.with((g, i)),
+                                item,
+                                position == *self.highlight,
+                                RowLook::Palette,
+                            );
                             if hit.hovered() {
                                 *self.highlight = position;
                             }

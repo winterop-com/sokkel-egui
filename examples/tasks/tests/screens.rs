@@ -64,4 +64,13 @@ fn every_screen() {
     harness.get_by_label("Choose a date").click();
     harness.run_steps(3);
     results.add(harness.try_snapshot("edit_due_calendar"));
+
+    // a card's menu on the board, opened from its button as the pointer rests on the card
+    let mut harness = render(Scheme::System, |app| app.prefs.view = View::Board);
+    let button = harness.get_all_by_label("More actions").next().unwrap().rect();
+    harness.hover_at(button.center());
+    harness.run_steps(2);
+    harness.get_all_by_label("More actions").next().unwrap().click();
+    harness.run_steps(3);
+    results.add(harness.try_snapshot("board_menu"));
 }
