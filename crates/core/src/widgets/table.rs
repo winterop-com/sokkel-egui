@@ -464,6 +464,13 @@ impl<'a> DataTable<'a> {
                     ui.set_min_height(room - 2.0 - if self.footer { 26.0 } else { 0.0 });
                 }
                 ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+                // a table with no rows given its own words says them alone, without its heads
+                if self.rows.is_empty()
+                    && let Some(empty) = self.empty.take()
+                {
+                    empty(ui);
+                    return;
+                }
                 // the head
                 let (head, _) = ui.allocate_exact_size(vec2(ui.available_width(), head_height), Sense::hover());
                 let top = CornerRadius { sw: 0, se: 0, ..radius };

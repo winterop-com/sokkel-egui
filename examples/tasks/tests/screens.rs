@@ -33,9 +33,18 @@ type Screen = (&'static str, Scheme, fn(&mut TasksApp));
 #[test]
 fn every_screen() {
     let mut results = SnapshotResults::new();
-    let screens: [Screen; 13] = [
+    let screens: [Screen; 14] = [
         ("inbox", Scheme::System, |_| {}),
         ("today", Scheme::System, |app| app.go("today")),
+        ("today_empty", Scheme::System, |app| {
+            app.go("today");
+            let today = app.today;
+            for task in &mut app.tasks {
+                if task.due.is_some_and(|due| due <= today.0) {
+                    task.state = tasks::TaskState::Done;
+                }
+            }
+        }),
         ("upcoming", Scheme::System, |app| app.go("upcoming")),
         ("project", Scheme::System, |app| app.go("harbor")),
         ("edit_title", Scheme::System, |app| app.table.edit(0, 1)),

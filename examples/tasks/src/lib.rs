@@ -6,8 +6,8 @@
 use eframe::egui::{self, Color32, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, Appearance, Board, BoardCard, BoardColumn, BoardMove, Cell, Column, CommandGroup,
-    CommandPalette, ConfirmAnswer, ConfirmDialog, DataTable, Day, Editor, Icon, MenuItem, PageHeader, QuickAdd, Rail,
-    RailEntry, RailGroup, Segmented, SegmentedVariant, Select, SettingsDialog, SettingsSection, Shell, ShellPart,
+    CommandPalette, ConfirmAnswer, ConfirmDialog, DataTable, Day, Editor, Empty, Icon, MenuItem, PageHeader, QuickAdd,
+    Rail, RailEntry, RailGroup, Segmented, SegmentedVariant, Select, SettingsDialog, SettingsSection, Shell, ShellPart,
     StatusLine, Switch, SwitchField, TableState, TableVariant, ThemeWords, TopBar, install, palette_shortcut,
     setting_row, theme_settings, tokens, toolbar,
 };
@@ -357,6 +357,11 @@ impl TasksApp {
     fn rows(&mut self, ui: &mut Ui) {
         let shown = self.shown();
         let now = self.today;
+        // what an empty list says: how many done tasks it hides, and a way to show them
+        let list = self.list();
+        let in_list = self.tasks.iter().filter(|task| holds(&self.list, task, now)).count();
+        let hidden_done = in_list - self.open_in(&self.list);
+        let mut show_done = false;
         let week_start = match self.prefs.week_start {
             WeekStart::Monday => sokkel_ui_egui::WeekStart::Monday,
             WeekStart::Sunday => sokkel_ui_egui::WeekStart::Sunday,
@@ -413,10 +418,31 @@ impl TasksApp {
                     MenuItem::action("Delete").icon(Icon::Trash2).destructive(),
                 ]
             })
+            .empty(|ui| {
+                let description = match hidden_done {
+                    0 => "Add one above, and it lands here.".to_owned(),
+                    1 => "1 done task is hidden. Add one above, or show the done ones.".to_owned(),
+                    n => format!("{n} done tasks are hidden. Add one above, or show the done ones."),
+                };
+                Empty::new(format!("Nothing in {}", list.label))
+                    .icon(list.icon)
+                    .description(description)
+                    .show(ui, |ui| {
+                        if hidden_done > 0 {
+                            let button = sokkel_ui_egui::Button::new("Show done")
+                                .variant(sokkel_ui_egui::ButtonVariant::Outline)
+                                .size(sokkel_ui_egui::ButtonSize::Sm);
+                            show_done = ui.add(button).clicked();
+                        }
+                    });
+            })
             .footer(false)
             .stretch(true)
             .today(now)
             .show(ui);
+        if show_done {
+            self.prefs.show_done = true;
+        }
         if let Some(edit) = output.edited {
             let id = shown[edit.row].id.clone();
             let value = edit.value;

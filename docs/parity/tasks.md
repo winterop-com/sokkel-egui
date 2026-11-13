@@ -29,12 +29,13 @@ After porting a change, record the new blobs in `parity/tasks.json` (`ported.com
 
 ## Where it stands
 
-Ported from sokkel-ui `a4702e35` (0.25.0). 33 of the 34 library modules the example imports have an
-egui counterpart.
+Ported from sokkel-ui `a4702e35` (0.25.0). All 34 library modules the example imports have an egui
+counterpart.
 
 | Screen | State |
 |---|---|
 | inbox, today, upcoming, project | Within a point or two of the web. Frame, rail, top bar, toolbar, all five columns, the grip, due tones, avatars, the row's action and the status line all line up. |
+| today_empty | `Empty` in the table's frame without its heads: the list's icon, "Nothing in Today", the count of hidden done tasks in balanced lines, and Show done. |
 | inbox_dark | The same, in the dark scheme. |
 | board | Columns, heads, counts and cards match, the cards' feet included. egui breaks a title only at spaces, where the web also breaks after a hyphen ("send-" / "digest"). |
 | board_menu | A card's menu from its button, shown with the grip while the card is hovered: Move to with each column's icon (the card's own disabled), then Delete. Cards drag between and within columns (`Board`); where the web's other cards slide aside, ours show a line where the card lands. |
@@ -46,10 +47,8 @@ egui counterpart.
 
 ## What is left, largest first
 
-1. **The empty list** (`primitives/empty`): its icon, title, the count of hidden done tasks, and Show
-   done.
-2. **The rest of editing in place**: a typed character opening a text cell on what was typed, the
+1. **The rest of editing in place**: a typed character opening a text cell on what was typed, the
    calendar's own keys, and a save's spinner (an egui save is done when it returns).
-3. **Behavior the screens do not show**: the palette's groups as the web builds them
+2. **Behavior the screens do not show**: the palette's groups as the web builds them
    (`placeCommands`), the account menu's scheme, keyboard shortcuts, and the drawer and stacked rows
    below 768.

@@ -32,7 +32,7 @@
         "@winterop-com/sokkel-ui/primitives/button": "Button",
         "@winterop-com/sokkel-ui/primitives/checkbox": "Checkbox",
         "@winterop-com/sokkel-ui/primitives/dropdown-menu": "DropdownMenu",
-        "@winterop-com/sokkel-ui/primitives/empty": null,
+        "@winterop-com/sokkel-ui/primitives/empty": "Empty (DataTable::empty draws it without the heads)",
         "@winterop-com/sokkel-ui/primitives/select": "Select",
         "@winterop-com/sokkel-ui/primitives/switch": "Switch",
         "@winterop-com/sokkel-ui/primitives/tooltip": "tooltip",
@@ -56,6 +56,16 @@
         {
             "name": "today",
             "route": "today"
+        },
+        {
+            "name": "today_empty",
+            "route": "today",
+            "steps": [
+                "checkbox:Mark Rerun nightly-export for last week done",
+                "checkbox:Mark Review the failed sync-inventory runs done",
+                "checkbox:Mark Add a validate step to import-orders done",
+                "checkbox:Mark Draft the wording of send-digest done"
+            ]
         },
         {
             "name": "upcoming",
@@ -141,5 +151,5 @@
             "scheme": "dark"
         }
     ],
-    "shot": "5e9c791f0c647ba3f53610f39d6c10a6d4379efe"
+    "shot": "7490919c99ff437593c1fbcba4c1a8fa5a29a6d2"
 }
