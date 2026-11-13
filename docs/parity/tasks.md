@@ -19,14 +19,14 @@ differ, egui changes, in the library, never in the example alone.
 `make parity-web` rebuilds the web example in the clone at the same commit, and shoots its screens
 into `parity/tasks/web/`. Those screens are committed, so git shows how the web side changed. The
 egui screens are `examples/tasks/tests/snapshots/`, from `tests/screens.rs`. Both are 1280 by 800,
-light unless named dark, on 2026-11-16, from fresh data.
+in the System scheme (light, or dark when named so), on 2026-11-16, from fresh data.
 
 After porting a change, record the new blobs in `parity/tasks.json` (`ported.commit` and
 `ported.files`) and shoot the web again.
 
 ## Where it stands
 
-Ported from sokkel-ui `a4702e35` (0.25.0). 30 of the 34 library modules the example imports have an
+Ported from sokkel-ui `a4702e35` (0.25.0). 32 of the 34 library modules the example imports have an
 egui counterpart.
 
 | Screen | State |
@@ -34,19 +34,19 @@ egui counterpart.
 | inbox, today, upcoming, project | Within a point or two of the web. Frame, rail, top bar, toolbar, all five columns, the grip, due tones, avatars, the row's action and the status line all line up. |
 | inbox_dark | The same, in the dark scheme. |
 | board | Columns, heads, counts and cards match. A card's title-to-date gap is about 6 taller than the web's. |
-| settings | The dialog's size, head, column, search (focused on open, filtering every section), group titles, rows and footer line up. The web blurs the page behind it; egui cannot blur, so ours only dims. |
+| settings | The dialog's size, head, column, search (filtering every section), group titles, rows and footer line up. The web blurs the page behind it; egui cannot blur, so ours only dims. |
+| settings_appearance | `theme_settings` as the web's `themeSettings`: the theme select with each theme's sample, scheme, density and motion, the options as wide as the widest. |
+| settings_demo | The section has no Reset to defaults (`SettingsSection::reset(false)`). |
+| settings_reset | `ConfirmDialog` over the settings, its detail wrapping one word earlier than the web's. |
 
 ## What is left, largest first
 
-1. **The settings dialog**:
-   - the theme cards in Appearance (`ThemePicker`'s `themeSettings`);
-   - the confirm before resetting the demo data (`DialogShell`'s `ConfirmDialog`).
-2. **Editing in place** (`table-editing`): a title's text, a due date from a calendar, an assignee and
+1. **Editing in place** (`table-editing`): a title's text, a due date from a calendar, an assignee and
    a project from a select, each opened from its cell.
-3. **The board's drag**: cards moved between columns and within one, and a card's menu (Move to,
+2. **The board's drag**: cards moved between columns and within one, and a card's menu (Move to,
    Delete).
-4. **The empty list** (`primitives/empty`): its icon, title, the count of hidden done tasks, and Show
+3. **The empty list** (`primitives/empty`): its icon, title, the count of hidden done tasks, and Show
    done.
-5. **Behavior the screens do not show**: the palette's groups as the web builds them
+4. **Behavior the screens do not show**: the palette's groups as the web builds them
    (`placeCommands`), the account menu's scheme, keyboard shortcuts, and the drawer and stacked rows
    below 768.

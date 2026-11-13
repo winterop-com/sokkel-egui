@@ -7,8 +7,8 @@ use egui::{
 };
 
 use crate::{
-    Appearance, Button, ButtonVariant, Icon, Scheme, Segmented, SegmentedVariant, Select, TextRole, densities, icons,
-    themes, tokens,
+    Appearance, Button, ButtonVariant, Icon, Motion, Scheme, Segmented, SegmentedVariant, Select, TextRole, densities,
+    icons, swatch, themes, tokens,
 };
 
 /// One section of the settings: an id the app keeps, a label and an icon in the column.
@@ -19,6 +19,8 @@ pub struct SettingsSection {
     pub icon: Icon,
     /// The group title over this section and those after it with the same group.
     pub group: Option<String>,
+    /// Whether the footer offers Reset to defaults while the section shows.
+    pub reset: bool,
 }
 
 impl SettingsSection {
@@ -28,12 +30,19 @@ impl SettingsSection {
             label: label.into(),
             icon,
             group: None,
+            reset: true,
         }
     }
 
     /// Put the section under a group title in the column, as "Preferences" or "This demo".
     pub fn group(mut self, group: impl Into<String>) -> Self {
         self.group = Some(group.into());
+        self
+    }
+
+    /// False for a section with nothing to put back: the footer leaves out Reset to defaults.
+    pub fn reset(mut self, reset: bool) -> Self {
+        self.reset = reset;
         self
     }
 }
@@ -177,13 +186,7 @@ impl<'a> SettingsDialog<'a> {
                     vec2(nav.width() - 24.0, 32.0),
                 );
                 let mut child = ui.new_child(UiBuilder::new().max_rect(field));
-                let search = super::search_field(&mut child, &mut query, &self.words.search);
-                // the search takes the focus as the dialog opens, as the web's does
-                let opened_id = self.id.with("opened");
-                if !ui.ctx().data(|d| d.get_temp::<bool>(opened_id).unwrap_or(false)) {
-                    ui.ctx().data_mut(|d| d.insert_temp(opened_id, true));
-                    search.request_focus();
-                }
+                super::search_field(&mut child, &mut query, &self.words.search);
                 let mut y = field.bottom();
                 let mut group: Option<&String> = None;
                 for (index, section) in self.sections.iter().enumerate() {
@@ -308,9 +311,17 @@ impl<'a> SettingsDialog<'a> {
                         .layout(Layout::left_to_right(Align::Center)),
                     |ui| {
                         ui.spacing_mut().item_spacing.x = 8.0;
-                        if ui
-                            .add(Button::new(self.words.reset.clone()).variant(ButtonVariant::Ghost))
-                            .clicked()
+                        let resets = query.trim().is_empty()
+                            && self
+                                .sections
+                                .iter()
+                                .find(|s| s.id == *self.active)
+                                .or(self.sections.first())
+                                .is_some_and(|s| s.reset);
+                        if resets
+                            && ui
+                                .add(Button::new(self.words.reset.clone()).variant(ButtonVariant::Ghost))
+                                .clicked()
                         {
                             outcome.reset = true;
                         }
@@ -330,11 +341,8 @@ impl<'a> SettingsDialog<'a> {
         ctx.data_mut(|d| d.insert_temp(query_id, query));
         outcome.close |= response.should_close();
         if outcome.close {
-            // opened again later, the search is empty and takes the focus again
-            ctx.data_mut(|d| {
-                d.remove::<bool>(self.id.with("opened"));
-                d.remove::<String>(query_id);
-            });
+            // opened again later, the search is empty
+            ctx.data_mut(|d| d.remove::<String>(query_id));
         }
         outcome
     }
@@ -344,9 +352,22 @@ impl<'a> SettingsDialog<'a> {
 /// In a settings dialog that is searching, a row whose words do not match draws nothing; the first
 /// row of a section that shows draws the section's title over it.
 pub fn setting_row(ui: &mut Ui, title: &str, description: &str, control: impl FnOnce(&mut Ui)) {
+    setting_row_found_by(ui, title, description, &[], control);
+}
+
+/// A `setting_row` the settings' search also finds by `keywords`, such as the names of the
+/// options its control offers.
+pub fn setting_row_found_by(
+    ui: &mut Ui,
+    title: &str,
+    description: &str,
+    keywords: &[&str],
+    control: impl FnOnce(&mut Ui),
+) {
     let t = tokens(ui.ctx());
     if let Some(mut state) = ui.ctx().data(|d| d.get_temp::<RowsState>(rows_state_id())) {
-        let matches = state.query.is_empty() || format!("{title} {description}").to_lowercase().contains(&state.query);
+        let words = format!("{title} {description} {}", keywords.join(" ")).to_lowercase();
+        let matches = state.query.is_empty() || words.contains(&state.query);
         if !matches {
             return;
         }
@@ -370,61 +391,133 @@ pub fn setting_row(ui: &mut Ui, title: &str, description: &str, control: impl Fn
             ui.add_space(32.0);
             ui.with_layout(Layout::top_down(Align::Min), |ui| {
                 ui.spacing_mut().item_spacing.y = 2.0;
-                ui.label(TextRole::Label.rich(&t, title).color(t.color("popover-foreground")));
+                ui.label(TextRole::Action.rich(&t, title).color(t.color("popover-foreground")));
                 ui.add(
                     egui::Label::new(TextRole::Body.rich(&t, description).color(t.color("muted-foreground"))).wrap(),
                 );
             });
         });
     });
-    let rect = ui.available_rect_before_wrap();
+    // the rule under the row, a line of its own
+    let (rule, _) = ui.allocate_exact_size(vec2(ui.available_width(), 1.0), Sense::hover());
     ui.painter()
-        .hline(rect.x_range(), rect.top(), Stroke::new(1.0, t.color("border")));
+        .hline(rule.x_range(), rule.center().y, Stroke::new(1.0, t.color("border")));
 }
 
-/// The appearance rows every app's settings have: the theme, the scheme and the density.
-pub fn appearance_settings(ui: &mut Ui, appearance: &mut Appearance) {
-    setting_row(
-        ui,
-        "Theme",
-        "How the app looks: its grounds, its inks and its corners.",
-        |ui| {
-            let all: Vec<_> = themes().collect();
-            let mut chosen = all.iter().position(|theme| theme.name == appearance.theme).unwrap_or(0);
-            if ui
-                .add(Select::new(&mut chosen, all.iter().map(|t| t.label.clone()), "Theme").width(200.0))
-                .changed()
-            {
-                appearance.theme = all[chosen].name.clone();
-            }
-        },
-    );
-    setting_row(ui, "Scheme", "Light, dark, or as the system is set.", |ui| {
-        let schemes = [Scheme::Light, Scheme::Dark, Scheme::System];
-        let mut chosen = schemes.iter().position(|s| *s == appearance.scheme).unwrap_or(2);
-        if ui
-            .add(Segmented::new(&mut chosen, ["Light", "Dark", "System"]).variant(SegmentedVariant::Track))
-            .changed()
-        {
-            appearance.scheme = schemes[chosen];
+/// The words the appearance rows say, English by default, as sokkel-ui's `ThemePickerWords`.
+#[derive(Clone, Debug)]
+pub struct ThemeWords {
+    pub theme: String,
+    pub theme_hint: String,
+    pub scheme: String,
+    pub scheme_hint: String,
+    pub scheme_system_hint: String,
+    pub dark: String,
+    pub light: String,
+    pub system: String,
+    pub density: String,
+    pub density_hint: String,
+    pub motion: String,
+    pub motion_hint: String,
+    pub motion_system: String,
+    pub motion_on: String,
+    pub motion_off: String,
+}
+
+impl Default for ThemeWords {
+    fn default() -> Self {
+        Self {
+            theme: "Theme".into(),
+            theme_hint: "The colors of surfaces, lines, text and the accent.".into(),
+            scheme: "Scheme".into(),
+            scheme_hint: "Dark or light.".into(),
+            scheme_system_hint: "Dark, light, or as the device is set.".into(),
+            dark: "Dark".into(),
+            light: "Light".into(),
+            system: "System".into(),
+            density: "Density".into(),
+            density_hint: "How much fits on a screen.".into(),
+            motion: "Motion".into(),
+            motion_hint: "Whether parts move as they open and change.".into(),
+            motion_system: "System".into(),
+            motion_on: "On".into(),
+            motion_off: "Off".into(),
+        }
+    }
+}
+
+/// The appearance rows of a settings section, after sokkel-ui's `themeSettings`: the theme in a
+/// select with each theme's sample, the scheme (the system's as a third when `system`), the
+/// density and the motion, each found in the settings' search by its options' names too.
+pub fn theme_settings(ui: &mut Ui, appearance: &mut Appearance, system: bool, words: &ThemeWords) {
+    let all: Vec<_> = themes().collect();
+    let labels: Vec<&str> = all.iter().map(|theme| theme.label.as_str()).collect();
+    setting_row_found_by(ui, &words.theme, &words.theme_hint, &labels, |ui| {
+        let dark = tokens(ui.ctx()).dark;
+        let mut chosen = all.iter().position(|theme| theme.name == appearance.theme).unwrap_or(0);
+        let select = Select::new(&mut chosen, labels.iter().copied(), words.theme.clone())
+            .width(224.0)
+            .swatches(all.iter().map(|theme| swatch(&theme.name, dark)));
+        if ui.add(select).changed() {
+            appearance.theme = all[chosen].name.clone();
         }
     });
-    setting_row(ui, "Density", "How much room rows and controls take.", |ui| {
-        let levels = densities();
+    let mut schemes = vec![
+        (Scheme::Dark, words.dark.as_str()),
+        (Scheme::Light, words.light.as_str()),
+    ];
+    if system {
+        schemes.push((Scheme::System, words.system.as_str()));
+    }
+    let names: Vec<&str> = schemes.iter().map(|(_, name)| *name).collect();
+    let hint = if system {
+        &words.scheme_system_hint
+    } else {
+        &words.scheme_hint
+    };
+    setting_row_found_by(ui, &words.scheme, hint, &names, |ui| {
+        let mut chosen = schemes.iter().position(|(s, _)| *s == appearance.scheme).unwrap_or(0);
+        if ui
+            .add(Segmented::new(&mut chosen, names.iter().copied()).variant(SegmentedVariant::Track))
+            .changed()
+        {
+            appearance.scheme = schemes[chosen].0;
+        }
+    });
+    let levels = densities();
+    let level_names: Vec<String> = levels
+        .iter()
+        .map(|level| {
+            let mut label = level.to_string();
+            label[..1].make_ascii_uppercase();
+            label
+        })
+        .collect();
+    let level_words: Vec<&str> = level_names.iter().map(String::as_str).collect();
+    setting_row_found_by(ui, &words.density, &words.density_hint, &level_words, |ui| {
         let mut chosen = levels
             .iter()
             .position(|level| *level == appearance.density)
             .unwrap_or(0);
-        let labels = levels.iter().map(|level| {
-            let mut label = level.to_string();
-            label[..1].make_ascii_uppercase();
-            label
-        });
         if ui
-            .add(Segmented::new(&mut chosen, labels).variant(SegmentedVariant::Track))
+            .add(Segmented::new(&mut chosen, level_words.iter().copied()).variant(SegmentedVariant::Track))
             .changed()
         {
             appearance.density = levels[chosen].to_owned();
+        }
+    });
+    let motions = [
+        (Motion::System, words.motion_system.as_str()),
+        (Motion::On, words.motion_on.as_str()),
+        (Motion::Off, words.motion_off.as_str()),
+    ];
+    setting_row_found_by(ui, &words.motion, &words.motion_hint, &["animation"], |ui| {
+        let mut chosen = motions.iter().position(|(m, _)| *m == appearance.motion).unwrap_or(0);
+        if ui
+            .add(Segmented::new(&mut chosen, motions.iter().map(|(_, name)| *name)).variant(SegmentedVariant::Track))
+            .changed()
+        {
+            appearance.motion = motions[chosen].0;
         }
     });
 }

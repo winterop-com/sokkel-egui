@@ -97,6 +97,27 @@ pub fn themes() -> impl Iterator<Item = &'static ThemeInfo> {
     catalog().themes.iter().map(|(info, _)| info)
 }
 
+/// A theme's sample, drawn in that theme whatever the page wears: its background and border, and
+/// its text, accent and third chart color as dots on it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Swatch {
+    pub ground: Color32,
+    pub edge: Color32,
+    pub dots: [Color32; 3],
+}
+
+/// The sample of the theme named `name` in the scheme asked for; `None` for a theme the tokens lack.
+pub fn swatch(name: &str, dark: bool) -> Option<Swatch> {
+    let (_, theme) = catalog().themes.iter().find(|(info, _)| info.name == name)?;
+    let scheme = if dark { &theme.dark } else { &theme.light };
+    let color = |key: &str| scheme.colors.get(key).and_then(|v| v.as_str()).map(parse_hex);
+    Some(Swatch {
+        ground: color("background")?,
+        edge: color("border")?,
+        dots: [color("foreground")?, color("primary")?, color("chart-3")?],
+    })
+}
+
 /// Every density level, by name.
 pub fn densities() -> Vec<&'static str> {
     let mut levels: Vec<&str> = catalog().density.keys().map(String::as_str).collect();
@@ -113,12 +134,24 @@ pub enum Scheme {
     System,
 }
 
-/// What an app picks: a theme, a scheme and a density, as sokkel-ui's `ThemeSettings` holds them.
+/// Whether parts move as they open and change: as the system asks, always, or never.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Motion {
+    #[default]
+    System,
+    On,
+    Off,
+}
+
+/// What an app picks: a theme, a scheme, a density and the motion, as sokkel-ui's `ThemeSettings`
+/// holds them.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Appearance {
     pub theme: String,
     pub scheme: Scheme,
     pub density: String,
+    #[serde(default)]
+    pub motion: Motion,
 }
 
 impl Default for Appearance {
@@ -127,6 +160,7 @@ impl Default for Appearance {
             theme: catalog().default_theme.clone(),
             scheme: Scheme::System,
             density: catalog().default_density.clone(),
+            motion: Motion::System,
         }
     }
 }

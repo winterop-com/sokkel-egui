@@ -19,11 +19,11 @@
         "@winterop-com/sokkel-ui/board/BoardColumn": "BoardColumn",
         "@winterop-com/sokkel-ui/CommandPalette": "CommandPalette",
         "@winterop-com/sokkel-ui/DataTable": "DataTable",
-        "@winterop-com/sokkel-ui/DialogShell": null,
+        "@winterop-com/sokkel-ui/DialogShell": "ConfirmDialog, Dialog",
         "@winterop-com/sokkel-ui/DueText": "DueText, Cell::Due",
         "@winterop-com/sokkel-ui/hooks/use-overlay-route": "app state (egui has no URL)",
         "@winterop-com/sokkel-ui/Layout": "egui layout",
-        "@winterop-com/sokkel-ui/lib/appearance": "Appearance",
+        "@winterop-com/sokkel-ui/lib/appearance": "Appearance, Motion, swatch",
         "@winterop-com/sokkel-ui/lib/commands": "CommandGroup",
         "@winterop-com/sokkel-ui/lib/reorder": "DataTable::reorder (TableOutput::reordered)",
         "@winterop-com/sokkel-ui/PageHeader": "PageHeader",
@@ -44,7 +44,7 @@
         "@winterop-com/sokkel-ui/StatusLine": "StatusLine",
         "@winterop-com/sokkel-ui/SwitchField": "SwitchField",
         "@winterop-com/sokkel-ui/table-editing": null,
-        "@winterop-com/sokkel-ui/ThemePicker": null,
+        "@winterop-com/sokkel-ui/ThemePicker": "theme_settings, ThemeWords",
         "@winterop-com/sokkel-ui/Toolbar": "toolbar",
         "@winterop-com/sokkel-ui/TopBar": "TopBar"
     },
@@ -75,6 +75,28 @@
         {
             "name": "settings",
             "route": "settings"
+        },
+        {
+            "name": "settings_appearance",
+            "route": "settings",
+            "steps": [
+                "button:Appearance"
+            ]
+        },
+        {
+            "name": "settings_demo",
+            "route": "settings",
+            "steps": [
+                "button:Demo data"
+            ]
+        },
+        {
+            "name": "settings_reset",
+            "route": "settings",
+            "steps": [
+                "button:Demo data",
+                "button:Reset"
+            ]
         },
         {
             "name": "inbox_dark",

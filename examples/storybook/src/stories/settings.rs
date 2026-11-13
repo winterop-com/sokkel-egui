@@ -1,6 +1,7 @@
 use eframe::egui::Ui;
 use sokkel_ui_egui::{
-    Appearance, Button, ButtonVariant, Icon, SettingsDialog, SettingsSection, Switch, appearance_settings, setting_row,
+    Appearance, Button, ButtonVariant, Icon, SettingsDialog, SettingsSection, Switch, ThemeWords, setting_row,
+    theme_settings,
 };
 
 use super::{State, section};
@@ -16,7 +17,7 @@ pub fn sections() -> Vec<SettingsSection> {
 /// The rows of one section of Tidevann's settings.
 pub fn rows(state: &mut State, appearance: &mut Appearance, section: &str, ui: &mut Ui) {
     match section {
-        "appearance" => appearance_settings(ui, appearance),
+        "appearance" => theme_settings(ui, appearance, true, &ThemeWords::default()),
         "notifications" => {
             setting_row(
                 ui,

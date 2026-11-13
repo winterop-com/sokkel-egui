@@ -252,21 +252,37 @@ impl<'a> Segmented<'a> {
 impl Widget for Segmented<'_> {
     fn ui(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
-        let role = TextRole::Badge;
         let variant = self.variant;
+        let galley = |ui: &Ui, option: &str, role: TextRole| {
+            WidgetText::from(role.rich(&t, option)).into_galley(
+                ui,
+                Some(TextWrapMode::Extend),
+                f32::INFINITY,
+                role.font(&t),
+            )
+        };
+        // the chosen option at medium weight, the others at regular
         let galleys: Vec<_> = self
             .options
             .iter()
-            .map(|option| {
-                WidgetText::from(role.rich(&t, option)).into_galley(
-                    ui,
-                    Some(TextWrapMode::Extend),
-                    f32::INFINITY,
-                    role.font(&t),
-                )
+            .enumerate()
+            .map(|(index, option)| {
+                let role = if index == *self.chosen {
+                    TextRole::Badge
+                } else {
+                    TextRole::Help
+                };
+                galley(ui, option, role)
             })
             .collect();
-        let widths: Vec<f32> = galleys.iter().map(|g| g.size().x + 20.0).collect();
+        // every option as wide as the widest label at medium weight, as the web lays each label
+        // over the others
+        let widest = self
+            .options
+            .iter()
+            .map(|option| galley(ui, option, TextRole::Badge).size().x)
+            .fold(0.0, f32::max);
+        let widths: Vec<f32> = galleys.iter().map(|_| widest + 20.0).collect();
         // the frame's edge and padding, the gap between options, and an option's height
         let (inset, gap, height) = match variant {
             SegmentedVariant::Track => (2.0, 0.0, 24.0),

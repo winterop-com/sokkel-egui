@@ -7,7 +7,7 @@ use egui::{
 };
 
 use super::focus_ring;
-use crate::{Icon, TextRole, icons, tokens};
+use crate::{Button, ButtonVariant, Icon, Swatch, TextRole, icons, tokens};
 
 /// How long the pointer rests on a part before its tooltip shows, in seconds.
 const TOOLTIP_DELAY: f64 = 0.5;
@@ -66,6 +66,7 @@ pub struct Select<'a> {
     label: String,
     width: f32,
     default_open: bool,
+    swatches: Option<Vec<Option<Swatch>>>,
 }
 
 impl<'a> Select<'a> {
@@ -81,6 +82,7 @@ impl<'a> Select<'a> {
             label: label.into(),
             width: 220.0,
             default_open: false,
+            swatches: None,
         }
     }
 
@@ -89,10 +91,64 @@ impl<'a> Select<'a> {
         self
     }
 
+    /// A sample before each option's label, as a theme's colors; `None` draws an empty dashed box.
+    pub fn swatches(mut self, swatches: impl IntoIterator<Item = Option<Swatch>>) -> Self {
+        self.swatches = Some(swatches.into_iter().collect());
+        self
+    }
+
     /// Open the list the first time the select is shown, as a story shows it.
     pub fn default_open(mut self, open: bool) -> Self {
         self.default_open = open;
         self
+    }
+}
+
+impl Select<'_> {
+    /// How far the label moves for the swatch before it: 28 and a gap of 8.
+    fn lead(&self) -> f32 {
+        if self.swatches.is_some() { 36.0 } else { 0.0 }
+    }
+}
+
+/// A theme's sample, 28 by 16 from `left_center`: its background with its text, accent and third
+/// chart color as dots, or a dashed empty box for no theme.
+fn paint_swatch(painter: &egui::Painter, t: &crate::Tokens, left_center: egui::Pos2, swatch: Option<Swatch>) {
+    let rect = Rect::from_min_size(pos2(left_center.x, left_center.y - 8.0), vec2(28.0, 16.0));
+    let control = t.radius("control");
+    let radius = CornerRadius::same(control.nw / 2);
+    match swatch {
+        Some(swatch) => {
+            painter.rect(
+                rect,
+                radius,
+                swatch.ground,
+                Stroke::new(1.0, swatch.edge),
+                StrokeKind::Inside,
+            );
+            for (index, dot) in swatch.dots.into_iter().enumerate() {
+                painter.circle_filled(
+                    pos2(rect.center().x + (index as f32 - 1.0) * 8.0, rect.center().y),
+                    3.0,
+                    dot,
+                );
+            }
+        }
+        None => {
+            let shape = egui::Shape::dashed_line(
+                &[
+                    rect.left_top(),
+                    rect.right_top(),
+                    rect.right_bottom(),
+                    rect.left_bottom(),
+                    rect.left_top(),
+                ],
+                Stroke::new(1.0, t.color("border-strong")),
+                3.0,
+                2.0,
+            );
+            painter.extend(shape);
+        }
     }
 }
 
@@ -132,14 +188,23 @@ impl Widget for Select<'_> {
             painter.rect_filled(rect.shrink(1.0), radius, ground);
         }
         let current = self.options.get(*self.chosen).cloned().unwrap_or_default();
+        let lead = self.lead();
+        if let Some(swatches) = &self.swatches {
+            paint_swatch(
+                painter,
+                &t,
+                pos2(rect.left() + 10.0, rect.center().y),
+                swatches.get(*self.chosen).copied().flatten(),
+            );
+        }
         let galley = WidgetText::from(TextRole::Body.rich(&t, current)).into_galley(
             ui,
             Some(TextWrapMode::Truncate),
-            rect.width() - 40.0,
+            rect.width() - 40.0 - lead,
             TextRole::Body.font(&t),
         );
         painter.galley(
-            pos2(rect.left() + 10.0, rect.center().y - galley.size().y / 2.0),
+            pos2(rect.left() + 10.0 + lead, rect.center().y - galley.size().y / 2.0),
             galley,
             t.color("foreground"),
         );
@@ -181,14 +246,22 @@ impl Widget for Select<'_> {
                     if hit.hovered() || hit.has_focus() {
                         ui.painter().rect_filled(row, t.radius("md"), t.color("hover"));
                     }
+                    if let Some(swatches) = &self.swatches {
+                        paint_swatch(
+                            ui.painter(),
+                            &t,
+                            pos2(row.left() + 8.0, row.center().y),
+                            swatches.get(index).copied().flatten(),
+                        );
+                    }
                     let galley = WidgetText::from(TextRole::Body.rich(&t, option)).into_galley(
                         ui,
                         Some(TextWrapMode::Truncate),
-                        row.width() - 40.0,
+                        row.width() - 40.0 - lead,
                         TextRole::Body.font(&t),
                     );
                     ui.painter().galley(
-                        pos2(row.left() + 8.0, row.center().y - galley.size().y / 2.0),
+                        pos2(row.left() + 8.0 + lead, row.center().y - galley.size().y / 2.0),
                         galley,
                         t.color("popover-foreground"),
                     );
@@ -249,6 +322,11 @@ impl Dialog {
     /// Show the dialog; `body` draws its content and `footer` its actions, laid out from the end.
     /// True when it asks to close: Escape, or a press on the shade.
     pub fn show(self, ctx: &Context, body: impl FnOnce(&mut Ui), footer: impl FnOnce(&mut Ui)) -> bool {
+        self.draw(ctx, Some(body), footer)
+    }
+
+    /// The dialog with no body: its title and description, 16 over the footer.
+    fn draw(self, ctx: &Context, body: Option<impl FnOnce(&mut Ui)>, footer: impl FnOnce(&mut Ui)) -> bool {
         let t = tokens(ctx);
         let frame = Frame::new()
             .fill(t.color("popover"))
@@ -277,8 +355,10 @@ impl Dialog {
                     if let Some(description) = &self.description {
                         ui.label(TextRole::Body.rich(&t, description).color(t.color("muted-foreground")));
                     }
-                    ui.add_space(8.0);
-                    body(ui);
+                    if let Some(body) = body {
+                        ui.add_space(8.0);
+                        body(ui);
+                    }
                 });
                 // the footer band: muted at half, a rule above, the surface's lower corners
                 let (band, _) = ui.allocate_exact_size(vec2(self.width, 64.0), Sense::hover());
@@ -299,5 +379,90 @@ impl Dialog {
                 );
             });
         response.should_close()
+    }
+}
+
+/// What a confirm dialog was answered this frame.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ConfirmAnswer {
+    /// Cancel, Escape or a press on the shade.
+    Cancel,
+    Confirm,
+}
+
+/// A question with one answer to confirm, after sokkel-ui's `ConfirmDialog`: the title is the
+/// question ("Reset the demo data?"), a line under it says what the answer does, and the footer
+/// holds Cancel and the answer, drawn destructive when it is one.
+pub struct ConfirmDialog {
+    id: Id,
+    question: String,
+    detail: Option<String>,
+    confirm: String,
+    destructive: bool,
+    busy: Option<String>,
+    cancel: String,
+}
+
+impl ConfirmDialog {
+    pub fn new(id: impl egui::AsId, question: impl Into<String>, confirm: impl Into<String>) -> Self {
+        Self {
+            id: Id::new(id),
+            question: question.into(),
+            detail: None,
+            confirm: confirm.into(),
+            destructive: false,
+            busy: None,
+            cancel: "Cancel".into(),
+        }
+    }
+
+    /// One line on what the answer does, where the question does not say it.
+    pub fn detail(mut self, detail: impl Into<String>) -> Self {
+        self.detail = Some(detail.into());
+        self
+    }
+
+    /// Draw the answer as a destructive one.
+    pub fn destructive(mut self, destructive: bool) -> Self {
+        self.destructive = destructive;
+        self
+    }
+
+    /// While the answer is carried out: the answer says `label` and nothing can be pressed.
+    pub fn busy(mut self, label: Option<String>) -> Self {
+        self.busy = label;
+        self
+    }
+
+    /// The word on the button that leaves the question unanswered.
+    pub fn cancel(mut self, cancel: impl Into<String>) -> Self {
+        self.cancel = cancel.into();
+        self
+    }
+
+    /// Show the question; `Some` once it is answered.
+    pub fn show(self, ctx: &Context) -> Option<ConfirmAnswer> {
+        let mut answer = None;
+        let busy = self.busy.is_some();
+        let mut dialog = Dialog::new(self.id, self.question.clone());
+        if let Some(detail) = &self.detail {
+            dialog = dialog.description(detail.clone());
+        }
+        let closed = dialog.draw(ctx, None::<fn(&mut Ui)>, |ui| {
+            let variant = if self.destructive {
+                ButtonVariant::Destructive
+            } else {
+                ButtonVariant::Default
+            };
+            let label = self.busy.clone().unwrap_or_else(|| self.confirm.clone());
+            if ui.add(Button::new(label).variant(variant).busy(busy)).clicked() && !busy {
+                answer = Some(ConfirmAnswer::Confirm);
+            }
+            let cancel = Button::new(self.cancel.clone()).variant(ButtonVariant::Ghost);
+            if ui.add_enabled(!busy, cancel).clicked() {
+                answer = Some(ConfirmAnswer::Cancel);
+            }
+        });
+        answer.or((closed && !busy).then_some(ConfirmAnswer::Cancel))
     }
 }

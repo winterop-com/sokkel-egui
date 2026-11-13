@@ -6,8 +6,8 @@ use eframe::egui::{self, Key, KeyboardShortcut, Modifiers, Ui, vec2};
 use sokkel_ui_egui::{
     Appearance, Button, ButtonSize, ButtonVariant, Card, Chip, Column, CommandGroup, CommandPalette, DataTable, Icon,
     MenuItem, PageHeader, Rail, RailEntry, RailGroup, SettingsDialog, SettingsSection, Shell, ShellPart, StatusLine,
-    StatusTone, TableState, TableVariant, TextRole, TopBar, appearance_settings, install, palette_shortcut,
-    setting_row, tokens,
+    StatusTone, TableState, TableVariant, TextRole, ThemeWords, TopBar, install, palette_shortcut, setting_row,
+    theme_settings, tokens,
 };
 use sokkel_ui_egui_charts::{LineChart, Series, Sparkline, legend};
 
@@ -301,7 +301,7 @@ impl RunsApp {
             let (appearance, notify, paused) = (&mut self.appearance, &mut self.notify, &mut self.paused);
             let outcome = SettingsDialog::new("settings", &sections, &mut active).show(ui.ctx(), |section, ui| {
                 if section == "appearance" {
-                    appearance_settings(ui, appearance);
+                    theme_settings(ui, appearance, true, &ThemeWords::default());
                 } else {
                     setting_row(
                         ui,

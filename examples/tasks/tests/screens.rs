@@ -26,19 +26,29 @@ fn render(scheme: Scheme, setup: impl FnOnce(&mut TasksApp)) -> Harness<'static,
     harness
 }
 
-/// A screen: its name in parity/tasks.json, its scheme, and how the app gets there.
+/// A screen: its name in parity/tasks.json, its scheme (System is light here, as the web's default), and how the app gets there.
 type Screen = (&'static str, Scheme, fn(&mut TasksApp));
 
 #[test]
 fn every_screen() {
     let mut results = SnapshotResults::new();
-    let screens: [Screen; 7] = [
-        ("inbox", Scheme::Light, |_| {}),
-        ("today", Scheme::Light, |app| app.go("today")),
-        ("upcoming", Scheme::Light, |app| app.go("upcoming")),
-        ("project", Scheme::Light, |app| app.go("harbor")),
-        ("board", Scheme::Light, |app| app.prefs.view = View::Board),
-        ("settings", Scheme::Light, |app| app.go("settings")),
+    let screens: [Screen; 10] = [
+        ("inbox", Scheme::System, |_| {}),
+        ("today", Scheme::System, |app| app.go("today")),
+        ("upcoming", Scheme::System, |app| app.go("upcoming")),
+        ("project", Scheme::System, |app| app.go("harbor")),
+        ("board", Scheme::System, |app| app.prefs.view = View::Board),
+        ("settings", Scheme::System, |app| app.go("settings")),
+        ("settings_appearance", Scheme::System, |app| {
+            app.settings = Some("appearance".into())
+        }),
+        ("settings_demo", Scheme::System, |app| {
+            app.settings = Some("demo".into())
+        }),
+        ("settings_reset", Scheme::System, |app| {
+            app.settings = Some("demo".into());
+            app.resetting = true;
+        }),
         ("inbox_dark", Scheme::Dark, |_| {}),
     ];
     for (name, scheme, setup) in screens {

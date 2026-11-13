@@ -25,10 +25,13 @@ pub(crate) use fields::search_field;
 pub use fields::{DueState, DueText, QuickAdd, SearchField, SwitchField, due_state, toolbar};
 pub use frame::{Rail, RailEntry, RailGroup, Shell, ShellPart, StatusLine, StatusTone, TopBar};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
-pub use overlay::{Dialog, Select, tooltip, tooltip_shown};
+pub use overlay::{ConfirmAnswer, ConfirmDialog, Dialog, Select, tooltip, tooltip_shown};
 pub use page::{PageHeader, PageState, PageStateTone, PageStateWords};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
-pub use settings::{SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, appearance_settings, setting_row};
+pub use settings::{
+    SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, ThemeWords, setting_row, setting_row_found_by,
+    theme_settings,
+};
 pub use switch::Switch;
 pub use table::{Cell, Column, DataTable, RowActions, TableOutput, TableState, TableVariant, TableWords};
 pub use text_field::{Input, TextField};

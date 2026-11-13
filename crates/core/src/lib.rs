@@ -21,7 +21,9 @@ mod widgets;
 pub use day::Day;
 pub use icons::Icon;
 pub use text::TextRole;
-pub use tokens::{Appearance, Scheme, TextSpec, ThemeInfo, Tokens, densities, density_level, hex, themes};
+pub use tokens::{
+    Appearance, Motion, Scheme, Swatch, TextSpec, ThemeInfo, Tokens, densities, density_level, hex, swatch, themes,
+};
 pub use widgets::*;
 
 /// IBM Plex Sans, variable on its `wght` axis (OFL), as sokkel-ui ships it: Latin and Latin Extended.
@@ -80,6 +82,7 @@ pub fn scope<R>(ui: &mut egui::Ui, theme: &str, dark: Option<bool>, add: impl Fn
                         theme: theme.to_owned(),
                         scheme,
                         density,
+                        ..Default::default()
                     },
                     dark,
                 ))
@@ -125,6 +128,12 @@ pub fn install(ctx: &Context, appearance: &Appearance) {
             (TextStyle::Monospace, FontId::monospace(mono)),
         ]
         .into();
+        // motion off stops egui's own animations: popups, collapses and scroll fades jump to their end
+        style.animation_time = if appearance.motion == Motion::Off {
+            0.0
+        } else {
+            1.0 / 12.0
+        };
         let spacing = &mut style.spacing;
         spacing.item_spacing = egui::vec2(8.0, 8.0);
         spacing.button_padding = egui::vec2(10.0, 4.0);

@@ -6,9 +6,10 @@
 use eframe::egui::{self, Color32, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, Appearance, BoardCard, BoardColumn, Cell, Column, CommandGroup, CommandPalette,
-    DataTable, Day, Icon, MenuItem, PageHeader, QuickAdd, Rail, RailEntry, RailGroup, Segmented, SegmentedVariant,
-    Select, SettingsDialog, SettingsSection, Shell, ShellPart, StatusLine, Switch, SwitchField, TableState,
-    TableVariant, TopBar, appearance_settings, install, palette_shortcut, setting_row, tokens, toolbar,
+    ConfirmAnswer, ConfirmDialog, DataTable, Day, Icon, MenuItem, PageHeader, QuickAdd, Rail, RailEntry, RailGroup,
+    Segmented, SegmentedVariant, Select, SettingsDialog, SettingsSection, Shell, ShellPart, StatusLine, Switch,
+    SwitchField, TableState, TableVariant, ThemeWords, TopBar, install, palette_shortcut, setting_row, theme_settings,
+    tokens, toolbar,
 };
 
 mod data;
@@ -131,6 +132,8 @@ pub struct TasksApp {
     pub list: String,
     /// The settings over the page, with the section shown.
     pub settings: Option<String>,
+    /// The question before the demo data is put back, open over the settings.
+    pub resetting: bool,
     palette: Option<(String, usize)>,
     quick: String,
     table: TableState,
@@ -160,6 +163,7 @@ impl TasksApp {
             list: prefs.start_list.clone(),
             prefs,
             settings: None,
+            resetting: false,
             palette: None,
             quick: String::new(),
             table: TableState::default(),
@@ -454,7 +458,9 @@ impl TasksApp {
             SettingsSection::new("lists", "Lists", Icon::ListTodo).group("Preferences"),
             SettingsSection::new("adding", "New tasks", Icon::Plus).group("Preferences"),
             SettingsSection::new("appearance", "Appearance", Icon::Palette).group("Preferences"),
-            SettingsSection::new("data", "Demo data", Icon::Database).group("This demo"),
+            SettingsSection::new("demo", "Demo data", Icon::Database)
+                .group("This demo")
+                .reset(false),
         ];
         let (prefs, appearance, today) = (&mut self.prefs, &mut self.appearance, self.today);
         let mut reset_data = false;
@@ -507,17 +513,36 @@ impl TasksApp {
                     }
                 });
             }
-            "appearance" => appearance_settings(ui, appearance),
+            "appearance" => theme_settings(ui, appearance, true, &ThemeWords::default()),
             _ => {
-                setting_row(ui, "Reset the demo data", "Puts the tasks back as they were on the first run.", |ui| {
-                    if ui.add(sokkel_ui_egui::Button::new("Reset").variant(sokkel_ui_egui::ButtonVariant::Outline)).clicked() {
+                setting_row(ui, "Reset demo data", "Puts back the tasks and these settings, as the demo started.", |ui| {
+                    let reset = sokkel_ui_egui::Button::new("Reset")
+                        .size(sokkel_ui_egui::ButtonSize::Sm)
+                        .variant(sokkel_ui_egui::ButtonVariant::Outline);
+                    if ui.add(reset).clicked() {
                         reset_data = true;
                     }
                 });
             }
         });
         if reset_data {
-            self.tasks = seed(today);
+            self.resetting = true;
+        }
+        if self.resetting {
+            let question = ConfirmDialog::new("reset-demo", "Reset the demo data?", "Reset")
+                .detail("Tasks added, changed or deleted since are put back, and the page loads again.")
+                .destructive(true);
+            match question.show(ui.ctx()) {
+                Some(ConfirmAnswer::Confirm) => {
+                    self.resetting = false;
+                    self.tasks = seed(today);
+                    self.prefs = Prefs::default();
+                    self.appearance = Appearance::default();
+                    self.next = 15;
+                }
+                Some(ConfirmAnswer::Cancel) => self.resetting = false,
+                None => {}
+            }
         }
         if outcome.reset {
             match active.as_str() {
