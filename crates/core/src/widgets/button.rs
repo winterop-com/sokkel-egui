@@ -110,7 +110,7 @@ impl Widget for Button {
             0.0
         };
         let pad = if lead > 0.0 { pad - 2.0 } else { pad };
-        let radius = CornerRadius::same(control.min(cap).round() as u8);
+        let radius = CornerRadius::same(control.min(cap).floor() as u8);
         let galley = WidgetText::from(role.rich(&t, &self.label)).into_galley(
             ui,
             Some(TextWrapMode::Extend),

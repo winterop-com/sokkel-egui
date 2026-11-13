@@ -128,7 +128,7 @@ impl Widget for Rail<'_> {
                     painter.hline(
                         rect.left() + 16.0..=rect.right() - 16.0,
                         y + 4.0,
-                        Stroke::new(1.0, t.color("sidebar-border")),
+                        Stroke::new(1.0, t.color("border-strong")),
                     );
                     y += 10.0;
                 } else {

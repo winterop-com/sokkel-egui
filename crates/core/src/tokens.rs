@@ -242,7 +242,7 @@ impl Tokens {
 
     /// A corner by role: `control`, `surface`, `chip`, `thumb` and the other `radius-*` tokens.
     pub fn radius(&self, role: &str) -> CornerRadius {
-        CornerRadius::same(self.length(&format!("radius-{role}")).round() as u8)
+        CornerRadius::same(self.length(&format!("radius-{role}")).floor() as u8)
     }
 
     /// A density length in points, such as `control` or `row`.
