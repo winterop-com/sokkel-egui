@@ -1,0 +1,85 @@
+{
+    "example": "examples/tasks/web/src",
+    "today": "2026-11-16",
+    "ported": {
+        "commit": "a4702e35",
+        "files": {
+            "App.tsx": "6c80577796288e0404c613aaa780cdfd9736131d",
+            "Settings.tsx": "2bdb6414d3c8f445b9bc947d76b102dfd96072f5",
+            "Tasks.tsx": "07464bfd213d0c29f14a7bf2067b013467293303",
+            "app.css": "2b859ee7c09a306f29823293f0b20af840d054bf",
+            "data.ts": "4e23cf73dec0a001a60ba750a5446bcb5e05149e",
+            "main.tsx": "ca67821dbb871ea8542eeb2bbd29632bc3061725"
+        }
+    },
+    "parts": {
+        "@winterop-com/sokkel-ui/AccountMenu": "AccountMenu",
+        "@winterop-com/sokkel-ui/board/Board": "egui row of BoardColumn (drag not yet)",
+        "@winterop-com/sokkel-ui/board/BoardCard": "BoardCard",
+        "@winterop-com/sokkel-ui/board/BoardColumn": "BoardColumn",
+        "@winterop-com/sokkel-ui/CommandPalette": "CommandPalette",
+        "@winterop-com/sokkel-ui/DataTable": "DataTable",
+        "@winterop-com/sokkel-ui/DialogShell": null,
+        "@winterop-com/sokkel-ui/DueText": "DueText, Cell::Due",
+        "@winterop-com/sokkel-ui/hooks/use-overlay-route": "app state (egui has no URL)",
+        "@winterop-com/sokkel-ui/Layout": "egui layout",
+        "@winterop-com/sokkel-ui/lib/appearance": "Appearance",
+        "@winterop-com/sokkel-ui/lib/commands": "CommandGroup",
+        "@winterop-com/sokkel-ui/lib/reorder": "DataTable::reorder (TableOutput::reordered)",
+        "@winterop-com/sokkel-ui/PageHeader": "PageHeader",
+        "@winterop-com/sokkel-ui/PageState": "PageState",
+        "@winterop-com/sokkel-ui/PersonAvatar": "PersonAvatar, Cell::Person",
+        "@winterop-com/sokkel-ui/primitives/button": "Button",
+        "@winterop-com/sokkel-ui/primitives/checkbox": "Checkbox",
+        "@winterop-com/sokkel-ui/primitives/dropdown-menu": "DropdownMenu",
+        "@winterop-com/sokkel-ui/primitives/empty": null,
+        "@winterop-com/sokkel-ui/primitives/select": "Select",
+        "@winterop-com/sokkel-ui/primitives/switch": "Switch",
+        "@winterop-com/sokkel-ui/primitives/tooltip": "tooltip",
+        "@winterop-com/sokkel-ui/QuickAdd": "QuickAdd",
+        "@winterop-com/sokkel-ui/Rail": "Rail",
+        "@winterop-com/sokkel-ui/Segmented": "Segmented",
+        "@winterop-com/sokkel-ui/SettingsDialog": "SettingsDialog",
+        "@winterop-com/sokkel-ui/Shell": "Shell",
+        "@winterop-com/sokkel-ui/StatusLine": "StatusLine",
+        "@winterop-com/sokkel-ui/SwitchField": "SwitchField",
+        "@winterop-com/sokkel-ui/table-editing": null,
+        "@winterop-com/sokkel-ui/ThemePicker": null,
+        "@winterop-com/sokkel-ui/Toolbar": "toolbar",
+        "@winterop-com/sokkel-ui/TopBar": "TopBar"
+    },
+    "screens": [
+        {
+            "name": "inbox",
+            "route": "inbox"
+        },
+        {
+            "name": "today",
+            "route": "today"
+        },
+        {
+            "name": "upcoming",
+            "route": "upcoming"
+        },
+        {
+            "name": "project",
+            "route": "harbor"
+        },
+        {
+            "name": "board",
+            "route": "inbox",
+            "steps": [
+                "button:Board"
+            ]
+        },
+        {
+            "name": "settings",
+            "route": "settings"
+        },
+        {
+            "name": "inbox_dark",
+            "route": "inbox",
+            "scheme": "dark"
+        }
+    ]
+}

@@ -12,6 +12,10 @@ sokkel-ui's components. Research stage; `docs/plan.md` says what was learned and
   painter, one engine as in sokkel-ui.
   The same dependency lines hold as in sokkel-ui: an add-on depends on the core by name, the core
   never on an add-on, and no add-on on another. No empty placeholder crates.
+- `examples/tasks` is sokkel-ui's tasks example ported one to one: the reference for everything
+  else. `make parity` checks it against the web example as GitHub has it and lays both sides'
+  screens beside each other (`docs/parity/tasks.md`); a difference is fixed in the library, never
+  in the example alone.
 - `examples/runs` is a working app on the frame (Tidevann's runs, simulated): it uses only the
   library's public parts; a part it lacks goes into the library.
 - `examples/storybook` is its own package that depends on the core by name, as an app would: the
@@ -22,9 +26,10 @@ sokkel-ui's components. Research stage; `docs/plan.md` says what was learned and
 ## Tokens
 
 - `crates/core/tokens/tokens.resolved.json` is generated here by `make tokens`
-  (`scripts/resolve.ts`, `scripts/resolve-tokens.ts`) from a sokkel-ui checkout's `tokens.json`
-  (`SOKKEL_UI`, `../sokkel-ui` by default) at `SOKKEL_UI_REF` (`origin/main`, so the tokens
-follow sokkel-ui's main as last fetched and never its checkout's work in progress); never edit it. `make tokens-check` fails when it is not
+  (`scripts/resolve.ts`, `scripts/resolve-tokens.ts`) from sokkel-ui's `tokens.json` as GitHub has
+  it: every script reads sokkel-ui from `.parity/sokkel-ui`, a clone fetched on each run
+  (`scripts/sokkel.ts`; `SOKKEL_UI_REF` pins a commit, `SOKKEL_UI_OFFLINE` skips the fetch). Never
+  edit it. `make tokens-check` fails when it is not
   what sokkel-ui's tokens make.
 - After sokkel-ui's tokens change, run `make tokens` and `make verify-colors` (Chromium against
   sokkel-ui's own CSS). A token the resolver cannot settle fails `make tokens`; teach

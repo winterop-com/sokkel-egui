@@ -4138,6 +4138,7 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui",
+ "egui_extras",
  "egui_kittest",
  "lucide-icons",
  "serde",
@@ -4297,6 +4298,16 @@ checksum = "8e1d1b10ced5ca923a1fcb8d03e96b8d3268065d724548c0211415ff6ac6bac4"
 dependencies = [
  "core-foundation-sys",
  "libc",
+]
+
+[[package]]
+name = "tasks"
+version = "0.1.0"
+dependencies = [
+ "eframe",
+ "egui_kittest",
+ "serde",
+ "sokkel-ui-egui",
 ]
 
 [[package]]

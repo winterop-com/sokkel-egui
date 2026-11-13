@@ -57,6 +57,7 @@ pub struct Rail<'a> {
     groups: &'a [RailGroup],
     active: &'a mut String,
     collapsed: bool,
+    mark: Option<&'static str>,
 }
 
 impl<'a> Rail<'a> {
@@ -66,7 +67,15 @@ impl<'a> Rail<'a> {
             groups,
             active,
             collapsed: false,
+            mark: None,
         }
+    }
+
+    /// The app's mark on the tile at the rail's head, as SVG drawn in `currentColor`, the way the
+    /// web takes a mark; without one the tile shows the name's initial.
+    pub fn mark(mut self, svg: &'static str) -> Self {
+        self.mark = Some(svg);
+        self
     }
 
     pub fn collapsed(mut self, collapsed: bool) -> Self {
@@ -95,23 +104,48 @@ impl Widget for Rail<'_> {
 
         // the head: the app's mark, and its name when open
         let head = Rect::from_min_size(rect.min, vec2(rect.width(), t.length("spacing-shell-top")));
-        let mark = Rect::from_center_size(pos2(head.left() + 12.0 + 14.0, head.center().y), vec2(28.0, 28.0));
+        // a 32 tile, 12 in from the edge, as sokkel-ui's `size-8` mark in its `px-3` head
+        let mark = Rect::from_center_size(pos2(head.left() + 12.0 + 16.0, head.center().y), vec2(32.0, 32.0));
         let mark = if self.collapsed {
             Rect::from_center_size(head.center(), mark.size())
         } else {
             mark
         };
         painter.rect_filled(mark, t.radius("md"), t.color("primary"));
-        let initial: String = self.name.chars().take(1).collect();
-        painter.text(
-            mark.center(),
-            egui::Align2::CENTER_CENTER,
-            initial,
-            TextRole::Head.font(&t),
-            t.color("primary-foreground"),
-        );
+        match self.mark {
+            Some(svg) => {
+                // the mark's ink is `currentColor`: drawn white, then tinted with the tile's ink
+                let white = svg.replace("currentColor", "#ffffff");
+                let uri = format!("bytes://rail-mark-{}.svg", egui::Id::new(svg).value());
+                egui::Image::from_bytes(uri, white.into_bytes())
+                    .tint(t.color("primary-foreground"))
+                    .paint_at(ui, Rect::from_center_size(mark.center(), vec2(16.0, 16.0)));
+            }
+            None => {
+                let initial: String = self.name.chars().take(1).collect();
+                painter.text(
+                    mark.center(),
+                    egui::Align2::CENTER_CENTER,
+                    initial,
+                    TextRole::Head.font(&t),
+                    t.color("primary-foreground"),
+                );
+            }
+        }
         if !self.collapsed {
-            let name = galley(ui, TextRole::SectionTitle, &self.name, head.width() - 60.0);
+            // the name at the title size, semibold and tight, as `text-title font-semibold tracking-tight`
+            let spec = t.text("detail-title");
+            let rich = egui::RichText::new(&self.name)
+                .size(spec.size)
+                .line_height(Some(spec.line_height))
+                .variation("wght", 600.0)
+                .extra_letter_spacing(-0.025 * spec.size);
+            let name = egui::WidgetText::from(rich).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                head.width() - 60.0,
+                TextRole::DetailTitle.font(&t),
+            );
             painter.galley(
                 pos2(mark.right() + 8.0, head.center().y - name.size().y / 2.0),
                 name,
@@ -123,7 +157,9 @@ impl Widget for Rail<'_> {
         let mut y = head.bottom();
         for group in self.groups {
             if let Some(title) = &group.title {
-                y += 16.0;
+                // the entries before end 4 above `y`; a title stands 16 under them (`pt-4`), its
+                // line 20 tall, then 6 (`pb-1.5`) and the group's 4 to its entries
+                y += 12.0;
                 if self.collapsed {
                     painter.hline(
                         rect.left() + 16.0..=rect.right() - 16.0,
@@ -145,10 +181,8 @@ impl Widget for Rail<'_> {
                         TextRole::Help.font(&t),
                     );
                     painter.galley(pos2(rect.left() + 16.0, y), label, t.color("faint"));
-                    y += 26.0;
+                    y += 30.0;
                 }
-            } else {
-                y += 8.0;
             }
             for entry in &group.entries {
                 let bounds = if self.collapsed {
@@ -245,14 +279,29 @@ fn galley(ui: &Ui, role: TextRole, text: &str, width: f32) -> std::sync::Arc<egu
 /// with the bar's own actions at its end.
 pub struct TopBar<'a> {
     trail: &'a [&'a str],
+    search: Option<(String, String)>,
+}
+
+/// What the top bar was asked this frame.
+pub struct TopBarResponse {
+    pub response: Response,
+    /// Its search button was pressed: open the palette.
+    pub search: bool,
 }
 
 impl<'a> TopBar<'a> {
     pub fn new(trail: &'a [&'a str]) -> Self {
-        Self { trail }
+        Self { trail, search: None }
     }
 
-    pub fn show(self, ui: &mut Ui, actions: impl FnOnce(&mut Ui)) -> Response {
+    /// The palette's button at the bar's end, a field-like button with its word and the keys that
+    /// open the palette, as sokkel-ui's top bar draws it in a shell with a palette.
+    pub fn search(mut self, word: impl Into<String>, keys: impl Into<String>) -> Self {
+        self.search = Some((word.into(), keys.into()));
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui, actions: impl FnOnce(&mut Ui)) -> TopBarResponse {
         let t = tokens(ui.ctx());
         let rect = ui.available_rect_before_wrap();
         let response = ui.allocate_rect(rect, Sense::hover());
@@ -262,7 +311,8 @@ impl<'a> TopBar<'a> {
             rect.bottom() - 0.5,
             Stroke::new(1.0, t.color("border-strong")),
         );
-        let inner = rect.shrink2(vec2(16.0, 0.0));
+        let inner = rect.shrink2(vec2(12.0, 0.0));
+        let mut searched = false;
         ui.scope_builder(
             UiBuilder::new()
                 .max_rect(inner)
@@ -288,11 +338,73 @@ impl<'a> TopBar<'a> {
                     };
                     ui.label(role.rich(&t, *crumb).color(ink));
                 }
-                ui.with_layout(Layout::right_to_left(Align::Center), actions);
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if let Some((word, keys)) = &self.search {
+                        searched = search_button(ui, word, keys).clicked();
+                    }
+                    actions(ui);
+                });
             },
         );
-        response
+        TopBarResponse {
+            response,
+            search: searched,
+        }
     }
+}
+
+/// The palette's button: 224 wide, a control tall, a field's ground and edge, a magnifier, the word
+/// and the keys in a key cap at its end.
+fn search_button(ui: &mut Ui, word: &str, keys: &str) -> Response {
+    let t = tokens(ui.ctx());
+    let (rect, response) = ui.allocate_exact_size(vec2(224.0, t.density("control")), Sense::click());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, word));
+    let hot = response.hovered();
+    let painter = ui.painter();
+    let edge = if hot {
+        t.color("border-strong")
+    } else {
+        t.color("border")
+    };
+    painter.rect(
+        rect,
+        t.radius("control"),
+        t.color("field"),
+        Stroke::new(1.0, edge),
+        egui::StrokeKind::Inside,
+    );
+    let ink = if hot {
+        t.color("foreground")
+    } else {
+        t.color("muted-foreground")
+    };
+    icons::paint(
+        painter,
+        pos2(rect.left() + 10.0 + 8.0, rect.center().y),
+        Icon::Search,
+        16.0,
+        ink,
+    );
+    let label = galley(ui, TextRole::Body, word, rect.width() - 90.0);
+    painter.galley(
+        pos2(rect.left() + 34.0, rect.center().y - label.size().y / 2.0),
+        label,
+        ink,
+    );
+    // the key cap: muted ground, the small radius, the help size
+    let cap_text = galley(ui, TextRole::Badge, keys, 80.0);
+    let cap = Rect::from_min_size(
+        pos2(rect.right() - 6.0 - cap_text.size().x - 10.0, rect.center().y - 10.0),
+        vec2(cap_text.size().x + 10.0, 20.0),
+    );
+    painter.rect_filled(cap, t.radius("sm"), t.color("muted"));
+    painter.galley(
+        pos2(cap.left() + 5.0, cap.center().y - cap_text.size().y / 2.0),
+        cap_text,
+        t.color("muted-foreground"),
+    );
+    super::focus_ring(painter, &t, rect, t.radius("control"), &response);
+    response
 }
 
 /// How the status line's note is inked: quiet in the foot's own ink, live, a warning, an error.
@@ -312,6 +424,7 @@ pub struct StatusLine {
     note: String,
     tone: StatusTone,
     facts: Vec<String>,
+    items: Vec<(String, String)>,
 }
 
 impl StatusLine {
@@ -320,11 +433,18 @@ impl StatusLine {
             note: note.into(),
             tone: StatusTone::Quiet,
             facts: Vec::new(),
+            items: Vec::new(),
         }
     }
 
     pub fn tone(mut self, tone: StatusTone) -> Self {
         self.tone = tone;
+        self
+    }
+
+    /// A labelled figure at the end: the label faint, the value in the foreground, as `StatusItem`.
+    pub fn item(mut self, label: impl Into<String>, value: impl ToString) -> Self {
+        self.items.push((label.into(), value.to_string()));
         self
     }
 
@@ -359,6 +479,24 @@ impl Widget for StatusLine {
         let note = galley(ui, TextRole::Help, &self.note, rect.width() / 2.0);
         painter.galley(pos2(x, rect.center().y - note.size().y / 2.0), note, ink);
         let mut right = rect.right() - 16.0;
+        // the items at the very end, each its label faint and its value in the foreground
+        for (label, value) in self.items.iter().rev() {
+            let value = galley(ui, TextRole::Help, value, 120.0);
+            right -= value.size().x;
+            painter.galley(
+                pos2(right, rect.center().y - value.size().y / 2.0),
+                value,
+                t.color("foreground"),
+            );
+            let label = galley(ui, TextRole::Help, label, 160.0);
+            right -= 6.0 + label.size().x;
+            painter.galley(
+                pos2(right, rect.center().y - label.size().y / 2.0),
+                label,
+                t.color("faint"),
+            );
+            right -= 16.0;
+        }
         for fact in self.facts.iter().rev() {
             let text = galley(ui, TextRole::Help, fact, 240.0);
             right -= text.size().x;
@@ -369,10 +507,15 @@ impl Widget for StatusLine {
     }
 }
 
+/// The room the page's scroll bar keeps at the page's end, as a thin bar's stable gutter.
+pub const SCROLL_GUTTER: f32 = 11.0;
+
 /// Which part of the frame [`Shell::show`] is asking for.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShellPart {
     Rail,
+    /// The cell at the rail's foot, level with the status line: the account.
+    RailFoot,
     Top,
     Page,
     Foot,
@@ -382,6 +525,7 @@ pub enum ShellPart {
 /// across the bottom, within the rect it is given.
 pub struct Shell {
     collapsed: bool,
+    framed: bool,
 }
 
 impl Default for Shell {
@@ -392,7 +536,10 @@ impl Default for Shell {
 
 impl Shell {
     pub fn new() -> Self {
-        Self { collapsed: false }
+        Self {
+            collapsed: false,
+            framed: false,
+        }
     }
 
     /// Lay the frame out for a collapsed rail.
@@ -401,23 +548,49 @@ impl Shell {
         self
     }
 
+    /// An edge around the whole frame, for a frame drawn inside a page (a story) rather than a window.
+    pub fn framed(mut self, framed: bool) -> Self {
+        self.framed = framed;
+        self
+    }
+
+    /// Fill the whole window with the frame, to its edges, whatever margin the `Ui` it is given has:
+    /// an app's frame.
+    pub fn show_window(self, ui: &mut Ui, part: impl FnMut(ShellPart, &mut Ui)) {
+        let window = ui.ctx().content_rect();
+        let mut child = ui.new_child(UiBuilder::new().max_rect(window).layout(Layout::top_down(Align::Min)));
+        child.set_clip_rect(window);
+        self.show(&mut child, window, part);
+    }
+
     /// Fill `rect` with the frame, asking `part` to draw each piece in its place.
     pub fn show(self, ui: &mut Ui, rect: Rect, mut part: impl FnMut(ShellPart, &mut Ui)) {
         let t = tokens(ui.ctx());
         let foot = t.length("spacing-shell-foot");
         let top = t.length("spacing-shell-top");
         let rail_width = Rail::width(self.collapsed);
-        let body = Rect::from_min_max(rect.min, pos2(rect.right(), rect.bottom() - foot));
-        let rail = Rect::from_min_max(body.min, pos2(body.left() + rail_width, body.bottom()));
-        let top_bar = Rect::from_min_max(pos2(rail.right(), body.top()), pos2(body.right(), body.top() + top));
-        let page = Rect::from_min_max(pos2(rail.right(), top_bar.bottom()), body.max);
-        let foot_strip = Rect::from_min_max(pos2(rect.left(), body.bottom()), rect.max);
+        // the rail runs the window's height, its foot cell level with the status line under the page
+        let rail = Rect::from_min_max(rect.min, pos2(rect.left() + rail_width, rect.bottom() - foot));
+        let rail_foot = Rect::from_min_max(
+            pos2(rect.left(), rect.bottom() - foot),
+            pos2(rect.left() + rail_width, rect.bottom()),
+        );
+        let top_bar = Rect::from_min_max(pos2(rail.right(), rect.top()), pos2(rect.right(), rect.top() + top));
+        let page = Rect::from_min_max(
+            pos2(rail.right(), top_bar.bottom()),
+            pos2(rect.right(), rect.bottom() - foot),
+        );
+        // the page's scroller keeps a thin track at its end whether or not it scrolls, as the web's
+        // `scrollbar-gutter: stable` with a thin bar: its content stands 11 short of the window's edge
+        let page_content = Rect::from_min_max(page.min, pos2(page.right() - SCROLL_GUTTER, page.bottom()));
+        let foot_strip = Rect::from_min_max(pos2(rail.right(), rect.bottom() - foot), rect.max);
         ui.painter()
             .rect_filled(page, CornerRadius::ZERO, t.color("background"));
         for (which, area) in [
             (ShellPart::Rail, rail),
+            (ShellPart::RailFoot, rail_foot),
             (ShellPart::Top, top_bar),
-            (ShellPart::Page, page),
+            (ShellPart::Page, page_content),
             (ShellPart::Foot, foot_strip),
         ] {
             ui.scope_builder(
@@ -428,12 +601,14 @@ impl Shell {
                 },
             );
         }
-        ui.painter().rect_stroke(
-            rect,
-            CornerRadius::ZERO,
-            Stroke::new(1.0, t.color("border-strong")),
-            egui::StrokeKind::Inside,
-        );
+        if self.framed {
+            ui.painter().rect_stroke(
+                rect,
+                CornerRadius::ZERO,
+                Stroke::new(1.0, t.color("border-strong")),
+                egui::StrokeKind::Inside,
+            );
+        }
         ui.allocate_rect(rect, Sense::hover());
     }
 }

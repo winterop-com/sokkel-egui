@@ -6,7 +6,10 @@ use std::collections::BTreeSet;
 
 use egui::{CornerRadius, CursorIcon, Id, Rect, Response, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
 
-use crate::{Button, ButtonSize, ButtonVariant, Checkbox, ChipTone, Icon, TextRole, icons, tokens};
+use crate::{
+    AvatarSize, Button, ButtonSize, ButtonVariant, Checkbox, ChipTone, Day, DropdownMenu, DueText, Icon, MenuItem,
+    TextRole, icons, tokens,
+};
 
 /// A column: its head, its starting width, and how its cells sit.
 #[derive(Clone, Debug)]
@@ -15,6 +18,8 @@ pub struct Column {
     pub width: f32,
     pub numeric: bool,
     pub sortable: bool,
+    /// Takes the room the other columns leave, at least `width`.
+    pub fill: bool,
 }
 
 impl Column {
@@ -24,6 +29,7 @@ impl Column {
             width,
             numeric: false,
             sortable: true,
+            fill: false,
         }
     }
 
@@ -37,22 +43,46 @@ impl Column {
         self.sortable = sortable;
         self
     }
+
+    /// The column that takes the room the others leave, as a `minmax(width, 1fr)` track.
+    pub fn fill(mut self) -> Self {
+        self.fill = true;
+        self
+    }
 }
 
 /// What a cell holds.
 #[derive(Clone, Debug)]
 pub enum Cell {
     Text(String),
+    /// Text struck through and muted: a thing done.
+    Struck(String),
     /// An id or a code, in the mono face.
     Mono(String),
     /// A state as a chip.
     Chip(String, ChipTone),
+    /// A check box whose press the table reports as `toggled`.
+    Check(bool),
+    /// A person: their avatar and their name.
+    Person(String),
+    /// A due date, toned by where it falls against `now`; a done task's is quiet.
+    Due {
+        date: Option<Day>,
+        now: Day,
+        done: bool,
+    },
+    Empty,
 }
 
 impl Cell {
-    fn sort_key(&self) -> &str {
+    fn sort_key(&self) -> String {
         match self {
-            Cell::Text(text) | Cell::Mono(text) | Cell::Chip(text, _) => text,
+            Cell::Text(text) | Cell::Struck(text) | Cell::Mono(text) | Cell::Chip(text, _) | Cell::Person(text) => {
+                text.clone()
+            }
+            Cell::Check(on) => u8::from(*on).to_string(),
+            Cell::Due { date, .. } => date.map_or("9999".into(), |d| d.to_string()),
+            Cell::Empty => String::new(),
         }
     }
 }
@@ -119,6 +149,23 @@ impl Default for TableWords {
     }
 }
 
+/// What the table was asked this frame, by the index of a row in the rows given.
+pub struct TableOutput {
+    pub response: Response,
+    /// A row's check box was pressed.
+    pub toggled: Option<usize>,
+    /// A row's action was chosen: the row and the action's index in its menu.
+    pub action: Option<(usize, usize)>,
+    /// A row was dragged by its grip from one place in the order shown to another.
+    pub reordered: Option<(usize, usize)>,
+}
+
+/// What a table draws in place of its rows when it has none.
+pub type EmptyContent<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
+
+/// The menu of actions a row offers, built for each row.
+pub type RowActions<'a> = Box<dyn Fn(usize) -> Vec<MenuItem> + 'a>;
+
 /// The table: `columns` over `rows`, its state held by the app.
 pub struct DataTable<'a> {
     id: Id,
@@ -129,7 +176,19 @@ pub struct DataTable<'a> {
     variant: TableVariant,
     height: f32,
     words: TableWords,
+    reorder: bool,
+    actions: Option<RowActions<'a>>,
+    empty: Option<EmptyContent<'a>>,
+    footer: bool,
+    stretch: bool,
 }
+
+/// How wide a row's grip is, in the first column before its content.
+const GRIP: f32 = 22.0;
+/// The room between two columns.
+const GAP: f32 = 12.0;
+/// The width of the actions' column at a row's end.
+const ACTIONS: f32 = 40.0;
 
 impl<'a> DataTable<'a> {
     pub fn new(id: impl egui::AsId, columns: &'a [Column], rows: &'a [Vec<Cell>], state: &'a mut TableState) -> Self {
@@ -142,6 +201,11 @@ impl<'a> DataTable<'a> {
             variant: TableVariant::Table,
             height: 360.0,
             words: TableWords::default(),
+            reorder: false,
+            actions: None,
+            empty: None,
+            footer: true,
+            stretch: false,
         }
     }
 
@@ -167,6 +231,37 @@ impl<'a> DataTable<'a> {
         self
     }
 
+    /// A grip at each row's start that drags the row to another place: the order is the person's.
+    pub fn reorder(mut self, reorder: bool) -> Self {
+        self.reorder = reorder;
+        self
+    }
+
+    /// A menu of actions at each row's end, built for the row.
+    pub fn actions(mut self, actions: impl Fn(usize) -> Vec<MenuItem> + 'a) -> Self {
+        self.actions = Some(Box::new(actions));
+        self
+    }
+
+    /// What the table shows with no rows, in place of the words' `empty`.
+    pub fn empty(mut self, empty: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.empty = Some(Box::new(empty));
+        self
+    }
+
+    /// Stretch the table's frame to the bottom of the room it is given, its rows scrolling inside,
+    /// as a table that fills its page.
+    pub fn stretch(mut self, stretch: bool) -> Self {
+        self.stretch = stretch;
+        self
+    }
+
+    /// The row count under the table; on by default.
+    pub fn footer(mut self, footer: bool) -> Self {
+        self.footer = footer;
+        self
+    }
+
     /// The rows' order under the current sort, as indices into the rows given.
     fn order(&self) -> Vec<usize> {
         let mut order: Vec<usize> = (0..self.rows.len()).collect();
@@ -181,9 +276,9 @@ impl<'a> DataTable<'a> {
                             .parse::<f64>()
                             .unwrap_or(f64::MIN)
                     };
-                    parse(x).total_cmp(&parse(y))
+                    parse(&x).total_cmp(&parse(&y))
                 } else {
-                    x.cmp(y)
+                    x.cmp(&y)
                 };
                 if ascending { ordering } else { ordering.reverse() }
             });
@@ -191,13 +286,47 @@ impl<'a> DataTable<'a> {
         order
     }
 
+    /// Each column's start and width within a row from `left` to `right`.
+    fn layout(&self, left: f32, right: f32) -> Vec<(f32, f32)> {
+        let lead = if self.reorder { GRIP } else { 0.0 };
+        let widths: Vec<f32> = self
+            .columns
+            .iter()
+            .enumerate()
+            .map(|(i, _)| self.state.widths[i] + if i == 0 { lead } else { 0.0 })
+            .collect();
+        let gaps = GAP * self.columns.len().saturating_sub(1) as f32;
+        let tail = if self.actions.is_some() { ACTIONS + GAP } else { 0.0 };
+        let fixed: f32 = widths.iter().sum::<f32>() + gaps + tail;
+        let fill = self
+            .columns
+            .iter()
+            .position(|c| c.fill)
+            .or(self.columns.len().checked_sub(1));
+        let mut x = left;
+        widths
+            .iter()
+            .enumerate()
+            .map(|(i, w)| {
+                let w = if Some(i) == fill {
+                    (w + (right - left - fixed)).max(*w)
+                } else {
+                    *w
+                };
+                let place = (x, w);
+                x += w + GAP;
+                place
+            })
+            .collect()
+    }
+
     /// Draw the table, stacked top to bottom whatever layout the row around it has.
-    pub fn show(self, ui: &mut Ui) -> Response {
+    pub fn show(self, ui: &mut Ui) -> TableOutput {
         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| self.show_stacked(ui))
             .inner
     }
 
-    fn show_stacked(self, ui: &mut Ui) -> Response {
+    fn show_stacked(mut self, ui: &mut Ui) -> TableOutput {
         let t = tokens(ui.ctx());
         if self.state.widths.len() != self.columns.len() {
             self.state.widths = self.columns.iter().map(|c| c.width).collect();
@@ -211,10 +340,17 @@ impl<'a> DataTable<'a> {
             TableVariant::Table => 12.0,
             TableVariant::List => t.density("panel-pad"),
         };
-        let select_width = if self.selectable { 40.0 } else { 0.0 };
+        let select_width = if self.selectable { 28.0 } else { 0.0 };
         let order = self.order();
         let radius = t.radius("surface");
         let width = ui.available_width();
+        let room = ui.available_height();
+        let mut out = TableOutput {
+            response: ui.response(),
+            toggled: None,
+            action: None,
+            reordered: None,
+        };
 
         // the selection bar, over the table while any row is chosen
         if self.selectable && !self.state.selected.is_empty() {
@@ -242,9 +378,14 @@ impl<'a> DataTable<'a> {
             .fill(t.color("card"))
             .stroke(Stroke::new(1.0, t.color("border-strong")))
             .corner_radius(radius);
+        let drag_id = self.id.with("dragging");
         let response = frame
             .show(ui, |ui| {
                 ui.set_width(width - 2.0);
+                if self.stretch {
+                    // the frame to the room's bottom, less its edge and the footer's line
+                    ui.set_min_height(room - 2.0 - if self.footer { 26.0 } else { 0.0 });
+                }
                 ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
                 // the head
                 let (head, _) = ui.allocate_exact_size(vec2(ui.available_width(), head_height), Sense::hover());
@@ -257,12 +398,12 @@ impl<'a> DataTable<'a> {
                     Stroke::new(1.0, t.color_or("table-head-line", t.color("border"))),
                 );
                 let upper = t.word("table-head-transform") == Some("uppercase");
-                let mut x = head.left() + select_width;
+                let places = self.layout(head.left() + pad + select_width, head.right() - pad);
                 if self.selectable {
                     let all = !self.rows.is_empty() && self.state.selected.len() == self.rows.len();
                     let some = !self.state.selected.is_empty() && !all;
                     let mut checked = all;
-                    let place = Rect::from_center_size(pos2(head.left() + 20.0, head.center().y), vec2(16.0, 16.0));
+                    let place = Rect::from_min_size(pos2(head.left() + pad, head.center().y - 8.0), vec2(16.0, 16.0));
                     let box_response = put_at(
                         ui,
                         place,
@@ -280,11 +421,7 @@ impl<'a> DataTable<'a> {
                 }
                 let last = self.columns.len().saturating_sub(1);
                 for (index, column) in self.columns.iter().enumerate() {
-                    let w = if index == last {
-                        (head.right() - x).max(64.0)
-                    } else {
-                        self.state.widths[index]
-                    };
+                    let (x, w) = places[index];
                     let cell = Rect::from_min_size(pos2(x, head.top()), vec2(w, head.height()));
                     let hit = ui.interact(
                         cell,
@@ -317,13 +454,15 @@ impl<'a> DataTable<'a> {
                     let galley = WidgetText::from(TextRole::Head.rich(&t, title)).into_galley(
                         ui,
                         Some(TextWrapMode::Truncate),
-                        w - 2.0 * pad - 16.0,
+                        w - 16.0,
                         TextRole::Head.font(&t),
                     );
+                    // a head over a row's grip stands after it
+                    let lead = if index == 0 && self.reorder { GRIP + 6.0 } else { 0.0 };
                     let text_x = if column.numeric {
-                        cell.right() - pad - galley.size().x - if sorted.is_some() { 16.0 } else { 0.0 }
+                        cell.right() - galley.size().x - if sorted.is_some() { 16.0 } else { 0.0 }
                     } else {
-                        cell.left() + pad
+                        cell.left() + lead
                     };
                     let text_w = galley.size().x;
                     ui.painter()
@@ -338,15 +477,17 @@ impl<'a> DataTable<'a> {
                             ink,
                         );
                     }
-                    // the resize handle on the column's end edge
+                    // the resize handle in the gap after the column
                     if index != last {
-                        let edge =
-                            Rect::from_center_size(pos2(cell.right(), cell.center().y), vec2(8.0, cell.height()));
+                        let edge = Rect::from_center_size(
+                            pos2(cell.right() + GAP / 2.0, cell.center().y),
+                            vec2(8.0, cell.height()),
+                        );
                         let drag = ui.interact(edge, self.id.with(("resize", index)), Sense::drag());
                         if drag.hovered() || drag.dragged() {
                             ui.ctx().set_cursor_icon(CursorIcon::ResizeHorizontal);
                             ui.painter()
-                                .vline(cell.right(), cell.y_range(), Stroke::new(2.0, t.color("ring")));
+                                .vline(edge.center().x, cell.y_range(), Stroke::new(2.0, t.color("ring")));
                         }
                         if drag.dragged() {
                             self.state.widths[index] = (self.state.widths[index] + drag.drag_delta().x).max(64.0);
@@ -355,33 +496,44 @@ impl<'a> DataTable<'a> {
                             self.state.widths[index] = column.width;
                         }
                     }
-                    x += w;
                 }
 
-                // the rows, only those in view
+                // with no rows, what the table says in their place
                 if self.rows.is_empty() {
-                    ui.add_space(12.0);
-                    ui.horizontal(|ui| {
-                        ui.add_space(pad);
-                        ui.label(
-                            TextRole::Body
-                                .rich(&t, &self.words.empty)
-                                .color(t.color("muted-foreground")),
-                        );
-                    });
-                    ui.add_space(12.0);
+                    match self.empty.take() {
+                        Some(empty) => empty(ui),
+                        None => {
+                            ui.add_space(12.0);
+                            ui.horizontal(|ui| {
+                                ui.add_space(pad);
+                                ui.label(
+                                    TextRole::Body
+                                        .rich(&t, &self.words.empty)
+                                        .color(t.color("muted-foreground")),
+                                );
+                            });
+                            ui.add_space(12.0);
+                        }
+                    }
                     return;
                 }
                 let zebra = t.color_or("table-zebra", t.color("card"));
+                let dragging: Option<usize> = ui.ctx().data(|d| d.get_temp(drag_id));
+                let mut row_rects: Vec<Rect> = Vec::new();
                 egui::ScrollArea::vertical()
                     .id_salt(self.id.with("rows"))
-                    .max_height(self.height)
+                    .max_height(if self.stretch {
+                        (room - head_height - 2.0).max(row_height)
+                    } else {
+                        self.height
+                    })
                     .auto_shrink([false, true])
                     .show_rows(ui, row_height, order.len(), |ui, range| {
                         for position in range {
                             let index = order[position];
                             let (rect, row) =
                                 ui.allocate_exact_size(vec2(ui.available_width(), row_height), Sense::click());
+                            row_rects.push(rect);
                             if row.clicked() {
                                 self.state.opened = if self.state.opened == Some(index) {
                                     None
@@ -393,7 +545,7 @@ impl<'a> DataTable<'a> {
                             let opened = self.state.opened == Some(index);
                             let ground = if selected || opened {
                                 t.color("secondary")
-                            } else if row.hovered() {
+                            } else if row.hovered() || dragging == Some(position) {
                                 t.color("hover")
                             } else if position % 2 == 1 {
                                 zebra
@@ -408,8 +560,10 @@ impl<'a> DataTable<'a> {
                             );
                             if self.selectable {
                                 let mut checked = selected;
-                                let place =
-                                    Rect::from_center_size(pos2(rect.left() + 20.0, rect.center().y), vec2(16.0, 16.0));
+                                let place = Rect::from_min_size(
+                                    pos2(rect.left() + pad, rect.center().y - 8.0),
+                                    vec2(16.0, 16.0),
+                                );
                                 if put_at(
                                     ui,
                                     place,
@@ -424,60 +578,170 @@ impl<'a> DataTable<'a> {
                                     }
                                 }
                             }
-                            let mut x = rect.left() + select_width;
+                            let places = self.layout(rect.left() + pad + select_width, rect.right() - pad);
                             for (c, column) in self.columns.iter().enumerate() {
-                                let w = if c == last {
-                                    (rect.right() - x).max(64.0)
-                                } else {
-                                    self.state.widths[c]
-                                };
-                                let cell = Rect::from_min_size(pos2(x, rect.top()), vec2(w, rect.height()));
-                                paint_cell(ui, &t, &self.rows[index][c], cell, pad, column.numeric);
-                                x += w;
+                                let (x, w) = places[c];
+                                let mut cell = Rect::from_min_size(pos2(x, rect.top()), vec2(w, rect.height()));
+                                if c == 0 && self.reorder {
+                                    // the grip: drag it to move the row
+                                    let grip =
+                                        Rect::from_min_size(pos2(x - 4.0, rect.top()), vec2(GRIP, rect.height()));
+                                    let hit = ui.interact(grip, self.id.with(("grip", index)), Sense::drag());
+                                    hit.widget_info(|| {
+                                        egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Move")
+                                    });
+                                    if hit.hovered() || hit.dragged() {
+                                        ui.ctx().set_cursor_icon(if hit.dragged() {
+                                            CursorIcon::Grabbing
+                                        } else {
+                                            CursorIcon::Grab
+                                        });
+                                    }
+                                    if hit.drag_started() {
+                                        ui.ctx().data_mut(|d| d.insert_temp(drag_id, position));
+                                    }
+                                    icons::paint(
+                                        ui.painter(),
+                                        pos2(x + 6.0, rect.center().y),
+                                        Icon::GripVertical,
+                                        14.0,
+                                        t.color("muted-foreground"),
+                                    );
+                                    cell.min.x += GRIP;
+                                }
+                                if let Some(toggled) = paint_cell(
+                                    ui,
+                                    &t,
+                                    &self.rows[index][c],
+                                    cell,
+                                    column.numeric,
+                                    self.id.with(("cell", index, c)),
+                                ) {
+                                    let _ = toggled;
+                                    out.toggled = Some(index);
+                                }
+                            }
+                            if let Some(actions) = &self.actions {
+                                let place = Rect::from_min_size(
+                                    pos2(rect.right() - pad - ACTIONS, rect.top()),
+                                    vec2(ACTIONS, rect.height()),
+                                );
+                                let button = Rect::from_center_size(place.center(), vec2(28.0, 28.0));
+                                let trigger = ui.interact(button, self.id.with(("actions", index)), Sense::click());
+                                trigger.widget_info(|| {
+                                    egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Actions")
+                                });
+                                if trigger.hovered() {
+                                    ui.painter().rect_filled(button, t.radius("control"), t.color("hover"));
+                                }
+                                icons::paint(
+                                    ui.painter(),
+                                    button.center(),
+                                    Icon::Ellipsis,
+                                    16.0,
+                                    t.color("muted-foreground"),
+                                );
+                                let items = actions(index);
+                                if let Some(chosen) = DropdownMenu::new(&items).show(&trigger) {
+                                    out.action = Some((index, chosen));
+                                }
                             }
                         }
                     });
+                // a dragged row: the line where it lands, and its move on release
+                if let Some(from) = dragging {
+                    let pointer = ui.ctx().pointer_latest_pos();
+                    let released = ui.input(|i| i.pointer.any_released());
+                    if let (Some(pointer), Some(first)) = (pointer, row_rects.first()) {
+                        let to = (((pointer.y - first.top()) / row_height).round().max(0.0) as usize).min(order.len());
+                        let y = first.top() + to as f32 * row_height;
+                        ui.painter()
+                            .hline(first.x_range(), y, Stroke::new(2.0, t.color("primary")));
+                        if released {
+                            let to = if to > from { to - 1 } else { to };
+                            if to != from {
+                                out.reordered = Some((from, to));
+                            }
+                        }
+                    }
+                    if released {
+                        ui.ctx().data_mut(|d| d.remove::<usize>(drag_id));
+                    }
+                }
             })
             .response;
-        let count = self.rows.len();
-        let words = if count == 1 { &self.words.row } else { &self.words.rows };
-        ui.add_space(6.0);
-        ui.label(
-            TextRole::Help
-                .rich(&t, words.replace("{count}", &count.to_string()))
-                .color(t.color("muted-foreground")),
-        );
-        response
+        if self.footer {
+            let count = self.rows.len();
+            let words = if count == 1 { &self.words.row } else { &self.words.rows };
+            ui.add_space(6.0);
+            ui.label(
+                TextRole::Help
+                    .rich(&t, words.replace("{count}", &count.to_string()))
+                    .color(t.color("muted-foreground")),
+            );
+        }
+        out.response = response;
+        out
     }
 }
 
-fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, pad: f32, numeric: bool) {
-    let room = (rect.width() - 2.0 * pad).max(1.0);
+/// Draw one cell's content in `rect`; true when its check box was pressed.
+fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: bool, id: Id) -> Option<bool> {
+    let room = rect.width().max(1.0);
+    let text = |ui: &mut Ui, rich: egui::RichText, ink: egui::Color32| {
+        let galley = WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), room, TextRole::Body.font(t));
+        let x = if numeric {
+            rect.right() - galley.size().x
+        } else {
+            rect.left()
+        };
+        ui.painter()
+            .galley(pos2(x, rect.center().y - galley.size().y / 2.0), galley, ink);
+    };
     match cell {
-        Cell::Chip(text, tone) => {
-            let place = Rect::from_min_size(pos2(rect.left() + pad, rect.center().y - 10.0), vec2(room, 20.0));
-            super::chip::paint_at(ui, place.left(), place.center().y, text, *tone);
+        Cell::Chip(label, tone) => {
+            super::chip::paint_at(ui, rect.left(), rect.center().y, label, *tone);
         }
-        Cell::Text(text) | Cell::Mono(text) => {
-            let rich = if matches!(cell, Cell::Mono(_)) {
-                egui::RichText::new(text).font(egui::FontId::monospace(TextRole::Help.font(t).size))
-            } else {
-                TextRole::Body.rich(t, text)
-            };
-            let galley =
-                WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), room, TextRole::Body.font(t));
-            let x = if numeric {
-                rect.right() - pad - galley.size().x
-            } else {
-                rect.left() + pad
-            };
+        Cell::Text(label) => text(ui, TextRole::Body.rich(t, label), t.color("foreground")),
+        Cell::Struck(label) => text(
+            ui,
+            TextRole::Body.rich(t, label).strikethrough(),
+            t.color("muted-foreground"),
+        ),
+        Cell::Mono(label) => {
+            let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
+            text(ui, rich, t.color("foreground"));
+        }
+        Cell::Due { date, now, done } => {
+            let (rich, ink) = DueText::new(*date, *now).done(*done).rich(t);
+            text(ui, rich, ink);
+        }
+        Cell::Person(name) => {
+            let avatar = Rect::from_min_size(pos2(rect.left(), rect.center().y - 8.0), vec2(16.0, 16.0));
+            super::person::paint_avatar(ui, t, avatar, name, AvatarSize::Xxs, false);
+            let galley = WidgetText::from(TextRole::Body.rich(t, name)).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                room - 20.0,
+                TextRole::Body.font(t),
+            );
             ui.painter().galley(
-                pos2(x, rect.center().y - galley.size().y / 2.0),
+                pos2(avatar.right() + 4.0, rect.center().y - galley.size().y / 2.0),
                 galley,
                 t.color("foreground"),
             );
         }
+        Cell::Check(on) => {
+            let mut checked = *on;
+            let place = Rect::from_min_size(pos2(rect.left(), rect.center().y - 8.0), vec2(16.0, 16.0));
+            if put_at(ui, place, Checkbox::new(&mut checked, "Done").hide_label()).clicked() {
+                return Some(checked);
+            }
+            let _ = id;
+        }
+        Cell::Empty => {}
     }
+    None
 }
 
 /// Add `widget` at `rect` in a child of `ui` that leaves `ui`'s own layout where it was, so a cell's

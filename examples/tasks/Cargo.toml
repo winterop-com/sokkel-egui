@@ -1,0 +1,15 @@
+[package]
+name = "tasks"
+description = "sokkel-ui's tasks example, one to one in egui: lists in your own order or on a board, a quick add and tasks edited in place."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-ui-egui.workspace = true
+eframe.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+egui_kittest.workspace = true

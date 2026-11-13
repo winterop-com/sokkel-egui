@@ -12,11 +12,13 @@ use egui::{
     style::WidgetVisuals,
 };
 
+mod day;
 pub mod icons;
 pub mod text;
 pub mod tokens;
 mod widgets;
 
+pub use day::Day;
 pub use icons::Icon;
 pub use text::TextRole;
 pub use tokens::{Appearance, Scheme, TextSpec, ThemeInfo, Tokens, densities, density_level, hex, themes};
@@ -105,6 +107,8 @@ pub fn install(ctx: &Context, appearance: &Appearance) {
     }
     if ctx.data(|d| d.get_temp::<(Appearance, bool)>(installed_id())).is_none() {
         install_fonts(ctx);
+        // SVG marks and pictures, drawn by resvg
+        egui_extras::install_image_loaders(ctx);
     }
     let tokens = Arc::new(Tokens::resolve(appearance, system_dark));
     let theme = if tokens.dark { Theme::Dark } else { Theme::Light };

@@ -95,11 +95,15 @@ impl RunsApp {
             .flat_map(|g| &g.entries)
             .find(|e| e.id == self.place)
             .map_or(String::new(), |e| e.label.clone());
-        let rect = ui.max_rect();
         let mut open_palette = false;
-        Shell::new().show(ui, rect, |part, ui| match part {
+        Shell::new().show_window(ui, |part, ui| match part {
             ShellPart::Rail => {
                 ui.add(Rail::new("Tidevann", &groups, &mut place));
+            }
+            ShellPart::RailFoot => {
+                sokkel_ui_egui::AccountMenu::new("ada")
+                    .place("tidevann.example.org")
+                    .show(ui);
             }
             ShellPart::Top => {
                 TopBar::new(&["Tidevann", &label]).show(ui, |ui| {

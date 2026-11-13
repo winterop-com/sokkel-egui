@@ -1,29 +1,35 @@
 //! The primitives, each drawn from the tokens alone, after sokkel-ui's components of the same name.
 
+mod board;
 mod button;
 mod chip;
 mod choice;
 mod display;
+mod fields;
 mod frame;
 mod menu;
 mod overlay;
 mod page;
+mod person;
 mod settings;
 mod switch;
 mod table;
 mod text_field;
 
+pub use board::{BOARD_COLUMN, BoardCard, BoardColumn};
 pub use button::{Button, ButtonSize, ButtonVariant};
 pub use chip::{Chip, ChipTone};
 pub use choice::{Checkbox, Segmented, SegmentedVariant, Tabs, TabsVariant};
 pub use display::{Alert, Badge, BadgeVariant, Card, Separator, Skeleton};
+pub use fields::{DueState, DueText, QuickAdd, SwitchField, due_state, toolbar};
 pub use frame::{Rail, RailEntry, RailGroup, Shell, ShellPart, StatusLine, StatusTone, TopBar};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use overlay::{Dialog, Select, tooltip, tooltip_shown};
 pub use page::{PageHeader, PageState, PageStateTone, PageStateWords};
+pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
 pub use settings::{SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, appearance_settings, setting_row};
 pub use switch::Switch;
-pub use table::{Cell, Column, DataTable, TableState, TableVariant, TableWords};
+pub use table::{Cell, Column, DataTable, RowActions, TableOutput, TableState, TableVariant, TableWords};
 pub use text_field::{Input, TextField};
 
 use egui::{Color32, CornerRadius, Painter, Rect, Response, Stroke, StrokeKind, Ui};

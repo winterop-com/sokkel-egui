@@ -5,33 +5,22 @@
  *
  *   bun scripts/verify-colors.ts      (make verify-colors)
  *
- * Playwright comes from the sokkel-ui checkout's own install (SOKKEL_UI, ../sokkel-ui by default),
- * read and never written. A token only the utility classes name (`good-ink`, an alias of a status
- * ink) has no variable of its own on the page, so only the tokens a theme sets are compared.
+ * Playwright comes from the clone's own install (scripts/sokkel.ts). A token only the utility
+ * classes name (`good-ink`, an alias of a status ink) has no variable of its own on the page, so only the tokens a theme sets are compared.
  */
-import { execFileSync } from 'node:child_process'
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
 
-const root = join(import.meta.dirname, '..')
-const sokkel = resolve(root, process.env.SOKKEL_UI ?? '../sokkel-ui')
-const core = join(sokkel, 'packages', 'core')
-const { chromium } = createRequire(join(sokkel, 'package.json'))('@playwright/test') as typeof import('@playwright/test')
+import { clone, git, root, show, sync } from './sokkel.ts'
 
-// sokkel-ui's files at SOKKEL_UI_REF when one is given, as scripts/resolve.ts reads them
-const ref = process.env.SOKKEL_UI_REF
-const read = (path: string): string =>
-    ref ? execFileSync('git', ['-C', sokkel, 'show', `${ref}:packages/core/${path}`], { encoding: 'utf8' }) : readFileSync(join(core, path), 'utf8')
-const themeFiles = (): string[] =>
-    ref
-        ? execFileSync('git', ['-C', sokkel, 'ls-tree', '--name-only', `${ref}:packages/core/src/styles/themes`], { encoding: 'utf8' }).split('\n').filter(Boolean)
-        : readdirSync(join(core, 'src', 'styles', 'themes'))
-const tokens = JSON.parse(read('tokens/tokens.json'))
+sync()
+const { chromium } = createRequire(join(clone, 'package.json'))('@playwright/test') as typeof import('@playwright/test')
+const tokens = JSON.parse(show('packages/core/tokens/tokens.json'))
 const resolved = JSON.parse(readFileSync(join(root, 'crates', 'core', 'tokens', 'tokens.resolved.json'), 'utf8'))
-let css = read('src/styles/tokens.css')
-for (const file of themeFiles()) {
-    css += read(`src/styles/themes/${file}`)
+let css = show('packages/core/src/styles/tokens.css')
+for (const file of git('ls-tree', '--name-only', 'HEAD:packages/core/src/styles/themes').split('\n').filter(Boolean)) {
+    css += show(`packages/core/src/styles/themes/${file}`)
 }
 
 /** The most a channel may differ, out of 255: rounding on either side. */
