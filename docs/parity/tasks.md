@@ -17,7 +17,10 @@ differ, egui changes, in the library, never in the example alone.
 4. It writes `.parity/tasks.html`: each screen from the web beside the same screen in egui.
 
 `make parity-web` rebuilds the web example in the clone at the same commit, and shoots its screens
-into `parity/tasks/web/`. Those screens are committed, so git shows how the web side changed. The
+into `parity/tasks/web/`, keeping a picture that differs only by antialiasing (no channel by more
+than 2), and records the commit it shot at (`shot`). The example's own files can stay still while
+the library moves under it, so `make parity` also lists the library files the example imports, and
+the tokens and styles, changed since that commit: the cue to shoot again and look. Those screens are committed, so git shows how the web side changed. The
 egui screens are `examples/tasks/tests/snapshots/`, from `tests/screens.rs`. Both are 1280 by 800,
 in the System scheme (light, or dark when named so), on 2026-11-16, from fresh data.
 

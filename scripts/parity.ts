@@ -1,10 +1,13 @@
 /**
  * Parity with a sokkel-ui example: keep the egui port as close to the web example as can be seen.
  *
- *   bun scripts/parity.ts check <example>   what changed in the example since it was ported, and
- *                                           every library part it uses with no egui counterpart
+ *   bun scripts/parity.ts check <example>   what changed in the example since it was ported, the
+ *                                           library files it imports (and the tokens and styles)
+ *                                           changed since its web screens were shot, and every
+ *                                           library part it uses with no egui counterpart
  *   bun scripts/parity.ts web <example>     build the example in .parity/sokkel-ui at SOKKEL_UI_REF
- *                                           and shoot its screens into parity/<example>/web/
+ *                                           and shoot its screens into parity/<example>/web/,
+ *                                           keeping a picture that differs only by antialiasing
  *   bun scripts/parity.ts board <example>   a page of each screen, web beside egui, in .parity/
  *
  * The manifest, parity/<example>.json, records the sokkel-ui commit each file of the example was
@@ -23,13 +26,18 @@ interface Screen {
     name: string
     route: string
     scheme?: 'light' | 'dark'
-    /** Clicks by accessible name (`role:name`) or keys (`key:Meta+K`), in order. */
+    /**
+     * In order: clicks by accessible name (`role:name`), keys (`key:Meta+K`), and double clicks on
+     * visible text (`dblclick:text`) or on what a selector finds (`dblclick-css:selector`).
+     */
     steps?: string[]
 }
 
 interface Manifest {
     example: string
     ported: { commit: string; files: Record<string, string> }
+    /** The sokkel-ui commit the web screens were last shot at. */
+    shot?: string
     parts: Record<string, string | null>
     screens: Screen[]
     /** The day the screens are shot on, so relative due dates read the same on both sides. */
@@ -82,6 +90,25 @@ function check(): number {
         console.log(`imported, not in the manifest: ${module}`)
         problems++
     }
+    // The library moves under an example that does not: the files it imports, and the tokens and
+    // styles every part wears, changed since the web screens were shot.
+    if (manifest.shot !== undefined) {
+        const exports = (JSON.parse(git('show', 'HEAD:packages/core/package.json')) as { exports: Record<string, { import?: string }> }).exports
+        const sources = new Set<string>()
+        for (const module of imported) {
+            const target = exports[`.${module.slice('@winterop-com/sokkel-ui'.length)}`]?.import
+            if (target !== undefined) sources.add(target.replace(/^\.\/dist\//, 'packages/core/src/').replace(/\.js$/, ''))
+        }
+        const changed = git('diff', '--name-only', manifest.shot, 'HEAD', '--', 'packages/core/src', 'packages/core/tokens')
+            .trim()
+            .split('\n')
+            .filter((path) => path !== '' && !/\.(test|stories)\.tsx?$/.test(path))
+            .filter((path) => sources.has(path.replace(/\.tsx?$/, '')) || /\/(tokens|styles)\//.test(path))
+        if (changed.length > 0) {
+            console.log(`library changed since the web was shot at ${manifest.shot.slice(0, 8)} (make parity-web, then look):`)
+            for (const path of changed) console.log(`    ${path}`)
+        }
+    }
     console.log(`sokkel-ui at ${head}; ported from ${manifest.ported.commit}`)
     console.log(`${imported.size - missing.length - unknown.length} of ${imported.size} parts have an egui counterpart`)
     if (missing.length > 0) console.log(`still without one: ${missing.map((m) => m.replace('@winterop-com/sokkel-ui/', '')).join(', ')}`)
@@ -113,17 +140,45 @@ async function web() {
                 const [kind, ...rest] = step.split(':')
                 const what = rest.join(':')
                 if (kind === 'key') await page.keyboard.press(what)
+                else if (kind === 'dblclick-css') await page.locator(what).locator('visible=true').first().dblclick()
+                else if (kind === 'dblclick') await page.getByText(what, { exact: true }).locator('visible=true').first().dblclick()
                 else await page.getByRole(kind as 'button', { name: what, exact: true }).first().click()
                 await page.waitForTimeout(400)
             }
-            await page.screenshot({ path: join(out, `${screen.name}.png`) })
+            const shot = await page.screenshot()
+            const path = join(out, `${screen.name}.png`)
+            const kept = existsSync(path) && (await same(page, readFileSync(path), shot))
+            if (!kept) writeFileSync(path, shot)
             await context.close()
-            console.log(`shot ${screen.name}`)
+            console.log(`${kept ? 'same' : 'shot'} ${screen.name}`)
         }
+        manifest.shot = git('rev-parse', 'HEAD').trim()
+        writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 4)}\n`)
     } finally {
         await browser.close()
         server.kill()
     }
+}
+
+/** Whether two pictures differ by no more than antialiasing: no channel of any pixel by more than 2. */
+async function same(page: import('@playwright/test').Page, a: Buffer, b: Buffer): Promise<boolean> {
+    return page.evaluate(
+        async ([one, two]) => {
+            const pixels = async (data: string) => {
+                const image = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob())
+                const canvas = new OffscreenCanvas(image.width, image.height)
+                const context = canvas.getContext('2d')
+                if (context === null) return null
+                context.drawImage(image, 0, 0)
+                return context.getImageData(0, 0, image.width, image.height)
+            }
+            const [x, y] = [await pixels(one), await pixels(two)]
+            if (x === null || y === null || x.width !== y.width || x.height !== y.height) return false
+            for (let i = 0; i < x.data.length; i++) if (Math.abs(x.data[i] - y.data[i]) > 2) return false
+            return true
+        },
+        [a.toString('base64'), b.toString('base64')],
+    )
 }
 
 function board() {

@@ -66,6 +66,27 @@
             "route": "harbor"
         },
         {
+            "name": "edit_title",
+            "route": "inbox",
+            "steps": [
+                "dblclick:Rerun nightly-export for last week"
+            ]
+        },
+        {
+            "name": "edit_due",
+            "route": "inbox",
+            "steps": [
+                "dblclick:Nov 15"
+            ]
+        },
+        {
+            "name": "edit_assignee",
+            "route": "inbox",
+            "steps": [
+                "dblclick-css:[role=\"row\"] [data-column=\"assignee\"] >> nth=1"
+            ]
+        },
+        {
             "name": "board",
             "route": "inbox",
             "steps": [
@@ -103,5 +124,6 @@
             "route": "inbox",
             "scheme": "dark"
         }
-    ]
+    ],
+    "shot": "9d95e082e5c6e19b4a3143e50f4c6521710c74c6"
 }
