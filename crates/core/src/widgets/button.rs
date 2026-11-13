@@ -130,7 +130,7 @@ impl Widget for Button {
         let (rect, mut response) = ui.allocate_exact_size(size, sense);
         response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, enabled, &self.label));
         if let Some(reason) = &self.reason {
-            response = response.on_hover_text(reason);
+            response = super::tooltip(response, reason.clone());
         }
         if !ui.is_rect_visible(rect) {
             return response;

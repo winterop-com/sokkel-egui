@@ -11,6 +11,7 @@ mod frame;
 mod icon_list;
 mod inputs;
 mod maps;
+mod overlays;
 mod page;
 mod primitives;
 mod table;
@@ -38,6 +39,8 @@ pub struct State {
     pub place: String,
     pub runs: sokkel_ui_egui::TableState,
     pub jobs: sokkel_ui_egui::TableState,
+    pub dialog_open: bool,
+    pub service: usize,
 }
 
 impl Default for State {
@@ -57,6 +60,8 @@ impl Default for State {
             place: "runs".into(),
             runs: sokkel_ui_egui::TableState::sorted(5, false),
             jobs: sokkel_ui_egui::TableState::default(),
+            dialog_open: true,
+            service: 1,
         }
     }
 }
@@ -148,9 +153,24 @@ pub const STORIES: &[Story] = &[
         show: inputs::input,
     },
     Story {
+        path: "Primitives/Inputs/Select",
+        doc: "One choice from a list in a popup under a trigger that looks like an input; the second opens with the story.",
+        show: overlays::select,
+    },
+    Story {
         path: "Primitives/Inputs/Switch",
         doc: "On, off and disabled, each beside the words it switches.",
         show: primitives::switch,
+    },
+    Story {
+        path: "Primitives/Overlays/Dialog",
+        doc: "A dialog over the page, open with the story: its title, a description, a field and a switch, and its actions in the footer band.",
+        show: overlays::dialog,
+    },
+    Story {
+        path: "Primitives/Overlays/Tooltip",
+        doc: "A short line on the foreground ground, under its part after the pointer rests or while the part has focus.",
+        show: overlays::tooltips,
     },
     Story {
         path: "Primitives/Navigation/Tabs",
