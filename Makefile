@@ -1,6 +1,8 @@
 # The resolved tokens are made from a sokkel-ui checkout's tokens.json, read and never written.
 SOKKEL_UI ?= ../sokkel-ui
-export SOKKEL_UI
+# the ref sokkel-ui is read at: its main as last fetched, never the checkout's work in progress
+SOKKEL_UI_REF ?= origin/main
+export SOKKEL_UI SOKKEL_UI_REF
 
 .PHONY: help tokens tokens-check verify-colors fmt fmt-check check test snapshots storybook all
 

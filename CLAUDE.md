@@ -21,7 +21,8 @@ sokkel-ui's components. Research stage; `docs/plan.md` says what was learned and
 
 - `crates/core/tokens/tokens.resolved.json` is generated here by `make tokens`
   (`scripts/resolve.ts`, `scripts/resolve-tokens.ts`) from a sokkel-ui checkout's `tokens.json`
-  (`SOKKEL_UI`, `../sokkel-ui` by default); never edit it. `make tokens-check` fails when it is not
+  (`SOKKEL_UI`, `../sokkel-ui` by default) at `SOKKEL_UI_REF` (`origin/main`, so the tokens
+follow sokkel-ui's main as last fetched and never its checkout's work in progress); never edit it. `make tokens-check` fails when it is not
   what sokkel-ui's tokens make.
 - After sokkel-ui's tokens change, run `make tokens` and `make verify-colors` (Chromium against
   sokkel-ui's own CSS). A token the resolver cannot settle fails `make tokens`; teach

@@ -69,8 +69,8 @@ with the component screenshots.
 
 **What the tokens lack, for any second renderer.**
 - No motion or z-order tokens; components use Tailwind's defaults.
-- No single control-size scale: Button and Input use fixed 24/28/32/36, while composites read
-  `density.control`. sokkel-ui's roadmap already has "one size scale" for 1.0.
+- The control-size scale landed in sokkel-ui 0.25.0 (`density.control-xs`/`-sm`/`control`/`-lg`,
+  24/28/32/36 regular and one step smaller compact); Button reads its height from it.
 - These sizes live in the components, so here they live in the widgets too.
 
 ## What is built

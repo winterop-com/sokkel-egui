@@ -18,7 +18,8 @@ pub enum ButtonVariant {
     Link,
 }
 
-/// How big a button is, as sokkel-ui's `Button` `size`: 24, 28, 32 and 36 tall.
+/// How big a button is, as sokkel-ui's `Button` `size`: as tall as the density's
+/// `control-xs`, `control-sm`, `control` and `control-lg` (24, 28, 32 and 36 at regular).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum ButtonSize {
     Xs,
@@ -93,10 +94,10 @@ impl Widget for Button {
         let control = t.length("radius-control");
         // height, side padding, text role and the corner cap the small sizes keep
         let (height, pad, role, cap, glyph) = match self.size {
-            ButtonSize::Xs => (24.0, 8.0, TextRole::Badge, 10.0, 12.0),
-            ButtonSize::Sm => (28.0, 10.0, TextRole::Badge, 12.0, 14.0),
-            ButtonSize::Default => (32.0, 10.0, TextRole::Action, f32::INFINITY, 16.0),
-            ButtonSize::Lg => (36.0, 10.0, TextRole::Action, f32::INFINITY, 16.0),
+            ButtonSize::Xs => (t.density("control-xs"), 8.0, TextRole::Badge, 10.0, 12.0),
+            ButtonSize::Sm => (t.density("control-sm"), 10.0, TextRole::Badge, 12.0, 14.0),
+            ButtonSize::Default => (t.density("control"), 10.0, TextRole::Action, f32::INFINITY, 16.0),
+            ButtonSize::Lg => (t.density("control-lg"), 10.0, TextRole::Action, f32::INFINITY, 16.0),
         };
         // the icon's room, or the spinner's in its place: the glyph and the gap after it
         let gap = if self.size == ButtonSize::Xs || self.size == ButtonSize::Sm {
