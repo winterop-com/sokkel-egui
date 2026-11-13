@@ -56,5 +56,6 @@ sokkel-ui's components. Research stage; `docs/plan.md` says what was learned and
 it. Look at each of those, and only then `make snapshots` to accept them. A story's snapshot draws
 its canvas alone (`Storybook::show_story`), so adding a story changes no other picture; only
 `storybook_frame.png` shows the sidebar. A new story's first picture is recorded by
-`make snapshots` and looked at before it is kept. Conventional commits, no
-attribution lines.
+`make snapshots` and looked at before it is kept. Commit each finished piece of work
+locally on main (the owner asked for one commit per iteration), staging named paths, conventional
+commits, no attribution lines. Never push: there is no remote.
