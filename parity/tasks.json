@@ -43,7 +43,7 @@
         "@winterop-com/sokkel-ui/Shell": "Shell",
         "@winterop-com/sokkel-ui/StatusLine": "StatusLine",
         "@winterop-com/sokkel-ui/SwitchField": "SwitchField",
-        "@winterop-com/sokkel-ui/table-editing": null,
+        "@winterop-com/sokkel-ui/table-editing": "Column::editable, Editor, TableOutput::edited (table_edit), Calendar",
         "@winterop-com/sokkel-ui/ThemePicker": "theme_settings, ThemeWords",
         "@winterop-com/sokkel-ui/Toolbar": "toolbar",
         "@winterop-com/sokkel-ui/TopBar": "TopBar"
@@ -77,6 +77,14 @@
             "route": "inbox",
             "steps": [
                 "dblclick:Nov 15"
+            ]
+        },
+        {
+            "name": "edit_due_calendar",
+            "route": "inbox",
+            "steps": [
+                "dblclick:Nov 15",
+                "button:Choose a date"
             ]
         },
         {

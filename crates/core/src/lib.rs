@@ -228,7 +228,8 @@ fn visuals(t: &Tokens) -> Visuals {
         color: Color32::from_black_alpha(shade),
     };
     v.selection.bg_fill = t.color_at("primary", 0.25);
-    v.selection.stroke = Stroke::new(1.0, t.color("primary"));
+    // selected text keeps its ink, as the browser's own selection does
+    v.selection.stroke = Stroke::new(1.0, t.color("foreground"));
     v.text_cursor.stroke = Stroke::new(2.0, t.color("primary"));
     v.widgets.noninteractive = widget(t.color("background"), t.color("border"), foreground, t);
     v.widgets.inactive = widget(t.color("secondary"), t.color("border"), foreground, t);

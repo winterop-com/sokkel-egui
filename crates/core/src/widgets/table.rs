@@ -2,14 +2,18 @@
 //! height and only those in view drawn; heads that sort and resize; selection with a bar; one row
 //! opened for a detail beside it.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 
 use egui::{CornerRadius, CursorIcon, Id, Rect, Response, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
 
+use super::table_edit::{self, EditMove, EditWords, Editor, OpenCell};
 use crate::{
     AvatarSize, Button, ButtonSize, ButtonVariant, Checkbox, ChipTone, Day, DropdownMenu, DueText, Icon, MenuItem,
     TextRole, icons, tokens,
 };
+
+/// Why a draft cannot be saved, or `None` when it can: a column's check on what was typed.
+pub type Validate = fn(&str) -> Option<String>;
 
 /// A column: its head, its starting width, and how its cells sit.
 #[derive(Clone, Debug)]
@@ -20,6 +24,9 @@ pub struct Column {
     pub sortable: bool,
     /// Takes the room the other columns leave, at least `width`.
     pub fill: bool,
+    /// How its cells are edited in place; `None` for a column that is not edited.
+    pub edit: Option<Editor>,
+    pub validate: Option<Validate>,
 }
 
 impl Column {
@@ -30,6 +37,8 @@ impl Column {
             numeric: false,
             sortable: true,
             fill: false,
+            edit: None,
+            validate: None,
         }
     }
 
@@ -47,6 +56,20 @@ impl Column {
     /// The column that takes the room the others leave, as a `minmax(width, 1fr)` track.
     pub fn fill(mut self) -> Self {
         self.fill = true;
+        self
+    }
+
+    /// Edit the column's cells in place with `editor`: a double click, or a press on the active
+    /// cell, opens it; Enter saves, Escape drops, Tab saves and opens the next editable cell, and a
+    /// press elsewhere saves. A saved value comes back as the table's `edited`.
+    pub fn editable(mut self, editor: Editor) -> Self {
+        self.edit = Some(editor);
+        self
+    }
+
+    /// Refuse a draft `validate` finds wrong, saying why at the cell, before it is saved.
+    pub fn validate(mut self, validate: Validate) -> Self {
+        self.validate = Some(validate);
         self
     }
 }
@@ -75,6 +98,17 @@ pub enum Cell {
 }
 
 impl Cell {
+    /// The text an editor starts from: the text, the person's name, or the day as `YYYY-MM-DD`.
+    fn draft(&self) -> String {
+        match self {
+            Cell::Text(text) | Cell::Struck(text) | Cell::Mono(text) | Cell::Chip(text, _) | Cell::Person(text) => {
+                text.clone()
+            }
+            Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
+            Cell::Check(_) | Cell::Empty => String::new(),
+        }
+    }
+
     fn sort_key(&self) -> String {
         match self {
             Cell::Text(text) | Cell::Struck(text) | Cell::Mono(text) | Cell::Chip(text, _) | Cell::Person(text) => {
@@ -103,6 +137,15 @@ pub struct TableState {
     pub selected: BTreeSet<usize>,
     /// The row opened for its detail, by its index in the rows given.
     pub opened: Option<usize>,
+    /// The active cell of an editing table, by its row's index and its column's.
+    pub active: Option<(usize, usize)>,
+    /// The table was pressed last: the active cell is marked and takes keys.
+    focused: bool,
+    open: Option<OpenCell>,
+    /// Drafts refused as the focus left them, kept at their cells with why.
+    refused: HashMap<(usize, usize), (String, String)>,
+    /// A cell to open as the table next draws.
+    pending: Option<(usize, usize)>,
 }
 
 impl TableState {
@@ -112,6 +155,12 @@ impl TableState {
             sort: Some((column, ascending)),
             ..Self::default()
         }
+    }
+
+    /// Open the editor of the cell at `row` (its index in the rows given) and `column` as the table
+    /// next draws, as a double click on it would.
+    pub fn edit(&mut self, row: usize, column: usize) {
+        self.pending = Some((row, column));
     }
 }
 
@@ -133,6 +182,7 @@ pub struct TableWords {
     pub rows: String,
     pub row: String,
     pub empty: String,
+    pub edit: EditWords,
 }
 
 impl Default for TableWords {
@@ -145,6 +195,7 @@ impl Default for TableWords {
             rows: "{count} rows".into(),
             row: "{count} row".into(),
             empty: "Nothing to show".into(),
+            edit: EditWords::default(),
         }
     }
 }
@@ -158,6 +209,17 @@ pub struct TableOutput {
     pub action: Option<(usize, usize)>,
     /// A row was dragged by its grip from one place in the order shown to another.
     pub reordered: Option<(usize, usize)>,
+    /// A cell's edit was saved: the app stores it.
+    pub edited: Option<CellEdit>,
+}
+
+/// A saved edit: the row's index in the rows given, the column's, and the value as text (a day as
+/// `YYYY-MM-DD`, or empty for none).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CellEdit {
+    pub row: usize,
+    pub column: usize,
+    pub value: String,
 }
 
 /// What a table draws in place of its rows when it has none.
@@ -181,6 +243,7 @@ pub struct DataTable<'a> {
     empty: Option<EmptyContent<'a>>,
     footer: bool,
     stretch: bool,
+    today: Day,
 }
 
 /// How wide a row's grip is, in the first column before its content.
@@ -206,6 +269,7 @@ impl<'a> DataTable<'a> {
             empty: None,
             footer: true,
             stretch: false,
+            today: Day::today(),
         }
     }
 
@@ -253,6 +317,12 @@ impl<'a> DataTable<'a> {
     /// as a table that fills its page.
     pub fn stretch(mut self, stretch: bool) -> Self {
         self.stretch = stretch;
+        self
+    }
+
+    /// The day a date editor's calendar marks as today.
+    pub fn today(mut self, today: Day) -> Self {
+        self.today = today;
         self
     }
 
@@ -341,6 +411,12 @@ impl<'a> DataTable<'a> {
             TableVariant::List => t.density("panel-pad"),
         };
         let select_width = if self.selectable { 28.0 } else { 0.0 };
+        if let Some(at) = self.state.pending.take()
+            && at.0 < self.rows.len()
+            && self.columns.get(at.1).is_some_and(|c| c.edit.is_some())
+        {
+            open_cell(self.state, self.rows, at);
+        }
         let order = self.order();
         let radius = t.radius("surface");
         let width = ui.available_width();
@@ -350,6 +426,7 @@ impl<'a> DataTable<'a> {
             toggled: None,
             action: None,
             reordered: None,
+            edited: None,
         };
 
         // the selection bar, over the table while any row is chosen
@@ -553,6 +630,21 @@ impl<'a> DataTable<'a> {
                                 t.color("card")
                             };
                             ui.painter().rect_filled(rect, CornerRadius::ZERO, ground);
+                            // the active cell's row, while the table has the focus or a typed editor is open
+                            let typed_open = self.state.open.as_ref().is_some_and(|o| {
+                                o.row == index
+                                    && !matches!(
+                                        self.columns.get(o.column).and_then(|c| c.edit.as_ref()),
+                                        Some(Editor::Select(_))
+                                    )
+                            });
+                            if typed_open
+                                || (self.state.focused
+                                    && self.state.open.is_none()
+                                    && self.state.active.map(|a| a.0) == Some(index))
+                            {
+                                ui.painter().rect_filled(rect, CornerRadius::ZERO, t.color("hover"));
+                            }
                             ui.painter().hline(
                                 rect.x_range(),
                                 rect.bottom() - 0.5,
@@ -609,7 +701,72 @@ impl<'a> DataTable<'a> {
                                     );
                                     cell.min.x += GRIP;
                                 }
-                                if let Some(toggled) = paint_cell(
+                                if let Some(editor) = &column.edit {
+                                    // an editable cell: its editor while open, else its content, opening on a press
+                                    let place = Rect::from_min_max(cell.min, pos2(cell.right(), rect.bottom() - 1.0));
+                                    let here = (index, c);
+                                    let open_here = self.state.open.as_ref().is_some_and(|o| (o.row, o.column) == here);
+                                    if open_here && let Some(mut open) = self.state.open.take() {
+                                        let id = self.id.with(("editor", index, c));
+                                        let moved = match editor {
+                                            Editor::Text => table_edit::text(ui, place, &mut open, id),
+                                            Editor::Date(week_start) => table_edit::date(
+                                                ui,
+                                                place,
+                                                &mut open,
+                                                id,
+                                                *week_start,
+                                                self.today,
+                                                &self.words.edit,
+                                            ),
+                                            Editor::Select(options) => {
+                                                table_edit::select(ui, place, &mut open, id, options)
+                                            }
+                                        };
+                                        if let Some(edit) = settle(
+                                            self.state,
+                                            self.columns,
+                                            self.rows,
+                                            &order,
+                                            position,
+                                            open,
+                                            moved,
+                                            &self.words.edit,
+                                        ) {
+                                            out.edited = Some(edit);
+                                        }
+                                    } else {
+                                        let hit = ui.interact(place, self.id.with(("edit", index, c)), Sense::click());
+                                        match self.state.refused.get(&here) {
+                                            Some((draft, error)) => table_edit::refused(ui, place, draft, error),
+                                            None => {
+                                                paint_cell(
+                                                    ui,
+                                                    &t,
+                                                    &self.rows[index][c],
+                                                    cell,
+                                                    column.numeric,
+                                                    self.id.with(("cell", index, c)),
+                                                );
+                                            }
+                                        }
+                                        let was_active = self.state.focused && self.state.active == Some(here);
+                                        if hit.double_clicked() || (hit.clicked() && was_active) {
+                                            open_cell(self.state, self.rows, here);
+                                        } else if hit.clicked() {
+                                            self.state.active = Some(here);
+                                            self.state.focused = true;
+                                        }
+                                        if self.state.focused && self.state.active == Some(here) {
+                                            ui.painter().rect_stroke(
+                                                place,
+                                                CornerRadius::ZERO,
+                                                Stroke::new(2.0, t.color("ring")),
+                                                egui::StrokeKind::Inside,
+                                            );
+                                        }
+                                    }
+                                } else if let Some(toggled) = paint_cell(
                                     ui,
                                     &t,
                                     &self.rows[index][c],
@@ -670,6 +827,41 @@ impl<'a> DataTable<'a> {
                 }
             })
             .response;
+        // the active cell's keys while the table has the focus: the arrows move it, Enter or F2 opens it
+        if self.state.focused
+            && self.state.open.is_none()
+            && let Some((row, column)) = self.state.active
+        {
+            let position = order.iter().position(|r| *r == row).unwrap_or(0);
+            let (enter, left, right, up, down) = ui.input_mut(|i| {
+                let none = egui::Modifiers::NONE;
+                (
+                    i.consume_key(none, egui::Key::Enter) || i.consume_key(none, egui::Key::F2),
+                    i.consume_key(none, egui::Key::ArrowLeft),
+                    i.consume_key(none, egui::Key::ArrowRight),
+                    i.consume_key(none, egui::Key::ArrowUp),
+                    i.consume_key(none, egui::Key::ArrowDown),
+                )
+            });
+            let last = self.columns.len().saturating_sub(1);
+            if enter && self.columns.get(column).is_some_and(|c| c.edit.is_some()) {
+                open_cell(self.state, self.rows, (row, column));
+            } else if left {
+                self.state.active = Some((row, column.saturating_sub(1)));
+            } else if right {
+                self.state.active = Some((row, (column + 1).min(last)));
+            } else if up {
+                self.state.active = Some((order[position.saturating_sub(1)], column));
+            } else if down {
+                self.state.active = Some((order[(position + 1).min(order.len().saturating_sub(1))], column));
+            }
+        }
+        // a press outside the table takes its focus away
+        if ui.input(|i| i.pointer.any_pressed() && i.pointer.interact_pos().is_some_and(|p| !response.rect.contains(p)))
+            && self.state.open.is_none()
+        {
+            self.state.focused = false;
+        }
         if self.footer {
             let count = self.rows.len();
             let words = if count == 1 { &self.words.row } else { &self.words.rows };
@@ -753,4 +945,115 @@ fn put_at(ui: &mut Ui, rect: Rect, widget: impl egui::Widget) -> Response {
             .layout(egui::Layout::left_to_right(egui::Align::Center)),
     );
     child.add(widget)
+}
+
+/// Open the editor of the cell `at`: on its refused draft if it has one, else on its value.
+fn open_cell(state: &mut TableState, rows: &[Vec<Cell>], at: (usize, usize)) {
+    let (draft, error) = match state.refused.get(&at) {
+        Some((draft, error)) => (draft.clone(), Some(error.clone())),
+        None => (rows[at.0][at.1].draft(), None),
+    };
+    state.active = Some(at);
+    state.focused = true;
+    state.open = Some(OpenCell {
+        row: at.0,
+        column: at.1,
+        draft,
+        error,
+        fresh: true,
+        calendar: false,
+        highlight: 0,
+    });
+}
+
+/// What an open editor's move does: keep it open, drop it, or save its draft (unchanged, refused or
+/// saved) and close it or open the next editable cell. A saved draft is returned for the app.
+#[allow(clippy::too_many_arguments)]
+fn settle(
+    state: &mut TableState,
+    columns: &[Column],
+    rows: &[Vec<Cell>],
+    order: &[usize],
+    position: usize,
+    mut open: OpenCell,
+    moved: EditMove,
+    words: &EditWords,
+) -> Option<CellEdit> {
+    let at = (open.row, open.column);
+    match moved {
+        EditMove::Stay => {
+            state.open = Some(open);
+            return None;
+        }
+        EditMove::Cancel => {
+            state.refused.remove(&at);
+            return None;
+        }
+        _ => {}
+    }
+    let column = &columns[open.column];
+    let unchanged = open.draft == rows[open.row][open.column].draft();
+    let refusal = if unchanged {
+        None
+    } else if matches!(column.edit, Some(Editor::Date(_)))
+        && !open.draft.trim().is_empty()
+        && Day::parse(open.draft.trim()).is_none()
+    {
+        Some(words.unreadable_date.clone())
+    } else {
+        column.validate.and_then(|validate| validate(&open.draft))
+    };
+    if let Some(error) = refusal {
+        if moved == EditMove::Leave {
+            // left refused: the draft stays at its cell, marked, until it is opened again
+            state.refused.insert(at, (open.draft, error));
+        } else {
+            open.error = Some(error);
+            state.open = Some(open);
+        }
+        return None;
+    }
+    state.refused.remove(&at);
+    let edit = (!unchanged).then(|| CellEdit {
+        row: open.row,
+        column: open.column,
+        value: if matches!(column.edit, Some(Editor::Date(_))) {
+            open.draft.trim().to_owned()
+        } else {
+            open.draft.clone()
+        },
+    });
+    if moved == EditMove::Leave {
+        state.focused = false;
+    }
+    if let EditMove::Next(forward) = moved
+        && let Some(next) = next_editable(columns, order, position, open.column, forward)
+    {
+        open_cell(state, rows, next);
+    }
+    edit
+}
+
+/// The editable cell after (or before) the column `column` of the row at `position` in the order
+/// shown: along the row, then on to the next row's first.
+fn next_editable(
+    columns: &[Column],
+    order: &[usize],
+    position: usize,
+    column: usize,
+    forward: bool,
+) -> Option<(usize, usize)> {
+    let editable: Vec<usize> = (0..columns.len()).filter(|c| columns[*c].edit.is_some()).collect();
+    let cells: Vec<(usize, usize)> = order
+        .iter()
+        .enumerate()
+        .flat_map(|(p, _)| editable.iter().map(move |c| (p, *c)))
+        .collect();
+    let here = cells.iter().position(|cell| *cell == (position, column))?;
+    let next = if forward {
+        here.checked_add(1)?
+    } else {
+        here.checked_sub(1)?
+    };
+    cells.get(next).map(|(p, c)| (order[*p], *c))
 }

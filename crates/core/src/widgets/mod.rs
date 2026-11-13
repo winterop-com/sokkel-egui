@@ -2,6 +2,7 @@
 
 mod board;
 mod button;
+mod calendar;
 mod chip;
 mod choice;
 mod display;
@@ -14,10 +15,12 @@ mod person;
 mod settings;
 mod switch;
 mod table;
+mod table_edit;
 mod text_field;
 
 pub use board::{BOARD_COLUMN, BoardCard, BoardColumn};
 pub use button::{Button, ButtonSize, ButtonVariant};
+pub use calendar::{Calendar, CalendarWords, WeekStart, calendar_forget};
 pub use chip::{Chip, ChipTone};
 pub use choice::{Checkbox, Segmented, SegmentedVariant, Tabs, TabsVariant};
 pub use display::{Alert, Badge, BadgeVariant, Card, Separator, Skeleton};
@@ -33,7 +36,10 @@ pub use settings::{
     theme_settings,
 };
 pub use switch::Switch;
-pub use table::{Cell, Column, DataTable, RowActions, TableOutput, TableState, TableVariant, TableWords};
+pub use table::{
+    Cell, CellEdit, Column, DataTable, RowActions, TableOutput, TableState, TableVariant, TableWords, Validate,
+};
+pub use table_edit::{EditWords, Editor};
 pub use text_field::{Input, TextField};
 
 use egui::{Color32, CornerRadius, Painter, Rect, Response, Stroke, StrokeKind, Ui};

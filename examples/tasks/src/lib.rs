@@ -6,10 +6,10 @@
 use eframe::egui::{self, Color32, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, Appearance, BoardCard, BoardColumn, Cell, Column, CommandGroup, CommandPalette,
-    ConfirmAnswer, ConfirmDialog, DataTable, Day, Icon, MenuItem, PageHeader, QuickAdd, Rail, RailEntry, RailGroup,
-    Segmented, SegmentedVariant, Select, SettingsDialog, SettingsSection, Shell, ShellPart, StatusLine, Switch,
-    SwitchField, TableState, TableVariant, ThemeWords, TopBar, install, palette_shortcut, setting_row, theme_settings,
-    tokens, toolbar,
+    ConfirmAnswer, ConfirmDialog, DataTable, Day, Editor, Icon, MenuItem, PageHeader, QuickAdd, Rail, RailEntry,
+    RailGroup, Segmented, SegmentedVariant, Select, SettingsDialog, SettingsSection, Shell, ShellPart, StatusLine,
+    Switch, SwitchField, TableState, TableVariant, ThemeWords, TopBar, install, palette_shortcut, setting_row,
+    theme_settings, tokens, toolbar,
 };
 
 mod data;
@@ -136,7 +136,8 @@ pub struct TasksApp {
     pub resetting: bool,
     palette: Option<(String, usize)>,
     quick: String,
-    table: TableState,
+    /// The list's table: its active cell and open editor.
+    pub table: TableState,
     next: usize,
 }
 
@@ -347,12 +348,26 @@ impl TasksApp {
     fn rows(&mut self, ui: &mut Ui) {
         let shown = self.shown();
         let now = self.today;
+        let week_start = match self.prefs.week_start {
+            WeekStart::Monday => sokkel_ui_egui::WeekStart::Monday,
+            WeekStart::Sunday => sokkel_ui_egui::WeekStart::Sunday,
+        };
         let columns = [
             Column::new("Done", 48.0).sortable(false),
-            Column::new("Title", 224.0).fill().sortable(false),
-            Column::new("Due", 152.0).sortable(false),
-            Column::new("Assignee", 136.0).sortable(false),
-            Column::new("Project", 112.0).sortable(false),
+            Column::new("Title", 224.0)
+                .fill()
+                .sortable(false)
+                .editable(Editor::Text)
+                .validate(|title| title.trim().is_empty().then(|| "A task needs a title.".to_owned())),
+            Column::new("Due", 152.0)
+                .sortable(false)
+                .editable(Editor::Date(week_start)),
+            Column::new("Assignee", 136.0)
+                .sortable(false)
+                .editable(Editor::Select(PEOPLE.map(String::from).to_vec())),
+            Column::new("Project", 112.0)
+                .sortable(false)
+                .editable(Editor::Select(PROJECTS.map(String::from).to_vec())),
         ];
         let rows: Vec<Vec<Cell>> = shown
             .iter()
@@ -391,7 +406,18 @@ impl TasksApp {
             })
             .footer(false)
             .stretch(true)
+            .today(now)
             .show(ui);
+        if let Some(edit) = output.edited {
+            let id = shown[edit.row].id.clone();
+            let value = edit.value;
+            self.change(&id, |task| match edit.column {
+                1 => task.title = value.trim().to_owned(),
+                2 => task.due = Day::parse(&value).map(|day| day.0),
+                3 => task.assignee = value,
+                _ => task.project = value,
+            });
+        }
         if let Some(row) = output.toggled {
             let id = shown[row].id.clone();
             self.change(&id, |task| {

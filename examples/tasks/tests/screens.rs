@@ -1,6 +1,7 @@
 //! The screens parity/tasks.json lists, drawn as the web example's are shot: 1280 by 800, on
 //! 2026-11-16, fresh data. `make parity` puts them beside the web's.
 
+use egui_kittest::kittest::Queryable;
 use egui_kittest::{Harness, SnapshotResults};
 use sokkel_ui_egui::{Appearance, Day, Scheme};
 use tasks::{TasksApp, View};
@@ -32,11 +33,14 @@ type Screen = (&'static str, Scheme, fn(&mut TasksApp));
 #[test]
 fn every_screen() {
     let mut results = SnapshotResults::new();
-    let screens: [Screen; 10] = [
+    let screens: [Screen; 13] = [
         ("inbox", Scheme::System, |_| {}),
         ("today", Scheme::System, |app| app.go("today")),
         ("upcoming", Scheme::System, |app| app.go("upcoming")),
         ("project", Scheme::System, |app| app.go("harbor")),
+        ("edit_title", Scheme::System, |app| app.table.edit(0, 1)),
+        ("edit_due", Scheme::System, |app| app.table.edit(0, 2)),
+        ("edit_assignee", Scheme::System, |app| app.table.edit(1, 3)),
         ("board", Scheme::System, |app| app.prefs.view = View::Board),
         ("settings", Scheme::System, |app| app.go("settings")),
         ("settings_appearance", Scheme::System, |app| {
@@ -55,4 +59,9 @@ fn every_screen() {
         let mut harness = render(scheme, setup);
         results.add(harness.try_snapshot(name));
     }
+    // the date editor with its calendar open, by its button as a person would
+    let mut harness = render(Scheme::System, |app| app.table.edit(0, 2));
+    harness.get_by_label("Choose a date").click();
+    harness.run_steps(3);
+    results.add(harness.try_snapshot("edit_due_calendar"));
 }
