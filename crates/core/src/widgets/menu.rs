@@ -1,0 +1,448 @@
+//! Menus: a dropdown menu under its trigger, and the command palette over the page on Mod+K,
+//! after sokkel-ui's `DropdownMenu` and `CommandPalette`.
+
+use egui::{
+    Context, Frame, Id, Key, KeyboardShortcut, Margin, Modifiers, Popup, PopupCloseBehavior, Response, Sense, Shadow,
+    Stroke, TextEdit, TextWrapMode, Ui, WidgetText, pos2, vec2,
+};
+
+use crate::{Icon, TextRole, Tokens, icons, tokens};
+
+/// One entry in a menu.
+#[derive(Clone, Debug)]
+pub enum MenuItem {
+    /// An action: its label, an icon, and the shortcut that does the same, drawn at its end.
+    Action {
+        label: String,
+        icon: Option<Icon>,
+        shortcut: Option<String>,
+        destructive: bool,
+    },
+    /// A label over the items after it.
+    Label(String),
+    Separator,
+}
+
+impl MenuItem {
+    pub fn action(label: impl Into<String>) -> Self {
+        MenuItem::Action {
+            label: label.into(),
+            icon: None,
+            shortcut: None,
+            destructive: false,
+        }
+    }
+
+    pub fn icon(mut self, glyph: Icon) -> Self {
+        if let MenuItem::Action { icon, .. } = &mut self {
+            *icon = Some(glyph);
+        }
+        self
+    }
+
+    pub fn shortcut(mut self, keys: impl Into<String>) -> Self {
+        if let MenuItem::Action { shortcut, .. } = &mut self {
+            *shortcut = Some(keys.into());
+        }
+        self
+    }
+
+    /// An action that destroys, in the destructive ink.
+    pub fn destructive(mut self) -> Self {
+        if let MenuItem::Action { destructive, .. } = &mut self {
+            *destructive = true;
+        }
+        self
+    }
+}
+
+fn popover_frame(t: &Tokens) -> Frame {
+    Frame::new()
+        .fill(t.color("popover"))
+        .stroke(Stroke::new(1.0, t.color_at("foreground", 0.1)))
+        .corner_radius(t.radius("surface"))
+        .shadow(Shadow {
+            offset: [0, 4],
+            blur: 12,
+            spread: 0,
+            color: egui::Color32::from_black_alpha(if t.dark { 90 } else { 24 }),
+        })
+        .inner_margin(Margin::same(4))
+}
+
+/// Draw one action row; true when it was pressed.
+fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: bool) -> (Response, bool) {
+    let MenuItem::Action {
+        label,
+        icon,
+        shortcut,
+        destructive,
+    } = item
+    else {
+        unreachable!()
+    };
+    let height = 32.0;
+    let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
+    let hit = ui.interact(row, id, Sense::click()).union(hit);
+    hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, label));
+    let painter = ui.painter();
+    if highlighted || hit.hovered() || hit.has_focus() {
+        painter.rect_filled(
+            row,
+            t.radius("md"),
+            if *destructive {
+                t.color_at("destructive", 0.1)
+            } else {
+                t.color("hover")
+            },
+        );
+    }
+    let ink = if *destructive {
+        t.color("destructive")
+    } else {
+        t.color("popover-foreground")
+    };
+    let mut x = row.left() + 8.0;
+    if let Some(glyph) = icon {
+        icons::paint(
+            painter,
+            pos2(x + 8.0, row.center().y),
+            *glyph,
+            16.0,
+            if *destructive { ink } else { t.color("muted-foreground") },
+        );
+        x += 24.0;
+    }
+    // the shortcut first, so the label takes only the room it leaves
+    let keys = shortcut.as_ref().map(|keys| {
+        let rich = TextRole::Help.rich(t, keys).extra_letter_spacing(1.0);
+        WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Help.font(t))
+    });
+    let room = row.right() - 8.0 - x - keys.as_ref().map_or(0.0, |k| k.size().x + 16.0);
+    let galley = WidgetText::from(TextRole::Body.rich(t, label)).into_galley(
+        ui,
+        Some(TextWrapMode::Truncate),
+        room,
+        TextRole::Body.font(t),
+    );
+    ui.painter()
+        .galley(pos2(x, row.center().y - galley.size().y / 2.0), galley, ink);
+    if let Some(keys) = keys {
+        let at = pos2(row.right() - 8.0 - keys.size().x, row.center().y - keys.size().y / 2.0);
+        ui.painter().galley(at, keys, t.color("muted-foreground"));
+    }
+    let pressed = hit.clicked();
+    (hit, pressed)
+}
+
+/// A menu under its trigger: actions with icons and shortcuts, labels and separators. Returns the
+/// index of the action pressed this frame.
+pub struct DropdownMenu<'a> {
+    items: &'a [MenuItem],
+    width: f32,
+    default_open: bool,
+}
+
+impl<'a> DropdownMenu<'a> {
+    pub fn new(items: &'a [MenuItem]) -> Self {
+        Self {
+            items,
+            width: 220.0,
+            default_open: false,
+        }
+    }
+
+    /// At least this wide; by default the menu fits its widest entry.
+    pub fn width(mut self, width: f32) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Open the menu the first time it is shown, as a story shows it.
+    pub fn default_open(mut self, open: bool) -> Self {
+        self.default_open = open;
+        self
+    }
+
+    /// Show the menu for `trigger`: it opens and closes with a press on the trigger.
+    pub fn show(self, trigger: &Response) -> Option<usize> {
+        let ctx = trigger.ctx.clone();
+        let t = tokens(&ctx);
+        let popup_id = trigger.id.with("menu");
+        let opened_once = trigger.id.with("menu-opened-once");
+        if self.default_open && !ctx.data(|d| d.get_temp::<bool>(opened_once).unwrap_or(false)) {
+            ctx.data_mut(|d| d.insert_temp(opened_once, true));
+            Popup::open_id(&ctx, popup_id);
+        }
+        // as wide as its widest entry, and at least its trigger and 128
+        let measure = |text: &str, role: TextRole| {
+            // the face at its default weight, with room for the role's heavier ones
+            let font = role.font(&t);
+            ctx.fonts_mut(|fonts| {
+                fonts
+                    .layout_no_wrap(text.to_owned(), font, egui::Color32::WHITE)
+                    .size()
+                    .x
+            }) * 1.04
+        };
+        let widest = self
+            .items
+            .iter()
+            .map(|item| match item {
+                MenuItem::Action {
+                    label, icon, shortcut, ..
+                } => {
+                    16.0 + measure(label, TextRole::Body)
+                        + if icon.is_some() { 24.0 } else { 0.0 }
+                        + shortcut
+                            .as_deref()
+                            .map_or(0.0, |keys| 24.0 + measure(keys, TextRole::Help))
+                }
+                MenuItem::Label(label) => 12.0 + measure(label, TextRole::Badge),
+                MenuItem::Separator => 0.0,
+            })
+            .fold(0.0, f32::max);
+        let width = widest.max(trigger.rect.width()).max(128.0).max(self.width);
+        let mut pressed = None;
+        Popup::menu(trigger)
+            .id(popup_id)
+            .frame(popover_frame(&t))
+            .gap(4.0)
+            .width(width)
+            .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
+            .show(|ui| {
+                ui.set_width(width);
+                ui.spacing_mut().item_spacing.y = 0.0;
+                for (index, item) in self.items.iter().enumerate() {
+                    match item {
+                        MenuItem::Separator => {
+                            ui.add_space(4.0);
+                            let rect = ui.available_rect_before_wrap();
+                            ui.painter().hline(
+                                (rect.left() - 4.0)..=(rect.right() + 4.0),
+                                rect.top(),
+                                Stroke::new(1.0, t.color("border")),
+                            );
+                            ui.add_space(5.0);
+                        }
+                        MenuItem::Label(label) => {
+                            ui.add_space(4.0);
+                            ui.horizontal(|ui| {
+                                ui.add_space(6.0);
+                                ui.label(TextRole::Badge.rich(&t, label).color(t.color("muted-foreground")));
+                            });
+                            ui.add_space(4.0);
+                        }
+                        action => {
+                            let (_, clicked) = action_row(ui, &t, popup_id.with(index), action, false);
+                            if clicked {
+                                pressed = Some(index);
+                                ui.close();
+                            }
+                        }
+                    }
+                }
+            });
+        pressed
+    }
+}
+
+/// A group of commands in the palette, under a title.
+#[derive(Clone, Debug)]
+pub struct CommandGroup {
+    pub title: String,
+    pub items: Vec<MenuItem>,
+}
+
+impl CommandGroup {
+    pub fn new(title: impl Into<String>, items: impl IntoIterator<Item = MenuItem>) -> Self {
+        Self {
+            title: title.into(),
+            items: items.into_iter().collect(),
+        }
+    }
+}
+
+/// What the palette was asked this frame.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct PaletteOutcome {
+    /// The command run, as its group and its index in the group.
+    pub run: Option<(usize, usize)>,
+    /// Escape, a press on the shade, or a command run.
+    pub close: bool,
+}
+
+/// The words the palette says, English by default.
+#[derive(Clone, Debug)]
+pub struct PaletteWords {
+    pub placeholder: String,
+    pub no_match: String,
+}
+
+impl Default for PaletteWords {
+    fn default() -> Self {
+        Self {
+            placeholder: "Type a command or search".into(),
+            no_match: "Nothing matches".into(),
+        }
+    }
+}
+
+/// Mod+K (Cmd on macOS, Ctrl elsewhere), consumed: true on the frame it is pressed.
+pub fn palette_shortcut(ctx: &Context) -> bool {
+    ctx.input_mut(|i| i.consume_shortcut(&KeyboardShortcut::new(Modifiers::COMMAND, Key::K)))
+}
+
+/// The command palette: a search over the page's commands in their groups, narrowed as one types,
+/// the arrows moving the highlight and Enter running it.
+pub struct CommandPalette<'a> {
+    id: Id,
+    groups: &'a [CommandGroup],
+    query: &'a mut String,
+    highlight: &'a mut usize,
+    words: PaletteWords,
+}
+
+impl<'a> CommandPalette<'a> {
+    pub fn new(
+        id: impl egui::AsId,
+        groups: &'a [CommandGroup],
+        query: &'a mut String,
+        highlight: &'a mut usize,
+    ) -> Self {
+        Self {
+            id: Id::new(id),
+            groups,
+            query,
+            highlight,
+            words: PaletteWords::default(),
+        }
+    }
+
+    pub fn words(mut self, words: PaletteWords) -> Self {
+        self.words = words;
+        self
+    }
+
+    pub fn show(self, ctx: &Context) -> PaletteOutcome {
+        let t = tokens(ctx);
+        let needle = self.query.to_lowercase();
+        // the commands that match, by group and index, in the order they show
+        let shown: Vec<(usize, usize)> = self
+            .groups
+            .iter()
+            .enumerate()
+            .flat_map(|(g, group)| {
+                let needle = needle.clone();
+                group.items.iter().enumerate().filter_map(move |(i, item)| match item {
+                    MenuItem::Action { label, .. } if label.to_lowercase().contains(&needle) => Some((g, i)),
+                    _ => None,
+                })
+            })
+            .collect();
+        let (down, up, enter) = ctx.input_mut(|i| {
+            (
+                i.consume_key(Modifiers::NONE, Key::ArrowDown),
+                i.consume_key(Modifiers::NONE, Key::ArrowUp),
+                i.consume_key(Modifiers::NONE, Key::Enter),
+            )
+        });
+        if shown.is_empty() {
+            *self.highlight = 0;
+        } else {
+            if down {
+                *self.highlight = (*self.highlight + 1) % shown.len();
+            }
+            if up {
+                *self.highlight = (*self.highlight + shown.len() - 1) % shown.len();
+            }
+            *self.highlight = (*self.highlight).min(shown.len() - 1);
+        }
+        let mut outcome = PaletteOutcome::default();
+        if enter && let Some(choice) = shown.get(*self.highlight) {
+            outcome.run = Some(*choice);
+        }
+        let width = 560.0;
+        let area = egui::Area::new(self.id.with("area")).anchor(egui::Align2::CENTER_TOP, vec2(0.0, 96.0));
+        let response = egui::Modal::new(self.id)
+            .area(area)
+            .backdrop_color(t.color_at("shade", 0.1))
+            .frame(popover_frame(&t).inner_margin(Margin::same(t.length("palette-inset") as i8)))
+            .show(ctx, |ui| {
+                ui.set_width(width);
+                ui.spacing_mut().item_spacing.y = 0.0;
+                ui.horizontal(|ui| {
+                    ui.add_space(8.0);
+                    let (glass, _) = ui.allocate_exact_size(vec2(16.0, 40.0), Sense::hover());
+                    icons::paint(
+                        ui.painter(),
+                        glass.center(),
+                        Icon::Search,
+                        16.0,
+                        t.color("muted-foreground"),
+                    );
+                    let edit = TextEdit::singleline(self.query)
+                        .frame(Frame::NONE)
+                        .font(TextRole::Body.font(&t))
+                        .text_color(t.color("popover-foreground"))
+                        .hint_text(
+                            TextRole::Body
+                                .rich(&t, &self.words.placeholder)
+                                .color(t.color("muted-foreground")),
+                        )
+                        .desired_width(f32::INFINITY);
+                    let field = ui.add(edit);
+                    field.request_focus();
+                });
+                let rect = ui.available_rect_before_wrap();
+                ui.painter()
+                    .hline(rect.x_range(), rect.top(), Stroke::new(1.0, t.color("border")));
+                ui.add_space(4.0);
+                if shown.is_empty() {
+                    ui.add_space(12.0);
+                    ui.horizontal(|ui| {
+                        ui.add_space(10.0);
+                        ui.label(
+                            TextRole::Body
+                                .rich(&t, &self.words.no_match)
+                                .color(t.color("muted-foreground")),
+                        );
+                    });
+                    ui.add_space(12.0);
+                    return;
+                }
+                {
+                    {
+                        let mut last_group = None;
+                        // the first matches, at most a dozen: typing narrows the rest
+                        for (position, (g, i)) in shown.iter().enumerate().take(12) {
+                            if last_group != Some(*g) {
+                                ui.add_space(6.0);
+                                ui.horizontal(|ui| {
+                                    ui.add_space(8.0);
+                                    ui.label(
+                                        TextRole::Badge
+                                            .rich(&t, &self.groups[*g].title)
+                                            .color(t.color("muted-foreground")),
+                                    );
+                                });
+                                ui.add_space(4.0);
+                                last_group = Some(*g);
+                            }
+                            let item = &self.groups[*g].items[*i];
+                            let (hit, clicked) =
+                                action_row(ui, &t, self.id.with((g, i)), item, position == *self.highlight);
+                            if hit.hovered() {
+                                *self.highlight = position;
+                            }
+                            if clicked {
+                                outcome.run = Some((*g, *i));
+                            }
+                        }
+                    }
+                }
+            });
+        outcome.close = response.should_close() || outcome.run.is_some();
+        outcome
+    }
+}

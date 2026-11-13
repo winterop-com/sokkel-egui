@@ -14,6 +14,8 @@ const STORY_KEY: &str = "sokkel-ui-egui/story";
 pub struct Storybook {
     pub appearance: Appearance,
     settings: Option<String>,
+    /// The storybook's own palette, on Mod+K: its query and highlight while open.
+    palette: Option<(String, usize)>,
     story: usize,
     search: String,
     state: State,
@@ -42,6 +44,7 @@ impl Storybook {
         Self {
             appearance,
             settings: None,
+            palette: None,
             story: 0,
             search: String::new(),
             state: State::default(),
@@ -88,6 +91,26 @@ impl Storybook {
                     .inner_margin(Margin::symmetric(16, 8)),
             )
             .show(ui, |ui| self.toolbar(ui));
+        // the storybook's own palette on Mod+K: every story, by its path
+        if sokkel_ui_egui::palette_shortcut(ui.ctx()) {
+            self.palette = Some((String::new(), 0));
+        }
+        if let Some((mut query, mut highlight)) = self.palette.take() {
+            let groups = [sokkel_ui_egui::CommandGroup::new(
+                "Stories",
+                STORIES
+                    .iter()
+                    .map(|story| sokkel_ui_egui::MenuItem::action(story.path.replace('/', "  /  "))),
+            )];
+            let outcome = sokkel_ui_egui::CommandPalette::new("storybook-palette", &groups, &mut query, &mut highlight)
+                .show(ui.ctx());
+            if let Some((_, index)) = outcome.run {
+                self.story = index;
+            }
+            if !outcome.close {
+                self.palette = Some((query, highlight));
+            }
+        }
         // the storybook's own settings, on its real appearance
         if let Some(mut active) = self.settings.take() {
             let sections = stories::settings::sections();

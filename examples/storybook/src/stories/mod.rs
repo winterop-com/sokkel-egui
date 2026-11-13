@@ -11,6 +11,7 @@ mod frame;
 mod icon_list;
 mod inputs;
 mod maps;
+mod menus;
 mod overlays;
 mod page;
 mod primitives;
@@ -45,6 +46,10 @@ pub struct State {
     pub settings_open: bool,
     pub settings_section: String,
     pub settings_appearance: sokkel_ui_egui::Appearance,
+    pub last_command: String,
+    pub palette_open: bool,
+    pub palette_query: String,
+    pub palette_highlight: usize,
 }
 
 impl Default for State {
@@ -72,6 +77,10 @@ impl Default for State {
                 scheme: sokkel_ui_egui::Scheme::Light,
                 ..Default::default()
             },
+            last_command: String::new(),
+            palette_open: true,
+            palette_query: "run".into(),
+            palette_highlight: 0,
         }
     }
 }
@@ -183,6 +192,11 @@ pub const STORIES: &[Story] = &[
         show: overlays::tooltips,
     },
     Story {
+        path: "Primitives/Menus/Dropdown menu",
+        doc: "A menu under its trigger, open with the story: the account menu, with a label, icons, shortcuts, a separator and a destructive action.",
+        show: menus::dropdown,
+    },
+    Story {
         path: "Primitives/Navigation/Tabs",
         doc: "A tab list on a muted track with the chosen tab raised, or with a line under it.",
         show: inputs::tabs,
@@ -191,6 +205,11 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Chip",
         doc: "The tones a chip says a state in, and a chosen chip's stronger wash and edge.",
         show: primitives::chip,
+    },
+    Story {
+        path: "Patterns/Command palette",
+        doc: "The palette over the page, open with the story and narrowed by \"run\": the arrows move the highlight, Enter runs it.",
+        show: menus::palette,
     },
     Story {
         path: "Patterns/Data table",
