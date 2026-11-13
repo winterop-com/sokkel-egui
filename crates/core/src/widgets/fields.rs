@@ -56,56 +56,14 @@ impl<'a> QuickAdd<'a> {
 
     pub fn show(self, ui: &mut Ui) -> Option<String> {
         let t = tokens(ui.ctx());
-        let height = t.density("control");
-        let (rect, _) = ui.allocate_exact_size(vec2(self.width, height), Sense::hover());
-        let body = TextRole::Body;
-        // the text field inside, after the plus, vertically centered in the control's height
-        let inner = Rect::from_min_max(
-            pos2(rect.left() + 34.0, rect.top()),
-            pos2(rect.right() - 10.0, rect.bottom()),
-        );
-        let mut child = ui.new_child(
-            egui::UiBuilder::new()
-                .max_rect(inner)
-                .layout(Layout::left_to_right(Align::Center)),
-        );
-        let edit = TextEdit::singleline(self.text)
-            .id(Self::field_id(self.id))
-            .font(body.font(&t))
-            .text_color(t.color("foreground"))
-            .frame(Frame::NONE)
-            .margin(Margin::ZERO)
-            .desired_width(inner.width())
-            .hint_text(body.rich(&t, &self.placeholder).color(t.color("muted-foreground")));
-        // the ground under the field, painted first
-        let ground = ui.painter().add(egui::Shape::Noop);
-        let response = child.add(edit);
-        let focused = response.has_focus();
-        let edge = if focused { t.color("ring") } else { t.color("input") };
-        ui.painter().set(
-            ground,
-            egui::Shape::rect_filled(rect, t.radius("control"), t.color("field")),
-        );
-        ui.painter().rect_stroke(
+        let (rect, _) = ui.allocate_exact_size(vec2(self.width, t.density("control")), Sense::hover());
+        let response = icon_field(
+            ui,
             rect,
-            t.radius("control"),
-            Stroke::new(1.0, edge),
-            egui::StrokeKind::Inside,
-        );
-        if focused {
-            ui.painter().rect_stroke(
-                rect,
-                t.radius("control"),
-                Stroke::new(1.0, t.color("ring")),
-                egui::StrokeKind::Outside,
-            );
-        }
-        icons::paint(
-            ui.painter(),
-            pos2(rect.left() + 18.0, rect.center().y),
+            self.text,
             Icon::Plus,
-            16.0,
-            t.color("muted-foreground"),
+            &self.placeholder,
+            Self::field_id(self.id),
         );
         let entered = response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
         let added = self.text.trim().to_owned();
@@ -116,6 +74,102 @@ impl<'a> QuickAdd<'a> {
         }
         None
     }
+}
+
+/// A one-line field with a glyph at its start, filling `rect`: the field's ground and edge, the
+/// ring while focused, the text after the glyph.
+fn icon_field(ui: &mut Ui, rect: Rect, text: &mut String, icon: Icon, placeholder: &str, id: egui::Id) -> Response {
+    let t = tokens(ui.ctx());
+    let body = TextRole::Body;
+    let inner = Rect::from_min_max(
+        pos2(rect.left() + 34.0, rect.top()),
+        pos2(rect.right() - 10.0, rect.bottom()),
+    );
+    // the ground under the field, painted before the text it holds
+    let ground = ui.painter().add(egui::Shape::Noop);
+    let mut child = ui.new_child(
+        egui::UiBuilder::new()
+            .max_rect(inner)
+            .layout(Layout::left_to_right(Align::Center)),
+    );
+    let edit = TextEdit::singleline(text)
+        .id(id)
+        .font(body.font(&t))
+        .text_color(t.color("foreground"))
+        .frame(Frame::NONE)
+        .margin(Margin::ZERO)
+        .desired_width(inner.width())
+        .hint_text(body.rich(&t, placeholder).color(t.color("muted-foreground")));
+    let response = child.add(edit);
+    let focused = response.has_focus();
+    ui.painter().set(
+        ground,
+        egui::Shape::rect_filled(rect, t.radius("control"), t.color("field")),
+    );
+    let edge = if focused { t.color("ring") } else { t.color("input") };
+    ui.painter().rect_stroke(
+        rect,
+        t.radius("control"),
+        Stroke::new(1.0, edge),
+        egui::StrokeKind::Inside,
+    );
+    if focused {
+        ui.painter().rect_stroke(
+            rect,
+            t.radius("control"),
+            Stroke::new(1.0, t.color("ring")),
+            egui::StrokeKind::Outside,
+        );
+    }
+    icons::paint(
+        ui.painter(),
+        pos2(rect.left() + 18.0, rect.center().y),
+        icon,
+        16.0,
+        t.color("muted-foreground"),
+    );
+    response
+}
+
+/// A search field: a magnifier, the words searched for, filling the width it is given.
+pub struct SearchField<'a> {
+    text: &'a mut String,
+    placeholder: String,
+    id: egui::Id,
+}
+
+impl<'a> SearchField<'a> {
+    pub fn new(id: impl egui::AsId, text: &'a mut String) -> Self {
+        Self {
+            text,
+            placeholder: "Search".into(),
+            id: egui::Id::new(id),
+        }
+    }
+
+    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
+        self.placeholder = placeholder.into();
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui) -> Response {
+        let t = tokens(ui.ctx());
+        let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), t.density("control")), Sense::hover());
+        icon_field(
+            ui,
+            rect,
+            self.text,
+            Icon::Search,
+            &self.placeholder,
+            self.id.with("field"),
+        )
+    }
+}
+
+/// The search field a part draws in the room it is given.
+pub(crate) fn search_field(ui: &mut Ui, text: &mut String, placeholder: &str) -> Response {
+    let id = ui.id().with("search");
+    SearchField::new(id, text).placeholder(placeholder).show(ui)
 }
 
 /// A switch with its label before it, a control tall: a setting turned on and off in place.

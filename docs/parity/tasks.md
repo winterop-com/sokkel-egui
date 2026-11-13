@@ -34,13 +34,11 @@ egui counterpart.
 | inbox, today, upcoming, project | Within a point or two of the web. Frame, rail, top bar, toolbar, all five columns, the grip, due tones, avatars, the row's action and the status line all line up. |
 | inbox_dark | The same, in the dark scheme. |
 | board | Columns, heads, counts and cards match. A card's title-to-date gap is about 6 taller than the web's. |
-| settings | Differs most: the web's dialog is 896 wide with a search field and group titles ("Preferences", "This demo"); ours is 760 with neither, and its rows run under the footer. |
+| settings | The dialog's size, head, column, search (focused on open, filtering every section), group titles, rows and footer line up. The web blurs the page behind it; egui cannot blur, so ours only dims. |
 
 ## What is left, largest first
 
 1. **The settings dialog**:
-   - its size, the search field, group titles over the sections, and rows that scroll under a fixed footer;
-   - "Reset to defaults" as a quiet button;
    - the theme cards in Appearance (`ThemePicker`'s `themeSettings`);
    - the confirm before resetting the demo data (`DialogShell`'s `ConfirmDialog`).
 2. **Editing in place** (`table-editing`): a title's text, a due date from a calendar, an assignee and

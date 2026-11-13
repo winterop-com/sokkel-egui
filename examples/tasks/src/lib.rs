@@ -451,10 +451,10 @@ impl TasksApp {
     fn settings_dialog(&mut self, ui: &mut Ui) {
         let Some(mut active) = self.settings.take() else { return };
         let sections = [
-            SettingsSection::new("lists", "Lists", Icon::ListTodo),
-            SettingsSection::new("adding", "New tasks", Icon::Plus),
-            SettingsSection::new("appearance", "Appearance", Icon::Palette),
-            SettingsSection::new("data", "Demo data", Icon::Database),
+            SettingsSection::new("lists", "Lists", Icon::ListTodo).group("Preferences"),
+            SettingsSection::new("adding", "New tasks", Icon::Plus).group("Preferences"),
+            SettingsSection::new("appearance", "Appearance", Icon::Palette).group("Preferences"),
+            SettingsSection::new("data", "Demo data", Icon::Database).group("This demo"),
         ];
         let (prefs, appearance, today) = (&mut self.prefs, &mut self.appearance, self.today);
         let mut reset_data = false;
