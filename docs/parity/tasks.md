@@ -47,8 +47,12 @@ counterpart.
 
 ## What is left, largest first
 
-1. **The rest of editing in place**: a typed character opening a text cell on what was typed, the
+1. **The frame's drift**, measured on every screen and named in sokkel-design's rail and status
+   line specs: the rail's icons and labels 2 short of the web's (10/38 where it has 12/40), the
+   status line padded 16 where the web pads 12, and a collapsed entry's name in egui's own hover text
+   rather than the library's tooltip.
+2. **The rest of editing in place**: a typed character opening a text cell on what was typed, the
    calendar's own keys, and a save's spinner (an egui save is done when it returns).
-2. **Behavior the screens do not show**: the palette's groups as the web builds them
+3. **Behavior the screens do not show**: the palette's groups as the web builds them
    (`placeCommands`), the account menu's scheme, keyboard shortcuts, and the drawer and stacked rows
    below 768.
