@@ -11,6 +11,7 @@ mod frame;
 mod icon_list;
 mod inputs;
 mod maps;
+mod page;
 mod primitives;
 mod themes;
 
@@ -160,6 +161,16 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Shell",
         doc: "The frame every app has: the rail of its places, the top bar with the trail, the page, and the status line across the bottom. Press a place to go there.",
         show: frame::shell,
+    },
+    Story {
+        path: "Patterns/Page header",
+        doc: "A page's head: its title with a count or a code, a description, and the page's actions at the end of the row.",
+        show: page::page_header,
+    },
+    Story {
+        path: "Patterns/Page state",
+        doc: "What a page shows in place of its content: loading, a refused read with its problems, no answer, a part refused, and empty.",
+        show: page::page_state,
     },
     Story {
         path: "Patterns/Segmented",

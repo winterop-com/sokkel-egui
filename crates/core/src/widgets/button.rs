@@ -195,17 +195,7 @@ impl Widget for Button {
         let ink = dim(ink, enabled);
         let mut x = rect.center().x - (galley.size().x + lead) / 2.0;
         if self.busy {
-            let r = glyph * 0.4;
-            let center = pos2(x + glyph / 2.0, rect.center().y);
-            let start = ui.input(|i| i.time) as f32 * 6.0;
-            let points: Vec<_> = (0..=24)
-                .map(|i| {
-                    let a = start + i as f32 / 24.0 * std::f32::consts::TAU * 0.75;
-                    center + r * vec2(a.cos(), a.sin())
-                })
-                .collect();
-            painter.add(egui::Shape::line(points, Stroke::new(1.5, ink)));
-            ui.ctx().request_repaint();
+            super::spinner(ui, painter, pos2(x + glyph / 2.0, rect.center().y), glyph * 0.4, ink);
         } else if let Some(icon) = self.icon {
             icons::paint(painter, pos2(x + glyph / 2.0, rect.center().y), icon, glyph, ink);
         }

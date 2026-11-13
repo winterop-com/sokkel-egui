@@ -5,6 +5,7 @@ mod chip;
 mod choice;
 mod display;
 mod frame;
+mod page;
 mod switch;
 mod text_field;
 
@@ -13,10 +14,11 @@ pub use chip::{Chip, ChipTone};
 pub use choice::{Checkbox, Segmented, SegmentedVariant, Tabs, TabsVariant};
 pub use display::{Alert, Badge, BadgeVariant, Card, Separator, Skeleton};
 pub use frame::{Rail, RailEntry, RailGroup, Shell, ShellPart, StatusLine, StatusTone, TopBar};
+pub use page::{PageHeader, PageState, PageStateTone, PageStateWords};
 pub use switch::Switch;
 pub use text_field::{Input, TextField};
 
-use egui::{Color32, CornerRadius, Painter, Rect, Response, Stroke, StrokeKind};
+use egui::{Color32, CornerRadius, Painter, Rect, Response, Stroke, StrokeKind, Ui};
 
 use crate::Tokens;
 
@@ -40,4 +42,17 @@ pub(crate) fn focus_ring(painter: &Painter, tokens: &Tokens, rect: Rect, radius:
 /// A color as a disabled control shows it.
 pub(crate) fn dim(color: Color32, enabled: bool) -> Color32 {
     if enabled { color } else { color.gamma_multiply(DISABLED) }
+}
+
+/// The busy spinner: three quarters of a ring turning, in `color`; asks for the next frame.
+pub(crate) fn spinner(ui: &Ui, painter: &Painter, center: egui::Pos2, radius: f32, color: Color32) {
+    let start = ui.input(|i| i.time) as f32 * 6.0;
+    let points: Vec<_> = (0..=24)
+        .map(|i| {
+            let a = start + i as f32 / 24.0 * std::f32::consts::TAU * 0.75;
+            center + radius * egui::vec2(a.cos(), a.sin())
+        })
+        .collect();
+    painter.add(egui::Shape::line(points, Stroke::new(1.5, color)));
+    ui.ctx().request_repaint();
 }
