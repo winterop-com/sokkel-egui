@@ -132,8 +132,19 @@ impl Widget for Rail<'_> {
                     );
                     y += 10.0;
                 } else {
-                    let label = galley(ui, TextRole::Help, title, rect.width() - 32.0);
-                    painter.galley(pos2(rect.left() + 16.0, y), label, t.color("muted-foreground"));
+                    // upper case, tracked, at 500, in faint
+                    let spec = t.text("help");
+                    let rich = TextRole::Help
+                        .rich(&t, title.to_uppercase())
+                        .variation("wght", 500.0)
+                        .extra_letter_spacing(spec.size * 0.025);
+                    let label = WidgetText::from(rich).into_galley(
+                        ui,
+                        Some(TextWrapMode::Truncate),
+                        rect.width() - 32.0,
+                        TextRole::Help.font(&t),
+                    );
+                    painter.galley(pos2(rect.left() + 16.0, y), label, t.color("faint"));
                     y += 26.0;
                 }
             } else {
@@ -245,8 +256,12 @@ impl<'a> TopBar<'a> {
         let t = tokens(ui.ctx());
         let rect = ui.available_rect_before_wrap();
         let response = ui.allocate_rect(rect, Sense::hover());
-        ui.painter()
-            .hline(rect.x_range(), rect.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
+        ui.painter().rect_filled(rect, CornerRadius::ZERO, t.color("sidebar"));
+        ui.painter().hline(
+            rect.x_range(),
+            rect.bottom() - 0.5,
+            Stroke::new(1.0, t.color("border-strong")),
+        );
         let inner = rect.shrink2(vec2(16.0, 0.0));
         ui.scope_builder(
             UiBuilder::new()
@@ -257,7 +272,14 @@ impl<'a> TopBar<'a> {
                 let last = self.trail.len().saturating_sub(1);
                 for (i, crumb) in self.trail.iter().enumerate() {
                     if i > 0 {
-                        ui.label(TextRole::Body.rich(&t, "/").color(t.color("faint")));
+                        let (chevron, _) = ui.allocate_exact_size(vec2(12.0, 12.0), Sense::hover());
+                        icons::paint(
+                            ui.painter(),
+                            chevron.center(),
+                            Icon::ChevronRight,
+                            12.0,
+                            t.color("faint"),
+                        );
                     }
                     let (role, ink) = if i == last {
                         (TextRole::Action, t.color("foreground"))
@@ -382,7 +404,7 @@ impl Shell {
     /// Fill `rect` with the frame, asking `part` to draw each piece in its place.
     pub fn show(self, ui: &mut Ui, rect: Rect, mut part: impl FnMut(ShellPart, &mut Ui)) {
         let t = tokens(ui.ctx());
-        let foot = t.length("spacing-shell-foot").min(32.0);
+        let foot = t.length("spacing-shell-foot");
         let top = t.length("spacing-shell-top");
         let rail_width = Rail::width(self.collapsed);
         let body = Rect::from_min_max(rect.min, pos2(rect.right(), rect.bottom() - foot));
@@ -402,10 +424,6 @@ impl Shell {
                 UiBuilder::new().max_rect(area).layout(Layout::top_down(Align::Min)),
                 |ui| {
                     ui.set_clip_rect(area.intersect(ui.clip_rect()));
-                    if which == ShellPart::Top {
-                        ui.painter()
-                            .rect_filled(area, CornerRadius::ZERO, t.color("background"));
-                    }
                     part(which, ui);
                 },
             );

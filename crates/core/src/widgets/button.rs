@@ -118,8 +118,12 @@ impl Widget for Button {
             role.font(&t),
         );
         let size = vec2(galley.size().x + lead + pad * 2.0, height);
+        // a busy button, and one disabled with a reason, keep their place in the tab order so the
+        // reason can be read; a plain disabled button leaves it
         let sense = if enabled && !self.busy {
             Sense::click()
+        } else if self.busy || self.reason.is_some() {
+            Sense::focusable_noninteractive()
         } else {
             Sense::hover()
         };
@@ -178,18 +182,16 @@ impl Widget for Button {
         } else {
             rect
         };
+        // under the pointer the hover ground takes the place of the rest ground, as `hover:bg-*` does
+        let ground = if hot && hover != none { hover } else { fill };
         let painter = ui.painter();
         painter.rect(
             rect,
             radius,
-            dim(fill, enabled),
+            dim(ground, enabled),
             Stroke::new(1.0, dim(border, enabled)),
             StrokeKind::Inside,
         );
-        if hot && hover != none {
-            // `hover` is a wash for the outline and ghost looks and a whole fill for the others
-            painter.rect_filled(rect.shrink(if border == none { 0.0 } else { 1.0 }), radius, hover);
-        }
         focus_ring(painter, &t, rect, radius, &response);
 
         let ink = dim(ink, enabled);
