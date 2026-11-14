@@ -59,6 +59,14 @@ and never chase a difference made of numbers.
   (`SERIES_ORDER`, from `chart-2`), a line's points sit on the axis' ends, and the value axis
   steps as ECharts picks (1, 2, 3 or 5 times a power of ten, about five apart). The dependency
   graph, deploys and maintenance follow.
+- Under the overview's tiles stands the web's board as it comes, in a `DashboardGrid`: Sites (two
+  thirds, the map of the sites in their states with its legend), Open incidents (a third, the
+  compact incident table and its All, `DashboardPanel::actions`), and Uptime (the whole row,
+  each service's name, what it is and its state over its `UptimeBar`, a day pressed opening that
+  day on the service's page). Arranging the board (Edit, `DashboardArrange`) and the other
+  panels (latency, requests, errors, on call, maintenance, deploys) are still to come.
+- A place chosen inside a page (All, a service's tile, a day) now stays chosen: the shell went
+  back to the place the rail started the frame on whenever the page moved elsewhere.
 - Regions is the web's: the head counting the sites operational, a `ChipBar` of the regions
   (choosing one frames its sites with 6 degrees about them, All frames every site), and a
   `SplitPane` (60% to the map, 35 to 75, the rule dragged or double-clicked back) of the map and

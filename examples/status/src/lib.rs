@@ -71,6 +71,9 @@ pub struct StatusApp {
     pub selected_site: Option<usize>,
     pub sites_table: TableState,
     pub sites_map: MapView,
+    /// The overview's map of the sites, every site framed.
+    pub overview_map: MapView,
+    pub open_table: TableState,
     pub services_table: TableState,
     /// The board's day, the rotation, the handovers and the rotation's table.
     pub today: Day,
@@ -86,6 +89,11 @@ impl StatusApp {
         let mut app = Self::on(Appearance::default());
         // the street map only in the running app: tests draw the map without the network
         sokkel_ui_egui_maps::install(cc.wgpu_render_state.as_ref());
+        app.overview_map = std::mem::replace(&mut app.overview_map, MapView::new(0.0, 0.0, 1.0)).with_tiles(
+            &cc.egui_ctx,
+            "tidevann-status/0.1 (an example app of a component library)",
+            std::env::temp_dir().join("sokkel-ui-egui-tiles").into(),
+        );
         app.sites_map = std::mem::replace(&mut app.sites_map, MapView::new(0.0, 0.0, 1.0)).with_tiles(
             &cc.egui_ctx,
             "tidevann-status/0.1 (an example app of a component library)",
@@ -123,6 +131,12 @@ impl StatusApp {
             region: "All".into(),
             selected_site: None,
             sites_table: TableState::default(),
+            overview_map: {
+                let mut map = MapView::new(30.0, 10.0, 1.0).framed(false);
+                map.frame(Some(bounds_of(&data::SITES.iter().collect::<Vec<_>>())));
+                map
+            },
+            open_table: TableState::default(),
             sites_map: {
                 let mut map = MapView::new(30.0, 10.0, 1.0).framed(false);
                 map.frame(Some(bounds_of(&data::SITES.iter().collect::<Vec<_>>())));
@@ -215,6 +229,8 @@ impl StatusApp {
         } else {
             self.place.clone()
         };
+        // what the rail started the frame on, so only a place chosen there moves the app after it
+        let shown = place.clone();
         let label = PLACES
             .iter()
             .find(|(id, _)| *id == self.place)
@@ -289,7 +305,7 @@ impl StatusApp {
         }
         if place == "settings" {
             self.settings = true;
-        } else if place != self.place && place != "public" {
+        } else if place != shown && place != "public" {
             self.go(&place);
         }
         match account {
@@ -342,6 +358,9 @@ impl StatusApp {
                 self.kpis(ui);
                 if let Some(id) = self.tiles(ui) {
                     self.go(&format!("services/{id}"));
+                }
+                if let Some(route) = self.board(ui) {
+                    self.go(&route);
                 }
             }
         }
@@ -436,36 +455,7 @@ impl StatusApp {
             Column::new("Opened", 128.0).stack(StackPlace::Secondary),
             Column::new("Lasted", 104.0),
         ];
-        let rows: Vec<Vec<Cell>> = listed
-            .iter()
-            .map(|incident| {
-                let mut touched: Vec<String> = incident.services.iter().map(|s| s.to_string()).collect();
-                touched.extend(incident.sites.iter().map(|id| {
-                    data::SITES
-                        .iter()
-                        .find(|s| s.id == *id)
-                        .map_or(*id, |s| s.city)
-                        .to_string()
-                }));
-                let lasted = incident.resolved.unwrap_or(now) - incident.opened;
-                vec![
-                    Cell::Text(incident.title.clone()),
-                    Cell::Mono(incident.code.clone()),
-                    Cell::Chip(state_words(incident.state).into(), state_tone(incident.state)),
-                    Cell::Chip(
-                        severity_words(incident.severity).into(),
-                        severity_tone(incident.severity),
-                    ),
-                    Cell::Tags(touched),
-                    Cell::Person(incident.assignee.into()),
-                    Cell::Relative {
-                        at: incident.opened,
-                        now,
-                    },
-                    Cell::Text(duration(lasted)),
-                ]
-            })
-            .collect();
+        let rows: Vec<Vec<Cell>> = listed.iter().map(|incident| incident_cells(incident, now)).collect();
         let keys: Vec<String> = listed.iter().map(|i| i.id.clone()).collect();
         DataTable::new("incidents", &columns, &rows, &mut self.incidents_table)
             .keys(keys)
@@ -562,6 +552,123 @@ impl StatusApp {
         }
     }
 
+    /// The board under the tiles, as it comes: the sites on a map beside what is open, then every
+    /// service's last ninety days. Returns the route a panel asked to go to.
+    fn board(&mut self, ui: &mut Ui) -> Option<String> {
+        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let mut to_all = None;
+        let mut to_day = None;
+        let markers = self.site_markers(&t);
+        let legend = self.sites_legend(&t);
+        let open: Vec<&data::Incident> = self
+            .incidents
+            .iter()
+            .filter(|i| i.state != data::State::Resolved)
+            .collect();
+        let columns = [
+            Column::new("Incident", 224.0).fill(),
+            Column::new("Code", 88.0).stack(StackPlace::Secondary),
+            Column::new("State", 136.0).stack(StackPlace::Secondary),
+            Column::new("Severity", 104.0).stack(StackPlace::Secondary),
+            Column::new("Opened", 128.0).stack(StackPlace::Secondary),
+        ];
+        // the compact table: the title, code, state, severity and when it opened
+        let rows: Vec<Vec<Cell>> = open
+            .iter()
+            .map(|i| {
+                incident_cells(i, now)
+                    .into_iter()
+                    .enumerate()
+                    .filter(|(column, _)| [0, 1, 2, 3, 6].contains(column))
+                    .map(|(_, cell)| cell)
+                    .collect()
+            })
+            .collect();
+        let open_count = open.len();
+        let keys: Vec<String> = open.iter().map(|i| i.id.clone()).collect();
+        let uptime = self.uptime();
+        let order = self.service_order.clone();
+        let health = self.live_world.health.clone();
+        let map = &mut self.overview_map;
+        let table = &mut self.open_table;
+        DashboardGrid::new("overview").show(ui, |grid| {
+            grid.cell(PanelSpan::TwoThirds, |ui| {
+                DashboardPanel::new("Sites")
+                    .subtitle("by state, live")
+                    .flush(true)
+                    .show(ui, |ui| {
+                        let size = egui::vec2(ui.available_width(), 344.0);
+                        let response = map.show(ui, size, &markers, &[]);
+                        legend.show(ui, response.rect);
+                    });
+            });
+            let all = &mut to_all;
+            grid.cell(PanelSpan::Third, move |ui| {
+                let subtitle = if open_count == 0 {
+                    "none".to_owned()
+                } else {
+                    open_count.to_string()
+                };
+                DashboardPanel::new("Open incidents")
+                    .subtitle(subtitle)
+                    .flush(true)
+                    .actions(|ui| {
+                        let button = Button::new("All").variant(ButtonVariant::Ghost).size(ButtonSize::Sm);
+                        if ui.add(button).clicked() {
+                            *all = Some("incidents".to_owned());
+                        }
+                    })
+                    .show(ui, |ui| {
+                        if rows.is_empty() {
+                            sokkel_ui_egui::Empty::new("Nothing open")
+                                .icon(Icon::CircleCheck)
+                                .description("Every incident is resolved.")
+                                .show(ui, |_| {});
+                        } else {
+                            DataTable::new("open-incidents", &columns, &rows, table)
+                                .keys(keys)
+                                .stack_layout(StackLayout::Labeled)
+                                .footer(false)
+                                .show(ui);
+                        }
+                    });
+            });
+            let days = &mut to_day;
+            grid.cell(PanelSpan::Full, move |ui| {
+                DashboardPanel::new("Uptime")
+                    .subtitle("the last 90 days")
+                    .show(ui, |ui| {
+                        if let Some((service, day)) = uptime_list(ui, &order, &health, &uptime) {
+                            *days = Some(format!("services/{service}/{day}"));
+                        }
+                    });
+            });
+        });
+        to_all.or(to_day)
+    }
+
+    /// Each site as a point in its state's color.
+    fn site_markers(&self, t: &sokkel_ui_egui::Tokens) -> Vec<Marker> {
+        data::SITES
+            .iter()
+            .enumerate()
+            .map(|(i, site)| {
+                Marker::new(site.at[1], site.at[0], "").color(t.color(self.live_world.site_health[i].color()))
+            })
+            .collect()
+    }
+
+    /// The sites map's legend: every site counted by its state.
+    fn sites_legend(&self, t: &sokkel_ui_egui::Tokens) -> MapLegend {
+        let count = |h: live::Health| self.live_world.site_health.iter().filter(|x| **x == h).count();
+        MapLegend::new("Sites")
+            .description(format!("{} cities", data::SITES.len()))
+            .row(t.color("good"), "Operational", count(live::Health::Operational))
+            .row(t.color("warning"), "Degraded", count(live::Health::Degraded))
+            .row(t.color("critical"), "Outage", count(live::Health::Outage))
+    }
+
     /// Every site on a map and in a table, both live: a region frames its sites, and a site chosen
     /// in the table is chosen on the map.
     fn regions_page(&mut self, ui: &mut Ui) {
@@ -593,19 +700,8 @@ impl StatusApp {
         let listed: Vec<usize> = (0..data::SITES.len())
             .filter(|i| self.region == "All" || data::SITES[*i].region == self.region)
             .collect();
-        let markers: Vec<Marker> = data::SITES
-            .iter()
-            .enumerate()
-            .map(|(i, site)| {
-                Marker::new(site.at[1], site.at[0], "").color(t.color(self.live_world.site_health[i].color()))
-            })
-            .collect();
-        let count = |h: live::Health| self.live_world.site_health.iter().filter(|x| **x == h).count();
-        let legend = MapLegend::new("Sites")
-            .description(format!("{} cities", data::SITES.len()))
-            .row(t.color("good"), "Operational", count(live::Health::Operational))
-            .row(t.color("warning"), "Degraded", count(live::Health::Degraded))
-            .row(t.color("critical"), "Outage", count(live::Health::Outage));
+        let markers = self.site_markers(&t);
+        let legend = self.sites_legend(&t);
         let columns = [
             Column::new("City", 128.0).fill(),
             Column::new("State", 136.0).stack(StackPlace::Secondary),
@@ -1065,4 +1161,77 @@ fn bounds_of(sites: &[&data::Site]) -> [f64; 4] {
         lons.fold(f64::NEG_INFINITY, f64::max) + margin,
         lats.fold(f64::NEG_INFINITY, f64::max) + margin,
     ]
+}
+
+/// An incident's cells in the incidents table's columns: its title, code, state, severity, what
+/// it touches, its assignee, when it opened and how long it lasted.
+fn incident_cells(incident: &data::Incident, now: f64) -> Vec<Cell> {
+    let mut touched: Vec<String> = incident.services.iter().map(|s| s.to_string()).collect();
+    touched.extend(incident.sites.iter().map(|id| {
+        data::SITES
+            .iter()
+            .find(|s| s.id == *id)
+            .map_or(*id, |s| s.city)
+            .to_string()
+    }));
+    let lasted = incident.resolved.unwrap_or(now) - incident.opened;
+    vec![
+        Cell::Text(incident.title.clone()),
+        Cell::Mono(incident.code.clone()),
+        Cell::Chip(state_words(incident.state).into(), state_tone(incident.state)),
+        Cell::Chip(
+            severity_words(incident.severity).into(),
+            severity_tone(incident.severity),
+        ),
+        Cell::Tags(touched),
+        Cell::Person(incident.assignee.into()),
+        Cell::Relative {
+            at: incident.opened,
+            now,
+        },
+        Cell::Text(duration(lasted)),
+    ]
+}
+
+/// Each service over its last ninety days, as the web's `UptimeList`: its name and what it is, its
+/// state now, and a bar a day under them, 24 between services. Returns the service and day pressed.
+fn uptime_list(
+    ui: &mut Ui,
+    order: &[usize],
+    health: &[live::Health],
+    uptime: &[Vec<UptimeDay>],
+) -> Option<(&'static str, Day)> {
+    let t = sokkel_ui_egui::tokens(ui.ctx());
+    let mut pressed = None;
+    Stack::new(Gap::Xl).show(ui, |ui| {
+        for &index in order {
+            let service = SERVICES[index];
+            ui.vertical(|ui| {
+                ui.spacing_mut().item_spacing.y = 4.0;
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 8.0;
+                    ui.label(TextRole::Body.rich(&t, service.id).variation("wght", 500.0));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let h = health[index];
+                        ui.add(sokkel_ui_egui::Chip::new(h.words().to_lowercase()).tone(health_tone(h)));
+                        // what it is, beside its name, giving way first where the line is short
+                        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                            ui.add(
+                                egui::Label::new(
+                                    TextRole::Help
+                                        .rich(&t, service.description)
+                                        .color(t.color("muted-foreground")),
+                                )
+                                .truncate(),
+                            );
+                        });
+                    });
+                });
+                if let Some(day) = UptimeBar::new(("overview", service.id), &uptime[index]).show(ui) {
+                    pressed = Some((service.id, day.date));
+                }
+            });
+        }
+    });
+    pressed
 }

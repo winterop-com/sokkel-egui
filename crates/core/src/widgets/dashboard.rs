@@ -158,21 +158,29 @@ impl DashboardGrid {
 /// A panel of a dashboard: a head with its title and subtitle over a rule, its body padded 16
 /// (flush for a table or a graph), and a footer of muted words over a rule, in a card with the
 /// strong border and the surface's corners. In a `DashboardGrid` it stretches to its row.
-pub struct DashboardPanel {
+pub struct DashboardPanel<'a> {
     title: String,
     subtitle: Option<String>,
     flush: bool,
     footer: Option<String>,
+    actions: Option<Box<dyn FnOnce(&mut Ui) + 'a>>,
 }
 
-impl DashboardPanel {
+impl<'a> DashboardPanel<'a> {
     pub fn new(title: impl Into<String>) -> Self {
         Self {
             title: title.into(),
             subtitle: None,
             flush: false,
             footer: None,
+            actions: None,
         }
+    }
+
+    /// Controls at the head's end, such as a small ghost button to the page the panel sums up.
+    pub fn actions(mut self, actions: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.actions = Some(Box::new(actions));
+        self
     }
 
     /// Muted words beside the title, such as what the figures are in.
@@ -238,6 +246,20 @@ impl DashboardPanel {
                     let sub_base = subtitle.rows.first().map_or(0.0, |r| r.max_y());
                     ui.painter()
                         .galley(pos2(x + title_width + 8.0, baseline - sub_base), subtitle, ink);
+                }
+                if let Some(actions) = self.actions {
+                    let end = egui::Rect::from_min_max(
+                        pos2(head.left() + 12.0, head.top()),
+                        pos2(head.right() - 12.0, head.bottom() - 1.0),
+                    );
+                    let mut tools = ui.new_child(
+                        UiBuilder::new()
+                            .id_salt("dashboard-panel-actions")
+                            .max_rect(end)
+                            .layout(egui::Layout::right_to_left(egui::Align::Center)),
+                    );
+                    tools.spacing_mut().item_spacing.x = 8.0;
+                    actions(&mut tools);
                 }
                 let footer = self.footer.as_ref().map(|f| {
                     WidgetText::from(TextRole::Help.rich(&t, f)).into_galley(
