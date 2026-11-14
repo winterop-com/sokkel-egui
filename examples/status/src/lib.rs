@@ -9,13 +9,14 @@ pub mod live;
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, Appearance, AsideWidth, Button, ButtonSize, ButtonVariant, Cell, ChipTone, Column,
-    Columns, DataTable, Day, Editor, Gap, Icon, KpiRow, MenuItem, Page, PageHeader, PersonRow, Rail, RailEntry,
-    RailGroup, Section, Segmented, Shell, ShellPart, Split, Stack, StackLayout, StackPlace, Stat, StatusLine,
-    StatusTone, TableState, TableVariant, Timeline, TimelineEvent, TopBar, install, relative_time,
+    Columns, DashboardGrid, DataTable, Day, Editor, Gap, Icon, KpiRow, MenuItem, Page, PageHeader, PanelSpan,
+    PersonRow, Rail, RailEntry, RailGroup, Section, Segmented, Shell, ShellPart, Split, Stack, StackLayout, StackPlace,
+    Stat, StatusLine, StatusTone, TableState, TableVariant, Timeline, TimelineEvent, TopBar, install, relative_time,
 };
 
 use data::SERVICES;
 use live::Live;
+use sokkel_ui_egui_charts::{Series, TimeSeriesPanel};
 
 /// Tidevann's mark, as sokkel-ui's examples draw it (`tidevann-shared/mark`).
 pub const TIDEVANN_MARK: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="currentColor"><path d="M12 4c-1 1.8-3 3.5-3 5a3 3 0 0 0 6 0c0-1.5-2-3.2-3-5Z"/><path d="M5 13c2-2 4 2 7 0s5-2 7 0v1a7 7 0 0 1-14 0Z"/></svg>"#;
@@ -528,6 +529,7 @@ impl StatusApp {
     fn service_page(&mut self, ui: &mut Ui, id: &str) {
         let index = SERVICES.iter().position(|s| s.id == id).unwrap_or(0);
         let service = SERVICES[index];
+        let t = sokkel_ui_egui::tokens(ui.ctx());
         let health = self.live_world.health[index];
         let last = self.live_world.readings[index].last().copied();
         let head = PageHeader::new(service.id)
@@ -563,6 +565,38 @@ impl StatusApp {
             Stat::new("Running", service.version),
         ])
         .show(ui);
+        let readings = &self.live_world.readings[index];
+        let x: Vec<String> = readings.iter().map(|r| clock_of(r.at)).collect();
+        let warning = t.color("warning");
+        let critical = t.color("critical");
+        DashboardGrid::new("service").show(ui, |grid| {
+            let x2 = x.clone();
+            grid.cell(PanelSpan::Half, move |ui| {
+                TimeSeriesPanel::new("Latency", x2)
+                    .subtitle("live, in milliseconds")
+                    .series(Series::new("p95", readings.iter().map(|r| r.p95.round())))
+                    .series(Series::new("p50", readings.iter().map(|r| r.p50.round())))
+                    .unit("ms")
+                    .threshold((service.latency * 1.8).round(), warning)
+                    .threshold((service.latency * 3.5).round(), critical)
+                    .label_every(15)
+                    .show(ui);
+            });
+            grid.cell(PanelSpan::Half, move |ui| {
+                TimeSeriesPanel::new("Errors", x)
+                    .subtitle("live, share of requests")
+                    .series(Series::new(
+                        "Errors",
+                        readings.iter().map(|r| (r.errors * 100.0).round() / 100.0),
+                    ))
+                    .unit("%")
+                    .decimals(2)
+                    .threshold(1.5, warning)
+                    .threshold(5.0, critical)
+                    .label_every(15)
+                    .show(ui);
+            });
+        });
     }
 
     /// On call: who answers now, the escalation and the next week; the rotation, each week's person
@@ -807,4 +841,10 @@ impl eframe::App for StatusApp {
             .frame(egui::Frame::NONE)
             .show(ui, |ui| self.show(ui));
     }
+}
+
+/// A time of the board's clock, in milliseconds, as `HH:MM:SS`.
+fn clock_of(at: f64) -> String {
+    let at = (at / 1000.0) as u64;
+    format!("{:02}:{:02}:{:02}", at / 3600 % 24, at / 60 % 60, at % 60)
 }

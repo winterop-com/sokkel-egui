@@ -12,6 +12,9 @@ use egui::{
 };
 use std::sync::Arc;
 
+mod panel;
+pub use panel::TimeSeriesPanel;
+
 use sokkel_ui_egui::{TextRole, Tokens, tokens};
 
 /// One named run of values, one per category; `None` leaves a gap.
@@ -30,30 +33,79 @@ impl Series {
     }
 }
 
-/// The series color for the n-th series: the theme's five chart colors, in turn.
+/// The order series take their colors in, as sokkel-ui's charts take them (`SERIES_ORDER`):
+/// `chart-1` is left to a single figure's own color.
+pub const SERIES_ORDER: [&str; 8] = [
+    "chart-2",
+    "chart-3",
+    "chart-4",
+    "kind-teal",
+    "kind-pink",
+    "kind-green",
+    "kind-blue",
+    "chart-5",
+];
+
+/// The color of the n-th series, in `SERIES_ORDER`, round again past the eighth.
 pub fn series_color(t: &Tokens, index: usize) -> Color32 {
-    t.color(&format!("chart-{}", index % 5 + 1))
+    t.color(SERIES_ORDER[index % SERIES_ORDER.len()])
 }
 
 fn axis_font(t: &Tokens) -> FontId {
     FontId::new(t.length("chart-text-size"), FontFamily::Proportional)
 }
 
-/// A step for `ticks` lines between 0 and `max`: 1, 2 or 5 times a power of ten.
+/// A step for about `ticks` intervals between 0 and `max`, rounded as ECharts rounds its axis
+/// interval: 1, 2, 3 or 5 times a power of ten.
 fn nice_step(max: f64, ticks: usize) -> f64 {
     let raw = (max / ticks as f64).max(f64::MIN_POSITIVE);
     let power = 10f64.powf(raw.log10().floor());
     let fraction = raw / power;
-    let nice = if fraction <= 1.0 {
+    let nice = if fraction < 1.5 {
         1.0
-    } else if fraction <= 2.0 {
+    } else if fraction < 2.5 {
         2.0
-    } else if fraction <= 5.0 {
+    } else if fraction < 4.0 {
+        3.0
+    } else if fraction < 7.0 {
         5.0
     } else {
         10.0
     };
     nice * power
+}
+
+/// How a value axis writes its values: a unit after each, and a fixed number of decimals.
+#[derive(Clone, Default)]
+struct Writing {
+    unit: String,
+    decimals: Option<usize>,
+}
+
+impl Writing {
+    /// A value on the axis: its decimals with the trailing zeros dropped, and the unit.
+    fn tick(&self, value: f64) -> String {
+        let number = match self.decimals {
+            Some(d) => {
+                let fixed = format!("{value:.d$}");
+                if fixed.contains('.') {
+                    fixed.trim_end_matches('0').trim_end_matches('.').to_owned()
+                } else {
+                    fixed
+                }
+            }
+            None => label(value),
+        };
+        format!("{number}{}", self.unit)
+    }
+
+    /// A value read out, as under the pointer: all its decimals, and the unit.
+    fn value(&self, value: f64) -> String {
+        match self.decimals {
+            Some(d) => format!("{value:.d$}{}", self.unit),
+            None => format!("{}{}", label(value), self.unit),
+        }
+    }
 }
 
 /// A value as an axis label: whole numbers grouped by thousands, small ones with a decimal.
@@ -79,29 +131,45 @@ fn label(value: f64) -> String {
 struct Frame {
     plot: Rect,
     top: f64,
+    /// Points on the axis' ends, as a line's are, rather than in the middle of each category's band.
+    edge: bool,
+    count: usize,
+}
+
+/// What a frame is drawn with beyond its categories and top value.
+#[derive(Default)]
+struct Axes {
+    writing: Writing,
+    /// Every nth category labeled; as many as fit when `None`.
+    every: Option<usize>,
+    edge: bool,
 }
 
 impl Frame {
-    fn draw(ui: &Ui, rect: Rect, t: &Tokens, categories: &[String], max: f64) -> Self {
+    fn draw(ui: &Ui, rect: Rect, t: &Tokens, categories: &[String], max: f64, axes: &Axes) -> Self {
         let painter = ui.painter();
         let font = axis_font(t);
         let ink = t.color("muted-foreground");
         let rule = t.color("border");
-        let step = nice_step(max.max(1.0), 4);
-        let top = (max / step).ceil().max(1.0) * step;
-        let widest = (0..=((top / step) as usize))
+        let max = if max > 0.0 { max } else { 1.0 };
+        let step = nice_step(max, 5);
+        let top = (max / step - 1e-9).ceil().max(1.0) * step;
+        let ticks = (top / step).round() as usize;
+        let widest = (0..=ticks)
             .map(|i| {
                 painter
-                    .layout_no_wrap(label(i as f64 * step), font.clone(), ink)
+                    .layout_no_wrap(axes.writing.tick(i as f64 * step), font.clone(), ink)
                     .size()
                     .x
             })
             .fold(0.0, f32::max);
+        // the x labels 8 under the plot, the chart's foot 4 under them, as ECharts lays its grid
+        let line = painter.layout_no_wrap("0".into(), font.clone(), ink).size().y;
         let plot = Rect::from_min_max(
             pos2(rect.left() + widest + 8.0, rect.top() + 6.0),
-            pos2(rect.right(), rect.bottom() - 20.0),
+            pos2(rect.right() - 10.0, rect.bottom() - 12.0 - line),
         );
-        for i in 0..=((top / step) as usize) {
+        for i in 0..=ticks {
             let value = i as f64 * step;
             let y = plot.bottom() - (value / top) as f32 * plot.height();
             // the baseline is a rule; the lines above it are quieter
@@ -114,26 +182,45 @@ impl Frame {
             painter.text(
                 pos2(plot.left() - 8.0, y),
                 Align2::RIGHT_CENTER,
-                label(value),
+                axes.writing.tick(value),
                 font.clone(),
                 ink,
             );
         }
-        let band = plot.width() / categories.len().max(1) as f32;
-        // as many x labels as fit, evenly
-        let fits = (plot.width() / 64.0).max(1.0) as usize;
-        let every = categories.len().div_ceil(fits).max(1);
+        let frame = Self {
+            plot,
+            top,
+            edge: axes.edge,
+            count: categories.len(),
+        };
+        // every nth label as asked, or as many as fit, evenly
+        let label_width = categories
+            .iter()
+            .map(|c| painter.layout_no_wrap(c.clone(), font.clone(), ink).size().x)
+            .fold(0.0, f32::max);
+        let fits = (plot.width() / (label_width + 16.0)).max(1.0) as usize;
+        let every = axes.every.unwrap_or_else(|| categories.len().div_ceil(fits)).max(1);
         for (i, category) in categories.iter().enumerate().filter(|(i, _)| i % every == 0) {
-            let x = plot.left() + band * (i as f32 + 0.5);
+            let x = frame.x(i);
             painter.text(
-                pos2(x, plot.bottom() + 6.0),
+                pos2(x, plot.bottom() + 8.0),
                 Align2::CENTER_TOP,
                 category,
                 font.clone(),
                 ink,
             );
         }
-        Self { plot, top }
+        frame
+    }
+
+    /// Where category `i` stands across: on the axis' ends for a line, in its band's middle otherwise.
+    fn x(&self, i: usize) -> f32 {
+        if self.edge {
+            let gaps = self.count.saturating_sub(1).max(1) as f32;
+            self.plot.left() + self.plot.width() * i as f32 / gaps
+        } else {
+            self.plot.left() + self.band(self.count) * (i as f32 + 0.5)
+        }
     }
 
     fn y(&self, value: f64) -> f32 {
@@ -144,13 +231,19 @@ impl Frame {
         self.plot.width() / count.max(1) as f32
     }
 
-    /// The category under the pointer, if it is over the plot.
+    /// The category under the pointer, if it is over the plot: the nearest point on a line.
     fn hovered(&self, response: &Response, count: usize) -> Option<usize> {
         let pos = response.hover_pos()?;
         if !self.plot.expand2(vec2(0.0, 8.0)).contains(pos) {
             return None;
         }
-        Some((((pos.x - self.plot.left()) / self.band(count)) as usize).min(count.saturating_sub(1)))
+        let at = if self.edge {
+            let gaps = count.saturating_sub(1).max(1) as f32;
+            ((pos.x - self.plot.left()) / self.plot.width() * gaps).round().max(0.0) as usize
+        } else {
+            ((pos.x - self.plot.left()) / self.band(count)) as usize
+        };
+        Some(at.min(count.saturating_sub(1)))
     }
 }
 
@@ -158,6 +251,8 @@ impl Frame {
 pub fn legend(ui: &mut Ui, names: &[&str]) {
     let t = tokens(ui.ctx());
     ui.horizontal_wrapped(|ui| {
+        // a line of the legend is 24 tall, as the web's legend items are
+        ui.spacing_mut().interact_size.y = 24.0;
         ui.spacing_mut().item_spacing.x = 16.0;
         for (i, name) in names.iter().enumerate() {
             ui.horizontal(|ui| {
@@ -171,7 +266,13 @@ pub fn legend(ui: &mut Ui, names: &[&str]) {
     });
 }
 
-fn tooltip(response: Response, t: Arc<Tokens>, category: &str, rows: Vec<(Color32, String, Option<f64>)>) {
+fn tooltip(
+    response: Response,
+    t: Arc<Tokens>,
+    category: &str,
+    rows: Vec<(Color32, String, Option<f64>)>,
+    writing: &Writing,
+) {
     response.on_hover_ui_at_pointer(|ui| {
         ui.label(TextRole::Label.rich(&t, category).color(t.color("popover-foreground")));
         for (color, name, value) in rows {
@@ -182,7 +283,7 @@ fn tooltip(response: Response, t: Arc<Tokens>, category: &str, rows: Vec<(Color3
                 if let Some(value) = value {
                     ui.label(
                         TextRole::Help
-                            .rich(&t, label(value))
+                            .rich(&t, writing.value(value))
                             .color(t.color("popover-foreground")),
                     );
                 }
@@ -203,7 +304,21 @@ pub struct LineChart {
     series: Vec<Series>,
     band: Option<(Vec<f64>, Vec<f64>)>,
     area: bool,
+    fill: Fill,
+    writing: Writing,
+    every: Option<usize>,
+    thresholds: Vec<(f64, Color32)>,
     height: f32,
+}
+
+/// How the areas under a line chart's series are filled: not at all, fading from each line toward
+/// the axis (40% of its color to 4%), or evenly (15%).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Fill {
+    #[default]
+    None,
+    Gradient,
+    Solid,
 }
 
 impl LineChart {
@@ -213,12 +328,46 @@ impl LineChart {
             series: Vec::new(),
             band: None,
             area: false,
+            fill: Fill::None,
+            writing: Writing::default(),
+            every: None,
+            thresholds: Vec::new(),
             height: 240.0,
         }
     }
 
     pub fn series(mut self, series: Series) -> Self {
         self.series.push(series);
+        self
+    }
+
+    /// The area under every series filled, as the `area` kind fills it.
+    pub fn fill(mut self, fill: Fill) -> Self {
+        self.fill = fill;
+        self
+    }
+
+    /// The unit written after each value, on the axis and under the pointer ("ms", "%").
+    pub fn unit(mut self, unit: impl Into<String>) -> Self {
+        self.writing.unit = unit.into();
+        self
+    }
+
+    /// The decimals a value is written with; the axis drops trailing zeros.
+    pub fn decimals(mut self, decimals: usize) -> Self {
+        self.writing.decimals = Some(decimals);
+        self
+    }
+
+    /// Labels every nth category on the axis, from the first; as many as fit when not given.
+    pub fn label_every(mut self, every: usize) -> Self {
+        self.every = Some(every);
+        self
+    }
+
+    /// A dashed line across at `value` in `color`, a threshold's step, drawn where the axis reaches it.
+    pub fn threshold(mut self, value: f64, color: Color32) -> Self {
+        self.thresholds.push((value, color));
         self
     }
 
@@ -254,10 +403,54 @@ impl Widget for LineChart {
             .iter()
             .map(|s| max_of(s.values.iter()))
             .fold(band_top, f64::max);
-        let frame = Frame::draw(ui, rect, &t, &self.categories, max);
-        let step = frame.band(count);
-        let x = |i: usize| frame.plot.left() + step * (i as f32 + 0.5);
+        let axes = Axes {
+            writing: self.writing.clone(),
+            every: self.every,
+            edge: true,
+        };
+        let frame = Frame::draw(ui, rect, &t, &self.categories, max, &axes);
+        let x = |i: usize| frame.x(i);
         let painter = ui.painter();
+        // the areas first, so every line lies over every area; the highest point is the gradient's top
+        if self.fill != Fill::None {
+            let crest = frame.y(max);
+            let floor = frame.plot.bottom();
+            for (index, series) in self.series.iter().enumerate() {
+                let color = series_color(&t, index);
+                let shade = |y: f32| match self.fill {
+                    Fill::Gradient => {
+                        let at = ((y - crest) / (floor - crest).max(1.0)).clamp(0.0, 1.0);
+                        color.gamma_multiply(0.40 + (0.04 - 0.40) * at)
+                    }
+                    _ => color.gamma_multiply(0.15),
+                };
+                let mut mesh = egui::Mesh::default();
+                for i in 0..series.values.len().saturating_sub(1) {
+                    if let (Some(a), Some(b)) = (series.values[i], series.values[i + 1]) {
+                        let base = mesh.vertices.len() as u32;
+                        let (ya, yb) = (frame.y(a), frame.y(b));
+                        mesh.colored_vertex(pos2(x(i), ya), shade(ya));
+                        mesh.colored_vertex(pos2(x(i + 1), yb), shade(yb));
+                        mesh.colored_vertex(pos2(x(i + 1), floor), shade(floor));
+                        mesh.colored_vertex(pos2(x(i), floor), shade(floor));
+                        mesh.add_triangle(base, base + 1, base + 2);
+                        mesh.add_triangle(base, base + 2, base + 3);
+                    }
+                }
+                painter.add(Shape::mesh(mesh));
+            }
+        }
+        for (value, color) in &self.thresholds {
+            if *value <= frame.top {
+                let y = frame.y(*value);
+                painter.add(Shape::dashed_line(
+                    &[pos2(frame.plot.left(), y), pos2(frame.plot.right(), y)],
+                    Stroke::new(1.25, *color),
+                    4.0,
+                    4.0,
+                ));
+            }
+        }
         if let Some((low, high)) = &self.band {
             let color = series_color(&t, 0).gamma_multiply(0.18);
             // a band is concave in general; fill it a slice at a time
@@ -273,7 +466,7 @@ impl Widget for LineChart {
         }
         for (index, series) in self.series.iter().enumerate() {
             let color = series_color(&t, index);
-            if self.area && index == 0 {
+            if self.area && index == 0 && self.fill == Fill::None {
                 for i in 0..series.values.len().saturating_sub(1) {
                     if let (Some(a), Some(b)) = (series.values[i], series.values[i + 1]) {
                         let quad = vec![
@@ -323,7 +516,7 @@ impl Widget for LineChart {
                 })
                 .collect();
             let category = self.categories[i].clone();
-            tooltip(response.clone(), t.clone(), &category, rows);
+            tooltip(response.clone(), t.clone(), &category, rows, &self.writing);
         }
         response
     }
@@ -380,7 +573,7 @@ impl Widget for BarChart {
         } else {
             self.series.iter().map(|s| max_of(s.values.iter())).fold(0.0, f64::max)
         };
-        let frame = Frame::draw(ui, rect, &t, &self.categories, max);
+        let frame = Frame::draw(ui, rect, &t, &self.categories, max, &Axes::default());
         let step = frame.band(count);
         let hovered = frame.hovered(&response, count);
         let painter = ui.painter();
@@ -431,7 +624,7 @@ impl Widget for BarChart {
                 })
                 .collect();
             let category = self.categories[i].clone();
-            tooltip(response.clone(), t.clone(), &category, rows);
+            tooltip(response.clone(), t.clone(), &category, rows, &Writing::default());
         }
         response
     }
@@ -511,11 +704,25 @@ mod tests {
     use super::*;
 
     #[test]
-    fn steps_are_one_two_or_five_times_a_power_of_ten() {
-        assert_eq!(nice_step(100.0, 4), 50.0);
-        assert_eq!(nice_step(37.0, 4), 10.0);
-        assert_eq!(nice_step(1284.0, 4), 500.0);
-        assert_eq!(nice_step(0.8, 4), 0.2);
+    fn steps_are_ones_twos_threes_or_fives_as_echarts_picks() {
+        let close = |a: f64, b: f64| (a - b).abs() < 1e-9;
+        assert!(close(nice_step(186.0, 5), 30.0));
+        assert!(close(nice_step(0.14, 5), 0.03));
+        assert!(close(nice_step(100.0, 5), 20.0));
+        assert!(close(nice_step(1284.0, 5), 300.0));
+        assert!(close(nice_step(40.0, 5), 10.0));
+    }
+
+    #[test]
+    fn axis_values_drop_trailing_zeros_and_keep_the_unit() {
+        let writing = Writing {
+            unit: "%".into(),
+            decimals: Some(2),
+        };
+        assert_eq!(writing.tick(0.0), "0%");
+        assert_eq!(writing.tick(0.15), "0.15%");
+        assert_eq!(writing.tick(0.1), "0.1%");
+        assert_eq!(writing.value(0.1), "0.10%");
     }
 
     #[test]

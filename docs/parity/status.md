@@ -42,8 +42,14 @@ and never chase a difference made of numbers.
   scrolls as the web's `main` does (`Page::scroll`); the listings that fill the page with a table
   (incidents, services, regions) keep `Page::show`, their tables scrolling inside it.
 - A service's page has its head (`PageHeader::back`, the host as its code, `PageHeader::chip` for
-  its state, Report incident, Schedule maintenance and Deploy) and its figures; its latency and
-  errors charts, the dependency graph and the uptime bar follow.
+  its state, Report incident, Schedule maintenance and Deploy), its figures, and its live charts
+  in a `DashboardGrid`: Latency (p95 and p50) and Errors, each a `TimeSeriesPanel` from the charts
+  add-on, half the row, the areas fading from each line, a clock time every 15th reading, the
+  values written with their unit and the threshold steps dashed where the axis reaches them. The
+  charts engine follows ECharts here for every chart: the series take the web's color order
+  (`SERIES_ORDER`, from `chart-2`), a line's points sit on the axis' ends, and the value axis
+  steps as ECharts picks (1, 2, 3 or 5 times a power of ten, about five apart). The dependency
+  graph, the uptime bar, deploys and maintenance follow.
 - The busy palette and busy confirm's way out (F23 as the owner refined it: after a wait, a "Stop
   waiting" and Escape again) comes with the overlays batch's specs; egui's palette commands do
   not run long yet, its busy `ConfirmDialog` does.
