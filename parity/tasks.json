@@ -2,7 +2,7 @@
     "example": "examples/tasks/web/src",
     "today": "2026-11-16",
     "ported": {
-        "commit": "a4702e35",
+        "commit": "4f2cf282",
         "files": {
             "App.tsx": "6c80577796288e0404c613aaa780cdfd9736131d",
             "Settings.tsx": "2bdb6414d3c8f445b9bc947d76b102dfd96072f5",
@@ -226,5 +226,5 @@
             ]
         }
     ],
-    "shot": "b1d927cd4d92c6479e6e5f9a6442815e7853b0eb"
+    "shot": "7e19eedb9e10d7ca1bb5c50037a507c1225c28e6"
 }

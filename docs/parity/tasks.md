@@ -50,6 +50,12 @@ counterpart.
 | settings_demo | The section has no Reset to defaults (`SettingsSection::reset(false)`). |
 | settings_reset | `ConfirmDialog` over the settings, 384 wide (`sm`; a `Dialog` is 512 by default, as the dialog spec says) with its 65 footer, its detail wrapping one word earlier than the web's. |
 
+## Last checked
+
+Against sokkel-ui `4f2cf282` (0.28.0): no file of the example changed; the library's overlays did,
+to the looks egui drew ahead of the web (the palette, selects and menus, the settings dialog),
+and the web screens shot again now match egui's there.
+
 ## Tokens
 
 The tokens are sokkel-design's (contract 0.28.0, released at `78dae1b`, made from sokkel-ui

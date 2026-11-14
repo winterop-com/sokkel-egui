@@ -83,6 +83,13 @@ and never chase a difference made of numbers.
 - Next, largest first:
   the dashboard under them; the incidents table (a stacked, labeled list under a bar with its search, row count and sort; `StatusChip`, `TagChips`, `RelativeTime`); the map of sites; the public page; settings; the live simulation behind all of them.
 
+## Last checked
+
+Against sokkel-ui `4f2cf282` (0.28.0): every web screen shot again, 45 of the example's 70 parts
+with an egui counterpart. The rail's untitled first group now stands 4 lower on the web, as egui
+already draws it; the Customers group's described entries stand 54 apart on the web and 58 in
+egui, a difference older than this check, still to settle.
+
 ## Groundwork
 
 - **Manifest:** `parity/status.json`: the example's 70 library parts, 32 with an egui counterpart,
