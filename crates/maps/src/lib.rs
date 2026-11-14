@@ -9,7 +9,8 @@
 use egui::{Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2, WidgetText, pos2, vec2};
 use sokkel_ui_egui::{Icon, TextRole, Tokens, icons, tokens};
 use walkers::{
-    HttpOptions, HttpTiles, Layer, Map, MapMemory, Position, Projector, Style, Tiles, lat_lon, sources::OpenFreeMap,
+    HttpOptions, HttpTiles, Layer, Map, MapMemory, Position, Projector, Style, TileId, Tiles, lat_lon,
+    sources::{Attribution, OpenFreeMap, TileSource},
 };
 
 /// Gets the maps ready to draw their street map's land, water and roads, which are drawn on the
@@ -265,7 +266,7 @@ impl MapView {
                 ..HttpOptions::default()
             };
             self.tiles = Some(HttpTiles::with_options_and_style(
-                OpenFreeMap,
+                Planet::new(source.user_agent),
                 options,
                 street_style(t, dark),
                 source.ctx.clone(),
@@ -372,6 +373,74 @@ impl MapView {
                 let _ = self.memory.set_zoom((self.memory.zoom() + step).clamp(2.0, 18.0));
             }
         }
+    }
+}
+
+/// OpenFreeMap's current build of the world map, which it names at `https://tiles.openfreemap.org/planet`
+/// (its TileJSON). Its builds are dated and an old one may be retired, so the build is looked up
+/// once a run, in the background; until the answer comes, or if the lookup fails, tiles come from
+/// the build walkers names.
+struct Planet {
+    current: &'static std::sync::Mutex<Option<String>>,
+}
+
+impl Planet {
+    fn new(user_agent: &'static str) -> Self {
+        static CURRENT: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+        static ASKED: std::sync::Once = std::sync::Once::new();
+        ASKED.call_once(|| {
+            std::thread::spawn(move || {
+                if let Some(template) = current_planet(user_agent)
+                    && let Ok(mut current) = CURRENT.lock()
+                {
+                    *current = Some(template);
+                }
+            });
+        });
+        Self { current: &CURRENT }
+    }
+}
+
+/// The tile url template OpenFreeMap's TileJSON names for its current build.
+fn current_planet(user_agent: &str) -> Option<String> {
+    let answer = reqwest::blocking::Client::builder()
+        .user_agent(user_agent)
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .ok()?
+        .get("https://tiles.openfreemap.org/planet")
+        .send()
+        .ok()?
+        .error_for_status()
+        .ok()?
+        .text()
+        .ok()?;
+    let json: serde_json::Value = serde_json::from_str(&answer).ok()?;
+    let template = json.get("tiles")?.get(0)?.as_str()?;
+    template.contains("{z}").then(|| template.to_owned())
+}
+
+impl TileSource for Planet {
+    fn tile_url(&self, tile_id: TileId) -> String {
+        match self.current.lock().ok().and_then(|c| c.clone()) {
+            Some(template) => template
+                .replace("{z}", &tile_id.zoom.to_string())
+                .replace("{x}", &tile_id.x.to_string())
+                .replace("{y}", &tile_id.y.to_string()),
+            None => OpenFreeMap.tile_url(tile_id),
+        }
+    }
+
+    fn attribution(&self) -> Attribution {
+        OpenFreeMap.attribution()
+    }
+
+    fn tile_size(&self) -> u32 {
+        OpenFreeMap.tile_size()
+    }
+
+    fn max_zoom(&self) -> u8 {
+        OpenFreeMap.max_zoom()
     }
 }
 
@@ -544,4 +613,17 @@ fn attribution(ui: &Ui, painter: &egui::Painter, t: &Tokens, rect: Rect) {
     );
     painter.rect_filled(pill, t.radius("chip"), t.color("popover").gamma_multiply(0.9));
     painter.galley(pill.min + vec2(5.0, 2.0), text, t.color("muted-foreground"));
+}
+
+#[cfg(test)]
+mod tests {
+    /// Asks OpenFreeMap for its current build; it reaches the network, so it runs only when asked
+    /// (`cargo test -p sokkel-ui-egui-maps -- --ignored`).
+    #[test]
+    #[ignore]
+    fn the_current_planet_is_named() {
+        let template = super::current_planet("sokkel-ui-egui-test").expect("an answer");
+        assert!(template.starts_with("https://tiles.openfreemap.org/planet/"));
+        assert!(template.ends_with("/{z}/{x}/{y}.pbf"));
+    }
 }
