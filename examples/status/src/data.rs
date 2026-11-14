@@ -529,3 +529,64 @@ pub fn seed_incidents(now: f64) -> Vec<Incident> {
     });
     std::iter::once(open).chain(past).collect()
 }
+
+/// What the person on call now was told at the handover.
+pub const ON_CALL_NOTE: &str = "INC-41 is in monitoring; nightly-export should finish by morning.";
+
+/// A week on call, Monday to Monday.
+#[derive(Clone, Debug)]
+pub struct Shift {
+    pub id: String,
+    pub starts: sokkel_ui_egui::Day,
+    /// The Monday after it.
+    pub ends: sokkel_ui_egui::Day,
+    pub person: &'static str,
+}
+
+/// The rotation the demo starts with: eight weeks from two before the one `today` is in, the
+/// people in turn, as the web's `seedShifts`.
+pub fn seed_shifts(today: sokkel_ui_egui::Day) -> Vec<Shift> {
+    let monday = today.plus(-(today.weekday() as i32));
+    (0..8)
+        .map(|index| {
+            let starts = monday.plus((index - 2) * 7);
+            Shift {
+                id: format!("shift-{}", index + 1),
+                starts,
+                ends: starts.plus(7),
+                person: PEOPLE[(index as usize + 3) % PEOPLE.len()],
+            }
+        })
+        .collect()
+}
+
+/// The pager changing hands: who gave it to whom, when, and what they said.
+#[derive(Clone, Debug)]
+pub struct Handover {
+    pub id: String,
+    /// When, in milliseconds of the board's clock.
+    pub at: f64,
+    pub from: &'static str,
+    pub to: &'static str,
+    pub note: String,
+}
+
+/// The handovers the demo starts with: this Monday at nine, and the one before.
+pub fn seed_handovers(monday_nine: f64) -> Vec<Handover> {
+    vec![
+        Handover {
+            id: "handover-1".into(),
+            at: monday_nine,
+            from: "ada",
+            to: "grace",
+            note: "Quiet week. The search index move is planned for the weekend.".into(),
+        },
+        Handover {
+            id: "handover-2".into(),
+            at: monday_nine - 7.0 * DAY,
+            from: "margaret",
+            to: "ada",
+            note: "Watch the worker after the upload fix.".into(),
+        },
+    ]
+}

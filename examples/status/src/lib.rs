@@ -8,9 +8,10 @@ pub mod live;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
-    AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, Cell, ChipTone, Column, Columns,
-    DataTable, Gap, Icon, KpiRow, MenuItem, Page, PageHeader, Rail, RailEntry, RailGroup, Segmented, Shell, ShellPart,
-    Stack, StackLayout, StackPlace, Stat, StatusLine, StatusTone, TableState, TopBar, install,
+    AccountAction, AccountMenu, Appearance, AsideWidth, Button, ButtonSize, ButtonVariant, Cell, ChipTone, Column,
+    Columns, DataTable, Day, Editor, Gap, Icon, KpiRow, MenuItem, Page, PageHeader, PersonRow, Rail, RailEntry,
+    RailGroup, Section, Segmented, Shell, ShellPart, Split, Stack, StackLayout, StackPlace, Stat, StatusLine,
+    StatusTone, TableState, TableVariant, Timeline, TimelineEvent, TopBar, install, relative_time,
 };
 
 use data::SERVICES;
@@ -59,6 +60,11 @@ pub struct StatusApp {
     /// The services in the person's own order, by their index in `SERVICES`, and their table.
     pub service_order: Vec<usize>,
     pub services_table: TableState,
+    /// The board's day, the rotation, the handovers and the rotation's table.
+    pub today: Day,
+    pub shifts: Vec<data::Shift>,
+    pub handovers: Vec<data::Handover>,
+    pub rotation_table: TableState,
     /// The live world the readings come from.
     pub live_world: Live,
 }
@@ -70,6 +76,8 @@ impl StatusApp {
 
     /// The board as the demo starts: 09:00, the seeded incidents, grace on call.
     pub fn on(appearance: Appearance) -> Self {
+        // the demo's day, as the web's shots are taken on it
+        let today = Day::parse("2026-11-16").expect("a day");
         Self {
             place: "overview".into(),
             service: None,
@@ -86,6 +94,10 @@ impl StatusApp {
             incident_search: String::new(),
             service_order: (0..SERVICES.len()).collect(),
             services_table: TableState::default(),
+            today,
+            shifts: data::seed_shifts(today),
+            handovers: data::seed_handovers(9.0 * 3600.0 * 1000.0),
+            rotation_table: TableState::default(),
             live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
         }
     }
@@ -259,11 +271,9 @@ impl StatusApp {
             ("regions", _) => PageHeader::new("Regions")
                 .count("11 of 11 sites operational")
                 .show(ui, |_| {}),
-            ("on-call", _) => PageHeader::new("On call")
-                .description("Who answers when something goes wrong, and the weeks ahead.")
-                .show(ui, |ui| {
-                    ui.add(Button::new("Hand over").icon(Icon::ArrowRightLeft));
-                }),
+            ("on-call", _) => {
+                Stack::new(Gap::Page).show(ui, |ui| self.on_call_page(ui));
+            }
             _ => {
                 let description = if live {
                     format!("Live, a reading every {INTERVAL} s, the last at {clock}.")
@@ -503,6 +513,126 @@ impl StatusApp {
         }
     }
 
+    /// On call: who answers now, the escalation and the next week; the rotation, each week's person
+    /// chosen in place; and the handovers beside them.
+    fn on_call_page(&mut self, ui: &mut Ui) {
+        PageHeader::new("On call")
+            .description("Who answers when something goes wrong, and the weeks ahead.")
+            .show(ui, |ui| {
+                ui.add(Button::new("Hand over").icon(Icon::ArrowRightLeft));
+            });
+        let today = self.today;
+        let current = self.shifts.iter().position(|s| s.starts <= today && today < s.ends);
+        let next = self.shifts.iter().find(|s| s.starts > today).cloned();
+        // the backup is whoever had last week, unless that is who has the pager now or next
+        let before = current.and_then(|i| i.checked_sub(1)).map(|i| self.shifts[i].person);
+        let now = self.on_call.clone();
+        let escalates = match before {
+            Some(b) if b != now && Some(b) != next.as_ref().map(|n| n.person) => Some(b),
+            _ => data::PEOPLE
+                .iter()
+                .copied()
+                .find(|p| *p != now && Some(*p) != next.as_ref().map(|n| n.person)),
+        };
+        let handovers: Vec<TimelineEvent> = self
+            .handovers
+            .iter()
+            .map(|h| TimelineEvent {
+                icon: Icon::PhoneCall,
+                title: format!("{} to {}", h.from, h.to),
+                at: {
+                    let words = relative_time(h.at - self.start as f64 * 1000.0);
+                    if words == "now" { "now".into() } else { words }
+                },
+                detail: Some(h.note.clone()),
+            })
+            .collect();
+        let handover_count = self.handovers.len().to_string();
+        let since = format!("{}, 09:00", today.plus(-(today.weekday() as i32)).with_weekday());
+        Split::new(AsideWidth::Lg).show(
+            ui,
+            |ui| {
+                Stack::new(Gap::Section).show(ui, |ui| {
+                    Section::new("Now")
+                        .description(format!("From the handover: {}", data::ON_CALL_NOTE))
+                        .show(ui, |ui| {
+                            Stack::new(Gap::Md).show(ui, |ui| {
+                                PersonRow::new(&now)
+                                    .detail(format!("on call since {since}"))
+                                    .show(ui, |ui| chip(ui, "on call", ChipTone::Good));
+                                if let Some(person) = escalates {
+                                    PersonRow::new(person)
+                                        .detail("takes it if nobody answers in 15 minutes")
+                                        .show(ui, |ui| chip(ui, "escalation", ChipTone::Status("waiting")));
+                                }
+                                if let Some(next) = &next {
+                                    PersonRow::new(next.person)
+                                        .detail(format!("on call from {}", next.starts.with_weekday()))
+                                        .show(ui, |ui| chip(ui, "next week", ChipTone::Status("queued")));
+                                }
+                            });
+                        });
+                    Section::new("Rotation")
+                        .description("A week each, Monday to Monday. Press a name to change who takes the week.")
+                        .flush(true)
+                        .show(ui, |ui| self.rotation(ui));
+                });
+            },
+            |ui| {
+                Section::new("Handovers")
+                    .meta(handover_count)
+                    .show(ui, |ui| Timeline::new(handovers).show(ui));
+            },
+        );
+    }
+
+    /// The rotation week by week, each week's person chosen in place.
+    fn rotation(&mut self, ui: &mut Ui) {
+        let today = self.today;
+        let columns = [
+            Column::new("Week", 192.0).fill(),
+            Column::new("When", 128.0).stack(StackPlace::Secondary),
+            Column::new("On call", 160.0).editable(Editor::Select(data::PEOPLE.map(String::from).to_vec())),
+        ];
+        let rows: Vec<Vec<Cell>> = self
+            .shifts
+            .iter()
+            .map(|s| {
+                let when = if s.starts <= today && today < s.ends {
+                    Cell::Chip("this week".into(), ChipTone::Good)
+                } else if s.ends <= today {
+                    Cell::Text("past".into())
+                } else {
+                    Cell::Text("ahead".into())
+                };
+                vec![
+                    Cell::Text(format!(
+                        "{} to {}",
+                        s.starts.with_weekday(),
+                        s.ends.plus(-1).with_weekday()
+                    )),
+                    when,
+                    Cell::Person(s.person.into()),
+                ]
+            })
+            .collect();
+        let keys: Vec<String> = self.shifts.iter().map(|s| s.id.clone()).collect();
+        let output = DataTable::new("rotation", &columns, &rows, &mut self.rotation_table)
+            .keys(keys)
+            .variant(TableVariant::List)
+            .stack_layout(StackLayout::Labeled)
+            // every week shown, as the web's table holds them all
+            .height(f32::INFINITY)
+            .footer(false)
+            .today(today)
+            .show(ui);
+        if let Some(edit) = output.edited
+            && let Some(person) = data::PEOPLE.iter().find(|p| **p == edit.value)
+        {
+            self.shifts[edit.row].person = person;
+        }
+    }
+
     /// Each service as a tile: its state, its latency now with its last readings as a line, and its
     /// uptime (none yet: the incident history it is read from is still to port).
     fn tiles(&self, ui: &mut Ui) -> Option<&'static str> {
@@ -599,6 +729,11 @@ fn rate(value: f64) -> String {
     } else {
         format!("{value:.1}%")
     }
+}
+
+/// A chip at the end of a row, as `StatusChip` draws a state.
+fn chip(ui: &mut Ui, label: &str, tone: ChipTone) {
+    ui.add(sokkel_ui_egui::Chip::new(label).tone(tone));
 }
 
 /// A count with its thousands set apart, as the web's `formatCount`: 7,230.

@@ -15,6 +15,7 @@ mod menu;
 mod overlay;
 mod page;
 mod person;
+mod section;
 mod settings;
 mod stat;
 mod switch;
@@ -34,11 +35,12 @@ pub use empty::Empty;
 pub(crate) use fields::search_field;
 pub use fields::{DueState, DueText, QuickAdd, SearchField, SwitchField, due_state, toolbar};
 pub use frame::{Rail, RailEntry, RailGroup, Shell, ShellPart, ShellWords, StatusLine, StatusTone, TopBar, is_phone};
-pub use layout::{Columns, Gap, Stack};
+pub use layout::{AsideWidth, Columns, Gap, Split, Stack};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use overlay::{ConfirmAnswer, ConfirmDialog, Dialog, Select, tooltip, tooltip_shown};
 pub use page::{Page, PageHeader, PageState, PageStateTone, PageStateWords};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
+pub use section::{PersonRow, Section, Timeline, TimelineEvent};
 pub use settings::{
     SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, ThemeWords, setting_row, setting_row_found_by,
     theme_settings,

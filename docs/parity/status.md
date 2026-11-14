@@ -36,9 +36,13 @@ and never chase a difference made of numbers.
   putting the board's back), the description as a primary value over up to two lines
   (`StackPlace::Primary`), the facts (state, p95, errors, uptime), the bar with the count and
   Sort, and the latency sparkline (`Cell::Trend`) for when it does not stack.
+- On call is the web's: a `Split` with the Now `Section` (each `PersonRow` with its chip, the
+  escalation and next week in their status tones, `ChipTone::Status`), the Rotation section with
+  its weeks, each week's person chosen in place, and the Handovers `Timeline` beside them. The
+  web's page scrolls past the window's foot where egui's page clips; that is the page's own
+  scroller, still to give the shell.
 - Next, largest first:
-  the dashboard under them; the incidents table (a stacked, labeled list under a bar with its search, row count and sort; `StatusChip`, `TagChips`, `RelativeTime`); the map of sites; on call's
-  rotation; the public page; settings; the live simulation behind all of them.
+  the dashboard under them; the incidents table (a stacked, labeled list under a bar with its search, row count and sort; `StatusChip`, `TagChips`, `RelativeTime`); the map of sites; the public page; settings; the live simulation behind all of them.
 
 ## Groundwork
 

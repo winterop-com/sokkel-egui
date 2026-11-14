@@ -421,7 +421,7 @@ impl<'a> DataTable<'a> {
         self
     }
 
-    /// Stack the rows as cards where a list's columns no longer fit, or it is narrower than 576:
+    /// Stack the rows as cards where a list's columns no longer fit, or it is narrower than 480:
     /// `StackLayout::Compact` draws each as its leads and title over one quiet line of the rest.
     pub fn stack_layout(mut self, layout: StackLayout) -> Self {
         self.stack_layout = layout;
@@ -446,7 +446,9 @@ impl<'a> DataTable<'a> {
             + select_width
             + if self.reorder { GRIP } else { 0.0 }
             + if self.actions.is_some() { ACTIONS } else { 0.0 };
-        width < columns.max(576.0)
+        // a table whose columns shrink to fit (`minWidth="auto"`) stacks below 480, as the web's
+        // `stackDefault`, or once its columns no longer fit, whichever is wider
+        width < columns.max(480.0)
     }
 
     pub fn today(mut self, today: Day) -> Self {

@@ -104,3 +104,54 @@ impl Stack {
         .inner
     }
 }
+
+/// How wide a `Split`'s aside stands: `sm` 256, `md` 320, `lg` 384.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AsideWidth {
+    Sm,
+    Md,
+    Lg,
+}
+
+/// The page's main part beside an aside at its end, after sokkel-ui's `Split`: side by side, 24
+/// apart, from 768 of room; one under the other below it.
+pub struct Split {
+    aside: AsideWidth,
+}
+
+impl Split {
+    pub fn new(aside: AsideWidth) -> Self {
+        Self { aside }
+    }
+
+    pub fn show(self, ui: &mut Ui, main: impl FnOnce(&mut Ui), aside: impl FnOnce(&mut Ui)) {
+        let room = ui.available_width();
+        let side = match self.aside {
+            AsideWidth::Sm => 256.0,
+            AsideWidth::Md => 320.0,
+            AsideWidth::Lg => 384.0,
+        };
+        let gap = 24.0;
+        if room < 768.0 {
+            ui.vertical(|ui| {
+                ui.spacing_mut().item_spacing.y = gap;
+                main(ui);
+                aside(ui);
+            });
+            return;
+        }
+        ui.horizontal_top(|ui| {
+            ui.spacing_mut().item_spacing.x = gap;
+            // each side lays its parts one under another, as wide as it is given
+            let down = egui::Layout::top_down(egui::Align::Min);
+            ui.allocate_ui_with_layout(vec2(room - side - gap, ui.available_height()), down, |ui| {
+                ui.set_width(room - side - gap);
+                main(ui);
+            });
+            ui.allocate_ui_with_layout(vec2(side, ui.available_height()), down, |ui| {
+                ui.set_width(side);
+                aside(ui);
+            });
+        });
+    }
+}
