@@ -1,12 +1,22 @@
 //! sokkel-ui-egui's maps: one engine, walkers, as sokkel-ui draws every map with one engine. A
 //! [`MapView`] keeps where the map looks and its tiles; [`MapView::show`] draws it at a size, with
 //! markers and routes over it in the chart colors, its frame in the tokens' rule and corner, and
-//! zoom buttons. Without tiles (tests, or offline) it draws the `canvas` ground with a graticule,
-//! so the markers and routes still sit somewhere.
+//! zoom buttons. Its tiles are OpenFreeMap's vector street map, as sokkel-ui's default basemap,
+//! drawn light or dark by the scheme over the ground in `card`, so a tile not yet loaded shows the
+//! ground. Without tiles (tests, or offline) it draws the ground with a graticule, so the markers
+//! and routes still sit somewhere.
 
 use egui::{Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2, WidgetText, pos2, vec2};
 use sokkel_ui_egui::{Icon, TextRole, Tokens, icons, tokens};
-use walkers::{HttpOptions, HttpTiles, Map, MapMemory, Position, Projector, Tiles, lat_lon, sources::OpenStreetMap};
+use walkers::{
+    HttpOptions, HttpTiles, Layer, Map, MapMemory, Position, Projector, Style, Tiles, lat_lon, sources::OpenFreeMap,
+};
+
+/// Gets the maps ready to draw their street map's land, water and roads, which are drawn on the
+/// GPU: call it once at startup with eframe's wgpu render state,
+/// `sokkel_ui_egui_maps::install(cc.wgpu_render_state.as_ref())`. Without it a map draws only the
+/// street map's names.
+pub use walkers::install_renderer as install;
 
 /// A point on the map with a label, in a chart color (0 to 4 for `chart-1` to `chart-5`).
 #[derive(Clone, Debug)]
@@ -57,7 +67,11 @@ impl Route {
 /// Where a map looks and what it draws its ground from; keep one per map between frames.
 pub struct MapView {
     memory: MapMemory,
+    /// Where the street map comes from, once asked for.
+    source: Option<Source>,
+    /// The street map, styled for the colors in `styled`.
     tiles: Option<HttpTiles>,
+    styled: Option<[Color32; 2]>,
     home: Position,
     zoom: f64,
 }
@@ -69,28 +83,51 @@ impl MapView {
         let _ = memory.set_zoom(zoom);
         Self {
             memory,
+            source: None,
             tiles: None,
+            styled: None,
             home: lat_lon(lat, lon),
             zoom,
         }
     }
 
-    /// Draw OpenStreetMap's tiles under the map, as their usage policy asks: an identifying
-    /// `user_agent` (natively; a browser sends its own), and `cache`, a folder that keeps tiles
-    /// until they expire.
+    /// Draw OpenFreeMap's vector street map under the map, light or dark by the scheme, as
+    /// sokkel-ui's default basemap: with an identifying `user_agent` (natively; a browser sends its
+    /// own), and `cache`, a folder that keeps tiles until they expire.
     pub fn with_tiles(
         mut self,
         ctx: &egui::Context,
         user_agent: &'static str,
         cache: Option<std::path::PathBuf>,
     ) -> Self {
-        let options = HttpOptions {
+        self.source = Some(Source {
+            ctx: ctx.clone(),
+            user_agent,
             cache,
-            user_agent: Some(walkers::HeaderValue::from_static(user_agent)),
-            ..HttpOptions::default()
-        };
-        self.tiles = Some(HttpTiles::with_options(OpenStreetMap, options, ctx.clone()));
+        });
         self
+    }
+
+    /// The street map styled for the tokens in use, made again when their ground or ink changes.
+    fn tiles_for(&mut self, t: &Tokens, dark: bool) {
+        let Some(source) = self.source.as_ref() else {
+            return;
+        };
+        let key = [t.color("card"), t.color("foreground")];
+        if self.styled != Some(key) || self.tiles.is_none() {
+            let options = HttpOptions {
+                cache: source.cache.clone(),
+                user_agent: Some(walkers::HeaderValue::from_static(source.user_agent)),
+                ..HttpOptions::default()
+            };
+            self.tiles = Some(HttpTiles::with_options_and_style(
+                OpenFreeMap,
+                options,
+                street_style(t, dark),
+                source.ctx.clone(),
+            ));
+            self.styled = Some(key);
+        }
     }
 
     /// Look at the place and zoom the map was made with again.
@@ -103,12 +140,18 @@ impl MapView {
     /// pinch to zoom, double-click the buttons' minus to step back out.
     pub fn show(&mut self, ui: &mut Ui, size: Vec2, markers: &[Marker], routes: &[Route]) -> Response {
         let t = tokens(ui.ctx());
-        let has_tiles = self.tiles.is_some();
+        let has_tiles = self.source.is_some();
+        let dark = ui.visuals().dark_mode;
+        let home = self.home;
+        self.tiles_for(&t, dark);
         let tiles = self.tiles.as_mut().map(|tiles| tiles as &mut dyn Tiles);
         let response = ui
             .allocate_ui(size, |ui| {
                 ui.set_min_size(size);
-                Map::new(tiles, &mut self.memory, self.home)
+                // the ground in `card`, under the tiles, showing where one has not loaded
+                let room = Rect::from_min_size(ui.cursor().min, size);
+                ui.painter().rect_filled(room, CornerRadius::ZERO, t.color("card"));
+                Map::new(tiles, &mut self.memory, home)
                     .zoom_with_ctrl(false)
                     .show(ui, |ui, response, projector, _| {
                         let painter = ui.painter_at(response.rect);
@@ -180,12 +223,93 @@ impl MapView {
     }
 }
 
-/// The ground without tiles: the canvas color and a graticule every degree.
+/// Where a map's street map comes from: the host's identifying user agent and a tile cache.
+struct Source {
+    ctx: egui::Context,
+    user_agent: &'static str,
+    cache: Option<std::path::PathBuf>,
+}
+
+/// `share` of `a` over `b`, as `color-mix` mixes two opaque colors.
+fn mix(a: Color32, b: Color32, share: f32) -> Color32 {
+    let channel = |x: u8, y: u8| (x as f32 * share + y as f32 * (1.0 - share)).round() as u8;
+    Color32::from_rgb(channel(a.r(), b.r()), channel(a.g(), b.g()), channel(a.b(), b.b()))
+}
+
+/// The street map in the tokens' colors, a pale map after the web's light and dark street maps:
+/// no background of its own, so the ground (`card`) is the land; water, land use, buildings, roads
+/// and borders in the foreground at small shares over it; place names in the web's ink (the
+/// foreground at 80%) over a halo in the ground, the rest of the names muted; and every name in
+/// its Latin form where the tiles have one, so a name in a script the fonts lack still reads.
+fn street_style(t: &Tokens, dark: bool) -> Style {
+    let mut style = if dark {
+        Style::openmaptiles_basemap_dark()
+    } else {
+        Style::openmaptiles_basemap_light()
+    };
+    let ground = t.color("card");
+    let ink = t.color("foreground");
+    let tone = |share: f32| walkers::Color(walkers::json!(sokkel_ui_egui::hex(mix(ink, ground, share))));
+    let source = |layer: &walkers::SourceLayer| layer.to_string();
+    style.layers.retain(|layer| !matches!(layer, Layer::Background { .. }));
+    for layer in &mut style.layers {
+        match layer {
+            Layer::Fill {
+                source_layer, paint, ..
+            } => {
+                let from = source(source_layer);
+                let share = if from.contains("water") {
+                    0.12
+                } else if from.contains("building") {
+                    0.07
+                } else {
+                    0.04
+                };
+                paint.fill_color = Some(tone(share));
+            }
+            Layer::Line {
+                source_layer, paint, ..
+            } => {
+                let from = source(source_layer);
+                let share = if from.contains("boundary") {
+                    0.28
+                } else if from.contains("water") {
+                    0.12
+                } else {
+                    0.1
+                };
+                paint.line_color = Some(tone(share));
+            }
+            Layer::Symbol {
+                source_layer,
+                layout,
+                paint,
+                ..
+            } => {
+                let place = source(source_layer).contains("place");
+                if layout.text_field == Some(walkers::json!(["get", "name"])) {
+                    layout.text_field = Some(walkers::json!(["coalesce", ["get", "name:latin"], ["get", "name"]]));
+                }
+                let paint = paint.get_or_insert_with(Default::default);
+                paint.text_color = Some(if place {
+                    tone(0.8)
+                } else {
+                    walkers::Color(walkers::json!(sokkel_ui_egui::hex(t.color("muted-foreground"))))
+                });
+                paint.text_halo_color = Some(walkers::Color(walkers::json!(sokkel_ui_egui::hex(ground))));
+            }
+            _ => {}
+        }
+    }
+    style
+}
+
+/// The ground without tiles: `card`, and a graticule every degree in the foreground at 14% over it.
 fn ground(painter: &egui::Painter, t: &Tokens, rect: Rect, projector: &Projector) {
-    painter.rect_filled(rect, CornerRadius::ZERO, t.color("canvas"));
+    painter.rect_filled(rect, CornerRadius::ZERO, t.color("card"));
     let center = projector.unproject(rect.center().to_vec2());
     let (lat0, lon0) = (center.y().round(), center.x().round());
-    let stroke = Stroke::new(1.0, t.color("border"));
+    let stroke = Stroke::new(1.0, t.color_at("foreground", 0.14));
     // parallels a degree apart, then meridians, each far enough to cross any view
     for d in -60..=60 {
         let lat = lat0 + d as f64;
@@ -241,9 +365,10 @@ fn overlays(painter: &egui::Painter, t: &Tokens, projector: &Projector, markers:
     }
 }
 
-/// OpenStreetMap's credit, which its tiles ask to be shown on the map.
+/// The credits the street map's hosts ask to be shown on the map, as the web's.
 fn attribution(ui: &Ui, painter: &egui::Painter, t: &Tokens, rect: Rect) {
-    let text = WidgetText::from(TextRole::Help.rich(t, "OpenStreetMap contributors")).into_galley(
+    let credits = "OpenFreeMap © OpenMapTiles © OpenStreetMap contributors";
+    let text = WidgetText::from(TextRole::Help.rich(t, credits)).into_galley(
         ui,
         Some(egui::TextWrapMode::Extend),
         f32::INFINITY,

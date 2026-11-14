@@ -29,6 +29,7 @@ impl Storybook {
             .unwrap_or_default();
         let mut book = Self::with(appearance);
         // tiles only in the running app: tests draw the map without the network
+        sokkel_ui_egui_maps::install(cc.wgpu_render_state.as_ref());
         book.state.map = sokkel_ui_egui_maps::MapView::new(60.4, 11.5, 5.0).with_tiles(
             &cc.egui_ctx,
             "sokkel-ui-egui-storybook/0.1 (a component library's example maps)",
