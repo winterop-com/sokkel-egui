@@ -1303,7 +1303,8 @@ impl<'a> DataTable<'a> {
                     .max_height(if self.stretch {
                         (room - head_height - 2.0).max(row_height)
                     } else {
-                        self.height
+                        // never taller than its rows: a height without bound shows them all
+                        self.height.min(order.len() as f32 * row_height + 1.0)
                     })
                     .auto_shrink([false, true]);
                 let count = order.len();

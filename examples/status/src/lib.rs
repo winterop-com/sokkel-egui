@@ -217,7 +217,17 @@ impl StatusApp {
                 });
             }
             ShellPart::Page => {
-                Page::show(ui, |ui| self.page(ui));
+                // the listings fill the page, their tables scrolling inside it; the other pages
+                // scroll as a whole
+                let fills = matches!(
+                    (self.place.as_str(), self.service.as_ref()),
+                    ("incidents", _) | ("services", None) | ("regions", _)
+                );
+                if fills {
+                    Page::show(ui, |ui| self.page(ui));
+                } else {
+                    Page::scroll(ui, |ui| self.page(ui));
+                }
             }
             ShellPart::Foot => {
                 let note = if live {

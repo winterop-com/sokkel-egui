@@ -12,6 +12,17 @@ use crate::{Button, ButtonSize, ButtonVariant, Icon, TextRole, icons, tokens};
 pub struct Page;
 
 impl Page {
+    /// The page in a scroller of its own, as the shell's `main` scrolls a page taller than the
+    /// window. A page that fills the window with a part that scrolls itself (a table) uses
+    /// [`Page::show`] instead, so that part can take the room left.
+    pub fn scroll<R>(ui: &mut Ui, content: impl FnOnce(&mut Ui) -> R) -> R {
+        egui::ScrollArea::vertical()
+            .id_salt("sokkel-page")
+            .auto_shrink([false, false])
+            .show(ui, |ui| Self::show(ui, content))
+            .inner
+    }
+
     pub fn show<R>(ui: &mut Ui, content: impl FnOnce(&mut Ui) -> R) -> R {
         let t = tokens(ui.ctx());
         // the room the page's scroller gives, its thin track included, as the web's `100cqi`

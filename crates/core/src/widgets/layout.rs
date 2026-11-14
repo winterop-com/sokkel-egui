@@ -144,11 +144,11 @@ impl Split {
             ui.spacing_mut().item_spacing.x = gap;
             // each side lays its parts one under another, as wide as it is given
             let down = egui::Layout::top_down(egui::Align::Min);
-            ui.allocate_ui_with_layout(vec2(room - side - gap, ui.available_height()), down, |ui| {
+            ui.allocate_ui_with_layout(vec2(room - side - gap, f32::INFINITY), down, |ui| {
                 ui.set_width(room - side - gap);
                 main(ui);
             });
-            ui.allocate_ui_with_layout(vec2(side, ui.available_height()), down, |ui| {
+            ui.allocate_ui_with_layout(vec2(side, f32::INFINITY), down, |ui| {
                 ui.set_width(side);
                 aside(ui);
             });
