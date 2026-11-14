@@ -65,6 +65,10 @@ differ on purpose until then; a difference listed here is not drift to undo:
   from a lead to its label; the palette's active row is lit in `accent` with `accent-foreground`
   ink, as the menus' are (the web's is `muted`); the palette's arrows stop at its ends, Home and
   End reach them, and Mod+K closes an open palette.
+- F1, F2 (focus_rail, phone_menu_focus, egui's own shots): the frame's controls (rail entries, the
+  account trigger, the drawer's close, the top bar's menu button) take the button's keyboard focus,
+  a 2px `ring` outline 2 off, where the web's rail takes the browser's outline in `ring/50`; the
+  menu button and the drawer's close turn `foreground` under the pointer.
 - F18: no blur behind a dialog, on either side once the web drops its own.
 
 ## What is left, largest first

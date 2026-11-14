@@ -104,6 +104,12 @@ fn every_screen() {
     harness.run_steps(2);
     results.add(harness.try_snapshot("account"));
 
+    // keyboard focus on a rail entry: the frame's one focus look, the button's 2px ring, 2 off
+    let mut harness = render(Scheme::System, |_| {});
+    harness.get_by_label("Today").focus();
+    harness.run_steps(3);
+    results.add(harness.try_snapshot("focus_rail"));
+
     // a phone, 390 by 844: the rail a drawer behind the top bar's menu button
     let phone = [390.0, 844.0];
     let mut harness = render_at(phone, Scheme::System, |_| {});
@@ -114,6 +120,12 @@ fn every_screen() {
     harness.remove_cursor();
     harness.run_steps(2);
     results.add(harness.try_snapshot("phone_drawer"));
+
+    // keyboard focus on the menu button, which looks like the rail's head control
+    let mut harness = render_at(phone, Scheme::System, |_| {});
+    harness.get_by_label("Open the navigation").focus();
+    harness.run_steps(3);
+    results.add(harness.try_snapshot("phone_menu_focus"));
 
     // a stacked row's title pressed: its editor in the title's place
     let mut harness = render_at(phone, Scheme::System, |_| {});

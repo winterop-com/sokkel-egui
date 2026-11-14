@@ -215,6 +215,8 @@ impl AccountMenu {
         if trigger.hovered() || Popup::is_id_open(ui.ctx(), popup_id) {
             ui.painter().rect_filled(row, t.radius("md"), t.color("hover"));
         }
+        // the frame's keyboard focus, the button's
+        super::focus_ring(ui.painter(), &t, row, t.radius("md"), &trigger);
         let avatar_at = if narrow {
             row.center()
         } else {

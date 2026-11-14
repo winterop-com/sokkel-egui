@@ -163,10 +163,7 @@ impl Widget for Rail<'_> {
             let close = Rect::from_center_size(pos2(head.right() - 12.0 - 16.0, head.center().y), vec2(32.0, 32.0));
             let hit = ui.interact(close, response.id.with("close"), Sense::click());
             hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, ShellWords::default().close));
-            if hit.hovered() {
-                painter.rect_filled(close, t.radius("md"), t.color("hover"));
-            }
-            icons::paint(&painter, close.center(), Icon::X, 16.0, t.color("muted-foreground"));
+            frame_control(&painter, &t, close, &hit, Icon::X);
             if hit.clicked() {
                 set_drawer(ui.ctx(), |d| d.open = false);
             }
@@ -257,14 +254,8 @@ impl Widget for Rail<'_> {
                     let corners = if narrow { t.radius("md") } else { row_corners };
                     painter.rect_filled(bounds, corners, t.color("hover"));
                 }
-                if hit.has_focus() {
-                    painter.rect_stroke(
-                        bounds,
-                        t.radius("md"),
-                        Stroke::new(2.0, t.color_at("ring", 0.5)),
-                        egui::StrokeKind::Outside,
-                    );
-                }
+                // the frame's one keyboard focus look, the button's
+                super::focus_ring(&painter, &t, bounds, t.radius("md"), &hit);
                 let ink = if active {
                     t.color("sidebar-accent-foreground")
                 } else if hit.hovered() {
@@ -310,6 +301,22 @@ impl Widget for Rail<'_> {
         }
         response
     }
+}
+
+/// A control of the frame's own, such as the rail head's or the top bar's menu button: an icon in
+/// `muted-foreground`, under the pointer the `hover` ground and the `foreground` ink, and the
+/// frame's keyboard focus, the button's.
+fn frame_control(painter: &egui::Painter, t: &crate::Tokens, rect: Rect, hit: &Response, icon: Icon) {
+    if hit.hovered() {
+        painter.rect_filled(rect, t.radius("md"), t.color("hover"));
+    }
+    let ink = if hit.hovered() {
+        t.color("foreground")
+    } else {
+        t.color("muted-foreground")
+    };
+    icons::paint(painter, rect.center(), icon, 16.0, ink);
+    super::focus_ring(painter, t, rect, t.radius("md"), hit);
 }
 
 fn galley(ui: &Ui, role: TextRole, text: &str, width: f32) -> std::sync::Arc<egui::Galley> {
@@ -815,16 +822,8 @@ impl Shell {
         );
         let menu_hit = ui.interact(menu, drawer_id().with("menu"), Sense::click());
         menu_hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.menu));
-        if menu_hit.hovered() {
-            ui.painter().rect_filled(menu, t.radius("md"), t.color("hover"));
-        }
-        icons::paint(
-            ui.painter(),
-            menu.center(),
-            Icon::Menu,
-            16.0,
-            t.color("muted-foreground"),
-        );
+        // as the rail's head control looks
+        frame_control(ui.painter(), &t, menu, &menu_hit, Icon::Menu);
         if menu_hit.clicked() {
             set_drawer(&ctx, |d| d.open = true);
         }
