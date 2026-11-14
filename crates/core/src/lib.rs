@@ -6,8 +6,7 @@
 use std::sync::Arc;
 
 use egui::{
-    Color32, Context, FontData, FontDefinitions, FontFamily, FontId, Id, Margin, Shadow, Stroke, TextStyle, Theme,
-    Visuals,
+    Color32, Context, FontData, FontDefinitions, FontFamily, FontId, Id, Margin, Stroke, TextStyle, Theme, Visuals,
     epaint::text::{FontTweak, VariationCoords},
     style::WidgetVisuals,
 };
@@ -216,19 +215,9 @@ fn visuals(t: &Tokens) -> Visuals {
     v.window_stroke = Stroke::new(1.0, t.color("border"));
     v.window_corner_radius = t.radius("surface");
     v.menu_corner_radius = t.radius("surface");
-    let shade = if t.dark { 110 } else { 30 };
-    v.window_shadow = Shadow {
-        offset: [0, 14],
-        blur: 44,
-        spread: 0,
-        color: Color32::from_black_alpha(shade),
-    };
-    v.popup_shadow = Shadow {
-        offset: [0, 6],
-        blur: 18,
-        spread: 0,
-        color: Color32::from_black_alpha(shade),
-    };
+    // egui's own windows and popups wear the tokens' elevation, as the library's surfaces do
+    v.window_shadow = t.shadow("elevation-pop");
+    v.popup_shadow = t.shadow("elevation-pop");
     v.selection.bg_fill = t.color_at("primary", 0.25);
     // selected text keeps its ink, as the browser's own selection does
     v.selection.stroke = Stroke::new(1.0, t.color("foreground"));

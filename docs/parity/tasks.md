@@ -45,10 +45,22 @@ counterpart.
 | edit_title, edit_due, edit_due_calendar, edit_assignee | Editing in place (`Column::editable`): the text editor over its cell with its line under it, the date typed with Clear and a calendar under the cell (its buttons' icons in the foreground's ink under the pointer; the web's shot keeps the pointer over the calendar button, ours takes it away), and the select's list over the cell with the chosen option where the value was. Selected text keeps its ink as the browser's does, on our token ground rather than the browser's own blue (sokkel-ui has no selection token). Rows are known by the task's id (`DataTable::keys`, the web's `rowKey`): an open editor, the active cell and a refused draft stay with their task when the rows move under them. |
 | palette | The palette a third down the window, 384 wide, its search on the input's tint, its rows rounded as radius-lg, its list fading at its foot while more is below (shadcn's `scroll-fade-b`, painted over the list), and the web's groups: Tasks, Lists and Go to from the rail (`place_commands`), Scheme, Density and Theme with the one in use hinted (`appearance_commands`), and Demo. |
 | account | The account menu from the rail's foot, 4 in from the trigger's start (`alignOffset`), its rows' labels 10 after their icons and a finger tall on a phone: the account with where it is signed in, Settings, and the scheme with each one's icon, the one worn checked. |
-| settings | The search takes the focus as the dialog opens from 640 (on a phone nothing does), as the spec says. The dialog's size (896 by 704, at most the window less 32 across and 64 down), head, column on the dialog's own ground, search (filtering every section), group titles 16 under the search, rows ruled only between each other, and footer line up, as sokkel-design's settings-dialog spec says. The web blurs the page behind it; egui cannot blur, so ours only dims. |
+| settings | The search takes the focus as the dialog opens from 640 (on a phone nothing does), as the spec says. The dialog's size (896 by 704, at most the window less 32 across and 64 down), head, column on the dialog's own ground, search (filtering every section), group titles 16 under the search, rows ruled only between each other, and footer line up, as sokkel-design's settings-dialog spec says. |
 | settings_appearance | `theme_settings` as the web's `themeSettings`: the theme select with each theme's sample, scheme, density and motion, the options as wide as the widest. |
 | settings_demo | The section has no Reset to defaults (`SettingsSection::reset(false)`). |
 | settings_reset | `ConfirmDialog` over the settings, 384 wide (`sm`; a `Dialog` is 512 by default, as the dialog spec says) with its 65 footer, its detail wrapping one word earlier than the web's. |
+
+## Decided ahead of the web
+
+sokkel-design's open questions were decided on 2026-11-14 (`docs/proposals/open-questions-decided.md`,
+F0 to F24). egui follows them now and the web when sokkel-ui lands them, so on these the two sides
+differ on purpose until then; a difference listed here is not drift to undo:
+
+- F16, F19: every popup wears a `border-strong` edge and `elevation-pop`, read from the token (the
+  web's select list and menus still wear Tailwind's `shadow-md` and a faint edge); dialogs, the
+  settings dialog and the palette wear `elevation-dialog` (at first `elevation-pop`) and the same
+  edge, where the web's dialogs are flat. The drawer wears `elevation-pop`.
+- F18: no blur behind a dialog, on either side once the web drops its own.
 
 ## What is left, largest first
 

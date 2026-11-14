@@ -297,6 +297,42 @@ impl Tokens {
         self.words.get(key).map(String::as_str)
     }
 
+    /// A box-shadow token, such as `elevation-pop`, as egui shadows, one per layer in the order
+    /// written (`x y blur [spread] color`, comma-separated); none for a token the theme lacks.
+    pub fn shadows(&self, key: &str) -> Vec<egui::Shadow> {
+        let Some(value) = self.word(key) else {
+            return Vec::new();
+        };
+        value
+            .split(',')
+            .filter_map(|layer| {
+                let parts: Vec<&str> = layer.split_whitespace().collect();
+                let (color, lengths) = parts.split_last()?;
+                let px = |i: usize| -> f32 {
+                    lengths
+                        .get(i)
+                        .and_then(|l| l.trim_end_matches("px").parse().ok())
+                        .unwrap_or(0.0)
+                };
+                Some(egui::Shadow {
+                    offset: [px(0).round() as i8, px(1).round() as i8],
+                    blur: px(2).round().clamp(0.0, 255.0) as u8,
+                    spread: px(3).round().clamp(0.0, 255.0) as u8,
+                    color: parse_hex(color),
+                })
+            })
+            .collect()
+    }
+
+    /// The deepest layer of a box-shadow token (the one that blurs most): what a single egui
+    /// `Frame` shadow draws of `elevation-pop`, which has one layer in every theme.
+    pub fn shadow(&self, key: &str) -> egui::Shadow {
+        self.shadows(key)
+            .into_iter()
+            .max_by_key(|s| s.blur)
+            .unwrap_or(egui::Shadow::NONE)
+    }
+
     /// A text role, such as `body` or `page-title`.
     pub fn text(&self, role: &str) -> TextSpec {
         match self.text.get(role) {
@@ -354,6 +390,23 @@ mod tests {
                 assert!(tokens.colors.len() > 100);
             }
         }
+    }
+
+    #[test]
+    fn a_box_shadow_reads_as_layers() {
+        let t = Tokens::resolve(&Appearance::default(), false);
+        let pop = t.shadows("elevation-pop");
+        assert_eq!(pop.len(), 1);
+        assert_eq!((pop[0].offset, pop[0].blur, pop[0].spread), ([0, 14], 44, 0));
+        // #23333e at 0x2e, give or take the premultiplied round trip
+        let [r, g, b, a] = pop[0].color.to_srgba_unmultiplied();
+        assert_eq!(a, 0x2e);
+        assert!(
+            [(r, 0x23), (g, 0x33), (b, 0x3e)]
+                .iter()
+                .all(|(x, y)| x.abs_diff(*y) <= 2)
+        );
+        assert_eq!(t.shadows("elevation-surface").len(), 2);
     }
 
     #[test]

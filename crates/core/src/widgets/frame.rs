@@ -870,12 +870,8 @@ impl Shell {
                 // the drawer: the rail expanded, the window's height, its account at the foot
                 let width = Rail::width(false);
                 let panel = Rect::from_min_size(rect.min, vec2(width, rect.height()));
-                let shadow = egui::Shadow {
-                    offset: [0, 8],
-                    blur: 24,
-                    spread: 0,
-                    color: egui::Color32::from_black_alpha(if t.dark { 120 } else { 40 }),
-                };
+                // the drawer wears the popups' elevation, as the web's `shadow-pop`
+                let shadow = t.shadow("elevation-pop");
                 ui.painter().add(shadow.as_shape(panel, CornerRadius::ZERO));
                 ui.painter().rect_filled(panel, CornerRadius::ZERO, t.color("sidebar"));
                 let rail = Rect::from_min_max(panel.min, pos2(panel.right(), panel.bottom() - foot));

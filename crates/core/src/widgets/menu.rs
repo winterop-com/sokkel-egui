@@ -2,7 +2,7 @@
 //! after sokkel-ui's `DropdownMenu` and `CommandPalette`.
 
 use egui::{
-    Context, Frame, Id, Key, Margin, Modifiers, Popup, PopupCloseBehavior, Response, Sense, Shadow, Stroke, TextEdit,
+    Context, Frame, Id, Key, Margin, Modifiers, Popup, PopupCloseBehavior, Response, Sense, Stroke, TextEdit,
     TextWrapMode, Ui, WidgetText, pos2, vec2,
 };
 
@@ -120,17 +120,7 @@ impl MenuItem {
 }
 
 fn popover_frame(t: &Tokens) -> Frame {
-    Frame::new()
-        .fill(t.color("popover"))
-        .stroke(Stroke::new(1.0, t.color_at("foreground", 0.1)))
-        .corner_radius(t.radius("surface"))
-        .shadow(Shadow {
-            offset: [0, 4],
-            blur: 12,
-            spread: 0,
-            color: egui::Color32::from_black_alpha(if t.dark { 90 } else { 24 }),
-        })
-        .inner_margin(Margin::same(4))
+    super::popup_frame(t).inner_margin(Margin::same(4))
 }
 
 /// Draw one action row; true when it was pressed.
@@ -507,7 +497,7 @@ impl<'a> CommandPalette<'a> {
         let response = egui::Modal::new(self.id)
             .area(area)
             .backdrop_color(t.color_at("shade", 0.1))
-            .frame(popover_frame(&t).inner_margin(Margin::same(inset as i8)))
+            .frame(super::dialog_frame(&t).inner_margin(Margin::same(inset as i8)))
             .show(ctx, |ui| {
                 let inner = width - 2.0 - 2.0 * inset;
                 ui.set_width(inner);

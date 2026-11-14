@@ -2,9 +2,7 @@
 //! start, the chosen section's rows, and a footer that resets the section and closes. After
 //! sokkel-ui's `SettingsDialog` and `SettingRow`.
 
-use egui::{
-    Align, Context, CornerRadius, Frame, Id, Layout, Margin, Rect, Sense, Shadow, Stroke, Ui, UiBuilder, pos2, vec2,
-};
+use egui::{Align, Context, CornerRadius, Frame, Id, Layout, Margin, Rect, Sense, Stroke, Ui, UiBuilder, pos2, vec2};
 
 use crate::{
     Appearance, Button, ButtonVariant, Icon, Motion, Scheme, Segmented, SegmentedVariant, Select, TextRole, densities,
@@ -132,16 +130,7 @@ impl<'a> SettingsDialog<'a> {
         // the footer: 16 over and under Done, and its rule
         let foot_height = 16.0 + t.density("control") + 16.0 + 1.0;
         let radius = t.radius("surface");
-        let frame = Frame::new()
-            .fill(t.color("popover"))
-            .stroke(Stroke::new(1.0, t.color_at("foreground", 0.1)))
-            .corner_radius(radius)
-            .shadow(Shadow {
-                offset: [0, 14],
-                blur: 44,
-                spread: 0,
-                color: egui::Color32::from_black_alpha(if t.dark { 120 } else { 46 }),
-            });
+        let frame = super::dialog_frame(&t);
         let query_id = self.id.with("search");
         let mut query: String = ctx.data(|d| d.get_temp(query_id)).unwrap_or_default();
         let response = egui::Modal::new(self.id)

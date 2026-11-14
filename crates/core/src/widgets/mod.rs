@@ -68,6 +68,27 @@ pub(crate) fn focus_ring(painter: &Painter, tokens: &Tokens, rect: Rect, radius:
     }
 }
 
+/// A popup's surface (a select's list, a menu, a submenu, the account menu): the popover's
+/// ground, the surface's corners, a 1px `border-strong` edge and `elevation-pop`'s shadow.
+pub(crate) fn popup_frame(tokens: &Tokens) -> egui::Frame {
+    egui::Frame::new()
+        .fill(tokens.color("popover"))
+        .stroke(Stroke::new(1.0, tokens.color("border-strong")))
+        .corner_radius(tokens.radius("surface"))
+        .shadow(tokens.shadow("elevation-pop"))
+}
+
+/// A boxed dialog's surface (a dialog, the settings dialog, the palette): a popup's, wearing
+/// `elevation-dialog`, or `elevation-pop` until a theme has the dialog's own.
+pub(crate) fn dialog_frame(tokens: &Tokens) -> egui::Frame {
+    let shadow = if tokens.word("elevation-dialog").is_some() {
+        tokens.shadow("elevation-dialog")
+    } else {
+        tokens.shadow("elevation-pop")
+    };
+    popup_frame(tokens).shadow(shadow)
+}
+
 /// A color as a disabled control shows it.
 pub(crate) fn dim(color: Color32, enabled: bool) -> Color32 {
     if enabled { color } else { color.gamma_multiply(DISABLED) }

@@ -3,8 +3,8 @@
 //! field's ground and a line under it in the ring's color.
 
 use egui::{
-    Align, Area, CornerRadius, Frame, Id, Key, Layout, Margin, Order, Rect, Sense, Shadow, Stroke, TextEdit, Ui,
-    UiBuilder, WidgetText, pos2, vec2,
+    Align, Area, CornerRadius, Frame, Id, Key, Layout, Margin, Order, Rect, Sense, Stroke, TextEdit, Ui, UiBuilder,
+    WidgetText, pos2, vec2,
 };
 
 use super::calendar::{Calendar, WeekStart, calendar_forget};
@@ -358,16 +358,7 @@ pub(crate) fn date(
 
 /// The popover's frame: its ground, a faint edge, the surface's corners and a soft shadow.
 fn popover_frame(t: &Tokens) -> Frame {
-    Frame::new()
-        .fill(t.color("popover"))
-        .stroke(Stroke::new(1.0, t.color_at("foreground", 0.1)))
-        .corner_radius(t.radius("surface"))
-        .shadow(Shadow {
-            offset: [0, 4],
-            blur: 12,
-            spread: 0,
-            color: egui::Color32::from_black_alpha(if t.dark { 90 } else { 24 }),
-        })
+    super::popup_frame(t)
 }
 
 /// How tall a select's option is.

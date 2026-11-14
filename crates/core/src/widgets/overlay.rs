@@ -3,7 +3,7 @@
 
 use egui::{
     Align, Context, CornerRadius, Frame, Id, Layout, Margin, Popup, PopupCloseBehavior, PopupKind, Rect, RectAlign,
-    Response, Sense, Shadow, Stroke, StrokeKind, TextWrapMode, Ui, Widget, WidgetText, pos2, vec2,
+    Response, Sense, Stroke, StrokeKind, TextWrapMode, Ui, Widget, WidgetText, pos2, vec2,
 };
 
 use super::focus_ring;
@@ -217,17 +217,7 @@ impl Widget for Select<'_> {
         );
         focus_ring(painter, &t, rect, radius, &response);
 
-        let frame = Frame::new()
-            .fill(t.color("popover"))
-            .stroke(Stroke::new(1.0, t.color_at("foreground", 0.1)))
-            .corner_radius(t.radius("surface"))
-            .shadow(Shadow {
-                offset: [0, 4],
-                blur: 12,
-                spread: 0,
-                color: egui::Color32::from_black_alpha(if t.dark { 90 } else { 24 }),
-            })
-            .inner_margin(Margin::same(4));
+        let frame = super::popup_frame(&t).inner_margin(Margin::same(4));
         let mut picked = None;
         Popup::menu(&response)
             .id(popup_id)
@@ -330,16 +320,7 @@ impl Dialog {
     /// The dialog with no body: its title and description, 16 over the footer.
     fn draw(self, ctx: &Context, body: Option<impl FnOnce(&mut Ui)>, footer: impl FnOnce(&mut Ui)) -> bool {
         let t = tokens(ctx);
-        let frame = Frame::new()
-            .fill(t.color("popover"))
-            .stroke(Stroke::new(1.0, t.color_at("foreground", 0.1)))
-            .corner_radius(t.radius("surface"))
-            .shadow(Shadow {
-                offset: [0, 14],
-                blur: 44,
-                spread: 0,
-                color: egui::Color32::from_black_alpha(if t.dark { 120 } else { 46 }),
-            });
+        let frame = super::dialog_frame(&t);
         let response = egui::Modal::new(self.id)
             .backdrop_color(t.color_at("shade", 0.1))
             .frame(frame)

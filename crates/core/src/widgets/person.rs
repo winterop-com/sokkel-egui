@@ -244,17 +244,7 @@ impl AccountMenu {
         }
 
         let mut action = None;
-        let frame = egui::Frame::new()
-            .fill(t.color("popover"))
-            .stroke(Stroke::new(1.0, t.color("border-strong")))
-            .corner_radius(t.radius("surface"))
-            .shadow(egui::Shadow {
-                offset: [0, 14],
-                blur: 44,
-                spread: 0,
-                color: egui::Color32::from_black_alpha(if t.dark { 120 } else { 46 }),
-            })
-            .inner_margin(egui::Margin::same(4));
+        let frame = super::popup_frame(&t).inner_margin(egui::Margin::same(4));
         // 4 in from the trigger's start, as the web's `alignOffset`
         Popup::menu(&trigger)
             .anchor(trigger.rect.with_min_x(trigger.rect.left() + 4.0))
