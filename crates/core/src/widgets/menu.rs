@@ -560,7 +560,9 @@ impl<'a> CommandPalette<'a> {
                     ui.add_space(24.0);
                     return;
                 }
-                // the groups, scrolling past 384: each 4 in, its title 32 tall, a rule between them
+                // the groups, scrolling past 384 and fading at the foot: each 4 in, its title 32 tall, a
+                // rule between them
+                ui.spacing_mut().scroll.fade = egui::style::ScrollFadeStyle::default();
                 egui::ScrollArea::vertical()
                     .id_salt(self.id.with("list"))
                     .max_height(384.0)

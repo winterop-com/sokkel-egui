@@ -140,6 +140,8 @@ pub fn install(ctx: &Context, appearance: &Appearance) {
         spacing.interact_size.y = tokens.density("control");
         spacing.window_margin = Margin::same(16);
         spacing.menu_margin = Margin::same(tokens.length("palette-inset") as i8);
+        // a scroller cuts its content plainly, as the web's do; the palette's list fades its own foot
+        spacing.scroll.fade.strength = 0.0;
     });
     ctx.data_mut(|d| {
         d.insert_temp(tokens_id(), tokens);
