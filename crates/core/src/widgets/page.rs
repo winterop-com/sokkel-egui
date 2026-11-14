@@ -77,7 +77,7 @@ impl PageHeader {
         let t = tokens(ui.ctx());
         let ink = t.color_or("page-title-ink", t.color("foreground"));
         ui.horizontal_top(|ui| {
-            ui.vertical(|ui| {
+            let block = ui.vertical(|ui| {
                 // the code right under the title, the description 4 under what is over it
                 ui.spacing_mut().item_spacing.y = 0.0;
                 // the title, and the count 8 after it standing on the title's baseline
@@ -121,10 +121,16 @@ impl PageHeader {
                     ui.label(TextRole::Body.rich(&t, description).color(t.color("muted-foreground")));
                 }
             });
-            ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
-                ui.add_space(0.0);
-                actions(ui);
-            });
+            // the actions at the row's end, 8 apart, level with the title block's foot
+            let height = block.response.rect.height();
+            ui.allocate_ui_with_layout(
+                egui::vec2(ui.available_width(), height),
+                Layout::right_to_left(Align::Max),
+                |ui| {
+                    ui.spacing_mut().item_spacing.x = 8.0;
+                    actions(ui);
+                },
+            );
         });
     }
 }

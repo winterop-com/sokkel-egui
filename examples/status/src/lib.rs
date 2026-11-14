@@ -7,8 +7,8 @@ pub mod data;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
-    AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, Icon, Page, PageHeader, Rail, RailEntry,
-    RailGroup, Shell, ShellPart, StatusLine, StatusTone, TopBar, install,
+    AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, Icon, KpiRow, Page, PageHeader, Rail,
+    RailEntry, RailGroup, Shell, ShellPart, Stat, StatusLine, StatusTone, TopBar, install,
 };
 
 use data::SERVICES;
@@ -247,12 +247,51 @@ impl StatusApp {
                         .add(Button::new(word).icon(icon).variant(ButtonVariant::Outline))
                         .clicked();
                 });
+                self.kpis(ui);
             }
         }
         if toggled {
             self.live = !self.live;
         }
     }
+}
+
+impl StatusApp {
+    /// The overview's figures: services and sites working, the open incidents, uptime, requests and
+    /// who is on call. Until the live readings are ported, the requests are each service's resting
+    /// load and the api's resting latency, and uptime has no history to read.
+    fn kpis(&self, ui: &mut Ui) {
+        let requests: f64 = SERVICES.iter().map(|s| s.load).sum();
+        let api = SERVICES.iter().find(|s| s.id == "api").map_or(0.0, |s| s.latency);
+        let mut open = Stat::new("Open incidents", self.open.len());
+        if let Some(first) = self.open.first() {
+            open = open.note(first.clone());
+        }
+        KpiRow::new([
+            Stat::new("Services operational", format!("{0} of {0}", SERVICES.len())),
+            Stat::new("Sites operational", format!("{0} of {0}", data::SITES)),
+            open,
+            Stat::new("Uptime, 90 days", "-"),
+            Stat::new("Requests", group(requests.round() as u64))
+                .unit("/s")
+                .note(format!("api p95 {} ms", api.round())),
+            Stat::new("On call", &self.on_call).note("Hand over on the On call page"),
+        ])
+        .show(ui);
+    }
+}
+
+/// A count with its thousands set apart, as the web's `formatCount`: 7,230.
+fn group(n: u64) -> String {
+    let digits = n.to_string();
+    let mut out = String::new();
+    for (i, c) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i) % 3 == 0 {
+            out.push(',');
+        }
+        out.push(c);
+    }
+    out
 }
 
 impl eframe::App for StatusApp {

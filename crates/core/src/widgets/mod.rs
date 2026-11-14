@@ -15,6 +15,7 @@ mod overlay;
 mod page;
 mod person;
 mod settings;
+mod stat;
 mod switch;
 mod table;
 mod table_edit;
@@ -39,6 +40,7 @@ pub use settings::{
     SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, ThemeWords, setting_row, setting_row_found_by,
     theme_settings,
 };
+pub use stat::{KpiRow, Stat};
 pub use switch::Switch;
 pub use table::{
     Cell, CellEdit, Column, DataTable, RowActions, Stack, StackLayout, TableOutput, TableState, TableVariant,

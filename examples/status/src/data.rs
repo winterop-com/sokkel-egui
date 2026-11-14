@@ -1,6 +1,9 @@
 //! Tidevann's services as the status board knows them, from sokkel-ui's status example
 //! (`examples/status/web/src/data.ts`).
 
+/// How many sites the services answer from (`SITES` in the web's data).
+pub const SITES: usize = 11;
+
 /// The people who answer, and who are signed in.
 pub const PEOPLE: [&str; 4] = ["ada", "grace", "linus", "margaret"];
 

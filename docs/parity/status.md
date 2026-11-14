@@ -10,11 +10,14 @@ drawn by `examples/status/tests/screens.rs` and laid beside the web's by
 - The frame lines up with the web's: the rail with each place's description under its label
   (`RailEntry::description`), the Customers group, the top bar's Live button, and the status line
   live with operational, open and on call.
-- Each page has its head (title, count or description, actions) and nothing under it yet.
-- Next, largest first: the overview's KPI row (`Stat`), the service tiles with their sparklines,
+- Each page has its head (title, count or description, actions), the actions level with the
+  title block's foot as the page-header spec says.
+- The overview's figures stand in a `KpiRow` of `Stat`s, at the web's places; until the live
+  readings are ported, requests and the api's latency are the services' resting values and uptime
+  reads "-".
+- Next, largest first: the service tiles with their sparklines,
   the dashboard under them; the incidents table; the services table; the map of sites; on call's
-  rotation; the public page; settings; the live simulation behind all of them. The header's actions
-  stand at its top where the web centers them on it.
+  rotation; the public page; settings; the live simulation behind all of them.
 
 ## Groundwork
 
