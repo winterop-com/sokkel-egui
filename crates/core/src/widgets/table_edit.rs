@@ -41,6 +41,8 @@ impl Default for EditWords {
 /// The cell whose editor is open, with what is typed in it.
 #[derive(Clone, Debug)]
 pub(crate) struct OpenCell {
+    /// The row's key, which it follows when the rows move.
+    pub key: egui::Id,
     pub row: usize,
     pub column: usize,
     pub draft: String,

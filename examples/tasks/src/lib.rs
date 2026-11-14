@@ -437,6 +437,7 @@ impl TasksApp {
                         }
                     });
             })
+            .keys(shown.iter().map(|task| &task.id))
             .footer(false)
             .stretch(true)
             .today(now)

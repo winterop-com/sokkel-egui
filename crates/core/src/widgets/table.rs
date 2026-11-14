@@ -139,11 +139,13 @@ pub struct TableState {
     pub opened: Option<usize>,
     /// The active cell of an editing table, by its row's index and its column's.
     pub active: Option<(usize, usize)>,
+    /// The active cell's row by its key, so it follows that row when the rows move.
+    active_key: Option<Id>,
     /// The table was pressed last: the active cell is marked and takes keys.
     focused: bool,
     open: Option<OpenCell>,
     /// Drafts refused as the focus left them, kept at their cells with why.
-    refused: HashMap<(usize, usize), (String, String)>,
+    refused: HashMap<(Id, usize), (String, String)>,
     /// A cell to open as the table next draws.
     pending: Option<(usize, usize)>,
 }
@@ -244,6 +246,7 @@ pub struct DataTable<'a> {
     footer: bool,
     stretch: bool,
     today: Day,
+    keys: Vec<Id>,
 }
 
 /// How wide a row's grip is, in the first column before its content.
@@ -270,6 +273,7 @@ impl<'a> DataTable<'a> {
             footer: true,
             stretch: false,
             today: Day::today(),
+            keys: Vec::new(),
         }
     }
 
@@ -321,6 +325,14 @@ impl<'a> DataTable<'a> {
     }
 
     /// The day a date editor's calendar marks as today.
+    /// Name each row by what it holds (a task's id), in the order of the rows given, as
+    /// sokkel-ui's `rowKey`: the active cell, an open editor and a refused draft stay with their
+    /// row when the rows move, and go when it does. Without keys a row is known by its index.
+    pub fn keys<K: egui::AsId>(mut self, keys: impl IntoIterator<Item = K>) -> Self {
+        self.keys = keys.into_iter().map(Id::new).collect();
+        self
+    }
+
     pub fn today(mut self, today: Day) -> Self {
         self.today = today;
         self
@@ -411,11 +423,18 @@ impl<'a> DataTable<'a> {
             TableVariant::List => t.density("panel-pad"),
         };
         let select_width = if self.selectable { 28.0 } else { 0.0 };
+        let keys: Vec<Id> = (0..self.rows.len())
+            .map(|index| match self.keys.get(index) {
+                Some(key) if self.keys.len() == self.rows.len() => *key,
+                _ => Id::new(("row", index)),
+            })
+            .collect();
+        follow_keys(self.state, &keys);
         if let Some(at) = self.state.pending.take()
             && at.0 < self.rows.len()
             && self.columns.get(at.1).is_some_and(|c| c.edit.is_some())
         {
-            open_cell(self.state, self.rows, at);
+            open_cell(self.state, self.rows, &keys, at);
         }
         let order = self.order();
         let radius = t.radius("surface");
@@ -714,7 +733,7 @@ impl<'a> DataTable<'a> {
                                     let here = (index, c);
                                     let open_here = self.state.open.as_ref().is_some_and(|o| (o.row, o.column) == here);
                                     if open_here && let Some(mut open) = self.state.open.take() {
-                                        let id = self.id.with(("editor", index, c));
+                                        let id = self.id.with(("editor", keys[index], c));
                                         let moved = match editor {
                                             Editor::Text => table_edit::text(ui, place, &mut open, id),
                                             Editor::Date(week_start) => table_edit::date(
@@ -734,6 +753,7 @@ impl<'a> DataTable<'a> {
                                             self.state,
                                             self.columns,
                                             self.rows,
+                                            &keys,
                                             &order,
                                             position,
                                             open,
@@ -744,7 +764,7 @@ impl<'a> DataTable<'a> {
                                         }
                                     } else {
                                         let hit = ui.interact(place, self.id.with(("edit", index, c)), Sense::click());
-                                        match self.state.refused.get(&here) {
+                                        match self.state.refused.get(&(keys[index], c)) {
                                             Some((draft, error)) => table_edit::refused(ui, place, draft, error),
                                             None => {
                                                 paint_cell(
@@ -759,7 +779,7 @@ impl<'a> DataTable<'a> {
                                         }
                                         let was_active = self.state.focused && self.state.active == Some(here);
                                         if hit.double_clicked() || (hit.clicked() && was_active) {
-                                            open_cell(self.state, self.rows, here);
+                                            open_cell(self.state, self.rows, &keys, here);
                                         } else if hit.clicked() {
                                             self.state.active = Some(here);
                                             self.state.focused = true;
@@ -867,14 +887,14 @@ impl<'a> DataTable<'a> {
                 _ => None,
             };
             if let Some(draft) = typed {
-                open_cell(self.state, self.rows, (row, column));
+                open_cell(self.state, self.rows, &keys, (row, column));
                 if let Some(open) = &mut self.state.open {
                     open.draft = draft;
                     open.error = None;
                     open.select_all = false;
                 }
             } else if enter && editor.is_some() {
-                open_cell(self.state, self.rows, (row, column));
+                open_cell(self.state, self.rows, &keys, (row, column));
             } else if left {
                 self.state.active = Some((row, column.saturating_sub(1)));
             } else if right {
@@ -902,6 +922,7 @@ impl<'a> DataTable<'a> {
             );
         }
         out.response = response;
+        self.state.active_key = self.state.active.and_then(|(row, _)| keys.get(row).copied());
         out
     }
 }
@@ -976,15 +997,37 @@ fn put_at(ui: &mut Ui, rect: Rect, widget: impl egui::Widget) -> Response {
     child.add(widget)
 }
 
+/// Find the rows the editing state names by key among `keys`, this frame's: an open editor or an
+/// active cell whose row is gone closes, and one whose row moved follows it.
+fn follow_keys(state: &mut TableState, keys: &[Id]) {
+    let index_of = |key: Id| keys.iter().position(|k| *k == key);
+    if let Some(mut open) = state.open.take()
+        && let Some(row) = index_of(open.key)
+    {
+        open.row = row;
+        state.open = Some(open);
+    }
+    match (state.active, state.active_key.and_then(index_of)) {
+        (Some((_, column)), Some(row)) => state.active = Some((row, column)),
+        (Some(_), None) if state.active_key.is_some() => {
+            state.active = None;
+            state.focused = false;
+        }
+        _ => {}
+    }
+}
+
 /// Open the editor of the cell `at`: on its refused draft if it has one, else on its value.
-fn open_cell(state: &mut TableState, rows: &[Vec<Cell>], at: (usize, usize)) {
-    let (draft, error) = match state.refused.get(&at) {
+fn open_cell(state: &mut TableState, rows: &[Vec<Cell>], keys: &[Id], at: (usize, usize)) {
+    let key = keys[at.0];
+    let (draft, error) = match state.refused.get(&(key, at.1)) {
         Some((draft, error)) => (draft.clone(), Some(error.clone())),
         None => (rows[at.0][at.1].draft(), None),
     };
     state.active = Some(at);
     state.focused = true;
     state.open = Some(OpenCell {
+        key,
         row: at.0,
         column: at.1,
         draft,
@@ -1010,13 +1053,14 @@ fn settle(
     state: &mut TableState,
     columns: &[Column],
     rows: &[Vec<Cell>],
+    keys: &[Id],
     order: &[usize],
     position: usize,
     mut open: OpenCell,
     moved: EditMove,
     words: &EditWords,
 ) -> Option<CellEdit> {
-    let at = (open.row, open.column);
+    let at = (open.key, open.column);
     match moved {
         EditMove::Stay => {
             state.open = Some(open);
@@ -1066,7 +1110,7 @@ fn settle(
     if let EditMove::Next(forward) = moved
         && let Some(next) = next_editable(columns, order, position, open.column, forward)
     {
-        open_cell(state, rows, next);
+        open_cell(state, rows, keys, next);
     }
     edit
 }

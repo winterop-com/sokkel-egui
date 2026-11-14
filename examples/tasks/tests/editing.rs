@@ -122,3 +122,26 @@ fn the_calendar_moves_by_its_keys_and_enter_picks() {
         .unwrap();
     assert_eq!(task.due, Some(Day::parse("2026-11-23").unwrap().0));
 }
+
+#[test]
+fn an_edit_stays_with_its_task_when_the_rows_move_under_it() {
+    let mut harness = app(|app| app.table.edit(0, 1));
+    harness.event(egui::Event::Text("Rerun nightly-export again".into()));
+    harness.run();
+    // the second task moved above the first while the editor is open
+    {
+        let app = harness.state_mut();
+        let first = app.tasks.iter().map(|task| task.rank).fold(f64::INFINITY, f64::min);
+        let second = app
+            .tasks
+            .iter_mut()
+            .find(|task| task.title == "Review the failed sync-inventory runs")
+            .unwrap();
+        second.rank = first - 1.0;
+    }
+    harness.run();
+    harness.key_press(Key::Enter);
+    harness.run();
+    assert!(titled(&harness, "Rerun nightly-export again"));
+    assert!(titled(&harness, "Review the failed sync-inventory runs"));
+}
