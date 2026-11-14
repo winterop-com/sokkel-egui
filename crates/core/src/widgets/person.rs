@@ -255,18 +255,20 @@ impl AccountMenu {
                 color: egui::Color32::from_black_alpha(if t.dark { 120 } else { 46 }),
             })
             .inner_margin(egui::Margin::same(4));
+        // 4 in from the trigger's start, as the web's `alignOffset`
         Popup::menu(&trigger)
+            .anchor(trigger.rect.with_min_x(trigger.rect.left() + 4.0))
             .id(popup_id)
             .frame(frame)
             .align(egui::RectAlign::TOP_START)
             .gap(4.0)
-            .width(256.0)
+            .width(252.0)
             .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
             .show(|ui| {
-                ui.set_width(248.0);
+                ui.set_width(244.0);
                 ui.spacing_mut().item_spacing.y = 0.0;
                 // the account: its avatar, name and where it is signed in
-                let (head, _) = ui.allocate_exact_size(vec2(248.0, 58.0), Sense::hover());
+                let (head, _) = ui.allocate_exact_size(vec2(244.0, 58.0), Sense::hover());
                 let big = Rect::from_center_size(pos2(head.left() + 8.0 + 16.0, head.center().y), vec2(32.0, 32.0));
                 paint_avatar(ui, &t, big, &self.name, AvatarSize::Md, true);
                 let text_x = big.right() + 10.0;
@@ -302,7 +304,7 @@ impl AccountMenu {
                 if let Some(current) = self.scheme {
                     separator(ui, &t);
                     // the group's title: 28 tall, 8 in, as a menu label's `px-2 py-1.5`
-                    let (title, _) = ui.allocate_exact_size(vec2(248.0, 28.0), Sense::hover());
+                    let (title, _) = ui.allocate_exact_size(vec2(244.0, 28.0), Sense::hover());
                     let words = egui::WidgetText::from(TextRole::Badge.rich(&t, &self.words.scheme)).into_galley(
                         ui,
                         Some(egui::TextWrapMode::Truncate),
@@ -343,7 +345,13 @@ fn separator(ui: &mut Ui, t: &Tokens) {
 
 /// One row of a menu: an icon, a label and a check when it is the one chosen.
 pub(crate) fn menu_row(ui: &mut Ui, t: &Tokens, icon: Option<Icon>, label: &str, checked: bool) -> Response {
-    let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), 32.0), Sense::click());
+    // 32 tall, a finger tall on a phone
+    let height = if super::is_phone(ui.ctx()) {
+        t.length("spacing-finger")
+    } else {
+        32.0
+    };
+    let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
     hit.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::Button, true, checked, label));
     if hit.hovered() || hit.has_focus() {
         ui.painter().rect_filled(row, t.radius("md"), t.color("hover"));
@@ -357,7 +365,8 @@ pub(crate) fn menu_row(ui: &mut Ui, t: &Tokens, icon: Option<Icon>, label: &str,
             16.0,
             t.color("muted-foreground"),
         );
-        x += 24.0;
+        // the icon, then 10 to the label
+        x += 16.0 + 10.0;
     }
     let galley = egui::WidgetText::from(TextRole::Body.rich(t, label)).into_galley(
         ui,
