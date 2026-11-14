@@ -2,10 +2,10 @@
 
 use eframe::egui::{Ui, vec2};
 use sokkel_ui_egui::{
-    AppBar, Banner, BannerTone, Button, ButtonSize, ButtonVariant, Chip, ChipBar, ChipTone, Choice, ChoiceList,
-    DashboardGrid, DashboardPanel, DateTimeField, Day, DescriptionList, Gap, Icon, IconButton, KpiRow, PanelSpan,
-    PersonRow, Section, SplitPane, Stack, Stat, Switch, TagChips, TextField, TextRole, Timeline, TimelineEvent,
-    UptimeBar, UptimeDay, form_bar, tokens,
+    AppBar, Banner, BannerTone, Button, ButtonSize, ButtonVariant, CalendarEvent, Chip, ChipBar, ChipTone, Choice,
+    ChoiceList, DashboardGrid, DashboardPanel, DateTimeField, Day, DescriptionList, Gap, Icon, IconButton, KpiRow,
+    Moment, PanelSpan, PersonRow, Section, SplitPane, Stack, Stat, Switch, TagChips, TextField, TextRole, Timeline,
+    TimelineEvent, UptimeBar, UptimeDay, WeekGrid, form_bar, tokens,
 };
 use sokkel_ui_egui_charts::{Series, TimeSeriesPanel};
 
@@ -337,4 +337,35 @@ pub fn text_area(state: &mut State, ui: &mut Ui) {
             .placeholder("What you know now, and what happens next.")
             .multiline(true),
     );
+}
+
+/// A week of Tidevann's runs: two overlapping on Monday night, one skipped on Thursday.
+pub fn week_grid(_: &mut State, ui: &mut Ui) {
+    let days: Vec<Day> = (0..7).map(|d| today().plus(d)).collect();
+    let run = |id: &str, title: &str, day: i32, from: (u32, u32), to: (u32, u32), color: &'static str| CalendarEvent {
+        id: id.into(),
+        title: title.into(),
+        start: Moment::new(today().plus(day), from.0, from.1),
+        end: Moment::new(today().plus(day), to.0, to.1),
+        color,
+        detail: None,
+        muted: false,
+    };
+    let mut events = vec![
+        run("export-mon", "nightly-export", 0, (2, 0), (2, 45), "blue"),
+        run("index-mon", "rebuild-index", 0, (2, 30), (4, 0), "violet"),
+        run("sync-tue", "sync-inventory", 1, (6, 30), (6, 50), "green"),
+        run("digest-wed", "send-digest", 2, (7, 0), (7, 15), "pink"),
+        run("orders-wed", "import-orders", 2, (8, 0), (9, 30), "teal"),
+        run("index-thu", "rebuild-index", 3, (3, 0), (4, 30), "violet"),
+        run("export-fri", "nightly-export", 4, (2, 0), (2, 45), "blue"),
+    ];
+    events[5].muted = true;
+    events[4].detail = Some("juniper".into());
+    ui.allocate_ui(vec2(ui.available_width(), 560.0), |ui| {
+        WeekGrid::new("story-week", &days, &events)
+            .now(Moment::new(today().plus(2), 5, 0))
+            .scroll_to_hour(1)
+            .show(ui);
+    });
 }

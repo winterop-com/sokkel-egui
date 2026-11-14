@@ -235,6 +235,11 @@ pub const STORIES: &[Story] = &[
         show: inputs::tabs,
     },
     Story {
+        path: "Patterns/Calendar",
+        doc: "A week of jobs' runs, the days side by side and the hours running down; runs at the same time split their day, a skipped one is faded, the time now a line across today.",
+        show: parts::week_grid,
+    },
+    Story {
         path: "Patterns/Chip",
         doc: "The tones a chip says a state in, and a chosen chip's stronger wash and edge.",
         show: primitives::chip,
