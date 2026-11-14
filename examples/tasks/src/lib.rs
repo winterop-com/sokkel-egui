@@ -328,7 +328,6 @@ impl TasksApp {
                 |ui| {
                     ui.add(Segmented::new(&mut view, ["List", "Board"]).variant(SegmentedVariant::Track));
                     if list_view {
-                        ui.add_space(4.0);
                         ui.add(SwitchField::new(&mut show_done, "Show done"));
                     }
                 },
