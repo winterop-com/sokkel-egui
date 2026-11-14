@@ -70,6 +70,12 @@ impl TimeSeriesPanel {
     }
 
     /// Whether the legend is drawn under the chart.
+    /// Each series on top of those before it, as shares of a whole.
+    pub fn stacked(mut self, stacked: bool) -> Self {
+        self.chart = self.chart.stacked(stacked);
+        self
+    }
+
     pub fn legend(mut self, legend: bool) -> Self {
         self.legend = legend;
         self

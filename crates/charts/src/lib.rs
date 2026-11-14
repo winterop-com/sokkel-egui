@@ -254,14 +254,23 @@ pub fn legend(ui: &mut Ui, names: &[&str]) {
         // a line of the legend is 24 tall, as the web's legend items are
         ui.spacing_mut().interact_size.y = 24.0;
         ui.spacing_mut().item_spacing.x = 16.0;
+        // each item one piece, the swatch 6 before its name, so a long legend wraps between items
         for (i, name) in names.iter().enumerate() {
-            ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = 6.0;
-                let (rect, _) = ui.allocate_exact_size(vec2(10.0, 10.0), Sense::hover());
-                ui.painter()
-                    .rect_filled(rect, CornerRadius::same(2), series_color(&t, i));
-                ui.label(TextRole::Help.rich(&t, *name).color(t.color("muted-foreground")));
-            });
+            let galley = egui::WidgetText::from(TextRole::Help.rich(&t, *name)).into_galley(
+                ui,
+                Some(egui::TextWrapMode::Extend),
+                f32::INFINITY,
+                TextRole::Help.font(&t),
+            );
+            let (rect, _) = ui.allocate_exact_size(vec2(10.0 + 6.0 + galley.size().x, 24.0), Sense::hover());
+            let swatch = egui::Rect::from_center_size(pos2(rect.left() + 5.0, rect.center().y), vec2(10.0, 10.0));
+            ui.painter()
+                .rect_filled(swatch, CornerRadius::same(2), series_color(&t, i));
+            ui.painter().galley(
+                pos2(rect.left() + 16.0, rect.center().y - galley.size().y / 2.0),
+                galley,
+                t.color("muted-foreground"),
+            );
         }
     });
 }
@@ -309,6 +318,7 @@ pub struct LineChart {
     every: Option<usize>,
     thresholds: Vec<(f64, Color32)>,
     height: f32,
+    stacked: bool,
 }
 
 /// How the areas under a line chart's series are filled: not at all, fading from each line toward
@@ -333,11 +343,19 @@ impl LineChart {
             every: None,
             thresholds: Vec::new(),
             height: 240.0,
+            stacked: false,
         }
     }
 
     pub fn series(mut self, series: Series) -> Self {
         self.series.push(series);
+        self
+    }
+
+    /// Each series drawn on top of those before it, the area between them filled, as the `stacked`
+    /// line kind draws shares of a whole; the pointer still reads each series' own value.
+    pub fn stacked(mut self, stacked: bool) -> Self {
+        self.stacked = stacked;
         self
     }
 
@@ -394,15 +412,33 @@ impl Widget for LineChart {
         let t = tokens(ui.ctx());
         let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), self.height), Sense::hover());
         let count = self.categories.len();
+        // where each series is drawn: its values, or stacked on the series before it
+        let mut tops: Vec<Vec<Option<f64>>> = Vec::new();
+        for series in &self.series {
+            let drawn: Vec<Option<f64>> = if self.stacked {
+                series
+                    .values
+                    .iter()
+                    .enumerate()
+                    .map(|(i, v)| {
+                        v.map(|v| {
+                            v + tops
+                                .last()
+                                .and_then(|below: &Vec<Option<f64>>| below.get(i).copied().flatten())
+                                .unwrap_or(0.0)
+                        })
+                    })
+                    .collect()
+            } else {
+                series.values.clone()
+            };
+            tops.push(drawn);
+        }
         let band_top = self
             .band
             .as_ref()
             .map_or(0.0, |(_, high)| high.iter().copied().fold(0.0, f64::max));
-        let max = self
-            .series
-            .iter()
-            .map(|s| max_of(s.values.iter()))
-            .fold(band_top, f64::max);
+        let max = tops.iter().map(|v| max_of(v.iter())).fold(band_top, f64::max);
         let axes = Axes {
             writing: self.writing.clone(),
             every: self.every,
@@ -412,12 +448,17 @@ impl Widget for LineChart {
         let x = |i: usize| frame.x(i);
         let painter = ui.painter();
         // the areas first, so every line lies over every area; the highest point is the gradient's top
-        if self.fill != Fill::None {
+        let fill = if self.stacked && self.fill == Fill::None {
+            Fill::Solid
+        } else {
+            self.fill
+        };
+        if fill != Fill::None {
             let crest = frame.y(max);
             let floor = frame.plot.bottom();
-            for (index, series) in self.series.iter().enumerate() {
+            for (index, values) in tops.iter().enumerate() {
                 let color = series_color(&t, index);
-                let shade = |y: f32| match self.fill {
+                let shade = |y: f32| match fill {
                     Fill::Gradient => {
                         let at = ((y - crest) / (floor - crest).max(1.0)).clamp(0.0, 1.0);
                         color.gamma_multiply(0.40 + (0.04 - 0.40) * at)
@@ -425,14 +466,23 @@ impl Widget for LineChart {
                     _ => color.gamma_multiply(0.15),
                 };
                 let mut mesh = egui::Mesh::default();
-                for i in 0..series.values.len().saturating_sub(1) {
-                    if let (Some(a), Some(b)) = (series.values[i], series.values[i + 1]) {
+                // stacked, an area runs down to the series under it; else to the axis
+                let under = |i: usize| {
+                    if self.stacked && index > 0 {
+                        tops[index - 1].get(i).copied().flatten().map_or(floor, |v| frame.y(v))
+                    } else {
+                        floor
+                    }
+                };
+                for i in 0..values.len().saturating_sub(1) {
+                    if let (Some(a), Some(b)) = (values[i], values[i + 1]) {
                         let base = mesh.vertices.len() as u32;
                         let (ya, yb) = (frame.y(a), frame.y(b));
+                        let (fa, fb) = (under(i), under(i + 1));
                         mesh.colored_vertex(pos2(x(i), ya), shade(ya));
                         mesh.colored_vertex(pos2(x(i + 1), yb), shade(yb));
-                        mesh.colored_vertex(pos2(x(i + 1), floor), shade(floor));
-                        mesh.colored_vertex(pos2(x(i), floor), shade(floor));
+                        mesh.colored_vertex(pos2(x(i + 1), fb), shade(fb));
+                        mesh.colored_vertex(pos2(x(i), fa), shade(fa));
                         mesh.add_triangle(base, base + 1, base + 2);
                         mesh.add_triangle(base, base + 2, base + 3);
                     }
@@ -466,7 +516,7 @@ impl Widget for LineChart {
         }
         for (index, series) in self.series.iter().enumerate() {
             let color = series_color(&t, index);
-            if self.area && index == 0 && self.fill == Fill::None {
+            if self.area && index == 0 && fill == Fill::None {
                 for i in 0..series.values.len().saturating_sub(1) {
                     if let (Some(a), Some(b)) = (series.values[i], series.values[i + 1]) {
                         let quad = vec![
@@ -481,7 +531,7 @@ impl Widget for LineChart {
             }
             // a run of values between gaps is one line
             let mut run: Vec<Pos2> = Vec::new();
-            for (i, value) in series.values.iter().enumerate() {
+            for (i, value) in tops[index].iter().enumerate() {
                 match value {
                     Some(v) => run.push(pos2(x(i), frame.y(*v))),
                     None => {
@@ -493,8 +543,8 @@ impl Widget for LineChart {
         }
         if let Some(i) = frame.hovered(&response, count) {
             painter.vline(x(i), frame.plot.y_range(), Stroke::new(1.0, t.color("border-strong")));
-            for (index, series) in self.series.iter().enumerate() {
-                if let Some(Some(v)) = series.values.get(i) {
+            for (index, values) in tops.iter().enumerate() {
+                if let Some(Some(v)) = values.get(i) {
                     painter.circle(
                         pos2(x(i), frame.y(*v)),
                         4.0,

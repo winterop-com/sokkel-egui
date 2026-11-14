@@ -55,6 +55,7 @@ impl Marker {
 
 /// What a map's corner says its points' colors mean, after sokkel-ui's `MapLegend`: a title, a
 /// line under it, and a row per class with its dot, its words and how many points are in it.
+#[derive(Clone, Debug)]
 pub struct MapLegend {
     title: String,
     description: Option<String>,

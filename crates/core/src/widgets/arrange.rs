@@ -723,6 +723,7 @@ pub struct DashboardEditActions<'a> {
     edit: &'a mut DashboardEdit,
     kept: &'a mut Vec<DashboardLayoutItem>,
     default: Option<&'a [DashboardLayoutItem]>,
+    size: ButtonSize,
     words: DashboardEditWords,
 }
 
@@ -732,6 +733,7 @@ impl<'a> DashboardEditActions<'a> {
             edit,
             kept,
             default: None,
+            size: ButtonSize::Sm,
             words: DashboardEditWords::default(),
         }
     }
@@ -739,6 +741,12 @@ impl<'a> DashboardEditActions<'a> {
     /// The layout Reset puts back; no Reset without it.
     pub fn default_layout(mut self, default: &'a [DashboardLayoutItem]) -> Self {
         self.default = Some(default);
+        self
+    }
+
+    /// The buttons' size: small by default, as in a panel's head; `Default` beside a page's own.
+    pub fn size(mut self, size: ButtonSize) -> Self {
+        self.size = size;
         self
     }
 
@@ -755,7 +763,7 @@ impl<'a> DashboardEditActions<'a> {
                     Button::new(&self.words.edit)
                         .icon(Icon::Pencil)
                         .variant(ButtonVariant::Outline)
-                        .size(ButtonSize::Sm),
+                        .size(self.size),
                 )
                 .clicked()
             {
@@ -764,7 +772,7 @@ impl<'a> DashboardEditActions<'a> {
             return outcome;
         }
         if ui
-            .add(Button::new(&self.words.done).icon(Icon::Check).size(ButtonSize::Sm))
+            .add(Button::new(&self.words.done).icon(Icon::Check).size(self.size))
             .clicked()
         {
             outcome.saved = self.edit.done(self.kept);
@@ -774,7 +782,7 @@ impl<'a> DashboardEditActions<'a> {
             .add(
                 Button::new(&self.words.cancel)
                     .variant(ButtonVariant::Outline)
-                    .size(ButtonSize::Sm),
+                    .size(self.size),
             )
             .clicked()
         {
@@ -787,7 +795,7 @@ impl<'a> DashboardEditActions<'a> {
             let mut reset = Button::new(&self.words.reset)
                 .icon(Icon::RotateCcw)
                 .variant(ButtonVariant::Ghost)
-                .size(ButtonSize::Sm);
+                .size(self.size);
             if is_default {
                 reset = reset.reason(&self.words.is_default);
             }

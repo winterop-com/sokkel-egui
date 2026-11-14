@@ -65,7 +65,7 @@
         "@winterop-com/sokkel-ui/InlineEdit": null,
         "@winterop-com/sokkel-ui/IssueMark": null,
         "@winterop-com/sokkel-ui/Layout": "egui layout",
-        "@winterop-com/sokkel-ui/ListRow": null,
+        "@winterop-com/sokkel-ui/ListRow": "ListRow and ListRows",
         "@winterop-com/sokkel-ui/MetaLine": null,
         "@winterop-com/sokkel-ui/PageHeader": "PageHeader",
         "@winterop-com/sokkel-ui/PageState": "PageState",

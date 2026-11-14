@@ -73,8 +73,11 @@ and never chase a difference made of numbers.
   thirds, the map of the sites in their states with its legend), Open incidents (a third, the
   compact incident table and its All, `DashboardPanel::actions`), and Uptime (the whole row,
   each service's name, what it is and its state over its `UptimeBar`, a day pressed opening that
-  day on the service's page). Arranging the board (Edit, `DashboardArrange`) and the other
-  panels (latency, requests, errors, on call, maintenance, deploys) are still to come.
+  day on the service's page). Edit arranges it (`DashboardArrange`, `DashboardEditActions`):
+  a grip, a size menu and remove in each panel's head, the web's nine widgets over the board to
+  drag or press in (latency, requests stacked, errors, on call, maintenance and deploys as
+  `ListRows` too), Reset, Cancel and Done. The kept layout lives as long as the app runs; the
+  web keeps it in the browser's storage.
 - A place chosen inside a page (All, a service's tile, a day) now stays chosen: the shell went
   back to the place the rail started the frame on whenever the page moved elsewhere.
 - The public status page is the web's, a page of its own outside the board's frame: an `AppBar`
@@ -105,9 +108,8 @@ and never chase a difference made of numbers.
 
 ## What does not work yet
 
-sokkel-ui's examples keep one rule: every button does what it says. Edit on the overview stands
-there so the screen matches the web's, but nothing answers it yet, until the arranged board
-(`DashboardArrange`) is ported. Everything else works:
+sokkel-ui's examples keep one rule: every button does what it says, and every button here
+does, Edit on the overview now among them. What works:
 
 - Report incident (the overview, a service's page) and New (the incidents page) open the new
   incident dialog, the web's `NewIncidentDialog`, opened on its own page.

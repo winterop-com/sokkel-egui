@@ -12,11 +12,13 @@ pub mod new_incident;
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, AppBar, Appearance, AsideWidth, Banner, BannerTone, Button, ButtonSize, ButtonVariant,
-    Cell, ChipBar, ChipTone, Choice, ChoiceList, Column, Columns, DashboardGrid, DashboardPanel, DataTable, Day,
-    DescriptionList, DesktopWindow, Editor, Gap, Icon, IconButton, KpiRow, MenuItem, Page, PageHeader, PanelSpan,
-    PersonRow, Rail, RailEntry, RailGroup, Section, Segmented, Select, Shell, ShellPart, Split, SplitPane, Stack,
-    StackLayout, StackPlace, Stat, StatusLine, StatusTone, TableState, TableVariant, TextRole, Timeline, TimelineEvent,
-    TopBar, UptimeBar, UptimeDay, checkbox_list, form_bar, format_uptime, install, overall_uptime, relative_time,
+    Cell, ChipBar, ChipTone, Choice, ChoiceList, Column, Columns, DashboardArrange, DashboardEdit,
+    DashboardEditActions, DashboardGrid, DashboardLayoutItem, DashboardPanel, DashboardWidget, DataTable, Day,
+    DescriptionList, DesktopWindow, Editor, Gap, Icon, IconButton, KpiRow, ListRow, ListRows, MenuItem, Page,
+    PageHeader, PanelSpan, PersonRow, Rail, RailEntry, RailGroup, RowAside, RowMark, Section, Segmented, Select, Shell,
+    ShellPart, Split, SplitPane, Stack, StackLayout, StackPlace, Stat, StatusLine, StatusTone, TableState,
+    TableVariant, TextRole, Timeline, TimelineEvent, TopBar, UptimeBar, UptimeDay, checkbox_list, form_bar,
+    format_uptime, install, overall_uptime, relative_time,
 };
 
 use data::SERVICES;
@@ -106,6 +108,10 @@ pub struct StatusApp {
     /// The public page's form, and the addresses it has subscribed.
     pub subscribe: Subscribe,
     pub rotation_table: TableState,
+    /// The overview's panels as kept: their order and widths.
+    pub overview_layout: Vec<DashboardLayoutItem>,
+    /// The overview's edit mode, its draft while editing.
+    pub overview_edit: DashboardEdit,
     /// The live world the readings come from.
     pub live_world: Live,
 }
@@ -167,6 +173,8 @@ impl StatusApp {
             post_state: 0,
             post_message: String::new(),
             rotation_table: TableState::default(),
+            overview_layout: default_layout(),
+            overview_edit: DashboardEdit::default(),
             live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
             region: "All".into(),
             selected_site: None,
@@ -478,23 +486,37 @@ impl StatusApp {
                 Stack::new(Gap::Page).show(ui, |ui| self.on_call_page(ui));
             }
             _ => {
-                let description = if live {
+                let editing = self.overview_edit.editing();
+                let description = if editing {
+                    "Drag a panel by its grip to move it, set its width or remove it, and drag a widget in to add it."
+                        .to_owned()
+                } else if live {
                     format!("Live, a reading every {INTERVAL} s, the last at {clock}.")
                 } else {
                     format!("Paused at {clock}.")
                 };
                 let mut report = false;
+                let (edit, kept) = (&mut self.overview_edit, &mut self.overview_layout);
+                let default = default_layout();
                 PageHeader::new("Overview").description(description).show(ui, |ui| {
-                    report = ui.add(Button::new("Report incident").icon(Icon::Siren)).clicked();
-                    ui.add(Button::new("Edit").icon(Icon::Pencil).variant(ButtonVariant::Outline));
-                    let (icon, word) = if live {
-                        (Icon::Pause, "Pause")
-                    } else {
-                        (Icon::Play, "Resume")
-                    };
-                    toggled = ui
-                        .add(Button::new(word).icon(icon).variant(ButtonVariant::Outline))
-                        .clicked();
+                    // right to left: the primary action last in reading order, hidden while editing
+                    if !editing {
+                        report = ui.add(Button::new("Report incident").icon(Icon::Siren)).clicked();
+                    }
+                    DashboardEditActions::new(edit, kept)
+                        .default_layout(&default)
+                        .size(ButtonSize::Default)
+                        .show(ui);
+                    if !editing {
+                        let (icon, word) = if live {
+                            (Icon::Pause, "Pause")
+                        } else {
+                            (Icon::Play, "Resume")
+                        };
+                        toggled = ui
+                            .add(Button::new(word).icon(icon).variant(ButtonVariant::Outline))
+                            .clicked();
+                    }
                 });
                 if report {
                     self.report_incident(None);
@@ -1263,62 +1285,236 @@ impl StatusApp {
         let uptime = self.uptime();
         let order = self.service_order.clone();
         let health = self.live_world.health.clone();
+        // the live charts: every service in the person's order, by its last readings
+        let index_of = |id: &str| SERVICES.iter().position(|s| s.id == id);
+        let api = index_of("api").unwrap_or(0);
+        let x: Vec<String> = self.live_world.readings[api].iter().map(|r| clock_of(r.at)).collect();
+        let series = |pick: fn(&live::Reading) -> f64| -> Vec<Series> {
+            order
+                .iter()
+                .map(|&i| Series::new(SERVICES[i].id, self.live_world.readings[i].iter().map(pick)))
+                .collect()
+        };
+        let latency = series(|r| r.p95.round());
+        let requests = series(|r| r.load.round());
+        let errors = series(|r| (r.errors * 100.0).round() / 100.0);
+        // who is on call now and next, the windows coming up and the latest deploys
+        let today = self.today;
+        let next_shift = self.shifts.iter().find(|s| s.starts > today).cloned();
+        let monday = today.plus(-(today.weekday() as i32));
+        let on_call = self.on_call.clone();
+        let mut windows: Vec<&data::Maintenance> = self
+            .maintenance
+            .iter()
+            .filter(|w| !w.cancelled && w.ends > now)
+            .collect();
+        windows.sort_by(|a, b| a.starts.total_cmp(&b.starts));
+        let windows: Vec<ListRow> = windows
+            .iter()
+            .take(5)
+            .map(|w| {
+                ListRow::new(w.title.clone())
+                    .detail(format!("{}, {}", w.service, moment_of(today, w.starts)))
+                    .mark(RowMark::Icon(Icon::CalendarClock, None))
+                    .pressable(true)
+            })
+            .collect();
+        let window_services: Vec<&str> = {
+            let mut w: Vec<&data::Maintenance> = self
+                .maintenance
+                .iter()
+                .filter(|w| !w.cancelled && w.ends > now)
+                .collect();
+            w.sort_by(|a, b| a.starts.total_cmp(&b.starts));
+            w.iter().take(5).map(|w| w.service).collect()
+        };
+        let mut deploys: Vec<&data::Deploy> = self.deploys.iter().collect();
+        deploys.sort_by(|a, b| b.at.total_cmp(&a.at));
+        let deploy_services: Vec<&str> = deploys.iter().take(6).map(|d| d.service).collect();
+        let deploys: Vec<ListRow> = deploys
+            .iter()
+            .take(6)
+            .map(|d| {
+                let (word, tone) = match d.state {
+                    data::DeployState::Running => ("running", "running"),
+                    data::DeployState::Succeeded => ("succeeded", "succeeded"),
+                    data::DeployState::Failed => ("failed", "failed"),
+                };
+                ListRow::new(format!("{} {}", d.service, d.version))
+                    .detail(relative_time(d.at - now))
+                    .mark(RowMark::Icon(Icon::Rocket, None))
+                    .aside(RowAside::Chip(word.into(), ChipTone::Status(tone)))
+                    .pressable(true)
+            })
+            .collect();
         let map = &mut self.overview_map;
         let table = &mut self.open_table;
-        DashboardGrid::new("overview").show(ui, |grid| {
-            grid.cell(PanelSpan::TwoThirds, |ui| {
-                DashboardPanel::new("Sites")
-                    .subtitle("by state, live")
-                    .flush(true)
-                    .show(ui, |ui| {
-                        let size = egui::vec2(ui.available_width(), 344.0);
-                        let response = map.show(ui, size, &markers, &[]);
-                        legend.show(ui, response.rect);
-                    });
+        let mut to_page: Option<String> = None;
+        let shown: Vec<String> = self
+            .overview_edit
+            .layout(&mut self.overview_layout)
+            .iter()
+            .map(|i| i.id.clone())
+            .collect();
+        let palette: Vec<DashboardWidget> = WIDGETS
+            .iter()
+            .filter(|(id, ..)| !shown.iter().any(|s| s == id))
+            .map(|(id, label, icon, span)| DashboardWidget::new(*id, *label).icon(*icon).span(*span))
+            .collect();
+        let editing = self.overview_edit.editing();
+        let layout = self.overview_edit.layout(&mut self.overview_layout);
+        let label = |item: &DashboardLayoutItem| widget_label(&item.id).to_owned();
+        let arranged = DashboardArrange::new("overview", layout, &label)
+            .arranging(editing)
+            .palette(&palette)
+            .show(ui, |ui, item| match item.id.as_str() {
+                "sites" => {
+                    DashboardPanel::new("Sites")
+                        .subtitle("by state, live")
+                        .flush(true)
+                        .show(ui, |ui| {
+                            let size = egui::vec2(ui.available_width(), 344.0);
+                            let response = map.show(ui, size, &markers, &[]);
+                            legend.clone().show(ui, response.rect);
+                        });
+                }
+                "open" => {
+                    let subtitle = if open_count == 0 {
+                        "none".to_owned()
+                    } else {
+                        open_count.to_string()
+                    };
+                    let all = &mut to_all;
+                    DashboardPanel::new("Open incidents")
+                        .subtitle(subtitle)
+                        .flush(true)
+                        .actions(|ui| {
+                            let button = Button::new("All").variant(ButtonVariant::Ghost).size(ButtonSize::Sm);
+                            if ui.add(button).clicked() {
+                                *all = Some("incidents".to_owned());
+                            }
+                        })
+                        .show(ui, |ui| {
+                            if rows.is_empty() {
+                                sokkel_ui_egui::Empty::new("Nothing open")
+                                    .icon(Icon::CircleCheck)
+                                    .description("Every incident is resolved.")
+                                    .show(ui, |_| {});
+                            } else {
+                                DataTable::new("open-incidents", &columns, &rows, table)
+                                    .keys(keys.clone())
+                                    .stack_layout(StackLayout::Labeled)
+                                    .footer(false)
+                                    .show(ui);
+                            }
+                        });
+                }
+                "uptime" => {
+                    DashboardPanel::new("Uptime")
+                        .subtitle("the last 90 days")
+                        .show(ui, |ui| {
+                            if let Some((service, day)) = uptime_list(ui, &order, &health, &uptime) {
+                                to_day = Some(format!("services/{service}/{day}"));
+                            }
+                        });
+                }
+                "latency" => {
+                    let mut panel = TimeSeriesPanel::new("Latency", x.clone())
+                        .subtitle("p95 of each service, live")
+                        .unit("ms")
+                        .label_every(15);
+                    for s in &latency {
+                        panel = panel.series(s.clone());
+                    }
+                    panel.show(ui);
+                }
+                "requests" => {
+                    let mut panel = TimeSeriesPanel::new("Requests", x.clone())
+                        .subtitle("per second, live")
+                        .stacked(true)
+                        .label_every(15);
+                    for s in &requests {
+                        panel = panel.series(s.clone());
+                    }
+                    panel.show(ui);
+                }
+                "errors" => {
+                    let mut panel = TimeSeriesPanel::new("Errors", x.clone())
+                        .subtitle("share of requests, live")
+                        .unit("%")
+                        .decimals(2)
+                        .label_every(15);
+                    for s in &errors {
+                        panel = panel.series(s.clone());
+                    }
+                    panel.show(ui);
+                }
+                "on-call" => {
+                    let page = &mut to_page;
+                    DashboardPanel::new("On call")
+                        .subtitle("now")
+                        .flush(true)
+                        .actions(|ui| {
+                            let button = Button::new("Rotation")
+                                .variant(ButtonVariant::Ghost)
+                                .size(ButtonSize::Sm);
+                            if ui.add(button).clicked() {
+                                *page = Some("on-call".to_owned());
+                            }
+                        })
+                        .show(ui, |ui| {
+                            let mut rows = vec![
+                                ListRow::new(on_call.clone())
+                                    .detail("On call now")
+                                    .mark(RowMark::Person(on_call.clone()))
+                                    .aside(RowAside::Text(format!("since {}, 09:00", monday.short())))
+                                    .wrap(true),
+                            ];
+                            if let Some(next) = &next_shift {
+                                rows.push(
+                                    ListRow::new(next.person)
+                                        .detail("Next on call")
+                                        .mark(RowMark::Person(next.person.into()))
+                                        .aside(RowAside::Text(next.starts.short())),
+                                );
+                            }
+                            ListRows::new(rows).flush(true).show(ui);
+                        });
+                }
+                "maintenance" => {
+                    DashboardPanel::new("Maintenance")
+                        .subtitle("coming up")
+                        .flush(true)
+                        .show(ui, |ui| {
+                            if windows.is_empty() {
+                                sokkel_ui_egui::Empty::new("No maintenance is planned.").show(ui, |_| {});
+                            } else if let Some(i) = ListRows::new(windows.clone()).flush(true).show(ui) {
+                                to_page = Some(format!("services/{}", window_services[i]));
+                            }
+                        });
+                }
+                "deploys" => {
+                    DashboardPanel::new("Deploys")
+                        .subtitle("the latest")
+                        .flush(true)
+                        .show(ui, |ui| {
+                            if deploys.is_empty() {
+                                sokkel_ui_egui::Empty::new("No deploys yet.").show(ui, |_| {});
+                            } else if let Some(i) = ListRows::new(deploys.clone()).flush(true).show(ui) {
+                                to_page = Some(format!("services/{}", deploy_services[i]));
+                            }
+                        });
+                }
+                _ => {}
             });
-            let all = &mut to_all;
-            grid.cell(PanelSpan::Third, move |ui| {
-                let subtitle = if open_count == 0 {
-                    "none".to_owned()
-                } else {
-                    open_count.to_string()
-                };
-                DashboardPanel::new("Open incidents")
-                    .subtitle(subtitle)
-                    .flush(true)
-                    .actions(|ui| {
-                        let button = Button::new("All").variant(ButtonVariant::Ghost).size(ButtonSize::Sm);
-                        if ui.add(button).clicked() {
-                            *all = Some("incidents".to_owned());
-                        }
-                    })
-                    .show(ui, |ui| {
-                        if rows.is_empty() {
-                            sokkel_ui_egui::Empty::new("Nothing open")
-                                .icon(Icon::CircleCheck)
-                                .description("Every incident is resolved.")
-                                .show(ui, |_| {});
-                        } else {
-                            DataTable::new("open-incidents", &columns, &rows, table)
-                                .keys(keys)
-                                .stack_layout(StackLayout::Labeled)
-                                .footer(false)
-                                .show(ui);
-                        }
-                    });
-            });
-            let days = &mut to_day;
-            grid.cell(PanelSpan::Full, move |ui| {
-                DashboardPanel::new("Uptime")
-                    .subtitle("the last 90 days")
-                    .show(ui, |ui| {
-                        if let Some((service, day)) = uptime_list(ui, &order, &health, &uptime) {
-                            *days = Some(format!("services/{service}/{day}"));
-                        }
-                    });
-            });
-        });
-        to_all.or(to_day)
+        if let Some((widget, index)) = arranged.added
+            && let Some((id, _, _, span)) = WIDGETS.iter().find(|(id, ..)| *id == widget)
+        {
+            let layout = self.overview_edit.layout(&mut self.overview_layout);
+            let at = index.min(layout.len());
+            layout.insert(at, DashboardLayoutItem::new(*id, *span));
+        }
+        to_all.or(to_day).or(to_page)
     }
 
     /// Each site as a point in its state's color.
@@ -1415,7 +1611,7 @@ impl StatusApp {
                 |ui| {
                     let size = ui.available_size().max(egui::vec2(1.0, 320.0));
                     let response = map.show(ui, size, &markers, &[]);
-                    legend.show(ui, response.rect);
+                    legend.clone().show(ui, response.rect);
                 },
                 |ui| {
                     let output = DataTable::new("sites", &columns, &rows, table)
@@ -2324,6 +2520,32 @@ fn mine_version(id: &str, deploys: &[data::Deploy]) -> String {
         .iter()
         .find(|d| d.id == id)
         .map_or_else(String::new, |d| d.version.clone())
+}
+
+/// Every panel the overview can show, as the web's `WIDGETS`: its id, label, icon and width.
+const WIDGETS: [(&str, &str, Icon, PanelSpan); 9] = [
+    ("sites", "Sites", Icon::Globe, PanelSpan::TwoThirds),
+    ("open", "Open incidents", Icon::Siren, PanelSpan::Third),
+    ("uptime", "Uptime", Icon::Activity, PanelSpan::Full),
+    ("latency", "Latency", Icon::Gauge, PanelSpan::Half),
+    ("requests", "Requests", Icon::Waves, PanelSpan::Half),
+    ("errors", "Errors", Icon::TriangleAlert, PanelSpan::Half),
+    ("on-call", "On call", Icon::PhoneCall, PanelSpan::Third),
+    ("maintenance", "Maintenance", Icon::CalendarClock, PanelSpan::Third),
+    ("deploys", "Deploys", Icon::Rocket, PanelSpan::Third),
+];
+
+/// What a panel is called, by its id.
+fn widget_label(id: &str) -> &'static str {
+    WIDGETS.iter().find(|(each, ..)| *each == id).map_or("Panel", |w| w.1)
+}
+
+/// The overview as it comes: the map beside what is open, then the last ninety days.
+pub fn default_layout() -> Vec<DashboardLayoutItem> {
+    WIDGETS[..3]
+        .iter()
+        .map(|(id, _, _, span)| DashboardLayoutItem::new(*id, *span))
+        .collect()
 }
 
 /// A deploy's state as its chip, in the status map's colors.

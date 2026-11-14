@@ -16,6 +16,7 @@ mod fields;
 mod file_preview;
 mod frame;
 mod layout;
+mod list_row;
 mod menu;
 mod overlay;
 mod page;
@@ -56,6 +57,7 @@ pub use frame::{
     TopBar, desktop_viewport, is_phone,
 };
 pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
+pub use list_row::{ListRow, ListRows, RowAside, RowMark};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use overlay::{ConfirmAnswer, ConfirmDialog, Dialog, Select, tooltip, tooltip_shown};
 pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
