@@ -58,6 +58,8 @@ pub struct State {
     pub tree_open: std::collections::HashSet<String>,
     pub tree_chosen: Option<String>,
     pub tree_query: String,
+    pub arranged: Vec<sokkel_ui_egui::DashboardLayoutItem>,
+    pub arrange_edit: sokkel_ui_egui::DashboardEdit,
 }
 
 impl Default for State {
@@ -102,6 +104,8 @@ impl Default for State {
                 .collect(),
             tree_chosen: Some("harbor/nightly-export/orders.csv".into()),
             tree_query: String::new(),
+            arranged: parts::arranged_default(),
+            arrange_edit: sokkel_ui_egui::DashboardEdit::default(),
         }
     }
 }
@@ -366,6 +370,11 @@ pub const STORIES: &[Story] = &[
         path: "Charts/Sparkline",
         doc: "A small line with no axis, in a stat card or beside a row.",
         show: charts::sparkline,
+    },
+    Story {
+        path: "Charts/Arranged dashboard",
+        doc: "A dashboard the reader arranges: Edit puts a grip, a size menu and remove in each panel's head and the widgets over the grid; a panel dragged by its grip lands where the line shows, a widget dragged or pressed adds a panel. Cancel throws the edits away, Done keeps them.",
+        show: parts::arranged,
     },
     Story {
         path: "Charts/Dashboard",

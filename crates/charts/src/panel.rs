@@ -120,6 +120,14 @@ impl TimeSeriesPanel {
                     ui.painter()
                         .galley(pos2(head.left() + 12.0 + title_width + 6.0, top), subtitle, ink);
                 }
+                // an arrangement's tools at the head's end
+                let mut tools = ui.new_child(
+                    egui::UiBuilder::new()
+                        .id_salt("chart-panel-tools")
+                        .max_rect(head.shrink2(vec2(6.0, 0.0)))
+                        .layout(egui::Layout::right_to_left(egui::Align::Center)),
+                );
+                sokkel_ui_egui::panel_tools(&mut tools, cell);
                 // the body: 8 in and under, the chart, the legend 4 under it
                 egui::Frame::new()
                     .inner_margin(egui::Margin {

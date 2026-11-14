@@ -252,7 +252,8 @@ impl<'a> DashboardPanel<'a> {
                     ui.painter()
                         .galley(pos2(x + title_width + 8.0, baseline - sub_base), subtitle, ink);
                 }
-                if let Some(actions) = self.actions {
+                let arranged = ui.data(|d| d.get_temp::<super::arrange::ArrangeMark>(cell)).is_some();
+                if self.actions.is_some() || arranged {
                     let end = egui::Rect::from_min_max(
                         pos2(head.left() + 12.0, head.top()),
                         pos2(head.right() - 12.0, head.bottom() - 1.0),
@@ -264,7 +265,13 @@ impl<'a> DashboardPanel<'a> {
                             .layout(egui::Layout::right_to_left(egui::Align::Center)),
                     );
                     tools.spacing_mut().item_spacing.x = 8.0;
-                    actions(&mut tools);
+                    // an arrangement's tools at the very end, then the panel's own actions
+                    if arranged {
+                        tools.scope(|ui| super::panel_tools(ui, cell));
+                    }
+                    if let Some(actions) = self.actions {
+                        actions(&mut tools);
+                    }
                 }
                 let footer = self.footer.as_ref().map(|f| {
                     WidgetText::from(TextRole::Help.rich(&t, f)).into_galley(

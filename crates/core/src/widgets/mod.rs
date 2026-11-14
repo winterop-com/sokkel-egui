@@ -1,5 +1,6 @@
 //! The primitives, each drawn from the tokens alone, after sokkel-ui's components of the same name.
 
+mod arrange;
 mod board;
 mod button;
 mod calendar;
@@ -31,6 +32,11 @@ mod tree;
 mod uptime;
 mod week;
 
+pub use arrange::{
+    ALL_SPANS, DashboardArrange, DashboardArrangeResponse, DashboardArrangeWords, DashboardEdit, DashboardEditActions,
+    DashboardEditOutcome, DashboardEditWords, DashboardLayoutItem, DashboardWidget, arranged_index, move_item,
+    panel_tools,
+};
 pub use board::{BOARD_COLUMN, Board, BoardCard, BoardColumn, BoardMove, CardResponse};
 pub use button::{Button, ButtonSize, ButtonVariant, IconButton};
 pub use calendar::{Calendar, CalendarWords, WeekStart, calendar_forget};

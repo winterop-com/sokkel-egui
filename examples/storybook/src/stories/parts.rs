@@ -1,11 +1,12 @@
 //! The parts the status example brought into the library: each in its story, with Tidevann's data.
 
-use eframe::egui::{Ui, vec2};
+use eframe::egui::{self, Ui, vec2};
 use sokkel_ui_egui::{
     AppBar, Banner, BannerTone, Button, ButtonSize, ButtonVariant, CalendarEvent, Chip, ChipBar, ChipTone, Choice,
-    ChoiceList, DashboardGrid, DashboardPanel, DateTimeField, Day, DescriptionList, FileKind, FilePreview, Gap, Icon,
-    IconButton, KpiRow, Moment, PanelSpan, PersonRow, SearchField, Section, SplitPane, Stack, Stat, Switch, TagChips,
-    TextField, TextRole, Timeline, TimelineEvent, Tree, TreeNode, UptimeBar, UptimeDay, WeekGrid, form_bar, tokens,
+    ChoiceList, DashboardArrange, DashboardEditActions, DashboardGrid, DashboardLayoutItem, DashboardPanel,
+    DashboardWidget, DateTimeField, Day, DescriptionList, FileKind, FilePreview, Gap, Icon, IconButton, KpiRow, Moment,
+    PanelSpan, PersonRow, SearchField, Section, SplitPane, Stack, Stat, Switch, TagChips, TextField, TextRole,
+    Timeline, TimelineEvent, Tree, TreeNode, UptimeBar, UptimeDay, WeekGrid, form_bar, tokens,
 };
 use sokkel_ui_egui_charts::{Series, TimeSeriesPanel};
 
@@ -445,4 +446,92 @@ pub fn files(_: &mut State, ui: &mut Ui) {
         .show(ui);
     section(ui, "No preview");
     FilePreview::new("story-archive", "index.tar.gz", FileKind::Archive).show(ui);
+}
+
+/// The arranged dashboard as it comes.
+pub fn arranged_default() -> Vec<DashboardLayoutItem> {
+    vec![
+        DashboardLayoutItem::new("latency", PanelSpan::Half),
+        DashboardLayoutItem::new("uptime", PanelSpan::Half),
+        DashboardLayoutItem::new("runs", PanelSpan::Third),
+        DashboardLayoutItem::new("failed", PanelSpan::Third),
+        DashboardLayoutItem::new("queued", PanelSpan::Third),
+    ]
+}
+
+fn arranged_label(item: &DashboardLayoutItem) -> String {
+    match item.id.split('-').next().unwrap_or_default() {
+        "latency" => "Latency",
+        "uptime" => "Uptime",
+        "runs" => "Runs today",
+        "failed" => "Failed",
+        "queued" => "Queued",
+        _ => "Note",
+    }
+    .into()
+}
+
+pub fn arranged(state: &mut State, ui: &mut Ui) {
+    // the story opens in edit mode, so its picture shows the tools
+    if !state.arrange_edit.editing() {
+        let kept = state.arranged.clone();
+        state.arrange_edit.edit(&kept);
+    }
+    let default = arranged_default();
+    let row = vec2(ui.available_width(), 32.0);
+    ui.allocate_ui_with_layout(row, egui::Layout::right_to_left(egui::Align::Center), |ui| {
+        DashboardEditActions::new(&mut state.arrange_edit, &mut state.arranged)
+            .default_layout(&default)
+            .show(ui);
+    });
+    ui.add_space(12.0);
+    let palette = [
+        DashboardWidget::new("note", "Note").icon(Icon::StickyNote),
+        DashboardWidget::new("runs", "Runs today").icon(Icon::Activity),
+    ];
+    let editing = state.arrange_edit.editing();
+    let layout = state.arrange_edit.layout(&mut state.arranged);
+    let (x, p95, p50) = readings();
+    let days = days();
+    let label = arranged_label;
+    let shown = DashboardArrange::new("story-arranged", layout, &label)
+        .arranging(editing)
+        .palette(&palette)
+        .show(ui, |ui, item| match item.id.split('-').next().unwrap_or_default() {
+            "latency" => TimeSeriesPanel::new("Latency", x.clone())
+                .subtitle("in milliseconds")
+                .series(Series::new("p95", p95.clone()))
+                .series(Series::new("p50", p50.clone()))
+                .unit("ms")
+                .label_every(15)
+                .show(ui),
+            "uptime" => {
+                DashboardPanel::new("Uptime")
+                    .subtitle("99.92% over 90 days")
+                    .show(ui, |ui| {
+                        UptimeBar::new(("story-arranged-uptime", &item.id), &days).show(ui);
+                    });
+            }
+            _ => {
+                let figure = match item.id.split('-').next().unwrap_or_default() {
+                    "runs" => "148",
+                    "failed" => "3",
+                    "queued" => "12",
+                    _ => "Rerun nightly-export once the api is back.",
+                };
+                DashboardPanel::new(arranged_label(item)).show(ui, |ui| {
+                    let t = tokens(ui.ctx());
+                    ui.label(TextRole::Statistic.rich(&t, figure).color(t.color("foreground")));
+                });
+            }
+        });
+    if let Some((widget, index)) = shown.added {
+        let layout = state.arrange_edit.layout(&mut state.arranged);
+        let id = format!("{widget}-{}", layout.len());
+        let span = palette
+            .iter()
+            .find(|w| w.id == widget)
+            .map_or(PanelSpan::Third, |w| w.span);
+        layout.insert(index.min(layout.len()), DashboardLayoutItem::new(id, span));
+    }
 }

@@ -249,6 +249,8 @@ impl Widget for Button {
 pub struct IconButton {
     icon: crate::Icon,
     label: String,
+    xs: bool,
+    destructive: bool,
 }
 
 impl IconButton {
@@ -256,27 +258,54 @@ impl IconButton {
         Self {
             icon,
             label: label.into(),
+            xs: false,
+            destructive: false,
         }
+    }
+
+    /// The smallest size, `icon-xs`: `control-xs` square, the icon 12, its corners at most 10.
+    pub fn xs(mut self) -> Self {
+        self.xs = true;
+        self
+    }
+
+    /// Under the pointer the critical tint, for a button that removes or deletes.
+    pub fn destructive(mut self) -> Self {
+        self.destructive = true;
+        self
     }
 }
 
 impl egui::Widget for IconButton {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let t = crate::tokens(ui.ctx());
-        let side = super::finger_tall(ui.ctx(), &t, t.density("control"));
+        let side = if self.xs {
+            t.density("control-xs")
+        } else {
+            super::finger_tall(ui.ctx(), &t, t.density("control"))
+        };
+        let radius = if self.xs {
+            let r = t.radius("control");
+            egui::CornerRadius::same(r.nw.min(10))
+        } else {
+            t.radius("control")
+        };
         let (rect, response) = ui.allocate_exact_size(egui::vec2(side, side), egui::Sense::click());
         response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.label));
         let hot = response.hovered();
-        if hot {
-            ui.painter().rect_filled(rect, t.radius("control"), t.color("hover"));
+        if hot && self.destructive {
+            ui.painter().rect_filled(rect, radius, t.color_at("critical", 0.10));
+        } else if hot {
+            ui.painter().rect_filled(rect, radius, t.color("hover"));
         }
-        let ink = if hot {
-            t.color("foreground")
-        } else {
-            t.color("muted-foreground")
+        let ink = match (hot, self.destructive) {
+            (true, true) => t.color("critical-ink"),
+            (true, false) => t.color("foreground"),
+            _ => t.color("muted-foreground"),
         };
-        crate::icons::paint(ui.painter(), rect.center(), self.icon, 16.0, ink);
-        super::focus_ring(ui.painter(), &t, rect, t.radius("control"), &response);
+        let glyph = if self.xs { 12.0 } else { 16.0 };
+        crate::icons::paint(ui.painter(), rect.center(), self.icon, glyph, ink);
+        super::focus_ring(ui.painter(), &t, rect, radius, &response);
         let label = self.label;
         response.on_hover_text(label)
     }
