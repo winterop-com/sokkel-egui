@@ -14,6 +14,7 @@ mod maps;
 mod menus;
 mod overlays;
 mod page;
+mod parts;
 mod primitives;
 pub mod settings;
 mod table;
@@ -50,6 +51,10 @@ pub struct State {
     pub palette_open: bool,
     pub palette_query: String,
     pub palette_highlight: usize,
+    pub choice: String,
+    pub starts: Option<sokkel_ui_egui::Moment>,
+    pub region: String,
+    pub update: String,
 }
 
 impl Default for State {
@@ -81,6 +86,14 @@ impl Default for State {
             palette_open: true,
             palette_query: "run".into(),
             palette_highlight: 0,
+            choice: "some".into(),
+            starts: Some(sokkel_ui_egui::Moment::new(
+                sokkel_ui_egui::Day::parse("2026-11-17").expect("a day"),
+                2,
+                0,
+            )),
+            region: "Europe".into(),
+            update: "We are looking into it.".into(),
         }
     }
 }
@@ -132,6 +145,11 @@ pub const STORIES: &[Story] = &[
         show: primitives::button,
     },
     Story {
+        path: "Primitives/Actions/Icon button",
+        doc: "A button that is an icon alone, its label what a screen reader hears and the pointer is told.",
+        show: parts::icon_button,
+    },
+    Story {
         path: "Primitives/Display/Alert",
         doc: "A message that stays on the page, plain or destructive, with an icon beside its title and description.",
         show: display::alert,
@@ -162,9 +180,24 @@ pub const STORIES: &[Story] = &[
         show: inputs::checkbox,
     },
     Story {
+        path: "Primitives/Inputs/Choice list",
+        doc: "One answer out of a few, each a row with a radio and a line under it.",
+        show: parts::choice_list,
+    },
+    Story {
+        path: "Primitives/Inputs/Date and time field",
+        doc: "A date and a time typed as one, or picked on a calendar beside the day's times; a moment before the earliest said under it.",
+        show: parts::date_time_field,
+    },
+    Story {
         path: "Primitives/Inputs/Field",
         doc: "A labeled text field with help under it, and the same field holding an error.",
         show: primitives::field,
+    },
+    Story {
+        path: "Primitives/Inputs/Text area",
+        doc: "A field of several lines, growing with its text.",
+        show: parts::text_area,
     },
     Story {
         path: "Primitives/Inputs/Input",
@@ -207,14 +240,39 @@ pub const STORIES: &[Story] = &[
         show: primitives::chip,
     },
     Story {
+        path: "Patterns/Chip bar",
+        doc: "A row of chips with one chosen, scrolling sideways where it runs out of room.",
+        show: parts::chip_bar,
+    },
+    Story {
         path: "Patterns/Command palette",
         doc: "The palette over the page, open with the story and narrowed by \"run\": the arrows move the highlight, Enter runs it.",
         show: menus::palette,
     },
     Story {
+        path: "Patterns/Banner",
+        doc: "A line across the page about how things stand, in its tone.",
+        show: parts::banner,
+    },
+    Story {
+        path: "Patterns/Description list",
+        doc: "Terms over their values, each value words or a control changed in place.",
+        show: parts::description_list,
+    },
+    Story {
         path: "Patterns/Data table",
         doc: "The one table: forty runs sorted by rows, with check boxes and the selection bar; a list; and an empty table. Press a head to sort, drag its edge to resize, press a row to open it.",
         show: table::data_table,
+    },
+    Story {
+        path: "Patterns/Form bar",
+        doc: "A form's actions at its end, a note at its start.",
+        show: parts::form_bar_story,
+    },
+    Story {
+        path: "Patterns/App bar",
+        doc: "The frame's top bar alone, for a screen without the shell: the mark, the trail and the actions.",
+        show: parts::app_bar,
     },
     Story {
         path: "Patterns/Settings dialog",
@@ -237,9 +295,39 @@ pub const STORIES: &[Story] = &[
         show: page::page_state,
     },
     Story {
+        path: "Patterns/Section",
+        doc: "A titled part of a page with its meta, description and actions, and people on its lines.",
+        show: parts::sections,
+    },
+    Story {
         path: "Patterns/Segmented",
         doc: "One choice among a few options, all in view, in each of its four looks.",
         show: inputs::segmented,
+    },
+    Story {
+        path: "Patterns/Split pane",
+        doc: "Two panes side by side, the rule between them dragged to share the room.",
+        show: parts::split_pane,
+    },
+    Story {
+        path: "Patterns/Stat",
+        doc: "Key figures in a row, each a stat ruled from the next.",
+        show: parts::stats,
+    },
+    Story {
+        path: "Patterns/Tag chips",
+        doc: "Tags in the code face, wrapping where they run out of room.",
+        show: parts::tag_chips,
+    },
+    Story {
+        path: "Patterns/Timeline",
+        doc: "Events one under another, newest first: dots in their states' colors, or icons.",
+        show: parts::timeline,
+    },
+    Story {
+        path: "Patterns/Uptime bar",
+        doc: "A service's last ninety days as a bar a day, the day pointed at said under it.",
+        show: parts::uptime_bar,
     },
     Story {
         path: "Charts/Line",
@@ -255,6 +343,11 @@ pub const STORIES: &[Story] = &[
         path: "Charts/Sparkline",
         doc: "A small line with no axis, in a stat card or beside a row.",
         show: charts::sparkline,
+    },
+    Story {
+        path: "Charts/Dashboard",
+        doc: "Panels in a dashboard's grid: a time series of latency beside a panel holding an uptime bar.",
+        show: parts::dashboard,
     },
     Story {
         path: "Maps/Map",
