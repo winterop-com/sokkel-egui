@@ -52,6 +52,9 @@ pub fn report_natural_height(ui: &Ui, cell: Id, height: f32) {
     ui.data_mut(|d| d.insert_temp(cell, CellNatural(height)));
 }
 
+/// Controls drawn at a panel's head.
+type Tools<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
+
 type Cell<'a> = (PanelSpan, Box<dyn FnOnce(&mut Ui) + 'a>);
 
 /// The panels a grid lays out, each with its span.
@@ -163,7 +166,7 @@ pub struct DashboardPanel<'a> {
     subtitle: Option<String>,
     flush: bool,
     footer: Option<String>,
-    actions: Option<Box<dyn FnOnce(&mut Ui) + 'a>>,
+    actions: Option<Tools<'a>>,
 }
 
 impl<'a> DashboardPanel<'a> {
