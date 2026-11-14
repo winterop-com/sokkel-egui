@@ -25,6 +25,7 @@ mod person;
 mod section;
 mod settings;
 mod stat;
+mod stat_panel;
 mod switch;
 mod table;
 mod table_edit;
@@ -70,6 +71,7 @@ pub use settings::{
     theme_settings,
 };
 pub use stat::{KpiRow, Stat, sparkline};
+pub use stat_panel::{StatPanel, StatWords, Threshold, format_value, threshold_color};
 pub use switch::Switch;
 pub use table::{
     Cell, CellEdit, Column, DataTable, RowActions, StackLayout, StackPlace, TableOutput, TableState, TableVariant,

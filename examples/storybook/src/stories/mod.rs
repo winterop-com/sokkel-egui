@@ -377,6 +377,11 @@ pub const STORIES: &[Story] = &[
         show: parts::arranged,
     },
     Story {
+        path: "Charts/Dashboard panels",
+        doc: "The figures a dashboard reads at a glance: stat tiles inked by their thresholds with their trend behind, a gauge on an arc with its thresholds as a band, and bars lying down by job.",
+        show: parts::dashboard_panels,
+    },
+    Story {
         path: "Charts/Dashboard",
         doc: "Panels in a dashboard's grid: a time series of latency beside a panel holding an uptime bar.",
         show: parts::dashboard,

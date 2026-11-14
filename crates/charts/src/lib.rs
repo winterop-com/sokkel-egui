@@ -13,7 +13,7 @@ use egui::{
 use std::sync::Arc;
 
 mod panel;
-pub use panel::TimeSeriesPanel;
+pub use panel::{BarPanel, GaugePanel, TimeSeriesPanel};
 
 use sokkel_ui_egui::{TextRole, Tokens, tokens};
 
@@ -578,6 +578,7 @@ pub struct BarChart {
     categories: Vec<String>,
     series: Vec<Series>,
     stacked: bool,
+    horizontal: bool,
     height: f32,
 }
 
@@ -587,6 +588,7 @@ impl BarChart {
             categories: categories.into_iter().map(Into::into).collect(),
             series: Vec::new(),
             stacked: false,
+            horizontal: false,
             height: 240.0,
         }
     }
@@ -598,6 +600,12 @@ impl BarChart {
 
     pub fn stacked(mut self, stacked: bool) -> Self {
         self.stacked = stacked;
+        self
+    }
+
+    /// The bars lying down: the categories down the left, the values across.
+    pub fn horizontal(mut self, horizontal: bool) -> Self {
+        self.horizontal = horizontal;
         self
     }
 
@@ -623,6 +631,10 @@ impl Widget for BarChart {
         } else {
             self.series.iter().map(|s| max_of(s.values.iter())).fold(0.0, f64::max)
         };
+        if self.horizontal {
+            self.lying(ui, &t, rect, max);
+            return response;
+        }
         let frame = Frame::draw(ui, rect, &t, &self.categories, max, &Axes::default());
         let step = frame.band(count);
         let hovered = frame.hovered(&response, count);
@@ -745,6 +757,175 @@ impl Widget for Sparkline {
         if let Some(last) = points.last() {
             painter.circle_filled(*last, 2.5, color);
         }
+        response
+    }
+}
+
+impl BarChart {
+    /// The bars lying down: the categories' names down the left, the values' rules across with
+    /// their labels under them, each category's bars in its band.
+    fn lying(&self, ui: &Ui, t: &Tokens, rect: Rect, max: f64) {
+        let painter = ui.painter();
+        let font = axis_font(t);
+        let ink = t.color("muted-foreground");
+        let rule = t.color("border");
+        let max = if max > 0.0 { max } else { 1.0 };
+        let step = nice_step(max, 5);
+        let top = (max / step - 1e-9).ceil().max(1.0) * step;
+        let ticks = (top / step).round() as usize;
+        let names = self
+            .categories
+            .iter()
+            .map(|c| painter.layout_no_wrap(c.clone(), font.clone(), ink).size().x)
+            .fold(0.0, f32::max);
+        let line = painter.layout_no_wrap("0".into(), font.clone(), ink).size().y;
+        let plot = Rect::from_min_max(
+            pos2(rect.left() + names + 8.0, rect.top() + 6.0),
+            pos2(rect.right() - 16.0, rect.bottom() - 12.0 - line),
+        );
+        let x = |value: f64| plot.left() + (value / top) as f32 * plot.width();
+        for i in 0..=ticks {
+            let value = i as f64 * step;
+            let stroke = if i == 0 {
+                Stroke::new(1.0, rule)
+            } else {
+                Stroke::new(1.0, rule.gamma_multiply(0.5))
+            };
+            painter.vline(x(value), plot.y_range(), stroke);
+            painter.text(
+                pos2(x(value), plot.bottom() + 8.0),
+                Align2::CENTER_TOP,
+                Writing::default().tick(value),
+                font.clone(),
+                ink,
+            );
+        }
+        let count = self.categories.len().max(1);
+        let band = plot.height() / count as f32;
+        let groups = if self.stacked { 1 } else { self.series.len().max(1) };
+        let thick = (band * 0.7 / groups as f32).min(28.0);
+        let end = CornerRadius {
+            nw: 0,
+            sw: 0,
+            ne: 2,
+            se: 2,
+        };
+        for (i, category) in self.categories.iter().enumerate() {
+            let middle = plot.top() + band * (i as f32 + 0.5);
+            painter.text(
+                pos2(plot.left() - 8.0, middle),
+                Align2::RIGHT_CENTER,
+                category,
+                font.clone(),
+                ink,
+            );
+            let mut base = 0.0;
+            for (index, series) in self.series.iter().enumerate() {
+                let Some(value) = series.values.get(i).copied().flatten() else {
+                    continue;
+                };
+                let (y, from, to) = if self.stacked {
+                    let from = base;
+                    base += value;
+                    (middle - thick / 2.0, from, base)
+                } else {
+                    (middle - thick * groups as f32 / 2.0 + thick * index as f32, 0.0, value)
+                };
+                let bar = Rect::from_min_max(pos2(x(from), y + 1.0), pos2(x(to), y + thick - 1.0));
+                painter.rect_filled(bar, end, series_color(t, index));
+            }
+        }
+    }
+}
+
+/// One reading on an arc from `min` to `max`, after sokkel-ui's gauge kind in its `arc` shape: a
+/// thick arc filled to the reading in its tone over the grid's track, the thresholds' colors as a
+/// thin band outside it, and the figure written in the middle in its tone.
+#[must_use = "add it with `ui.add(...)`"]
+pub struct Gauge {
+    value: Option<f64>,
+    min: f64,
+    max: f64,
+    /// The band's steps: from each value up, a color.
+    steps: Vec<(Option<f64>, Color32)>,
+    tone: Color32,
+    written: String,
+    height: f32,
+}
+
+impl Gauge {
+    pub fn new(value: Option<f64>, min: f64, max: f64, tone: Color32, written: impl Into<String>) -> Self {
+        Self {
+            value,
+            min,
+            max,
+            steps: Vec::new(),
+            tone,
+            written: written.into(),
+            height: 128.0,
+        }
+    }
+
+    /// The thresholds' band: from each step's value up (the first from `min`), its color.
+    pub fn steps(mut self, steps: Vec<(Option<f64>, Color32)>) -> Self {
+        self.steps = steps;
+        self
+    }
+
+    pub fn height(mut self, height: f32) -> Self {
+        self.height = height;
+        self
+    }
+}
+
+impl Widget for Gauge {
+    fn ui(self, ui: &mut Ui) -> Response {
+        let t = tokens(ui.ctx());
+        let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), self.height), Sense::hover());
+        let painter = ui.painter();
+        // from 215 degrees round to -35, its center at 60% down, as ECharts places the arc
+        let center = pos2(rect.center().x, rect.top() + rect.height() * 0.6);
+        let half = rect.width().min(rect.height()) / 2.0;
+        let (start, end) = (215.0_f32.to_radians(), (-35.0_f32).to_radians());
+        let span = (self.max - self.min).max(f64::EPSILON);
+        let share = |v: f64| (((v - self.min) / span).clamp(0.0, 1.0)) as f32;
+        let arc = |from: f32, to: f32, radius: f32, width: f32, color: Color32| {
+            let steps = ((to - from).abs() * 48.0).ceil().max(2.0) as usize;
+            let points: Vec<Pos2> = (0..=steps)
+                .map(|k| {
+                    let a = start + (end - start) * (from + (to - from) * k as f32 / steps as f32);
+                    pos2(center.x + radius * a.cos(), center.y - radius * a.sin())
+                })
+                .collect();
+            painter.add(Shape::line(points, Stroke::new(width, color)));
+        };
+        // the thick arc at 88%, 14 wide: the track, then the reading
+        let radius = half * 0.88 - 7.0;
+        arc(0.0, 1.0, radius, 14.0, t.color("border"));
+        if let Some(value) = self.value {
+            arc(0.0, share(value), radius, 14.0, self.tone);
+        }
+        // the band at 98%, 3 wide, each step from its value to the next one's
+        for (i, (from, color)) in self.steps.iter().enumerate() {
+            let a = from.map_or(0.0, share);
+            let b = self.steps.get(i + 1).and_then(|s| s.0).map_or(1.0, share);
+            if b > a {
+                arc(a, b, half * 0.98 - 1.5, 3.0, *color);
+            }
+        }
+        let shown = if self.value.is_some() {
+            self.written
+        } else {
+            "-".to_owned()
+        };
+        let figure = egui::WidgetText::from(TextRole::Statistic.rich(&t, shown).variation("wght", 600.0)).into_galley(
+            ui,
+            Some(egui::TextWrapMode::Extend),
+            f32::INFINITY,
+            TextRole::Statistic.font(&t),
+        );
+        let at = pos2(center.x, center.y + radius * 0.02) - figure.size() / 2.0;
+        painter.galley(at, figure, self.tone);
         response
     }
 }

@@ -5,10 +5,10 @@ use sokkel_ui_egui::{
     AppBar, Banner, BannerTone, Button, ButtonSize, ButtonVariant, CalendarEvent, Chip, ChipBar, ChipTone, Choice,
     ChoiceList, DashboardArrange, DashboardEditActions, DashboardGrid, DashboardLayoutItem, DashboardPanel,
     DashboardWidget, DateTimeField, Day, DescriptionList, FileKind, FilePreview, Gap, Icon, IconButton, KpiRow, Moment,
-    PanelSpan, PersonRow, SearchField, Section, SplitPane, Stack, Stat, Switch, TagChips, TextField, TextRole,
-    Timeline, TimelineEvent, Tree, TreeNode, UptimeBar, UptimeDay, WeekGrid, form_bar, tokens,
+    PanelSpan, PersonRow, SearchField, Section, SplitPane, Stack, Stat, StatPanel, Switch, TagChips, TextField,
+    TextRole, Threshold, Timeline, TimelineEvent, Tree, TreeNode, UptimeBar, UptimeDay, WeekGrid, form_bar, tokens,
 };
-use sokkel_ui_egui_charts::{Series, TimeSeriesPanel};
+use sokkel_ui_egui_charts::{BarPanel, GaugePanel, Series, TimeSeriesPanel};
 
 use super::{State, section};
 
@@ -534,4 +534,66 @@ pub fn arranged(state: &mut State, ui: &mut Ui) {
             .map_or(PanelSpan::Third, |w| w.span);
         layout.insert(index.min(layout.len()), DashboardLayoutItem::new(id, span));
     }
+}
+
+pub fn dashboard_panels(_: &mut State, ui: &mut Ui) {
+    const LATENCY: [Threshold; 3] = [
+        Threshold::base("good"),
+        Threshold::from(200.0, "warning"),
+        Threshold::from(300.0, "critical"),
+    ];
+    const CPU: [Threshold; 3] = [
+        Threshold::base("good"),
+        Threshold::from(70.0, "warning"),
+        Threshold::from(85.0, "critical"),
+    ];
+    let runs = [38.0, 41.0, 44.0, 40.0, 46.0, 49.0, 45.0, 51.0, 48.0, 53.0, 55.0, 52.0];
+    let latency = [
+        150.0, 162.0, 171.0, 190.0, 214.0, 236.0, 228.0, 241.0, 256.0, 249.0, 262.0, 271.0,
+    ];
+    DashboardGrid::new("story-dashboard-panels").show(ui, |grid| {
+        grid.cell(PanelSpan::Sixth, move |ui| {
+            StatPanel::new("Runs", Some(55.0))
+                .unit("/min")
+                .color("chart-1")
+                .sparkline(&runs)
+                .delta("+12%")
+                .good(Some(true))
+                .show(ui);
+        });
+        grid.cell(PanelSpan::Sixth, move |ui| {
+            StatPanel::new("api latency p95", Some(271.0))
+                .unit("ms")
+                .thresholds(&LATENCY)
+                .sparkline(&latency)
+                .delta("+80%")
+                .good(Some(false))
+                .show(ui);
+        });
+        grid.cell(PanelSpan::Sixth, |ui| {
+            StatPanel::new("Queue depth", None).show(ui);
+        });
+        grid.cell(PanelSpan::Sixth, |ui| {
+            GaugePanel::new("Worker CPU", Some(74.0))
+                .unit("%")
+                .thresholds(&CPU)
+                .show(ui);
+        });
+        grid.cell(PanelSpan::Third, |ui| {
+            BarPanel::new(
+                "Runs by job",
+                [
+                    "nightly-export",
+                    "sync-inventory",
+                    "rebuild-index",
+                    "send-digest",
+                    "import-orders",
+                ],
+            )
+            .subtitle("since midnight")
+            .series(Series::new("Runs", [52.0, 47.0, 44.0, 49.0, 48.0]))
+            .horizontal(true)
+            .show(ui);
+        });
+    });
 }
