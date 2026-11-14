@@ -163,7 +163,26 @@
             "name": "inbox_dark",
             "route": "inbox",
             "scheme": "dark"
+        },
+        {
+            "name": "phone",
+            "route": "inbox",
+            "viewport": {
+                "width": 390,
+                "height": 844
+            }
+        },
+        {
+            "name": "phone_drawer",
+            "route": "inbox",
+            "viewport": {
+                "width": 390,
+                "height": 844
+            },
+            "steps": [
+                "button:Open the navigation"
+            ]
         }
     ],
-    "shot": "d70448b8ae752bf900e85706a0afb2ed61b0a316"
+    "shot": "09e570c7b7de85fbb2e8910b6fe0ad6b156ace75"
 }

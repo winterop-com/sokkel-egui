@@ -26,6 +26,8 @@ interface Screen {
     name: string
     route: string
     scheme?: 'light' | 'dark'
+    /** The window, 1280 by 800 unless given: a phone is 390 by 844. */
+    viewport?: { width: number; height: number }
     /**
      * In order: clicks by accessible name (`role:name`), keys (`key:Meta+K`), and double clicks on
      * visible text (`dblclick:text`) or on what a selector finds (`dblclick-css:selector`).
@@ -131,7 +133,7 @@ async function web() {
     mkdirSync(out, { recursive: true })
     try {
         for (const screen of manifest.screens) {
-            const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, colorScheme: screen.scheme ?? 'light' })
+            const context = await browser.newContext({ viewport: screen.viewport ?? { width: 1280, height: 800 }, deviceScaleFactor: 1, colorScheme: screen.scheme ?? 'light' })
             const page = await context.newPage()
             await page.clock.install({ time: new Date(`${manifest.today}T09:00:00`) })
             await page.goto(`http://127.0.0.1:${port}/#/${screen.route}`)

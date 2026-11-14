@@ -8,6 +8,10 @@ use sokkel_ui_egui::{Appearance, Day, Scheme};
 use tasks::{TasksApp, View};
 
 fn render(scheme: Scheme, setup: impl FnOnce(&mut TasksApp)) -> Harness<'static, TasksApp> {
+    render_at([1280.0, 800.0], scheme, setup)
+}
+
+fn render_at(size: [f32; 2], scheme: Scheme, setup: impl FnOnce(&mut TasksApp)) -> Harness<'static, TasksApp> {
     let mut app = TasksApp::on(
         Day::parse("2026-11-16").unwrap(),
         Appearance {
@@ -16,7 +20,7 @@ fn render(scheme: Scheme, setup: impl FnOnce(&mut TasksApp)) -> Harness<'static,
         },
     );
     setup(&mut app);
-    let mut harness = Harness::builder().with_size([1280.0, 800.0]).build_ui_state(
+    let mut harness = Harness::builder().with_size(size).build_ui_state(
         |ui, app: &mut TasksApp| {
             eframe::egui::CentralPanel::default()
                 .frame(eframe::egui::Frame::NONE)
@@ -97,4 +101,15 @@ fn every_screen() {
     harness.remove_cursor();
     harness.run_steps(2);
     results.add(harness.try_snapshot("account"));
+
+    // a phone, 390 by 844: the rail a drawer behind the top bar's menu button
+    let phone = [390.0, 844.0];
+    let mut harness = render_at(phone, Scheme::System, |_| {});
+    results.add(harness.try_snapshot("phone"));
+    let mut harness = render_at(phone, Scheme::System, |_| {});
+    harness.get_by_label("Open the navigation").click();
+    harness.run_steps(3);
+    harness.remove_cursor();
+    harness.run_steps(2);
+    results.add(harness.try_snapshot("phone_drawer"));
 }
