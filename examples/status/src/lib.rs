@@ -10,7 +10,7 @@ use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, Cell, ChipTone, Column, Columns,
     DataTable, Gap, Icon, KpiRow, MenuItem, Page, PageHeader, Rail, RailEntry, RailGroup, Segmented, Shell, ShellPart,
-    Stack, StackLayout, StackPlace, Stat, StatusLine, StatusTone, TableState, TopBar, install, relative_time,
+    Stack, StackLayout, StackPlace, Stat, StatusLine, StatusTone, TableState, TopBar, install,
 };
 
 use data::SERVICES;
@@ -53,8 +53,9 @@ pub struct StatusApp {
     pub incidents: Vec<data::Incident>,
     /// Which incidents the incidents page shows: open, resolved or all.
     pub shown: usize,
-    /// The incidents' table.
+    /// The incidents' table, and what its search holds.
     pub incidents_table: TableState,
+    pub incident_search: String,
     /// The live world the readings come from.
     pub live_world: Live,
 }
@@ -77,7 +78,9 @@ impl StatusApp {
             on_call: "grace".into(),
             incidents: data::seed_incidents(9.0 * 3600.0 * 1000.0),
             shown: 0,
-            incidents_table: TableState::default(),
+            // newest first, as the web's `defaultSort` on Opened
+            incidents_table: TableState::sorted(6, false),
+            incident_search: String::new(),
             live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
         }
     }
@@ -333,7 +336,10 @@ impl StatusApp {
     /// labeled cards where its columns do not fit.
     fn incident_table(&mut self, ui: &mut Ui) {
         let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
-        let mut listed: Vec<&data::Incident> = self
+        // every word searched for in what an incident says: its code, title, services, sites and
+        // assignee, as the web's page matches them
+        let words: Vec<String> = self.incident_search.split_whitespace().map(str::to_lowercase).collect();
+        let listed: Vec<&data::Incident> = self
             .incidents
             .iter()
             .filter(|i| match self.shown {
@@ -341,8 +347,19 @@ impl StatusApp {
                 1 => i.state == data::State::Resolved,
                 _ => true,
             })
+            .filter(|i| {
+                let text = format!(
+                    "{} {} {} {} {}",
+                    i.code,
+                    i.title,
+                    i.services.join(" "),
+                    i.sites.join(" "),
+                    i.assignee
+                )
+                .to_lowercase();
+                words.iter().all(|w| text.contains(w))
+            })
             .collect();
-        listed.sort_by(|a, b| b.opened.total_cmp(&a.opened));
         let columns = [
             Column::new("Incident", 224.0).fill(),
             Column::new("Code", 88.0).stack(StackPlace::Secondary),
@@ -375,7 +392,10 @@ impl StatusApp {
                     ),
                     Cell::Tags(touched),
                     Cell::Person(incident.assignee.into()),
-                    Cell::Text(relative_time(incident.opened - now)),
+                    Cell::Relative {
+                        at: incident.opened,
+                        now,
+                    },
                     Cell::Text(duration(lasted)),
                 ]
             })
@@ -383,6 +403,7 @@ impl StatusApp {
         let keys: Vec<String> = listed.iter().map(|i| i.id.clone()).collect();
         DataTable::new("incidents", &columns, &rows, &mut self.incidents_table)
             .keys(keys)
+            .search(&mut self.incident_search)
             .stack_layout(StackLayout::Labeled)
             .actions(|_| {
                 vec![

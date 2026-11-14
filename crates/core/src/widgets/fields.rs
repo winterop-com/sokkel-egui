@@ -164,6 +164,7 @@ pub struct SearchField<'a> {
     text: &'a mut String,
     placeholder: String,
     id: egui::Id,
+    keys: Option<String>,
 }
 
 impl<'a> SearchField<'a> {
@@ -172,7 +173,15 @@ impl<'a> SearchField<'a> {
             text,
             placeholder: "Search".into(),
             id: egui::Id::new(id),
+            keys: None,
         }
+    }
+
+    /// The key that reaches the field, drawn at its end ("/"), and pressed while nothing else has
+    /// the focus, moves the focus into it.
+    pub fn keys(mut self, keys: impl Into<String>) -> Self {
+        self.keys = Some(keys.into());
+        self
     }
 
     pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
@@ -184,14 +193,42 @@ impl<'a> SearchField<'a> {
         let t = tokens(ui.ctx());
         let height = super::finger_tall(ui.ctx(), &t, t.density("control"));
         let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
-        icon_field(
-            ui,
-            rect,
-            self.text,
-            Icon::Search,
-            &self.placeholder,
-            self.id.with("field"),
-        )
+        let field = self.id.with("field");
+        let response = icon_field(ui, rect, self.text, Icon::Search, &self.placeholder, field);
+        if let Some(keys) = &self.keys {
+            if self.text.is_empty() && !response.has_focus() {
+                let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                let galley = egui::WidgetText::from(egui::RichText::new(keys).font(mono.clone())).into_galley(
+                    ui,
+                    Some(egui::TextWrapMode::Extend),
+                    f32::INFINITY,
+                    mono,
+                );
+                ui.painter().galley(
+                    pos2(
+                        rect.right() - 10.0 - galley.size().x,
+                        rect.center().y - galley.size().y / 2.0,
+                    ),
+                    galley,
+                    t.color("muted-foreground"),
+                );
+            }
+            let nothing_focused = ui.memory(|m| m.focused().is_none());
+            let pressed = nothing_focused
+                && ui.input(|i| {
+                    i.events
+                        .iter()
+                        .any(|e| matches!(e, egui::Event::Text(typed) if typed == keys))
+                });
+            if pressed {
+                ui.input_mut(|i| {
+                    i.events
+                        .retain(|e| !matches!(e, egui::Event::Text(typed) if typed == keys))
+                });
+                response.request_focus();
+            }
+        }
+        response
     }
 }
 

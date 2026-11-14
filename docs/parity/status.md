@@ -31,7 +31,7 @@ and never chase a difference made of numbers.
   parts a section's gap apart (`Stack`, `Gap::Section`).
 - The incidents table stacks as the web's labeled cards (`StackLayout::Labeled`): the title and
   its menu, a line each for Touches (`Cell::Tags`), Assignee and Lasted, and the facts (code, state
-  and severity chips, `relative_time`). Its bar (search, row count, sort) is still to build.
+  and severity chips, `relative_time`). Its bar is the web's (`DataTable::search`): the search, reached by "/" (`SearchField::keys`), narrowing by every word, the rows' count, and the sort menu, newest first by Opened (`Cell::Relative`).
 - Next, largest first:
   the dashboard under them; the incidents table (a stacked, labeled list under a bar with its search, row count and sort; `StatusChip`, `TagChips`, `RelativeTime`); the services table; the map of sites; on call's
   rotation; the public page; settings; the live simulation behind all of them.

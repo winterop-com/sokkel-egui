@@ -9,7 +9,7 @@ use egui::{CornerRadius, CursorIcon, Id, Rect, Response, Sense, Stroke, TextWrap
 use super::table_edit::{self, EditMove, EditWords, Editor, OpenCell};
 use crate::{
     AvatarSize, Button, ButtonSize, ButtonVariant, Checkbox, ChipTone, Day, DropdownMenu, DueText, Icon, MenuItem,
-    TextRole, icons, tokens,
+    SearchField, TextRole, icons, tokens,
 };
 
 /// Why a draft cannot be saved, or `None` when it can: a column's check on what was typed.
@@ -132,6 +132,12 @@ pub enum Cell {
     },
     /// Tags as chips in the code face, 4 apart, after sokkel-ui's `TagChips`.
     Tags(Vec<String>),
+    /// An instant said against `now` in words ("48 minutes ago"), sorted by the instant; both in
+    /// milliseconds of one clock.
+    Relative {
+        at: f64,
+        now: f64,
+    },
     Empty,
 }
 
@@ -144,6 +150,7 @@ impl Cell {
             }
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
             Cell::Tags(tags) => tags.join(" "),
+            Cell::Relative { at, now } => super::relative_time(at - now),
             Cell::Check(_) | Cell::Empty => String::new(),
         }
     }
@@ -156,6 +163,7 @@ impl Cell {
             Cell::Check(on) => u8::from(*on).to_string(),
             Cell::Due { date, .. } => date.map_or("9999".into(), |d| d.to_string()),
             Cell::Tags(tags) => tags.join(" "),
+            Cell::Relative { at, .. } => format!("{:024.3}", at + 1e18),
             Cell::Empty => String::new(),
         }
     }
@@ -297,6 +305,7 @@ pub struct DataTable<'a> {
     today: Day,
     keys: Vec<Id>,
     stack_layout: StackLayout,
+    search: Option<&'a mut String>,
 }
 
 /// How wide a row's grip is, in the first column before its content.
@@ -325,6 +334,7 @@ impl<'a> DataTable<'a> {
             today: Day::today(),
             keys: Vec::new(),
             stack_layout: StackLayout::Never,
+            search: None,
         }
     }
 
@@ -381,6 +391,13 @@ impl<'a> DataTable<'a> {
     /// row when the rows move, and go when it does. Without keys a row is known by its index.
     pub fn keys<K: egui::AsId>(mut self, keys: impl IntoIterator<Item = K>) -> Self {
         self.keys = keys.into_iter().map(Id::new).collect();
+        self
+    }
+
+    /// A bar over the rows with a search field (reached by "/") that edits `text`, the rows' count
+    /// and a sort menu of the columns that sort; the app narrows the rows by what is typed.
+    pub fn search(mut self, text: &'a mut String) -> Self {
+        self.search = Some(text);
         self
     }
 
@@ -638,6 +655,64 @@ impl<'a> DataTable<'a> {
             fx += width;
         }
         (toggled, edited)
+    }
+
+    /// The bar over the rows: the search, 256 wide, then at the end the rows' count in the code
+    /// face and the sort, a ghost button naming the column it sorts by, its menu the columns that
+    /// sort; 8 over and under a control, 12 across, a rule under it.
+    fn bar(&mut self, ui: &mut Ui, t: &crate::Tokens) {
+        let control = super::finger_tall(ui.ctx(), t, t.density("control"));
+        let (bar, _) = ui.allocate_exact_size(vec2(ui.available_width(), 8.0 + control + 8.0 + 1.0), Sense::hover());
+        ui.painter()
+            .hline(bar.x_range(), bar.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
+        let row = Rect::from_min_max(
+            pos2(bar.left() + 12.0, bar.top() + 8.0),
+            pos2(bar.right() - 12.0, bar.top() + 8.0 + control),
+        );
+        let id = self.id.with("search");
+        if let Some(text) = self.search.as_deref_mut() {
+            let field = Rect::from_min_size(row.min, vec2(256.0_f32.min(row.width()), control));
+            let mut child = ui.new_child(egui::UiBuilder::new().max_rect(field));
+            SearchField::new(id, text).keys("/").show(&mut child);
+        }
+        let mut child = ui.new_child(
+            egui::UiBuilder::new()
+                .max_rect(row)
+                .layout(egui::Layout::right_to_left(egui::Align::Center)),
+        );
+        child.spacing_mut().item_spacing.x = 16.0;
+        let sortable: Vec<usize> = (0..self.columns.len()).filter(|c| self.columns[*c].sortable).collect();
+        if let Some(&first) = sortable.first() {
+            let (column, ascending) = self.state.sort.unwrap_or((first, true));
+            let icon = if ascending { Icon::ArrowUp } else { Icon::ArrowDown };
+            let trigger = child.add(
+                Button::new(self.columns[column].title.clone())
+                    .icon(icon)
+                    .variant(ButtonVariant::Ghost)
+                    .size(ButtonSize::Sm),
+            );
+            let items: Vec<MenuItem> = sortable
+                .iter()
+                .map(|c| MenuItem::action(self.columns[*c].title.clone()))
+                .collect();
+            if let Some(chosen) = DropdownMenu::new(&items).show(&trigger) {
+                let picked = sortable[chosen];
+                // the column it sorts by turns the other way; another starts ascending
+                self.state.sort = Some(if picked == column {
+                    (picked, !ascending)
+                } else {
+                    (picked, true)
+                });
+            }
+        }
+        let count = self.rows.len();
+        let words = if count == 1 { &self.words.row } else { &self.words.rows };
+        let mono = egui::FontId::monospace(TextRole::Help.font(t).size);
+        child.label(
+            egui::RichText::new(words.replace("{count}", &count.to_string()))
+                .font(mono)
+                .color(t.color("muted-foreground")),
+        );
     }
 
     /// The rows as labeled cards (`StackLayout::Labeled`), 16 in and 16 apart: each card 12 across
@@ -930,6 +1005,9 @@ impl<'a> DataTable<'a> {
                     ui.set_min_height(room - 2.0 - if self.footer { 26.0 } else { 0.0 });
                 }
                 ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+                if self.search.is_some() {
+                    self.bar(ui, &t);
+                }
                 // a table with no rows given its own words says them alone, without its heads
                 if self.rows.is_empty()
                     && let Some(empty) = self.empty.take()
@@ -1519,6 +1597,7 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
         Cell::Tags(tags) => {
             paint_tags(ui, tags, pos2(rect.left(), rect.center().y), rect.width());
         }
+        Cell::Relative { .. } => text(ui, TextRole::Body.rich(t, cell.draft()), t.color("muted-foreground")),
         Cell::Empty => {}
     }
     None
@@ -1595,6 +1674,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Text(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
         Cell::Chip(label, tone) => super::chip::paint_at(ui, at.x, at.y, label, *tone),
         Cell::Tags(tags) => paint_tags(ui, tags, at, room),
+        Cell::Relative { .. } => text(ui, TextRole::Help.rich(t, cell.draft()), quiet, at.x, room),
         Cell::Struck(label) => text(ui, TextRole::Help.rich(t, label).strikethrough(), quiet, at.x, room),
         Cell::Mono(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
