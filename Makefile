@@ -2,7 +2,7 @@
 # and sokkel-ui is read from .parity/sokkel-ui (scripts/sokkel.ts): clones fetched from GitHub on
 # every run, read and never written.
 
-.PHONY: help tokens tokens-check parity parity-web fmt fmt-check check test snapshots storybook runs tasks status logs planner storage apps all
+.PHONY: help tokens tokens-check parity parity-web fmt fmt-check check test snapshots storybook runs tasks status logs planner storage dashboard apps all
 
 help:
 	@echo "make tokens        copy sokkel-design's resolved tokens, as GitHub has them, into the core crate"
@@ -17,6 +17,8 @@ help:
 	@echo "make runs          run the example app"
 	@echo "make tasks         run sokkel-ui's tasks example, ported one to one"
 	@echo "make status        run sokkel-ui's status example, being ported one to one"
+	@echo "make dashboard     run sokkel-ui's dashboard example, being ported one to one"
+	@echo "make logs, make planner, make storage   run egui's own example apps"
 	@echo "make apps          build every example app in release and bundle each as a macOS .app in dist/apps/"
 	@echo "make all           fmt-check, check and test"
 
@@ -68,6 +70,9 @@ planner:
 
 storage:
 	cargo run -p storage
+
+dashboard:
+	cargo run -p dashboard
 
 apps:
 	scripts/bundle.sh
