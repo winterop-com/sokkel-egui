@@ -562,8 +562,7 @@ impl<'a> CommandPalette<'a> {
                 }
                 // the groups, scrolling past 384 and fading at the foot: each 4 in, its title 32 tall, a
                 // rule between them
-                ui.spacing_mut().scroll.fade = egui::style::ScrollFadeStyle::default();
-                egui::ScrollArea::vertical()
+                let list = egui::ScrollArea::vertical()
                     .id_salt(self.id.with("list"))
                     .max_height(384.0)
                     .min_scrolled_height(384.0)
@@ -627,6 +626,21 @@ impl<'a> CommandPalette<'a> {
                         }
                         ui.add_space(4.0);
                     });
+                // the foot fades while more is below, as shadcn's `scroll-fade-b`: over its last
+                // twelfth, at most 40, to nothing at the edge
+                let below = list.content_size.y - list.inner_rect.height() - list.state.offset.y;
+                if below > 0.5 {
+                    let size = (list.inner_rect.height() * 0.12).min(40.0);
+                    let fade = egui::Rect::from_min_max(
+                        egui::pos2(list.inner_rect.left(), list.inner_rect.bottom() - size),
+                        list.inner_rect.max,
+                    );
+                    ui.painter().add(egui::Shape::gradient_rect(
+                        fade,
+                        egui::epaint::Direction::TopDown,
+                        [egui::Color32::TRANSPARENT, t.color("popover")],
+                    ));
+                }
             });
         outcome.close = response.should_close() || outcome.run.is_some();
         outcome
