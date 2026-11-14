@@ -39,6 +39,8 @@ pub enum StackPlace {
     /// A line of its own; in the compact layout, one of the quiet facts under the title.
     #[default]
     Line,
+    /// One of the quiet facts on a stacked row's last line, in the labeled layout too.
+    Secondary,
     /// Left out of a stacked row.
     None,
 }
@@ -51,6 +53,9 @@ pub enum StackLayout {
     Never,
     /// The title over one quiet line of the other columns, for short things on a phone.
     Compact,
+    /// A card per row: the title, a labeled line for each `Line` column, and the `Secondary`
+    /// columns as one quiet line of facts.
+    Labeled,
 }
 
 impl Column {
@@ -125,6 +130,8 @@ pub enum Cell {
         now: Day,
         done: bool,
     },
+    /// Tags as chips in the code face, 4 apart, after sokkel-ui's `TagChips`.
+    Tags(Vec<String>),
     Empty,
 }
 
@@ -136,6 +143,7 @@ impl Cell {
                 text.clone()
             }
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
+            Cell::Tags(tags) => tags.join(" "),
             Cell::Check(_) | Cell::Empty => String::new(),
         }
     }
@@ -147,6 +155,7 @@ impl Cell {
             }
             Cell::Check(on) => u8::from(*on).to_string(),
             Cell::Due { date, .. } => date.map_or("9999".into(), |d| d.to_string()),
+            Cell::Tags(tags) => tags.join(" "),
             Cell::Empty => String::new(),
         }
     }
@@ -385,7 +394,13 @@ impl<'a> DataTable<'a> {
     /// Whether the rows stack at `width`: a list stacks below 576 or once its columns no longer
     /// fit, whichever is wider, so it never scrolls sideways.
     fn stacks(&self, width: f32, pad: f32, select_width: f32) -> bool {
-        if self.stack_layout == StackLayout::Never || self.variant != TableVariant::List {
+        // a compact list stacks; labeled cards stack in either look, as a `minWidth="auto"` table
+        let stacks = match self.stack_layout {
+            StackLayout::Never => false,
+            StackLayout::Compact => self.variant == TableVariant::List,
+            StackLayout::Labeled => true,
+        };
+        if !stacks {
             return false;
         }
         let columns: f32 = self.columns.iter().map(|c| c.width).sum::<f32>()
@@ -580,7 +595,10 @@ impl<'a> DataTable<'a> {
         }
         let mut first = true;
         for (c, column) in columns.iter().enumerate() {
-            if Some(c) == title || column.stack != StackPlace::Line || matches!(row[c], Cell::Empty | Cell::Check(_)) {
+            if Some(c) == title
+                || !matches!(column.stack, StackPlace::Line | StackPlace::Secondary)
+                || matches!(row[c], Cell::Empty | Cell::Check(_))
+            {
                 continue;
             }
             if !first {
@@ -620,6 +638,150 @@ impl<'a> DataTable<'a> {
             fx += width;
         }
         (toggled, edited)
+    }
+
+    /// The rows as labeled cards (`StackLayout::Labeled`), 16 in and 16 apart: each card 12 across
+    /// and 8 down, its title on a 24 line with the menu at its end, a 20 line for each `Line`
+    /// column with a value, its name before it as wide as the widest name, and the `Secondary`
+    /// columns on one 24 line of facts. A card's height follows its lines, so every card is drawn.
+    fn labeled_cards(&mut self, ui: &mut Ui, t: &crate::Tokens, order: &[usize], out: &mut TableOutput) {
+        let title = self.columns.iter().position(|c| c.stack != StackPlace::Lead);
+        let lines: Vec<usize> = (0..self.columns.len())
+            .filter(|c| Some(*c) != title && self.columns[*c].stack == StackPlace::Line)
+            .collect();
+        let facts: Vec<usize> = (0..self.columns.len())
+            .filter(|c| self.columns[*c].stack == StackPlace::Secondary)
+            .collect();
+        let name_width = lines
+            .iter()
+            .map(|c| {
+                WidgetText::from(TextRole::Help.rich(t, &self.columns[*c].title))
+                    .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Help.font(t))
+                    .size()
+                    .x
+            })
+            .fold(0.0, f32::max)
+            .min(192.0);
+        let said = |cell: &Cell| !matches!(cell, Cell::Empty) && !matches!(cell, Cell::Tags(tags) if tags.is_empty());
+        egui::ScrollArea::vertical()
+            .id_salt(self.id.with("cards"))
+            .auto_shrink([false, true])
+            .show(ui, |ui| {
+                ui.add_space(16.0);
+                for &index in order {
+                    let row = &self.rows[index];
+                    let shown: Vec<usize> = lines.iter().copied().filter(|c| said(&row[*c])).collect();
+                    let has_facts = facts.iter().any(|c| said(&row[*c]));
+                    let height =
+                        1.0 + 8.0 + 24.0 + 20.0 * shown.len() as f32 + if has_facts { 24.0 } else { 0.0 } + 8.0 + 1.0;
+                    let width = ui.available_width() - 32.0;
+                    let (outer, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
+                    let card = Rect::from_min_size(pos2(outer.left() + 16.0, outer.top()), vec2(width, height));
+                    let hit = ui.interact(card, self.id.with(("card", index)), Sense::click());
+                    if hit.clicked() {
+                        self.state.opened = Some(index);
+                    }
+                    let ground = if hit.hovered() {
+                        t.color("hover")
+                    } else {
+                        t.color("card")
+                    };
+                    let radius = t.radius("surface");
+                    ui.painter().rect_filled(card, radius, ground);
+                    ui.painter().rect_stroke(
+                        card,
+                        radius,
+                        Stroke::new(1.0, t.color("border")),
+                        egui::StrokeKind::Inside,
+                    );
+                    let left = card.left() + 1.0 + 12.0;
+                    let right = card.right() - 1.0 - 12.0;
+                    let mut y = card.top() + 1.0 + 8.0;
+                    // the title, the menu at the line's end
+                    let menu = if self.actions.is_some() { 28.0 + 8.0 } else { 0.0 };
+                    if let Some(c) = title {
+                        let words = row[c].draft();
+                        let galley = WidgetText::from(TextRole::Action.rich(t, words)).into_galley(
+                            ui,
+                            Some(TextWrapMode::Truncate),
+                            (right - left - menu).max(1.0),
+                            TextRole::Action.font(t),
+                        );
+                        ui.painter().galley(
+                            pos2(left, y + 12.0 - galley.size().y / 2.0),
+                            galley,
+                            t.color("card-foreground"),
+                        );
+                    }
+                    if let Some(actions) = &self.actions {
+                        let button = Rect::from_center_size(pos2(right - 14.0, y + 12.0), vec2(28.0, 24.0));
+                        let trigger = ui.interact(button, self.id.with(("actions", index)), Sense::click());
+                        trigger.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Actions"));
+                        if trigger.hovered() {
+                            ui.painter().rect_filled(button, t.radius("control"), t.color("hover"));
+                        }
+                        icons::paint(
+                            ui.painter(),
+                            button.center(),
+                            Icon::Ellipsis,
+                            16.0,
+                            t.color("muted-foreground"),
+                        );
+                        let items = actions(index);
+                        if let Some(chosen) = DropdownMenu::new(&items).show(&trigger) {
+                            out.action = Some((index, chosen));
+                        }
+                    }
+                    y += 24.0;
+                    // a line per column with a value: its name, then the value
+                    for &c in &shown {
+                        let name = WidgetText::from(TextRole::Help.rich(t, &self.columns[c].title)).into_galley(
+                            ui,
+                            Some(TextWrapMode::Truncate),
+                            name_width,
+                            TextRole::Help.font(t),
+                        );
+                        ui.painter().galley(
+                            pos2(left, y + 10.0 - name.size().y / 2.0),
+                            name,
+                            t.color("muted-foreground"),
+                        );
+                        let x = left + name_width + 8.0;
+                        let place = Rect::from_min_max(pos2(x, y), pos2(right, y + 20.0));
+                        line_value(ui, t, &row[c], place);
+                        y += 20.0;
+                    }
+                    // the facts, one quiet line, a faint dot between them
+                    if has_facts {
+                        let mut x = left;
+                        let middle = y + 12.0;
+                        let mut first = true;
+                        for &c in &facts {
+                            if !said(&row[c]) {
+                                continue;
+                            }
+                            if !first {
+                                let dot = WidgetText::from(TextRole::Help.rich(t, "·")).into_galley(
+                                    ui,
+                                    None,
+                                    f32::INFINITY,
+                                    TextRole::Help.font(t),
+                                );
+                                x += 6.0;
+                                ui.painter().galley(
+                                    pos2(x, middle - dot.size().y / 2.0),
+                                    dot.clone(),
+                                    t.color("faint"),
+                                );
+                                x += dot.size().x + 6.0;
+                            }
+                            first = false;
+                            x += paint_fact(ui, t, &row[c], pos2(x, middle), (right - x).max(1.0));
+                        }
+                    }
+                    ui.add_space(16.0);
+                }
+            });
     }
 
     fn order(&self) -> Vec<usize> {
@@ -773,6 +935,11 @@ impl<'a> DataTable<'a> {
                     && let Some(empty) = self.empty.take()
                 {
                     empty(ui);
+                    return;
+                }
+                // labeled cards in place of the rows
+                if stacked && self.stack_layout == StackLayout::Labeled {
+                    self.labeled_cards(ui, &t, &order, &mut out);
                     return;
                 }
                 // the head, which a stacked table has none of
@@ -1349,9 +1516,68 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
             }
             let _ = id;
         }
+        Cell::Tags(tags) => {
+            paint_tags(ui, tags, pos2(rect.left(), rect.center().y), rect.width());
+        }
         Cell::Empty => {}
     }
     None
+}
+
+/// A labeled line's value in `place`: text and a person at the help's size in the foreground,
+/// tags and chips as they are.
+fn line_value(ui: &Ui, t: &crate::Tokens, cell: &Cell, place: Rect) {
+    let middle = place.center().y;
+    match cell {
+        Cell::Tags(tags) => {
+            paint_tags(ui, tags, pos2(place.left(), middle), place.width());
+        }
+        Cell::Chip(label, tone) => {
+            super::chip::paint_at(ui, place.left(), middle, label, *tone);
+        }
+        Cell::Person(name) => {
+            let avatar = Rect::from_min_size(pos2(place.left(), middle - 8.0), vec2(16.0, 16.0));
+            super::person::paint_avatar(ui, t, avatar, name, AvatarSize::Xxs, false);
+            let galley = WidgetText::from(TextRole::Help.rich(t, name)).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                (place.width() - 20.0).max(1.0),
+                TextRole::Help.font(t),
+            );
+            ui.painter().galley(
+                pos2(avatar.right() + 4.0, middle - galley.size().y / 2.0),
+                galley,
+                t.color("foreground"),
+            );
+        }
+        other => {
+            let galley = WidgetText::from(TextRole::Help.rich(t, other.draft())).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                place.width().max(1.0),
+                TextRole::Help.font(t),
+            );
+            ui.painter().galley(
+                pos2(place.left(), middle - galley.size().y / 2.0),
+                galley,
+                t.color("foreground"),
+            );
+        }
+    }
+}
+
+/// Tags as neutral chips in the code face, 4 apart, from `at` on the line's middle, as many as fit
+/// in `room`: the width they took.
+fn paint_tags(ui: &Ui, tags: &[String], at: egui::Pos2, room: f32) -> f32 {
+    let mut x = at.x;
+    for tag in tags {
+        let width = super::chip::paint_tag_at(ui, x, at.y, tag);
+        if x + width > at.x + room {
+            break;
+        }
+        x += width + 4.0;
+    }
+    (x - at.x - 4.0).max(0.0)
 }
 
 /// A value on a stacked row's facts line, small and quiet, its start at `at` (on the line's middle):
@@ -1366,7 +1592,9 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         width
     };
     match cell {
-        Cell::Text(label) | Cell::Chip(label, _) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
+        Cell::Text(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
+        Cell::Chip(label, tone) => super::chip::paint_at(ui, at.x, at.y, label, *tone),
+        Cell::Tags(tags) => paint_tags(ui, tags, at, room),
         Cell::Struck(label) => text(ui, TextRole::Help.rich(t, label).strikethrough(), quiet, at.x, room),
         Cell::Mono(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));

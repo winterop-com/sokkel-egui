@@ -115,3 +115,19 @@ pub(crate) fn paint_at(ui: &Ui, left: f32, center_y: f32, text: &str, tone: Chip
     paint(ui.painter(), &t, rect, galley, tone, false);
     rect.width()
 }
+
+/// Paint a tag (sokkel-ui's `TagChips`): a neutral chip in the code face at the help's size, its
+/// start at `left` on the line through `center_y`; returns its width.
+pub(crate) fn paint_tag_at(ui: &Ui, left: f32, center_y: f32, text: &str) -> f32 {
+    let t = tokens(ui.ctx());
+    let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+    let galley = WidgetText::from(egui::RichText::new(text).font(mono.clone())).into_galley(
+        ui,
+        Some(TextWrapMode::Extend),
+        f32::INFINITY,
+        mono,
+    );
+    let rect = egui::Rect::from_min_size(pos2(left, center_y - 10.0), vec2(galley.size().x + 12.0, 20.0));
+    paint(ui.painter(), &t, rect, galley, ChipTone::Neutral, false);
+    rect.width()
+}

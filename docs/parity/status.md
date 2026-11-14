@@ -5,6 +5,13 @@ public status page), ported one to one as `examples/status` (`make status`). Its
 drawn by `examples/status/tests/screens.rs` and laid beside the web's by
 `bun scripts/parity.ts board status`.
 
+## Comparing a live board
+
+Its readings are random draws, and the web and egui draw from different streams (the web's
+overview even differs from shot to shot), so the board can only show layout and look: sizes,
+places, spacing, colors. Judge the status screens by their structure, never by their figures,
+and never chase a difference made of numbers.
+
 ## Where it stands
 
 - The frame lines up with the web's: the rail with each place's description under its label
@@ -22,6 +29,9 @@ drawn by `examples/status/tests/screens.rs` and laid beside the web's by
 - The incidents are the web's seed (`data::seed_incidents`: INC-41 open, eight resolved) and the
   incidents page has its filter: `Segmented` with each option's count and state dot, the page's
   parts a section's gap apart (`Stack`, `Gap::Section`).
+- The incidents table stacks as the web's labeled cards (`StackLayout::Labeled`): the title and
+  its menu, a line each for Touches (`Cell::Tags`), Assignee and Lasted, and the facts (code, state
+  and severity chips, `relative_time`). Its bar (search, row count, sort) is still to build.
 - Next, largest first:
   the dashboard under them; the incidents table (a stacked, labeled list under a bar with its search, row count and sort; `StatusChip`, `TagChips`, `RelativeTime`); the services table; the map of sites; on call's
   rotation; the public page; settings; the live simulation behind all of them.

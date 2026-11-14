@@ -8,9 +8,9 @@ pub mod live;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
-    AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, Columns, Gap, Icon, KpiRow, Page,
-    PageHeader, Rail, RailEntry, RailGroup, Segmented, Shell, ShellPart, Stack, Stat, StatusLine, StatusTone, TopBar,
-    install,
+    AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, Cell, ChipTone, Column, Columns,
+    DataTable, Gap, Icon, KpiRow, MenuItem, Page, PageHeader, Rail, RailEntry, RailGroup, Segmented, Shell, ShellPart,
+    Stack, StackLayout, StackPlace, Stat, StatusLine, StatusTone, TableState, TopBar, install, relative_time,
 };
 
 use data::SERVICES;
@@ -53,6 +53,8 @@ pub struct StatusApp {
     pub incidents: Vec<data::Incident>,
     /// Which incidents the incidents page shows: open, resolved or all.
     pub shown: usize,
+    /// The incidents' table.
+    pub incidents_table: TableState,
     /// The live world the readings come from.
     pub live_world: Live,
 }
@@ -75,6 +77,7 @@ impl StatusApp {
             on_call: "grace".into(),
             incidents: data::seed_incidents(9.0 * 3600.0 * 1000.0),
             shown: 0,
+            incidents_table: TableState::default(),
             live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
         }
     }
@@ -323,6 +326,73 @@ impl StatusApp {
                 .counts([Some(open), Some(all - open), Some(all)])
                 .dots([Some(t.color("critical")), Some(t.color("good")), None]),
         );
+        self.incident_table(ui);
+    }
+
+    /// The incidents the filter shows, newest first, as the web's `IncidentTable`: stacked as
+    /// labeled cards where its columns do not fit.
+    fn incident_table(&mut self, ui: &mut Ui) {
+        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let mut listed: Vec<&data::Incident> = self
+            .incidents
+            .iter()
+            .filter(|i| match self.shown {
+                0 => i.state != data::State::Resolved,
+                1 => i.state == data::State::Resolved,
+                _ => true,
+            })
+            .collect();
+        listed.sort_by(|a, b| b.opened.total_cmp(&a.opened));
+        let columns = [
+            Column::new("Incident", 224.0).fill(),
+            Column::new("Code", 88.0).stack(StackPlace::Secondary),
+            Column::new("State", 136.0).stack(StackPlace::Secondary),
+            Column::new("Severity", 104.0).stack(StackPlace::Secondary),
+            Column::new("Touches", 144.0),
+            Column::new("Assignee", 136.0),
+            Column::new("Opened", 128.0).stack(StackPlace::Secondary),
+            Column::new("Lasted", 104.0),
+        ];
+        let rows: Vec<Vec<Cell>> = listed
+            .iter()
+            .map(|incident| {
+                let mut touched: Vec<String> = incident.services.iter().map(|s| s.to_string()).collect();
+                touched.extend(incident.sites.iter().map(|id| {
+                    data::SITES
+                        .iter()
+                        .find(|s| s.id == *id)
+                        .map_or(*id, |s| s.city)
+                        .to_string()
+                }));
+                let lasted = incident.resolved.unwrap_or(now) - incident.opened;
+                vec![
+                    Cell::Text(incident.title.clone()),
+                    Cell::Mono(incident.code.clone()),
+                    Cell::Chip(state_words(incident.state).into(), state_tone(incident.state)),
+                    Cell::Chip(
+                        severity_words(incident.severity).into(),
+                        severity_tone(incident.severity),
+                    ),
+                    Cell::Tags(touched),
+                    Cell::Person(incident.assignee.into()),
+                    Cell::Text(relative_time(incident.opened - now)),
+                    Cell::Text(duration(lasted)),
+                ]
+            })
+            .collect();
+        let keys: Vec<String> = listed.iter().map(|i| i.id.clone()).collect();
+        DataTable::new("incidents", &columns, &rows, &mut self.incidents_table)
+            .keys(keys)
+            .stack_layout(StackLayout::Labeled)
+            .actions(|_| {
+                vec![
+                    MenuItem::action("Resolve").icon(Icon::Check),
+                    MenuItem::action("Assign to on call").icon(Icon::PhoneCall),
+                ]
+            })
+            .footer(false)
+            .stretch(true)
+            .show(ui);
     }
 
     /// Each service as a tile: its state, its latency now with its last readings as a line, and its
@@ -350,6 +420,58 @@ impl StatusApp {
             });
         opened
     }
+}
+
+/// An incident's state in words, as the web's status map says it.
+fn state_words(state: data::State) -> &'static str {
+    match state {
+        data::State::Investigating => "investigating",
+        data::State::Identified => "identified",
+        data::State::Monitoring => "monitoring",
+        data::State::Resolved => "resolved",
+    }
+}
+
+/// An incident state's tone, as the web's `STATUSES` colors it.
+fn state_tone(state: data::State) -> ChipTone {
+    match state {
+        data::State::Investigating => ChipTone::Critical,
+        data::State::Identified => ChipTone::Warning,
+        data::State::Monitoring => ChipTone::Info,
+        data::State::Resolved => ChipTone::Good,
+    }
+}
+
+fn severity_words(severity: data::Severity) -> &'static str {
+    match severity {
+        data::Severity::Minor => "minor",
+        data::Severity::Major => "major",
+        data::Severity::Critical => "critical",
+    }
+}
+
+fn severity_tone(severity: data::Severity) -> ChipTone {
+    match severity {
+        data::Severity::Minor => ChipTone::Warning,
+        _ => ChipTone::Critical,
+    }
+}
+
+/// How long something lasted, as the web's `formatDuration`: "48 min", "2 h 10 min", "3 days".
+fn duration(ms: f64) -> String {
+    let minutes = (ms / 60_000.0).round().max(1.0) as u64;
+    if minutes < 60 {
+        return format!("{minutes} min");
+    }
+    let hours = minutes / 60;
+    if hours < 48 {
+        return if minutes.is_multiple_of(60) {
+            format!("{hours} h")
+        } else {
+            format!("{hours} h {} min", minutes % 60)
+        };
+    }
+    format!("{} days", ((hours as f64) / 24.0).round())
 }
 
 /// A count with its thousands set apart, as the web's `formatCount`: 7,230.
