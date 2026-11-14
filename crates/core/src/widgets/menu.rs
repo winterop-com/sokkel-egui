@@ -378,6 +378,9 @@ pub struct PaletteOutcome {
     pub run: Option<(usize, usize)>,
     /// Escape, a press on the shade, or a command run.
     pub close: bool,
+    /// The running command was let go, by Stop waiting or Escape once it had run `busy-release`:
+    /// the app stops it if it can, and the palette closes.
+    pub stop_waiting: bool,
 }
 
 /// The words the palette says, English by default.
@@ -385,6 +388,12 @@ pub struct PaletteOutcome {
 pub struct PaletteWords {
     pub placeholder: String,
     pub no_match: String,
+    /// Beside the command that runs, in its keys' place.
+    pub running: String,
+    /// The row that lets a running command go, once it has run `busy-release`.
+    pub stop_waiting: String,
+    /// Said where nothing is listed while the app's own search is out.
+    pub searching: String,
 }
 
 impl Default for PaletteWords {
@@ -392,6 +401,9 @@ impl Default for PaletteWords {
         Self {
             placeholder: "Search or run a command".into(),
             no_match: "No command matches.".into(),
+            running: "Running".into(),
+            stop_waiting: "Stop waiting".into(),
+            searching: "Searching".into(),
         }
     }
 }
@@ -449,6 +461,15 @@ pub struct CommandPalette<'a> {
     query: &'a mut String,
     highlight: &'a mut usize,
     words: PaletteWords,
+    running: Option<(usize, usize)>,
+    searching: bool,
+}
+
+/// When the palette's running command, and its search, began, on the context's clock.
+#[derive(Clone, Copy, Default)]
+struct Since {
+    running: Option<f64>,
+    searching: Option<f64>,
 }
 
 impl<'a> CommandPalette<'a> {
@@ -464,7 +485,25 @@ impl<'a> CommandPalette<'a> {
             query,
             highlight,
             words: PaletteWords::default(),
+            running: None,
+            searching: false,
         }
+    }
+
+    /// The command that is running, by its group and index, as F23 holds it: the palette stays
+    /// open (Escape, Mod+K and the shade do nothing) and other choices are ignored, the command's
+    /// row says it runs, and after `busy-release` a Stop waiting row at the list's top, and Escape,
+    /// let it go (`PaletteOutcome::stop_waiting`).
+    pub fn running(mut self, command: Option<(usize, usize)>) -> Self {
+        self.running = command;
+        self
+    }
+
+    /// The app's own search is out: after `wait-shown` the palette says Searching where nothing is
+    /// listed, or dims the earlier rows and passes over them; an answer sooner draws neither.
+    pub fn searching(mut self, searching: bool) -> Self {
+        self.searching = searching;
+        self
     }
 
     pub fn words(mut self, words: PaletteWords) -> Self {
@@ -474,6 +513,26 @@ impl<'a> CommandPalette<'a> {
 
     pub fn show(self, ctx: &Context) -> PaletteOutcome {
         let t = tokens(ctx);
+        // how long the command has run and the search been out, on the context's clock
+        let now = ctx.input(|i| i.time);
+        let since_id = self.id.with("since");
+        let mut since: Since = ctx.data(|d| d.get_temp(since_id)).unwrap_or_default();
+        since.running = self.running.map(|_| since.running.unwrap_or(now));
+        since.searching = self.searching.then(|| since.searching.unwrap_or(now));
+        ctx.data_mut(|d| d.insert_temp(since_id, since));
+        let after = |start: Option<f64>, key: &str, or: f32| {
+            start.map(|start| {
+                let wait = f64::from(t.duration(key).unwrap_or(or)) / 1000.0;
+                let left = start + wait - now;
+                if left > 0.0 {
+                    ctx.request_repaint_after(std::time::Duration::from_secs_f64(left));
+                }
+                left <= 0.0
+            })
+        };
+        let busy = self.running.is_some();
+        let released = after(since.running, "busy-release", 5000.0).unwrap_or(false);
+        let waiting = after(since.searching, "wait-shown", 300.0).unwrap_or(false);
         let needle = self.query.to_lowercase();
         // the commands that match, by group and index, in the order they show
         let shown: Vec<(usize, usize)> = self
@@ -524,11 +583,24 @@ impl<'a> CommandPalette<'a> {
             *self.highlight = (*self.highlight).min(last);
         }
         let mut outcome = PaletteOutcome::default();
-        if toggled {
+        let escape = ctx.input(|i| i.key_pressed(Key::Escape));
+        if busy {
+            // held while the command runs; once released, Escape lets it go
+            if released && escape {
+                outcome.stop_waiting = true;
+                outcome.close = true;
+                return outcome;
+            }
+        } else if toggled {
             outcome.close = true;
             return outcome;
         }
-        if enter && let Some(choice) = shown.get(*self.highlight) {
+        // a choice is ignored while a command runs, or while the earlier rows wait on a search
+        let choosing = !busy && !(self.searching && waiting);
+        if choosing
+            && enter
+            && let Some(choice) = shown.get(*self.highlight)
+        {
             outcome.run = Some(*choice);
         }
         // a dialog a third of the way down the window, as wide as `max-w-sm`
@@ -583,17 +655,39 @@ impl<'a> CommandPalette<'a> {
                     )
                     .desired_width(text.width());
                 child.add(edit).request_focus();
+                // released, a row at the list's top lets the running command go
+                if busy && released {
+                    ui.add_space(4.0);
+                    let stop = MenuItem::action(self.words.stop_waiting.clone()).icon(Icon::X);
+                    let (_, clicked) = ui
+                        .horizontal(|ui| {
+                            ui.add_space(4.0);
+                            ui.allocate_ui(vec2(inner - 8.0, 34.0), |ui| {
+                                action_row(ui, &t, self.id.with("stop-waiting"), &stop, false, RowLook::Palette)
+                            })
+                            .inner
+                        })
+                        .inner;
+                    if clicked {
+                        outcome.stop_waiting = true;
+                    }
+                }
                 if shown.is_empty() {
+                    let words = if self.searching && waiting {
+                        &self.words.searching
+                    } else {
+                        &self.words.no_match
+                    };
                     ui.add_space(24.0);
                     ui.vertical_centered(|ui| {
-                        ui.label(
-                            TextRole::Body
-                                .rich(&t, &self.words.no_match)
-                                .color(t.color("muted-foreground")),
-                        );
+                        ui.label(TextRole::Body.rich(&t, words).color(t.color("muted-foreground")));
                     });
                     ui.add_space(24.0);
                     return;
+                }
+                // the earlier rows, dimmed and passed over, while the search is out past its wait
+                if self.searching && waiting {
+                    ui.multiply_opacity(0.5);
                 }
                 // the groups, scrolling past 384 and fading at the foot: each 4 in, its title 32 tall, a
                 // rule between them
@@ -652,10 +746,53 @@ impl<'a> CommandPalette<'a> {
                             if position == *self.highlight && moved {
                                 hit.scroll_to_me(None);
                             }
-                            if hit.hovered() && ui.input(|i| i.pointer.delta() != egui::Vec2::ZERO) {
+                            if self.running == Some((*g, *i)) {
+                                // the running command's spinner and word in its keys' place
+                                let words = WidgetText::from(
+                                    TextRole::Help
+                                        .rich(&t, &self.words.running)
+                                        .color(t.color("muted-foreground")),
+                                )
+                                .into_galley(
+                                    ui,
+                                    Some(TextWrapMode::Extend),
+                                    f32::INFINITY,
+                                    TextRole::Help.font(&t),
+                                );
+                                let right = hit.rect.right() - row_x;
+                                ui.painter().rect_filled(
+                                    egui::Rect::from_min_max(
+                                        pos2(right - words.size().x - 22.0, hit.rect.top() + 2.0),
+                                        pos2(right + 2.0, hit.rect.bottom() - 2.0),
+                                    ),
+                                    0.0,
+                                    if position == *self.highlight {
+                                        t.color("accent")
+                                    } else {
+                                        t.color("popover")
+                                    },
+                                );
+                                super::spinner(
+                                    ui,
+                                    ui.painter(),
+                                    pos2(right - words.size().x - 12.0, hit.rect.center().y),
+                                    5.0,
+                                    t.color("muted-foreground"),
+                                );
+                                ui.painter().galley(
+                                    pos2(right - words.size().x, hit.rect.center().y - words.size().y / 2.0),
+                                    words,
+                                    t.color("muted-foreground"),
+                                );
+                                // what a screen reader hears of the running row
+                                let said = self.words.running.clone();
+                                ui.interact(hit.rect, self.id.with("running"), Sense::hover())
+                                    .widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, &said));
+                            }
+                            if choosing && hit.hovered() && ui.input(|i| i.pointer.delta() != egui::Vec2::ZERO) {
                                 *self.highlight = position;
                             }
-                            if clicked {
+                            if choosing && clicked {
                                 outcome.run = Some((*g, *i));
                             }
                         }
@@ -677,7 +814,12 @@ impl<'a> CommandPalette<'a> {
                     ));
                 }
             });
-        outcome.close = response.should_close() || outcome.run.is_some();
+        // a running command holds the palette until it is let go
+        outcome.close = if busy {
+            outcome.stop_waiting
+        } else {
+            response.should_close() || outcome.run.is_some()
+        };
         outcome
     }
 }

@@ -82,7 +82,11 @@ keys), F1 and F2 (the frame's focus and the menu button), F9 (the count), F11 (r
 F14 and F15 (the tooltip), F16 and F19 (popups and dialogs, from a resolved `elevation-pop`), F17
 (sheets below 768), F20, F21, F22 and F24 (the lists of choices). F3 to F8, F10, F13 and F18 need
 nothing here: egui already draws them so. F23's dialog half is in (a busy `ConfirmDialog` releases after `busy-release` with "Stop waiting");
-its palette half waits for an egui command that can run long. D10 is under way: egui reads the
+and so is its palette half: `CommandPalette::running` holds the palette while the app's command
+runs (its row saying Running), and after `busy-release` a Stop waiting row and Escape let it go
+(`PaletteOutcome::stop_waiting`, where the app stops the work, as the web's abort signal does).
+0.28.1's `searching` too: `CommandPalette::searching` says Searching after `wait-shown` where
+nothing is listed, or dims and passes over the earlier rows. D10 is under way: egui reads the
 resolved paints (`Tokens::paint`) for the button, the text field's edge, the popup and dialog
 surfaces with the dialog's shade and footer, the tooltip, and the menu's and select's highlighted
 row, and `crates/core/tests/paints.rs` fails a paint egui reads that a theme or scheme lacks;
