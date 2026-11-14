@@ -3,6 +3,7 @@
 
 use eframe::egui::{self, Key, Modifiers};
 use egui_kittest::Harness;
+use egui_kittest::kittest::Queryable;
 use sokkel_ui_egui::{Appearance, Day, Scheme};
 use tasks::TasksApp;
 
@@ -42,4 +43,26 @@ fn a_list_is_reached_from_the_palette() {
     harness.key_press(Key::Enter);
     harness.run_steps(2);
     assert_eq!(harness.state().list, "juniper");
+}
+
+#[test]
+fn ctrl_k_opens_the_palette_too_and_from_a_field() {
+    let mut harness = app();
+    harness.key_press_modifiers(Modifiers::CTRL, Key::K);
+    harness.run_steps(2);
+    assert!(open(&harness));
+    harness.key_press(Key::Escape);
+    harness.run_steps(2);
+    assert!(!open(&harness));
+    // a title being typed keeps none of it, and the palette opens over it
+    harness.state_mut().table.edit(0, 1);
+    harness.run_steps(2);
+    harness.key_press_modifiers(Modifiers::COMMAND, Key::K);
+    harness.run_steps(2);
+    assert!(open(&harness));
+}
+
+/// The palette is open: its Density group's Compact, which only the palette shows, is there.
+fn open(harness: &Harness<'_, TasksApp>) -> bool {
+    harness.query_by_label("Compact").is_some()
 }

@@ -52,6 +52,8 @@ counterpart.
 1. **A save's spinner** while editing in place: an egui save is done when the app's handler
    returns, so there is nothing to wait on yet; a typed character, Backspace and Delete open a
    cell, and the calendar moves by its keys, as the web's do.
-2. **Behavior the screens do not show**: keyboard shortcuts, and the drawer and stacked rows below
-   768.
+2. **Behavior the screens do not show**: the drawer and stacked rows below 768. The one shortcut
+   the example binds, the shell's Mod+K for the palette, is answered as the web's is: Cmd or Ctrl
+   on macOS (not both), Ctrl elsewhere, and in a field too; whether it closes an open palette
+   waits on sokkel-design's question 22.
 3. **The live dot's pulse** in the status line (sokkel-design's status line spec); ours is still.

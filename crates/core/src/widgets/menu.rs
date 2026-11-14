@@ -2,8 +2,8 @@
 //! after sokkel-ui's `DropdownMenu` and `CommandPalette`.
 
 use egui::{
-    Context, Frame, Id, Key, KeyboardShortcut, Margin, Modifiers, Popup, PopupCloseBehavior, Response, Sense, Shadow,
-    Stroke, TextEdit, TextWrapMode, Ui, WidgetText, pos2, vec2,
+    Context, Frame, Id, Key, Margin, Modifiers, Popup, PopupCloseBehavior, Response, Sense, Shadow, Stroke, TextEdit,
+    TextWrapMode, Ui, WidgetText, pos2, vec2,
 };
 
 use crate::{Icon, TextRole, Tokens, icons, tokens};
@@ -400,9 +400,25 @@ impl Default for PaletteWords {
     }
 }
 
-/// Mod+K (Cmd on macOS, Ctrl elsewhere), consumed: true on the frame it is pressed.
+/// Mod+K, consumed: true on the frame it is pressed. Mod is Ctrl, and on macOS Cmd or Ctrl but not
+/// both, as sokkel-ui's shell binds it (`alsoCtrl`); it is heard in a field too.
 pub fn palette_shortcut(ctx: &Context) -> bool {
-    ctx.input_mut(|i| i.consume_shortcut(&KeyboardShortcut::new(Modifiers::COMMAND, Key::K)))
+    let mac = ctx.os() == egui::os::OperatingSystem::Mac;
+    let chord = |m: &Modifiers| {
+        // `command` is Cmd on macOS and Ctrl elsewhere; `mac_cmd` is Cmd itself
+        let held = if mac {
+            (m.mac_cmd || m.command) != m.ctrl
+        } else {
+            (m.ctrl || m.command) && !m.mac_cmd
+        };
+        held && !m.alt && !m.shift
+    };
+    ctx.input_mut(|i| {
+        let at = i.events.iter().position(
+            |event| matches!(event, egui::Event::Key { key: Key::K, pressed: true, modifiers, .. } if chord(modifiers)),
+        );
+        at.map(|at| i.events.remove(at)).is_some()
+    })
 }
 
 /// The command palette: a search over the page's commands in their groups, narrowed as one types,
