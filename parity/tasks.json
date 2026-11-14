@@ -182,7 +182,18 @@
             "steps": [
                 "button:Open the navigation"
             ]
+        },
+        {
+            "name": "phone_edit_title",
+            "route": "inbox",
+            "viewport": {
+                "width": 390,
+                "height": 844
+            },
+            "steps": [
+                "button:Rerun nightly-export for last week"
+            ]
         }
     ],
-    "shot": "09e570c7b7de85fbb2e8910b6fe0ad6b156ace75"
+    "shot": "014d46013a92e9f6d8a5cfd3d17c86aacb87ece2"
 }

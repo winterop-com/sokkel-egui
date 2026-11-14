@@ -32,9 +32,9 @@ fn a_place_chosen_in_the_drawer_opens_and_closes_it() {
     harness.get_by_label("Open the navigation").click();
     harness.run_steps(3);
     assert!(drawer_open(&harness));
-    harness.get_by_label("juniper").click();
+    harness.get_by_label("Upcoming").click();
     harness.run_steps(3);
-    assert_eq!(harness.state().list, "juniper");
+    assert_eq!(harness.state().list, "upcoming");
     assert!(!drawer_open(&harness));
 }
 
@@ -56,4 +56,41 @@ fn a_stacked_rows_box_marks_its_task_done() {
     harness.run_steps(3);
     let after = harness.state().tasks.iter().filter(|task| task.done()).count();
     assert_eq!(after, before + 1);
+}
+
+#[test]
+fn a_stacked_title_is_edited_in_place() {
+    let mut harness = phone();
+    harness.get_by_label("Rerun nightly-export for last week").click();
+    harness.run_steps(3);
+    harness.key_press_modifiers(egui::Modifiers::COMMAND, Key::A);
+    harness.event(egui::Event::Text("Rerun nightly-export again".into()));
+    harness.run_steps(2);
+    harness.key_press(Key::Enter);
+    harness.run_steps(3);
+    assert!(
+        harness
+            .state()
+            .tasks
+            .iter()
+            .any(|task| task.title == "Rerun nightly-export again")
+    );
+}
+
+#[test]
+fn a_stacked_rows_assignee_is_chosen_from_its_fact() {
+    let mut harness = phone();
+    // the second row's assignee, grace
+    harness.get_all_by_label("grace").next().unwrap().click();
+    harness.run_steps(3);
+    // the list's option, drawn over the rows
+    harness.get_all_by_label("margaret").last().unwrap().click();
+    harness.run_steps(3);
+    let task = harness
+        .state()
+        .tasks
+        .iter()
+        .find(|task| task.title == "Review the failed sync-inventory runs")
+        .unwrap();
+    assert_eq!(task.assignee, "margaret");
 }

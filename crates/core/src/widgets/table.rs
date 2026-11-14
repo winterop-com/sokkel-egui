@@ -255,6 +255,13 @@ pub struct CellEdit {
     pub value: String,
 }
 
+/// Where an editor's row stands this frame: the rows' keys, the order shown, and its place in it.
+struct Editing<'k> {
+    keys: &'k [Id],
+    order: &'k [usize],
+    position: usize,
+}
+
 /// What a table draws in place of its rows when it has none.
 pub type EmptyContent<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
 
@@ -400,15 +407,65 @@ impl<'a> DataTable<'a> {
     }
 
     /// The rows' order under the current sort, as indices into the rows given.
+    /// Draw the open editor at `place` and settle what it was asked: the saved edit, if any.
+    fn run_editor(
+        &mut self,
+        ui: &mut Ui,
+        editor: &Editor,
+        place: Rect,
+        id: Id,
+        editing: &Editing<'_>,
+    ) -> Option<CellEdit> {
+        let mut open = self.state.open.take()?;
+        let moved = match editor {
+            Editor::Text => table_edit::text(ui, place, &mut open, id),
+            Editor::Date(week_start) => {
+                table_edit::date(ui, place, &mut open, id, *week_start, self.today, &self.words.edit)
+            }
+            Editor::Select(options) => table_edit::select(ui, place, &mut open, id, options),
+        };
+        settle(
+            self.state,
+            self.columns,
+            self.rows,
+            editing.keys,
+            editing.order,
+            editing.position,
+            open,
+            moved,
+            &self.words.edit,
+        )
+    }
+
     /// A row stacked in the compact layout: its grip, its leads and its title on a 24 line, and
     /// under the title one 20 line of the other columns' values, small and quiet, a faint dot
     /// between them. True when a lead's box was pressed.
-    fn stacked_row(&self, ui: &mut Ui, t: &crate::Tokens, rect: Rect, index: usize, pad: f32, lead: f32) -> bool {
+    fn stacked_row(
+        &mut self,
+        ui: &mut Ui,
+        t: &crate::Tokens,
+        rect: Rect,
+        index: usize,
+        (pad, lead): (f32, f32),
+        editing: &Editing<'_>,
+    ) -> (bool, Option<CellEdit>) {
         let mut toggled = false;
+        let mut edited = None;
+        // the column whose editor is open on this row
+        let open = self.state.open.as_ref().filter(|o| o.row == index).map(|o| o.column);
+        let table_id = self.id;
+        let editor_id = |c: usize| table_id.with(("editor", editing.keys[index], c));
         // `lead`: the room a select box takes at the start
+        let title = self.columns.iter().position(|c| c.stack != Stack::Lead);
+        // the title's line, a control tall while its field is open
+        let line_height = if open.is_some() && open == title {
+            t.density("control")
+        } else {
+            24.0
+        };
         let line = Rect::from_min_size(
             pos2(rect.left() + pad + lead, rect.top() + 8.0),
-            vec2(rect.width(), 24.0),
+            vec2(rect.width(), line_height),
         );
         let mut x = line.left();
         if self.reorder {
@@ -436,7 +493,8 @@ impl<'a> DataTable<'a> {
             );
             x += GRIP + 8.0;
         }
-        let row = &self.rows[index];
+        let rows = self.rows;
+        let row = &rows[index];
         for (c, column) in self.columns.iter().enumerate() {
             if column.stack == Stack::Lead {
                 let place = Rect::from_min_size(pos2(x, line.top()), vec2(16.0, line.height()));
@@ -448,16 +506,78 @@ impl<'a> DataTable<'a> {
         }
         // the title runs to 8 before the menu's 24 box at the row's end
         let end = rect.right() - pad - if self.actions.is_some() { 24.0 + 8.0 } else { 0.0 };
-        let title = self.columns.iter().position(|c| c.stack != Stack::Lead);
+        let columns = self.columns;
         if let Some(c) = title {
             let place = Rect::from_min_max(pos2(x, line.top()), pos2(end, line.bottom()));
-            paint_cell(ui, t, &row[c], place, false, self.id.with(("cell", index, c)));
+            match (&columns[c].edit, open == Some(c)) {
+                // the open editor from the title's line down, a control tall, a finger tall on a
+                // phone, over the facts it hides
+                (Some(editor), true) => {
+                    let tall = if super::is_phone(ui.ctx()) {
+                        t.length("spacing-finger")
+                    } else {
+                        t.density("control")
+                    };
+                    let field = Rect::from_min_size(place.min, vec2(place.width(), tall));
+                    if let Some(open) = &mut self.state.open {
+                        open.boxed = true;
+                    }
+                    edited = self.run_editor(ui, editor, field, editor_id(c), editing);
+                }
+                (edit, _) => {
+                    paint_cell(ui, t, &row[c], place, false, self.id.with(("cell", index, c)));
+                    if edit.is_some() {
+                        // named by what it says, as the web's title button is
+                        let hit = ui.interact(place, self.id.with(("edit", index, c)), Sense::click());
+                        let words = row[c].draft();
+                        hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &words));
+                        if hit.clicked() {
+                            open_cell(self.state, rows, editing.keys, (index, c));
+                        }
+                    }
+                }
+            }
         }
         // the facts: every other column but those left out, on one quiet line
         let mut fx = x;
-        let facts = Rect::from_min_size(pos2(x, line.bottom()), vec2(end - x, 20.0));
+        let facts_height = if open.is_some() && open != title {
+            t.density("control")
+        } else {
+            20.0
+        };
+        let facts = Rect::from_min_size(pos2(x, line.bottom()), vec2(end - x, facts_height));
+        // a fact's open editor takes the line's place, after its column's name
+        if let Some(c) = open.filter(|c| Some(*c) != title)
+            && let Some(editor) = &columns[c].edit
+        {
+            let name = WidgetText::from(TextRole::Help.rich(t, &columns[c].title)).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                96.0,
+                TextRole::Help.font(t),
+            );
+            let start = fx + name.size().x + 8.0;
+            ui.painter().galley(
+                pos2(fx, facts.center().y - name.size().y / 2.0),
+                name,
+                t.color("muted-foreground"),
+            );
+            let field = Rect::from_min_max(
+                pos2(start, facts.center().y - t.density("control") / 2.0),
+                pos2(facts.right(), facts.center().y + t.density("control") / 2.0),
+            );
+            if let Some(open) = &mut self.state.open {
+                open.boxed = true;
+            }
+            edited = self.run_editor(ui, editor, field, editor_id(c), editing);
+            return (toggled, edited);
+        }
+        // the title's open field covers the facts
+        if open.is_some() && open == title {
+            return (toggled, edited);
+        }
         let mut first = true;
-        for (c, column) in self.columns.iter().enumerate() {
+        for (c, column) in columns.iter().enumerate() {
             if Some(c) == title || column.stack != Stack::Line || matches!(row[c], Cell::Empty | Cell::Check(_)) {
                 continue;
             }
@@ -477,15 +597,27 @@ impl<'a> DataTable<'a> {
                 fx += dot.size().x + 6.0;
             }
             first = false;
-            fx += paint_fact(
+            let width = paint_fact(
                 ui,
                 t,
                 &row[c],
                 pos2(fx, facts.center().y),
                 (facts.right() - fx).max(1.0),
             );
+            // a press on an editable fact opens its editor
+            if column.edit.is_some() {
+                let place = Rect::from_min_size(pos2(fx, facts.top()), vec2(width, facts.height()));
+                let hit = ui.interact(place, self.id.with(("edit", index, c)), Sense::click());
+                // named by what it says, as the web's value button is
+                let words = row[c].draft();
+                hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &words));
+                if hit.clicked() {
+                    open_cell(self.state, rows, editing.keys, (index, c));
+                }
+            }
+            fx += width;
         }
-        toggled
+        (toggled, edited)
     }
 
     fn order(&self) -> Vec<usize> {
@@ -777,224 +909,223 @@ impl<'a> DataTable<'a> {
                 let zebra = t.color_or("table-zebra", t.color("card"));
                 let dragging: Option<usize> = ui.ctx().data(|d| d.get_temp(drag_id));
                 let mut row_rects: Vec<Rect> = Vec::new();
-                egui::ScrollArea::vertical()
+                // a stacked row grows to hold its open field: 8 for the title's, 12 for a fact's
+                let title_column = self.columns.iter().position(|c| c.stack != Stack::Lead);
+                let grown = |state: &TableState, index: usize| -> f32 {
+                    match state.open.as_ref().filter(|o| stacked && o.row == index) {
+                        Some(o) if Some(o.column) == title_column => 8.0,
+                        Some(_) => 12.0,
+                        None => 0.0,
+                    }
+                };
+                let area = egui::ScrollArea::vertical()
                     .id_salt(self.id.with("rows"))
                     .max_height(if self.stretch {
                         (room - head_height - 2.0).max(row_height)
                     } else {
                         self.height
                     })
-                    .auto_shrink([false, true])
-                    .show_rows(ui, row_height, order.len(), |ui, range| {
-                        for position in range {
-                            let index = order[position];
-                            let (rect, row) =
-                                ui.allocate_exact_size(vec2(ui.available_width(), row_height), Sense::click());
-                            row_rects.push(rect);
-                            if row.clicked() {
-                                self.state.opened = if self.state.opened == Some(index) {
-                                    None
-                                } else {
-                                    Some(index)
-                                };
-                            }
-                            let selected = self.state.selected.contains(&index);
-                            let opened = self.state.opened == Some(index);
-                            let ground = if selected || opened {
-                                t.color("secondary")
-                            } else if row.hovered() || dragging == Some(position) {
-                                t.color("hover")
-                            } else if position % 2 == 1 {
-                                zebra
+                    .auto_shrink([false, true]);
+                let count = order.len();
+                let mut body = |ui: &mut Ui, range: std::ops::Range<usize>| {
+                    for position in range {
+                        let index = order[position];
+                        let height = row_height + grown(self.state, index);
+                        let (rect, row) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
+                        row_rects.push(rect);
+                        if row.clicked() {
+                            self.state.opened = if self.state.opened == Some(index) {
+                                None
                             } else {
-                                t.color("card")
+                                Some(index)
                             };
-                            ui.painter().rect_filled(rect, CornerRadius::ZERO, ground);
-                            // the active cell's row, while the table has the focus or a typed editor is open
-                            let typed_open = self.state.open.as_ref().is_some_and(|o| {
-                                o.row == index
-                                    && !matches!(
-                                        self.columns.get(o.column).and_then(|c| c.edit.as_ref()),
-                                        Some(Editor::Select(_))
-                                    )
-                            });
-                            if typed_open
-                                || (self.state.focused
-                                    && self.state.open.is_none()
-                                    && self.state.active.map(|a| a.0) == Some(index))
-                            {
-                                ui.painter().rect_filled(rect, CornerRadius::ZERO, t.color("hover"));
-                            }
-                            ui.painter().hline(
-                                rect.x_range(),
-                                rect.bottom() - 0.5,
-                                Stroke::new(1.0, t.color("border")),
-                            );
-                            if self.selectable {
-                                let mut checked = selected;
-                                let place = Rect::from_min_size(
-                                    pos2(rect.left() + pad, rect.center().y - 8.0),
-                                    vec2(16.0, 16.0),
-                                );
-                                if put_at(
-                                    ui,
-                                    place,
-                                    Checkbox::new(&mut checked, self.words.select_row.clone()).hide_label(),
+                        }
+                        let selected = self.state.selected.contains(&index);
+                        let opened = self.state.opened == Some(index);
+                        let ground = if selected || opened {
+                            t.color("secondary")
+                        } else if row.hovered() || dragging == Some(position) {
+                            t.color("hover")
+                        } else if position % 2 == 1 {
+                            zebra
+                        } else {
+                            t.color("card")
+                        };
+                        ui.painter().rect_filled(rect, CornerRadius::ZERO, ground);
+                        // the active cell's row, while the table has the focus or a typed editor is open
+                        let typed_open = self.state.open.as_ref().is_some_and(|o| {
+                            o.row == index
+                                && !matches!(
+                                    self.columns.get(o.column).and_then(|c| c.edit.as_ref()),
+                                    Some(Editor::Select(_))
                                 )
-                                .clicked()
-                                {
-                                    if checked {
-                                        self.state.selected.insert(index);
-                                    } else {
-                                        self.state.selected.remove(&index);
-                                    }
-                                }
-                            }
-                            if stacked && self.stacked_row(ui, &t, rect, index, pad, select_width) {
-                                out.toggled = Some(index);
-                            }
-                            let places = self.layout(rect.left() + pad + select_width, rect.right() - pad);
-                            for (c, column) in self.columns.iter().enumerate().filter(|_| !stacked) {
-                                let (x, w) = places[c];
-                                let mut cell = Rect::from_min_size(pos2(x, rect.top()), vec2(w, rect.height()));
-                                if c == 0 && self.reorder {
-                                    // the grip: drag it to move the row
-                                    let grip =
-                                        Rect::from_min_size(pos2(x - 4.0, rect.top()), vec2(GRIP, rect.height()));
-                                    let hit = ui.interact(grip, self.id.with(("grip", index)), Sense::drag());
-                                    hit.widget_info(|| {
-                                        egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Move")
-                                    });
-                                    if hit.hovered() || hit.dragged() {
-                                        ui.ctx().set_cursor_icon(if hit.dragged() {
-                                            CursorIcon::Grabbing
-                                        } else {
-                                            CursorIcon::Grab
-                                        });
-                                    }
-                                    if hit.drag_started() {
-                                        ui.ctx().data_mut(|d| d.insert_temp(drag_id, position));
-                                    }
-                                    icons::paint(
-                                        ui.painter(),
-                                        pos2(x + 6.0, rect.center().y),
-                                        Icon::GripVertical,
-                                        14.0,
-                                        t.color("muted-foreground"),
-                                    );
-                                    cell.min.x += GRIP;
-                                }
-                                if let Some(editor) = &column.edit {
-                                    // an editable cell: its editor while open, else its content, opening on a press
-                                    let place = Rect::from_min_max(cell.min, pos2(cell.right(), rect.bottom() - 1.0));
-                                    let here = (index, c);
-                                    let open_here = self.state.open.as_ref().is_some_and(|o| (o.row, o.column) == here);
-                                    if open_here && let Some(mut open) = self.state.open.take() {
-                                        let id = self.id.with(("editor", keys[index], c));
-                                        let moved = match editor {
-                                            Editor::Text => table_edit::text(ui, place, &mut open, id),
-                                            Editor::Date(week_start) => table_edit::date(
-                                                ui,
-                                                place,
-                                                &mut open,
-                                                id,
-                                                *week_start,
-                                                self.today,
-                                                &self.words.edit,
-                                            ),
-                                            Editor::Select(options) => {
-                                                table_edit::select(ui, place, &mut open, id, options)
-                                            }
-                                        };
-                                        if let Some(edit) = settle(
-                                            self.state,
-                                            self.columns,
-                                            self.rows,
-                                            &keys,
-                                            &order,
-                                            position,
-                                            open,
-                                            moved,
-                                            &self.words.edit,
-                                        ) {
-                                            out.edited = Some(edit);
-                                        }
-                                    } else {
-                                        let hit = ui.interact(place, self.id.with(("edit", index, c)), Sense::click());
-                                        match self.state.refused.get(&(keys[index], c)) {
-                                            Some((draft, error)) => table_edit::refused(ui, place, draft, error),
-                                            None => {
-                                                paint_cell(
-                                                    ui,
-                                                    &t,
-                                                    &self.rows[index][c],
-                                                    cell,
-                                                    column.numeric,
-                                                    self.id.with(("cell", index, c)),
-                                                );
-                                            }
-                                        }
-                                        let was_active = self.state.focused && self.state.active == Some(here);
-                                        if hit.double_clicked() || (hit.clicked() && was_active) {
-                                            open_cell(self.state, self.rows, &keys, here);
-                                        } else if hit.clicked() {
-                                            self.state.active = Some(here);
-                                            self.state.focused = true;
-                                        }
-                                        if self.state.focused && self.state.active == Some(here) {
-                                            ui.painter().rect_stroke(
-                                                place,
-                                                CornerRadius::ZERO,
-                                                Stroke::new(2.0, t.color("ring")),
-                                                egui::StrokeKind::Inside,
-                                            );
-                                        }
-                                    }
-                                } else if let Some(toggled) = paint_cell(
-                                    ui,
-                                    &t,
-                                    &self.rows[index][c],
-                                    cell,
-                                    column.numeric,
-                                    self.id.with(("cell", index, c)),
-                                ) {
-                                    let _ = toggled;
-                                    out.toggled = Some(index);
-                                }
-                            }
-                            if let Some(actions) = &self.actions {
-                                let place = Rect::from_min_size(
-                                    pos2(rect.right() - pad - ACTIONS, rect.top()),
-                                    vec2(ACTIONS, rect.height()),
-                                );
-                                // stacked, the menu stands at the row's end on the title's line, a 24 box
-                                let middle = if stacked {
-                                    pos2(rect.right() - pad - 12.0, rect.top() + 8.0 + 12.0)
+                        });
+                        if typed_open
+                            || (self.state.focused
+                                && self.state.open.is_none()
+                                && self.state.active.map(|a| a.0) == Some(index))
+                        {
+                            ui.painter().rect_filled(rect, CornerRadius::ZERO, t.color("hover"));
+                        }
+                        ui.painter()
+                            .hline(rect.x_range(), rect.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
+                        if self.selectable {
+                            let mut checked = selected;
+                            let place =
+                                Rect::from_min_size(pos2(rect.left() + pad, rect.center().y - 8.0), vec2(16.0, 16.0));
+                            if put_at(
+                                ui,
+                                place,
+                                Checkbox::new(&mut checked, self.words.select_row.clone()).hide_label(),
+                            )
+                            .clicked()
+                            {
+                                if checked {
+                                    self.state.selected.insert(index);
                                 } else {
-                                    place.center()
-                                };
-                                let button = Rect::from_center_size(middle, vec2(28.0, 28.0));
-                                let trigger = ui.interact(button, self.id.with(("actions", index)), Sense::click());
-                                trigger.widget_info(|| {
-                                    egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Actions")
-                                });
-                                if trigger.hovered() {
-                                    ui.painter().rect_filled(button, t.radius("control"), t.color("hover"));
-                                }
-                                icons::paint(
-                                    ui.painter(),
-                                    button.center(),
-                                    Icon::Ellipsis,
-                                    16.0,
-                                    t.color("muted-foreground"),
-                                );
-                                let items = actions(index);
-                                if let Some(chosen) = DropdownMenu::new(&items).show(&trigger) {
-                                    out.action = Some((index, chosen));
+                                    self.state.selected.remove(&index);
                                 }
                             }
                         }
-                    });
+                        if stacked {
+                            let editing = Editing {
+                                keys: &keys,
+                                order: &order,
+                                position,
+                            };
+                            let (toggled, edited) =
+                                self.stacked_row(ui, &t, rect, index, (pad, select_width), &editing);
+                            if toggled {
+                                out.toggled = Some(index);
+                            }
+                            if edited.is_some() {
+                                out.edited = edited;
+                            }
+                        }
+                        let places = self.layout(rect.left() + pad + select_width, rect.right() - pad);
+                        for (c, column) in self.columns.iter().enumerate().filter(|_| !stacked) {
+                            let (x, w) = places[c];
+                            let mut cell = Rect::from_min_size(pos2(x, rect.top()), vec2(w, rect.height()));
+                            if c == 0 && self.reorder {
+                                // the grip: drag it to move the row
+                                let grip = Rect::from_min_size(pos2(x - 4.0, rect.top()), vec2(GRIP, rect.height()));
+                                let hit = ui.interact(grip, self.id.with(("grip", index)), Sense::drag());
+                                hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Move"));
+                                if hit.hovered() || hit.dragged() {
+                                    ui.ctx().set_cursor_icon(if hit.dragged() {
+                                        CursorIcon::Grabbing
+                                    } else {
+                                        CursorIcon::Grab
+                                    });
+                                }
+                                if hit.drag_started() {
+                                    ui.ctx().data_mut(|d| d.insert_temp(drag_id, position));
+                                }
+                                icons::paint(
+                                    ui.painter(),
+                                    pos2(x + 6.0, rect.center().y),
+                                    Icon::GripVertical,
+                                    14.0,
+                                    t.color("muted-foreground"),
+                                );
+                                cell.min.x += GRIP;
+                            }
+                            if let Some(editor) = &column.edit {
+                                // an editable cell: its editor while open, else its content, opening on a press
+                                let place = Rect::from_min_max(cell.min, pos2(cell.right(), rect.bottom() - 1.0));
+                                let here = (index, c);
+                                let open_here = self.state.open.as_ref().is_some_and(|o| (o.row, o.column) == here);
+                                if open_here {
+                                    let id = self.id.with(("editor", keys[index], c));
+                                    let editing = Editing {
+                                        keys: &keys,
+                                        order: &order,
+                                        position,
+                                    };
+                                    if let Some(edit) = self.run_editor(ui, editor, place, id, &editing) {
+                                        out.edited = Some(edit);
+                                    }
+                                } else {
+                                    let hit = ui.interact(place, self.id.with(("edit", index, c)), Sense::click());
+                                    match self.state.refused.get(&(keys[index], c)) {
+                                        Some((draft, error)) => table_edit::refused(ui, place, draft, error),
+                                        None => {
+                                            paint_cell(
+                                                ui,
+                                                &t,
+                                                &self.rows[index][c],
+                                                cell,
+                                                column.numeric,
+                                                self.id.with(("cell", index, c)),
+                                            );
+                                        }
+                                    }
+                                    let was_active = self.state.focused && self.state.active == Some(here);
+                                    if hit.double_clicked() || (hit.clicked() && was_active) {
+                                        open_cell(self.state, self.rows, &keys, here);
+                                    } else if hit.clicked() {
+                                        self.state.active = Some(here);
+                                        self.state.focused = true;
+                                    }
+                                    if self.state.focused && self.state.active == Some(here) {
+                                        ui.painter().rect_stroke(
+                                            place,
+                                            CornerRadius::ZERO,
+                                            Stroke::new(2.0, t.color("ring")),
+                                            egui::StrokeKind::Inside,
+                                        );
+                                    }
+                                }
+                            } else if let Some(toggled) = paint_cell(
+                                ui,
+                                &t,
+                                &self.rows[index][c],
+                                cell,
+                                column.numeric,
+                                self.id.with(("cell", index, c)),
+                            ) {
+                                let _ = toggled;
+                                out.toggled = Some(index);
+                            }
+                        }
+                        if let Some(actions) = &self.actions {
+                            let place = Rect::from_min_size(
+                                pos2(rect.right() - pad - ACTIONS, rect.top()),
+                                vec2(ACTIONS, rect.height()),
+                            );
+                            // stacked, the menu stands at the row's end on the title's line, a 24 box
+                            let middle = if stacked {
+                                pos2(rect.right() - pad - 12.0, rect.top() + 8.0 + 12.0)
+                            } else {
+                                place.center()
+                            };
+                            let button = Rect::from_center_size(middle, vec2(28.0, 28.0));
+                            let trigger = ui.interact(button, self.id.with(("actions", index)), Sense::click());
+                            trigger
+                                .widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Actions"));
+                            if trigger.hovered() {
+                                ui.painter().rect_filled(button, t.radius("control"), t.color("hover"));
+                            }
+                            icons::paint(
+                                ui.painter(),
+                                button.center(),
+                                Icon::Ellipsis,
+                                16.0,
+                                t.color("muted-foreground"),
+                            );
+                            let items = actions(index);
+                            if let Some(chosen) = DropdownMenu::new(&items).show(&trigger) {
+                                out.action = Some((index, chosen));
+                            }
+                        }
+                    }
+                };
+                // stacked rows differ in height while one holds an open field, so all are drawn
+                if stacked {
+                    area.show(ui, |ui| body(ui, 0..count));
+                } else {
+                    area.show_rows(ui, row_height, count, body);
+                }
                 // a dragged row: the line where it lands, and its move on release
                 if let Some(from) = dragging {
                     let pointer = ui.ctx().pointer_latest_pos();
@@ -1237,6 +1368,7 @@ fn open_cell(state: &mut TableState, rows: &[Vec<Cell>], keys: &[Id], at: (usize
         highlight: 0,
         select_all: true,
         focus_day: None,
+        boxed: false,
     });
 }
 

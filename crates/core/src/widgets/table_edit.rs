@@ -57,6 +57,9 @@ pub(crate) struct OpenCell {
     pub select_all: bool,
     /// The day the open calendar's keys move and Enter picks.
     pub focus_day: Option<Day>,
+    /// Drawn as a field of its own (a stacked row's) rather than over a table cell: rounded, its
+    /// edge in the ring's color, no line under it.
+    pub boxed: bool,
 }
 
 /// What a key, a press or a choice in an open editor asks.
@@ -71,6 +74,30 @@ pub(crate) enum EditMove {
     Next(bool),
     /// The focus went elsewhere: save what is typed, and close even when it is refused.
     Leave,
+}
+
+/// An open editor's ground: over a cell, the field's ground to its edges; boxed, a focused field's
+/// rounded box, its edge and a 1px ring outside it in the ring's color, or critical while refused.
+fn ground(ui: &Ui, t: &Tokens, cell: Rect, open: &OpenCell) {
+    if open.boxed {
+        let edge = if open.error.is_some() {
+            t.color("critical")
+        } else {
+            t.color("ring")
+        };
+        let radius = t.radius("control");
+        ui.painter().rect(
+            cell,
+            radius,
+            t.color("field"),
+            Stroke::new(1.0, edge),
+            egui::StrokeKind::Inside,
+        );
+        ui.painter()
+            .rect_stroke(cell, radius, Stroke::new(1.0, edge), egui::StrokeKind::Outside);
+    } else {
+        ui.painter().rect_filled(cell, CornerRadius::ZERO, t.color("field"));
+    }
 }
 
 /// The line under an editor: the ring's color, or the critical ink while refused.
@@ -155,16 +182,20 @@ fn bare_field(
 pub(crate) fn text(ui: &mut Ui, cell: Rect, open: &mut OpenCell, id: Id) -> EditMove {
     let t = tokens(ui.ctx());
     let fresh = std::mem::take(&mut open.fresh);
-    ui.painter().rect_filled(cell, CornerRadius::ZERO, t.color("field"));
+    ground(ui, &t, cell, open);
     let moved = keys(ui);
+    // 12 in over a cell, 10 in a box of its own
+    let inset = if open.boxed { 10.0 } else { 12.0 };
     let inner = Rect::from_min_max(
-        pos2(cell.left() + 12.0, cell.top()),
-        pos2(cell.right() - 12.0, cell.bottom()),
+        pos2(cell.left() + inset, cell.top()),
+        pos2(cell.right() - inset, cell.bottom()),
     );
     if bare_field(ui, &t, inner, &mut open.draft, id, fresh, open.select_all).changed() {
         open.error = None;
     }
-    underline(ui, &t, cell, open.error.is_some());
+    if !open.boxed {
+        underline(ui, &t, cell, open.error.is_some());
+    }
     alert(ui, &t, cell, open.error.as_deref());
     if moved != EditMove::Stay {
         moved
@@ -208,7 +239,7 @@ pub(crate) fn date(
 ) -> EditMove {
     let t = tokens(ui.ctx());
     let fresh = std::mem::take(&mut open.fresh);
-    ui.painter().rect_filled(cell, CornerRadius::ZERO, t.color("field"));
+    ground(ui, &t, cell, open);
     let moved = if open.calendar {
         // the calendar's own keys: Escape closes it and leaves the field open, the arrows move its
         // focused day a day or a week, and Enter picks it
@@ -279,7 +310,9 @@ pub(crate) fn date(
             }
         }
     }
-    underline(ui, &t, cell, open.error.is_some());
+    if !open.boxed {
+        underline(ui, &t, cell, open.error.is_some());
+    }
 
     // the calendar under the cell, 3 below it and 1 out to its edge
     let mut inside = vec![cell];
@@ -343,8 +376,10 @@ pub(crate) fn select(ui: &mut Ui, cell: Rect, open: &mut OpenCell, id: Id, optio
     if std::mem::take(&mut open.fresh) {
         open.highlight = chosen.unwrap_or(0);
     }
-    ui.painter().rect_filled(cell, CornerRadius::ZERO, t.color("field"));
-    underline(ui, &t, cell, open.error.is_some());
+    ground(ui, &t, cell, open);
+    if !open.boxed {
+        underline(ui, &t, cell, open.error.is_some());
+    }
     let mut moved = ui.input_mut(|i| {
         if i.consume_key(egui::Modifiers::NONE, Key::Escape) {
             EditMove::Cancel

@@ -112,4 +112,12 @@ fn every_screen() {
     harness.remove_cursor();
     harness.run_steps(2);
     results.add(harness.try_snapshot("phone_drawer"));
+
+    // a stacked row's title pressed: its editor in the title's place
+    let mut harness = render_at(phone, Scheme::System, |_| {});
+    harness.get_by_label("Rerun nightly-export for last week").click();
+    harness.run_steps(3);
+    harness.remove_cursor();
+    harness.run_steps(2);
+    results.add(harness.try_snapshot("phone_edit_title"));
 }
