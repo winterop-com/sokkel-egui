@@ -179,6 +179,8 @@ pub struct TableState {
     refused: HashMap<(Id, usize), (String, String)>,
     /// A cell to open as the table next draws.
     pending: Option<(usize, usize)>,
+    /// The head's column the keys stand on, reached by Up from the first row, where they sort.
+    head: Option<usize>,
 }
 
 impl TableState {
@@ -822,12 +824,16 @@ impl<'a> DataTable<'a> {
                         );
                         let sorted = self.state.sort.filter(|(c, _)| *c == index);
                         if column.sortable && hit.clicked() {
-                            // ascending, then descending, then as given
-                            self.state.sort = match sorted {
-                                None => Some((index, true)),
-                                Some((_, true)) => Some((index, false)),
-                                Some((_, false)) => None,
-                            };
+                            cycle_sort(self.state, index);
+                        }
+                        // the head's cell the keys stand on, ringed as the active cell is
+                        if self.state.focused && self.state.head == Some(index) {
+                            ui.painter().rect_stroke(
+                                cell,
+                                CornerRadius::ZERO,
+                                Stroke::new(2.0, t.color("ring")),
+                                egui::StrokeKind::Inside,
+                            );
                         }
                         let ink = if sorted.is_some() || (column.sortable && hit.hovered()) {
                             t.color("foreground")
@@ -1073,6 +1079,7 @@ impl<'a> DataTable<'a> {
                                     } else if hit.clicked() {
                                         self.state.active = Some(here);
                                         self.state.focused = true;
+                                        self.state.head = None;
                                     }
                                     if self.state.focused && self.state.active == Some(here) {
                                         ui.painter().rect_stroke(
@@ -1182,8 +1189,38 @@ impl<'a> DataTable<'a> {
                 }
             })
             .response;
-        // the active cell's keys while the table has the focus: the arrows move it, Enter or F2 opens it
+        // on the head row, the keys sort: Left and Right choose a column, Enter or Space cycles its
+        // sort, Down goes back to the rows
+        let sorts = !stacked && self.columns.iter().any(|c| c.sortable);
         if self.state.focused
+            && self.state.open.is_none()
+            && let Some(column) = self.state.head.filter(|_| sorts)
+        {
+            let (left, right, down, enter) = ui.input_mut(|i| {
+                let none = egui::Modifiers::NONE;
+                (
+                    i.consume_key(none, egui::Key::ArrowLeft),
+                    i.consume_key(none, egui::Key::ArrowRight),
+                    i.consume_key(none, egui::Key::ArrowDown),
+                    i.consume_key(none, egui::Key::Enter) || i.consume_key(none, egui::Key::Space),
+                )
+            });
+            let last = self.columns.len().saturating_sub(1);
+            if left {
+                self.state.head = Some(column.saturating_sub(1));
+            } else if right {
+                self.state.head = Some((column + 1).min(last));
+            } else if enter && self.columns[column].sortable {
+                cycle_sort(self.state, column);
+            } else if down {
+                self.state.head = None;
+                if let Some(first) = self.order().first() {
+                    self.state.active = Some((*first, column));
+                }
+            }
+        }
+        // the active cell's keys while the table has the focus: the arrows move it, Enter or F2 opens it
+        else if self.state.focused
             && self.state.open.is_none()
             && let Some((row, column)) = self.state.active
         {
@@ -1227,6 +1264,9 @@ impl<'a> DataTable<'a> {
                 self.state.active = Some((row, column.saturating_sub(1)));
             } else if right {
                 self.state.active = Some((row, (column + 1).min(last)));
+            } else if up && position == 0 && sorts {
+                // up from the first row, onto the head, where the keys sort
+                self.state.head = Some(column);
             } else if up {
                 self.state.active = Some((order[position.saturating_sub(1)], column));
             } else if down {
@@ -1362,6 +1402,15 @@ fn put_at(ui: &mut Ui, rect: Rect, widget: impl egui::Widget) -> Response {
     child.add(widget)
 }
 
+/// Sort by `column`: ascending, then descending, then as given.
+fn cycle_sort(state: &mut TableState, column: usize) {
+    state.sort = match state.sort.filter(|(c, _)| *c == column) {
+        None => Some((column, true)),
+        Some((_, true)) => Some((column, false)),
+        Some((_, false)) => None,
+    };
+}
+
 /// Find the rows the editing state names by key among `keys`, this frame's: an open editor or an
 /// active cell whose row is gone closes, and one whose row moved follows it.
 fn follow_keys(state: &mut TableState, keys: &[Id]) {
@@ -1391,6 +1440,7 @@ fn open_cell(state: &mut TableState, rows: &[Vec<Cell>], keys: &[Id], at: (usize
     };
     state.active = Some(at);
     state.focused = true;
+    state.head = None;
     state.open = Some(OpenCell {
         key,
         row: at.0,

@@ -71,6 +71,9 @@ differ on purpose until then; a difference listed here is not drift to undo:
   menu button and the drawer's close turn `foreground` under the pointer.
 - F14, F15: one tooltip, the inverted one, with its 10 arrow toward the trigger; 500 ms under the
   pointer, at once on keyboard focus. The web's rail tooltips still wear the popover look.
+- F0: a table that edits in place sorts by keys: Up from the first row reaches the head, Left and
+  Right choose a column, Enter or Space cycles its sort, Down goes back (the tasks example's
+  columns do not sort, so its screens show none of it).
 - F18: no blur behind a dialog, on either side once the web drops its own.
 
 ## What is left, largest first
