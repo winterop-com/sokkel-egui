@@ -3,9 +3,9 @@
 use eframe::egui::{Ui, vec2};
 use sokkel_ui_egui::{
     AppBar, Banner, BannerTone, Button, ButtonSize, ButtonVariant, CalendarEvent, Chip, ChipBar, ChipTone, Choice,
-    ChoiceList, DashboardGrid, DashboardPanel, DateTimeField, Day, DescriptionList, Gap, Icon, IconButton, KpiRow,
-    Moment, PanelSpan, PersonRow, Section, SplitPane, Stack, Stat, Switch, TagChips, TextField, TextRole, Timeline,
-    TimelineEvent, UptimeBar, UptimeDay, WeekGrid, form_bar, tokens,
+    ChoiceList, DashboardGrid, DashboardPanel, DateTimeField, Day, DescriptionList, FileKind, FilePreview, Gap, Icon,
+    IconButton, KpiRow, Moment, PanelSpan, PersonRow, SearchField, Section, SplitPane, Stack, Stat, Switch, TagChips,
+    TextField, TextRole, Timeline, TimelineEvent, Tree, TreeNode, UptimeBar, UptimeDay, WeekGrid, form_bar, tokens,
 };
 use sokkel_ui_egui_charts::{Series, TimeSeriesPanel};
 
@@ -368,4 +368,81 @@ pub fn week_grid(_: &mut State, ui: &mut Ui) {
             .scroll_to_hour(1)
             .show(ui);
     });
+}
+
+/// Tidevann's harbor and juniper buckets as a tree.
+fn bucket_nodes() -> Vec<TreeNode> {
+    let file = |path: &str, name: &str, size: &str| {
+        TreeNode::new(format!("{path}/{name}"), name)
+            .icon(FileKind::of_name(name).icon())
+            .meta(size)
+    };
+    let folder = |id: &str, name: &str, children: Vec<TreeNode>| {
+        TreeNode::new(id, name)
+            .icon(Icon::Folder)
+            .open_icon(Icon::FolderOpen)
+            .meta(children.len().to_string())
+            .children(children)
+    };
+    vec![
+        folder(
+            "harbor",
+            "harbor-exports",
+            vec![
+                folder(
+                    "harbor/nightly-export",
+                    "nightly-export",
+                    vec![
+                        file("harbor/nightly-export", "orders.csv", "532 B"),
+                        file("harbor/nightly-export", "summary.json", "180 B"),
+                        file("harbor/nightly-export", "run.log", "413 B"),
+                    ],
+                ),
+                file("harbor", "README.md", "131 B"),
+            ],
+        ),
+        folder(
+            "juniper",
+            "juniper-inventory",
+            vec![
+                file("juniper", "stock.csv", "1.1 KB"),
+                file("juniper", "warehouses.json", "128 B"),
+            ],
+        ),
+    ]
+}
+
+pub fn tree(state: &mut State, ui: &mut Ui) {
+    ui.set_max_width(360.0);
+    let nodes = bucket_nodes();
+    section(ui, "Open");
+    Tree::new("story-tree", &nodes, &mut state.tree_chosen, &mut state.tree_open).show(ui);
+    section(ui, "Searched");
+    let mut open = std::collections::HashSet::new();
+    let mut chosen = None;
+    SearchField::new("story-tree-search", &mut state.tree_query)
+        .placeholder("Search")
+        .show(ui);
+    let query = if state.tree_query.is_empty() {
+        "csv"
+    } else {
+        state.tree_query.as_str()
+    };
+    Tree::new("story-tree-searched", &nodes, &mut chosen, &mut open)
+        .query(query)
+        .show(ui);
+}
+
+pub fn files(_: &mut State, ui: &mut Ui) {
+    ui.set_max_width(640.0);
+    section(ui, "A table");
+    FilePreview::new("story-csv", "stock.csv", FileKind::Table)
+        .text("sku,warehouse,on_hand\nsku-01000,oslo-1,212\nsku-01037,porto-2,48\nsku-01074,kobe-1,305\n")
+        .show(ui);
+    section(ui, "Code");
+    FilePreview::new("story-code", "schedule.toml", FileKind::Code)
+        .text("[rebuild-index]\ndays = [\"mon\", \"thu\"]\nat = \"03:00\"\nminutes = 90\n")
+        .show(ui);
+    section(ui, "No preview");
+    FilePreview::new("story-archive", "index.tar.gz", FileKind::Archive).show(ui);
 }

@@ -55,6 +55,9 @@ pub struct State {
     pub starts: Option<sokkel_ui_egui::Moment>,
     pub region: String,
     pub update: String,
+    pub tree_open: std::collections::HashSet<String>,
+    pub tree_chosen: Option<String>,
+    pub tree_query: String,
 }
 
 impl Default for State {
@@ -94,6 +97,11 @@ impl Default for State {
             )),
             region: "Europe".into(),
             update: "We are looking into it.".into(),
+            tree_open: ["harbor".to_owned(), "harbor/nightly-export".to_owned()]
+                .into_iter()
+                .collect(),
+            tree_chosen: Some("harbor/nightly-export/orders.csv".into()),
+            tree_query: String::new(),
         }
     }
 }
@@ -270,6 +278,11 @@ pub const STORIES: &[Story] = &[
         show: table::data_table,
     },
     Story {
+        path: "Patterns/Files",
+        doc: "A file's contents drawn for its kind: a CSV as a table of its first rows, text and code as their lines numbered under the name, and a kind with no preview saying so.",
+        show: parts::files,
+    },
+    Story {
         path: "Patterns/Form bar",
         doc: "A form's actions at its end, a note at its start.",
         show: parts::form_bar_story,
@@ -328,6 +341,11 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Timeline",
         doc: "Events one under another, newest first: dots in their states' colors, or icons.",
         show: parts::timeline,
+    },
+    Story {
+        path: "Patterns/Tree",
+        doc: "Folders that open and shut, one file chosen; a search keeps the rows that match and the folders above them.",
+        show: parts::tree,
     },
     Story {
         path: "Patterns/Uptime bar",

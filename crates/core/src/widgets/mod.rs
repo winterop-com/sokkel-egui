@@ -12,6 +12,7 @@ mod datetime;
 mod display;
 mod empty;
 mod fields;
+mod file_preview;
 mod frame;
 mod layout;
 mod menu;
@@ -26,6 +27,7 @@ mod table;
 mod table_edit;
 mod text_field;
 mod time;
+mod tree;
 mod uptime;
 mod week;
 
@@ -42,6 +44,7 @@ pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separato
 pub use empty::Empty;
 pub(crate) use fields::search_field;
 pub use fields::{DueState, DueText, QuickAdd, SearchField, SwitchField, due_state, field, form_bar, toolbar};
+pub use file_preview::{FileKind, FilePreview, FilePreviewWords, format_size, parse_csv};
 pub use frame::{
     AppBar, DesktopWindow, Rail, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine, StatusTone,
     TopBar, desktop_viewport, is_phone,
@@ -65,6 +68,9 @@ pub use table::{
 pub use table_edit::{EditWords, Editor};
 pub use text_field::{Input, TextField};
 pub use time::relative_time;
+pub use tree::{
+    Tree, TreeNode, TreeResponse, TreeRow, TreeWords, tree_ancestors, tree_matches, tree_node, visible_rows,
+};
 pub use uptime::{UptimeBar, UptimeBarWords, UptimeDay, format_uptime, overall_uptime, uptime_color};
 pub use week::{CalendarEvent, PlacedEvent, WeekGrid, WeekGridResponse, layout_day};
 

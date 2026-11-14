@@ -1,0 +1,14 @@
+[package]
+name = "storage"
+description = "A storage browser for Tidevann's buckets: their folders as a tree, a folder's files listed, a file's contents previewed."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-ui-egui.workspace = true
+eframe.workspace = true
+
+[dev-dependencies]
+egui_kittest.workspace = true

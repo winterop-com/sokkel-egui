@@ -4431,6 +4431,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "storage"
+version = "0.1.0"
+dependencies = [
+ "eframe",
+ "egui_kittest",
+ "sokkel-ui-egui",
+]
+
+[[package]]
 name = "storybook"
 version = "0.1.0"
 dependencies = [

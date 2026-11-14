@@ -1337,6 +1337,16 @@ impl<'a> DataTable<'a> {
                         let height = row_height + grown(self.state, index);
                         let (rect, row) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
                         row_rects.push(rect);
+                        // a screen reader reads and presses the row by its cells' words, as a row reads
+                        row.widget_info(|| {
+                            let name = self.rows[index]
+                                .iter()
+                                .map(Cell::draft)
+                                .filter(|d| !d.is_empty())
+                                .collect::<Vec<_>>()
+                                .join(", ");
+                            egui::WidgetInfo::labeled(egui::WidgetType::Button, true, name)
+                        });
                         if row.clicked() {
                             self.state.opened = if self.state.opened == Some(index) {
                                 None
