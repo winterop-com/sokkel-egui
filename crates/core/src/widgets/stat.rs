@@ -55,7 +55,7 @@ impl Stat {
         label.size().y + 4.0 + value.size().y + note.map_or(0.0, |n| 4.0 + n.size().y)
     }
 
-    fn galleys(&self, ui: &Ui, width: f32) -> (Arc<Galley>, Arc<Galley>, Option<Arc<Galley>>, Option<Arc<Galley>>) {
+    fn galleys(&self, ui: &Ui, width: f32) -> Laid {
         let t = tokens(ui.ctx());
         let lay = |rich: egui::RichText, role: TextRole, wrap: TextWrapMode| {
             WidgetText::from(rich).into_galley(ui, Some(wrap), width.max(1.0), role.font(&t))
@@ -147,6 +147,9 @@ fn baseline(galley: &Galley) -> f32 {
         .and_then(|r| r.glyphs.first().map(|g| r.pos.y + g.pos.y))
         .unwrap_or(galley.size().y)
 }
+
+/// A stat laid out: its label, its value, its unit and its note.
+type Laid = (Arc<Galley>, Arc<Galley>, Option<Arc<Galley>>, Option<Arc<Galley>>);
 
 /// A row of stats in one box, after sokkel-ui's `KpiRow`: as many equal columns as stats (two on a
 /// phone), each 16 in, ruled apart, the box as tall as its tallest.
