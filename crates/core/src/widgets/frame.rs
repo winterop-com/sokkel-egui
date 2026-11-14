@@ -480,7 +480,7 @@ impl StatusLine {
         self
     }
 
-    /// The note says something happening now: a dot in its ink before it.
+    /// The note says something happening now: a dot in its ink before it, pulsing.
     pub fn live(mut self, live: bool) -> Self {
         self.live = live;
         self
@@ -550,7 +550,18 @@ impl Widget for StatusLine {
         }
         let mut x = rect.left() + 12.0;
         if self.live {
-            painter.circle_filled(pos2(x + 4.0, rect.center().y), 4.0, ink);
+            let center = pos2(x + 4.0, rect.center().y);
+            painter.circle_filled(center, 4.0, ink);
+            // a second dot at half strength pulsing out from it, as `animate-ping`: twice its size and
+            // gone by three quarters of each second; still while motion is off
+            if ui.style().animation_time > 0.0 {
+                let time = ui.input(|i| i.time);
+                let p = ((time % 1.0) / 0.75).min(1.0) as f32;
+                // cubic-bezier(0, 0, 0.2, 1), near enough: a cubic ease out
+                let eased = 1.0 - (1.0 - p).powi(3);
+                painter.circle_filled(center, 4.0 * (1.0 + eased), ink.gamma_multiply(0.5 * (1.0 - eased)));
+                ui.ctx().request_repaint_after(std::time::Duration::from_millis(16));
+            }
             x += 16.0;
         }
         let note = galley(ui, TextRole::Help, &self.note, (right - x).max(1.0));

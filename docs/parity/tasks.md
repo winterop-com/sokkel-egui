@@ -56,4 +56,3 @@ counterpart.
    the example binds, the shell's Mod+K for the palette, is answered as the web's is: Cmd or Ctrl
    on macOS (not both), Ctrl elsewhere, and in a field too; whether it closes an open palette
    waits on sokkel-design's question 22.
-3. **The live dot's pulse** in the status line (sokkel-design's status line spec); ours is still.
