@@ -98,7 +98,7 @@ impl StatusApp {
             // newest first, as the web's `defaultSort` on Opened
             incidents_table: TableState::sorted(6, false),
             incident_search: String::new(),
-            service_order: (0..SERVICES.len()).collect(),
+            service_order: data::board_order(),
             services_table: TableState::default(),
             today,
             shifts: data::seed_shifts(today),
@@ -475,7 +475,7 @@ impl StatusApp {
         } else {
             format!("{down} not operational")
         };
-        let ordered = self.service_order != (0..SERVICES.len()).collect::<Vec<_>>();
+        let ordered = self.service_order != data::board_order();
         let mut reset = false;
         PageHeader::new("Services").count(count).show(ui, |ui| {
             let mut button = Button::new("Reset order")
@@ -488,7 +488,7 @@ impl StatusApp {
             reset = ui.add(button).clicked();
         });
         if reset {
-            self.service_order = (0..SERVICES.len()).collect();
+            self.service_order = data::board_order();
         }
         let columns = [
             Column::new("Service", 128.0),
@@ -796,7 +796,9 @@ impl StatusApp {
         Columns::new(4)
             .min(160.0)
             .gap(12.0)
-            .show(ui, SERVICES.len(), |ui, index, width| {
+            .show(ui, SERVICES.len(), |ui, at, width| {
+                // the tiles stand in the person's order, as the services table does
+                let index = self.service_order[at];
                 let service = SERVICES[index];
                 let health = self.live_world.health[index];
                 let readings = &self.live_world.readings[index];

@@ -37,8 +37,8 @@ fn a_card_dragged_by_its_grip_moves_and_reset_puts_it_back() {
     }
     harness.drop_at(grip + vec2(0.0, 200.0));
     harness.run_steps(2);
-    assert_ne!(harness.state().service_order[0], 0);
+    assert_ne!(harness.state().service_order, status::data::board_order());
     harness.get_by_label("Reset order").click();
     harness.run_steps(2);
-    assert_eq!(harness.state().service_order, (0..8).collect::<Vec<_>>());
+    assert_eq!(harness.state().service_order, status::data::board_order());
 }

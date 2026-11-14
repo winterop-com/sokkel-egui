@@ -25,8 +25,9 @@ and never chase a difference made of numbers.
 - The service tiles stand as the web's: a `Stat` tile each (`Stat::tile`, its dot, unit, note and
   `sparkline`), four to a row in `Columns`, pressed to open the service. The readings come from
   `live.rs`, the web's calm readings ported (a seeded generator, so egui's numbers are its own);
-  each note says the service's uptime over ninety days. The web's second row stands queue,
-  storage, search, mail (the board's layout order), egui's still mail, queue, storage, search.
+  each note says the service's uptime over ninety days. The tiles and the services table stand in
+  the board's own order (`data::SERVICE_IDS`, as the web's) until the person drags the services
+  into their own, which the tiles then follow.
 - The incidents are the web's seed (`data::seed_incidents`: INC-41 open, eight resolved) and the
   incidents page has its filter: `Segmented` with each option's count and state dot, the page's
   parts a section's gap apart (`Stack`, `Gap::Section`).
