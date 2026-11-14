@@ -643,7 +643,8 @@ impl TasksApp {
                     self.appearance = Appearance::default();
                     self.next = 15;
                 }
-                Some(ConfirmAnswer::Cancel) => self.resetting = false,
+                // the reset is never busy, so letting it go is leaving it
+                Some(ConfirmAnswer::Cancel | ConfirmAnswer::StopWaiting) => self.resetting = false,
                 None => {}
             }
         }

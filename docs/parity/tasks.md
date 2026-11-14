@@ -52,7 +52,8 @@ counterpart.
 
 ## Tokens
 
-The tokens are sokkel-design's (contract 0.28.0 at `854c502`, made from sokkel-ui `3e043c08`),
+The tokens are sokkel-design's (contract 0.28.0, released at `78dae1b`, made from sokkel-ui
+`762799ba`, which adds `busy-release`; egui reads its durations),
 copied in by `make tokens`; elevations are read as its layers. The rail keeps 4 over an untitled
 first group (`untitledTop`), as sokkel-ui now does.
 

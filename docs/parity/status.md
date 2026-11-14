@@ -76,9 +76,10 @@ and never chase a difference made of numbers.
   trip now), its menu showing a site on the map. The sites' round trips are live (`live.rs`, the
   web's `siteHealthOf`). Still to come: the map's locate, full screen and basemap buttons, the
   site's popup, and Simulate trouble here, which waits on the scenarios.
-- The busy palette and busy confirm's way out (F23 as the owner refined it: after a wait, a "Stop
-  waiting" and Escape again) comes with the overlays batch's specs; egui's palette commands do
-  not run long yet, its busy `ConfirmDialog` does.
+- A busy confirm lets go after a wait (F23 as the owner refined it, in sokkel-design 0.28.0's
+  dialog spec): after `busy-release` (5 s) Cancel says "Stop waiting" and, as Escape does, lets
+  the work go (`ConfirmAnswer::StopWaiting`); the shade still holds. The palette's own way out
+  waits for an egui command that runs long.
 - Next, largest first:
   the dashboard under them; the incidents table (a stacked, labeled list under a bar with its search, row count and sort; `StatusChip`, `TagChips`, `RelativeTime`); the map of sites; the public page; settings; the live simulation behind all of them.
 

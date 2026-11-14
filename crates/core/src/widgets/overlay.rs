@@ -436,11 +436,16 @@ pub enum ConfirmAnswer {
     /// Cancel, Escape or a press on the shade.
     Cancel,
     Confirm,
+    /// Stop waiting, or Escape, once a busy answer has run `busy-release`: the dialog lets the work
+    /// go, and the app stops it if it can and says how it ended elsewhere.
+    StopWaiting,
 }
 
 /// A question with one answer to confirm, after sokkel-ui's `ConfirmDialog`: the title is the
 /// question ("Reset the demo data?"), a line under it says what the answer does, and the footer
-/// holds Cancel and the answer, drawn destructive when it is one.
+/// holds Cancel and the answer, drawn destructive when it is one. While the answer is busy the
+/// dialog holds; after `busy-release` (5 seconds) Cancel says "Stop waiting" and lets it go, as
+/// Escape does, while the shade still holds and the answer stays busy.
 pub struct ConfirmDialog {
     id: Id,
     question: String,
@@ -449,6 +454,8 @@ pub struct ConfirmDialog {
     destructive: bool,
     busy: Option<String>,
     cancel: String,
+    stop_waiting: String,
+    busy_release: Option<f32>,
 }
 
 impl ConfirmDialog {
@@ -461,7 +468,21 @@ impl ConfirmDialog {
             destructive: false,
             busy: None,
             cancel: "Cancel".into(),
+            stop_waiting: "Stop waiting".into(),
+            busy_release: None,
         }
+    }
+
+    /// The word Cancel says once a busy answer has run `busy-release`.
+    pub fn stop_waiting(mut self, words: impl Into<String>) -> Self {
+        self.stop_waiting = words.into();
+        self
+    }
+
+    /// How long, in milliseconds, a busy answer holds the dialog; `busy-release` by default.
+    pub fn busy_release(mut self, ms: f32) -> Self {
+        self.busy_release = Some(ms);
+        self
     }
 
     /// One line on what the answer does, where the question does not say it.
@@ -492,6 +513,25 @@ impl ConfirmDialog {
     pub fn show(self, ctx: &Context) -> Option<ConfirmAnswer> {
         let mut answer = None;
         let busy = self.busy.is_some();
+        // how long the answer has been busy, on the context's clock, to release the dialog after a wait
+        let since = self.id.with("busy-since");
+        let now = ctx.input(|i| i.time);
+        let released = if busy {
+            let started = ctx.data_mut(|d| *d.get_temp_mut_or_insert_with(since, || now));
+            let wait = f64::from(
+                self.busy_release
+                    .or_else(|| crate::tokens(ctx).duration("busy-release"))
+                    .unwrap_or(5000.0),
+            ) / 1000.0;
+            let left = started + wait - now;
+            if left > 0.0 {
+                ctx.request_repaint_after(std::time::Duration::from_secs_f64(left));
+            }
+            left <= 0.0
+        } else {
+            ctx.data_mut(|d| d.remove_temp::<f64>(since));
+            false
+        };
         // sokkel-ui's ConfirmDialog is `sm`, and a box on a phone too
         let mut dialog = Dialog::new(self.id, self.question.clone()).width(384.0);
         dialog.sheet = false;
@@ -508,11 +548,19 @@ impl ConfirmDialog {
             if ui.add(Button::new(label).variant(variant).busy(busy)).clicked() && !busy {
                 answer = Some(ConfirmAnswer::Confirm);
             }
-            let cancel = Button::new(self.cancel.clone()).variant(ButtonVariant::Ghost);
-            if ui.add_enabled(!busy, cancel).clicked() {
-                answer = Some(ConfirmAnswer::Cancel);
+            let words = if released { &self.stop_waiting } else { &self.cancel };
+            let cancel = Button::new(words.clone()).variant(ButtonVariant::Ghost);
+            if ui.add_enabled(!busy || released, cancel).clicked() {
+                answer = Some(if released {
+                    ConfirmAnswer::StopWaiting
+                } else {
+                    ConfirmAnswer::Cancel
+                });
             }
         });
+        if released && ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            answer = answer.or(Some(ConfirmAnswer::StopWaiting));
+        }
         answer.or((closed && !busy).then_some(ConfirmAnswer::Cancel))
     }
 }

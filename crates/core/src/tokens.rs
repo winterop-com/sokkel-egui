@@ -42,6 +42,9 @@ struct SchemeSource {
     /// Box shadows as layers, the way sokkel-design resolves them (`elevation-pop`, ...).
     #[serde(default)]
     elevations: HashMap<String, Vec<Layer>>,
+    /// Durations in milliseconds (`motion-base`, `busy-release`, ...).
+    #[serde(default)]
+    durations: HashMap<String, f32>,
 }
 
 /// One layer of a box shadow.
@@ -193,6 +196,7 @@ pub struct Tokens {
     text: HashMap<String, TextSpec>,
     density: HashMap<String, f32>,
     elevations: HashMap<String, Vec<egui::Shadow>>,
+    durations: HashMap<String, f32>,
 }
 
 impl Tokens {
@@ -238,6 +242,7 @@ impl Tokens {
             color_order: scheme.colors.keys().cloned().collect(),
             length_order: scheme.lengths.keys().cloned().collect(),
             numbers: scheme.numbers.clone(),
+            durations: scheme.durations.clone(),
             words: scheme.words.clone(),
             text: scheme.text.clone(),
             density: density.clone(),
@@ -315,6 +320,11 @@ impl Tokens {
             Some(length) => *length,
             None => panic!("no density token `{key}`"),
         }
+    }
+
+    /// A duration token in milliseconds, such as `busy-release`.
+    pub fn duration(&self, key: &str) -> Option<f32> {
+        self.durations.get(key).copied()
     }
 
     /// A plain number token, such as `mono-x-height`.
