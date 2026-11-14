@@ -10,11 +10,11 @@ pub mod live;
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, AppBar, Appearance, AsideWidth, Banner, BannerTone, Button, ButtonSize, ButtonVariant,
-    Cell, ChipBar, ChipTone, Column, Columns, DashboardGrid, DashboardPanel, DataTable, Day, DesktopWindow, Editor,
-    Gap, Icon, IconButton, KpiRow, MenuItem, Page, PageHeader, PanelSpan, PersonRow, Rail, RailEntry, RailGroup,
-    Section, Segmented, Shell, ShellPart, Split, SplitPane, Stack, StackLayout, StackPlace, Stat, StatusLine,
-    StatusTone, TableState, TableVariant, TextRole, Timeline, TimelineEvent, TopBar, UptimeBar, UptimeDay,
-    format_uptime, install, overall_uptime, relative_time,
+    Cell, ChipBar, ChipTone, Choice, ChoiceList, Column, Columns, DashboardGrid, DashboardPanel, DataTable, Day,
+    DesktopWindow, Editor, Gap, Icon, IconButton, KpiRow, MenuItem, Page, PageHeader, PanelSpan, PersonRow, Rail,
+    RailEntry, RailGroup, Section, Segmented, Shell, ShellPart, Split, SplitPane, Stack, StackLayout, StackPlace, Stat,
+    StatusLine, StatusTone, TableState, TableVariant, TextRole, Timeline, TimelineEvent, TopBar, UptimeBar, UptimeDay,
+    checkbox_list, form_bar, format_uptime, install, overall_uptime, relative_time,
 };
 
 use data::SERVICES;
@@ -84,6 +84,8 @@ pub struct StatusApp {
     pub shifts: Vec<data::Shift>,
     pub handovers: Vec<data::Handover>,
     pub maintenance: Vec<data::Maintenance>,
+    /// The public page's form, and the addresses it has subscribed.
+    pub subscribe: Subscribe,
     pub rotation_table: TableState,
     /// The live world the readings come from.
     pub live_world: Live,
@@ -134,6 +136,7 @@ impl StatusApp {
             shifts: data::seed_shifts(today),
             handovers: data::seed_handovers(9.0 * 3600.0 * 1000.0),
             maintenance: data::seed_maintenance(),
+            subscribe: Subscribe::default(),
             rotation_table: TableState::default(),
             live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
             region: "All".into(),
@@ -757,6 +760,8 @@ impl StatusApp {
                                                     ui.vertical(|ui| {
                                                         ui.spacing_mut().item_spacing.y = 2.0;
                                                         ui.horizontal(|ui| {
+                                                            // the title and its chip `gap-xs` apart
+                                                            ui.spacing_mut().item_spacing.x = 6.0;
                                                             ui.label(
                                                                 TextRole::Body.rich(&t, title).variation("wght", 500.0),
                                                             );
@@ -783,6 +788,7 @@ impl StatusApp {
                             Section::new("Past incidents")
                                 .meta("the last 7 days")
                                 .show(ui, |ui| Timeline::new(events).show(ui));
+                            subscribe_form(ui, &mut self.subscribe);
                             ui.label(
                                 TextRole::Help
                                     .rich(
@@ -1505,4 +1511,183 @@ fn uptime_list(
         }
     });
     pressed
+}
+
+/// An address subscribed on the public page: every service, or the ones named.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Subscriber {
+    pub email: String,
+    pub services: Vec<&'static str>,
+}
+
+/// The public page's form: the address being written, every service or some, the ones ticked, what
+/// is wrong with it, and the subscribers it has made.
+pub struct Subscribe {
+    pub email: String,
+    pub which: String,
+    pub picked: Vec<bool>,
+    pub error: Option<String>,
+    pub subscribers: Vec<Subscriber>,
+    /// The subscriber just made, shown in the form's place.
+    pub done: Option<Subscriber>,
+}
+
+impl Default for Subscribe {
+    fn default() -> Self {
+        Self {
+            email: String::new(),
+            which: "all".into(),
+            picked: vec![false; SERVICES.len()],
+            error: None,
+            subscribers: Vec::new(),
+            done: None,
+        }
+    }
+}
+
+impl Subscribe {
+    /// Subscribe the address written, as the web's `SubscribeForm` checks it.
+    pub fn submit(&mut self) {
+        let address = self.email.trim().to_lowercase();
+        let looks_right = {
+            let mut parts = address.split('@');
+            let (local, domain) = (parts.next().unwrap_or(""), parts.next().unwrap_or(""));
+            !local.is_empty()
+                && parts.next().is_none()
+                && !address.contains(char::is_whitespace)
+                && domain.split('.').count() >= 2
+                && domain.split('.').all(|piece| !piece.is_empty())
+        };
+        if !looks_right {
+            self.error = Some("Write an address such as you@example.org.".into());
+            return;
+        }
+        if self.subscribers.iter().any(|s| s.email == address) {
+            self.error = Some(format!("{address} is subscribed already."));
+            return;
+        }
+        let services: Vec<&'static str> = if self.which == "all" {
+            Vec::new()
+        } else {
+            SERVICES
+                .iter()
+                .zip(&self.picked)
+                .filter(|(_, ticked)| **ticked)
+                .map(|(s, _)| s.id)
+                .collect()
+        };
+        if self.which == "some" && services.is_empty() {
+            self.error = Some("Tick at least one service, or choose every service.".into());
+            return;
+        }
+        let made = Subscriber {
+            email: address,
+            services,
+        };
+        self.subscribers.push(made.clone());
+        self.done = Some(made);
+        self.email.clear();
+        self.picked = vec![false; SERVICES.len()];
+    }
+}
+
+/// The public page's "Get notified": an address, every service or some, and Subscribe; once
+/// subscribed, the address said back with Unsubscribe and Subscribe another.
+fn subscribe_form(ui: &mut Ui, form: &mut Subscribe) {
+    let t = sokkel_ui_egui::tokens(ui.ctx());
+    if let Some(done) = form.done.clone() {
+        Section::new("Get notified")
+            .description(format!(
+                "{} hears of every new incident and update by email.",
+                done.email
+            ))
+            .show(ui, |ui| {
+                Stack::new(Gap::Lg).show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 8.0;
+                        ui.add(sokkel_ui_egui::Chip::new("subscribed").tone(ChipTone::Good));
+                        let which = if done.services.is_empty() {
+                            "every service".to_owned()
+                        } else {
+                            done.services.join(", ")
+                        };
+                        ui.label(TextRole::Help.rich(&t, which).color(t.color("muted-foreground")));
+                    });
+                    form_bar(ui, None, |ui| {
+                        if ui
+                            .add(Button::new("Subscribe another").variant(ButtonVariant::Outline))
+                            .clicked()
+                        {
+                            form.done = None;
+                        }
+                        if ui
+                            .add(Button::new("Unsubscribe").variant(ButtonVariant::Ghost))
+                            .clicked()
+                        {
+                            form.subscribers.retain(|s| *s != done);
+                            form.done = None;
+                        }
+                    });
+                });
+            });
+        return;
+    }
+    Section::new("Get notified")
+        .description("An email when an incident opens, with each update until it is resolved.")
+        .show(ui, |ui| {
+            Stack::new(Gap::Lg).show(ui, |ui| {
+                let before = form.email.clone();
+                ui.add(
+                    sokkel_ui_egui::TextField::new("Email", &mut form.email)
+                        .placeholder("you@example.org")
+                        .error(form.error.clone()),
+                );
+                if form.email != before {
+                    form.error = None;
+                }
+                let choices = [
+                    Choice {
+                        value: "all",
+                        label: "Every service",
+                        description: None,
+                    },
+                    Choice {
+                        value: "some",
+                        label: "Some services",
+                        description: Some("Only the ones ticked below."),
+                    },
+                ];
+                if ChoiceList::new("Hear about", &choices).show(ui, &mut form.which) {
+                    form.error = None;
+                }
+                if form.which == "some" {
+                    let picked = &mut form.picked;
+                    let error = &mut form.error;
+                    checkbox_list(ui, "Services", |ui| {
+                        Columns::new(4)
+                            .min(120.0)
+                            .gap(0.0)
+                            .show(ui, SERVICES.len(), |ui, i, _| {
+                                if ui
+                                    .add(sokkel_ui_egui::Checkbox::new(&mut picked[i], SERVICES[i].id))
+                                    .changed()
+                                {
+                                    *error = None;
+                                }
+                            });
+                    });
+                }
+                let mut submit = false;
+                form_bar(
+                    ui,
+                    Some("No more than one email an update. Unsubscribe from any of them."),
+                    |ui| {
+                        submit = ui.add(Button::new("Subscribe")).clicked();
+                    },
+                );
+                if submit {
+                    form.submit();
+                }
+            });
+        });
 }

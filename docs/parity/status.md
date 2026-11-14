@@ -72,8 +72,11 @@ and never chase a difference made of numbers.
   everything is, then in a column 768 wide the incidents going on (a `Section` with its state's
   chip in `Section::actions`, its updates on a `Timeline` with dots in their states' colors), the
   maintenance ahead (`data::seed_maintenance`, the web's windows), every service's ninety days,
-  and the last seven days, each day's incidents as `TimelineEvent::content`. The subscribe form
-  is still to come.
+  and the last seven days, each day's incidents as `TimelineEvent::content`. Get notified is the
+  web's form: the address (a `TextField`, which now fills its column as the web's `w-full`), every
+  service or some (`ChoiceList`), the services ticked (`checkbox_list` in four `Columns`), Subscribe
+  with its note (`form_bar`), the web's three refusals, and the address said back with Unsubscribe
+  and Subscribe another.
 - Regions is the web's: the head counting the sites operational, a `ChipBar` of the regions
   (choosing one frames its sites with 6 degrees about them, All frames every site), and a
   `SplitPane` (60% to the map, 35 to 75, the rule dragged or double-clicked back) of the map and

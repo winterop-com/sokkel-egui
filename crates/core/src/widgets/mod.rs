@@ -32,13 +32,13 @@ pub use button::{Button, ButtonSize, ButtonVariant, IconButton};
 pub use calendar::{Calendar, CalendarWords, WeekStart, calendar_forget};
 pub use chip::{Chip, ChipTone};
 pub use chip_bar::ChipBar;
-pub use choice::{Checkbox, Segmented, SegmentedVariant, Tabs, TabsVariant};
+pub use choice::{Checkbox, Choice, ChoiceList, Segmented, SegmentedVariant, Tabs, TabsVariant, checkbox_list};
 pub use commands::{AppearanceCommandWords, appearance_commands, place_commands, place_of, run_appearance_command};
 pub use dashboard::{DashboardGrid, DashboardPanel, GridCells, PanelSpan, cell_height, report_natural_height};
 pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton};
 pub use empty::Empty;
 pub(crate) use fields::search_field;
-pub use fields::{DueState, DueText, QuickAdd, SearchField, SwitchField, due_state, toolbar};
+pub use fields::{DueState, DueText, QuickAdd, SearchField, SwitchField, due_state, form_bar, toolbar};
 pub use frame::{
     AppBar, DesktopWindow, Rail, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine, StatusTone,
     TopBar, desktop_viewport, is_phone,

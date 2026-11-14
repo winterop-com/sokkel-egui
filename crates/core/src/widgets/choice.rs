@@ -439,3 +439,111 @@ impl Widget for Segmented<'_> {
         response
     }
 }
+
+/// One choice of a `ChoiceList`: its value, its words and a line under them.
+pub struct Choice<'a> {
+    pub value: &'a str,
+    pub label: &'a str,
+    pub description: Option<&'a str>,
+}
+
+/// One answer out of a few, each a row with a radio, its words and a line under them, after
+/// sokkel-ui's `ChoiceList`: the chosen row on the `secondary` ground, another under the pointer on
+/// `hover`, each 10 in and 8 over and under, 2 apart.
+pub struct ChoiceList<'a> {
+    label: &'a str,
+    choices: &'a [Choice<'a>],
+}
+
+impl<'a> ChoiceList<'a> {
+    /// `label` names the list for a screen reader.
+    pub fn new(label: &'a str, choices: &'a [Choice<'a>]) -> Self {
+        Self { label, choices }
+    }
+
+    /// Draws the list; true when another choice was made, `value` then holding it.
+    pub fn show(self, ui: &mut egui::Ui, value: &mut String) -> bool {
+        let t = crate::tokens(ui.ctx());
+        let width = ui.available_width();
+        let mut changed = false;
+        ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.y = 2.0;
+            for choice in self.choices {
+                let chosen = value == choice.value;
+                let text = (width - 20.0 - 28.0).max(1.0);
+                let label =
+                    egui::WidgetText::from(crate::TextRole::Body.rich(&t, choice.label).variation("wght", 500.0))
+                        .into_galley(ui, Some(egui::TextWrapMode::Wrap), text, crate::TextRole::Body.font(&t));
+                let line = choice.description.map(|d| {
+                    egui::WidgetText::from(crate::TextRole::Help.rich(&t, d)).into_galley(
+                        ui,
+                        Some(egui::TextWrapMode::Wrap),
+                        text,
+                        crate::TextRole::Help.font(&t),
+                    )
+                });
+                let height = 16.0 + label.size().y + line.as_ref().map_or(0.0, |l| l.size().y);
+                let (rect, response) = ui.allocate_exact_size(egui::vec2(width, height), egui::Sense::click());
+                response.widget_info(|| {
+                    egui::WidgetInfo::selected(egui::WidgetType::RadioButton, true, chosen, choice.label)
+                });
+                let painter = ui.painter();
+                if chosen {
+                    painter.rect_filled(rect, t.radius("control"), t.color("secondary"));
+                } else if response.hovered() {
+                    painter.rect_filled(rect, t.radius("control"), t.color("hover"));
+                }
+                // the radio: level with the words' first line where a line follows them, centered otherwise
+                let middle = if line.is_some() {
+                    rect.top() + 8.0 + label.size().y / 2.0
+                } else {
+                    rect.center().y
+                };
+                let dot = egui::pos2(rect.left() + 10.0 + 8.0, middle);
+                if chosen {
+                    painter.circle_filled(dot, 8.0, t.color("primary"));
+                    painter.circle_filled(dot, 4.0, t.color("primary-foreground"));
+                } else {
+                    painter.circle_stroke(dot, 7.5, egui::Stroke::new(1.0, t.color("input")));
+                }
+                super::focus_ring(
+                    painter,
+                    &t,
+                    egui::Rect::from_center_size(dot, egui::vec2(16.0, 16.0)),
+                    egui::CornerRadius::same(8),
+                    &response,
+                );
+                let x = rect.left() + 10.0 + 16.0 + 12.0;
+                let label_height = label.size().y;
+                painter.galley(egui::pos2(x, rect.top() + 8.0), label, t.color("foreground"));
+                if let Some(line) = line {
+                    painter.galley(
+                        egui::pos2(x, rect.top() + 8.0 + label_height),
+                        line,
+                        t.color("muted-foreground"),
+                    );
+                }
+                if response.clicked() && !chosen {
+                    *value = choice.value.to_owned();
+                    changed = true;
+                }
+            }
+        })
+        .response
+        .widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Other, true, self.label));
+        changed
+    }
+}
+
+/// Check boxes under a label of their own, after sokkel-ui's `CheckboxList`: the label medium, 6
+/// over the boxes.
+pub fn checkbox_list<R>(ui: &mut egui::Ui, label: &str, boxes: impl FnOnce(&mut egui::Ui) -> R) -> R {
+    let t = crate::tokens(ui.ctx());
+    ui.vertical(|ui| {
+        ui.spacing_mut().item_spacing.y = 0.0;
+        ui.label(crate::TextRole::Body.rich(&t, label).variation("wght", 500.0));
+        ui.add_space(6.0);
+        boxes(ui)
+    })
+    .inner
+}

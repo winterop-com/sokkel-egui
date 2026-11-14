@@ -17,6 +17,8 @@ pub fn checkbox(state: &mut State, ui: &mut Ui) {
 }
 
 pub fn input(state: &mut State, ui: &mut Ui) {
+    // a form's column, as the web's stories hold their fields (`max-w-md`)
+    ui.set_max_width(448.0);
     section(ui, "Plain");
     ui.add(Input::new(&mut state.job));
     section(ui, "Placeholder");

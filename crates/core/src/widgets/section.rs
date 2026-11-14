@@ -279,7 +279,9 @@ impl Timeline {
             let height = 24.0 + detail.as_ref().map_or(0.0, |d| d.size().y);
             // 16 under each event but the last, as the web's `pb-4`
             let gap = if index + 1 < count { 16.0 } else { 0.0 };
-            let (rect, _) = ui.allocate_exact_size(vec2(width, height + gap), Sense::hover());
+            // the gap after an event comes after its content, where it has some
+            let after = if event.content.is_some() { 0.0 } else { gap };
+            let (rect, _) = ui.allocate_exact_size(vec2(width, height + after), Sense::hover());
             let middle = rect.top() + 12.0;
             match event.icon {
                 Some(icon) => crate::icons::paint(
@@ -317,7 +319,7 @@ impl Timeline {
             }
             if let Some(content) = event.content {
                 // 6 under the title or the detail, as far in as the title
-                let top = rect.top() + height - gap + 6.0;
+                let top = rect.top() + height + 6.0;
                 let room = egui::Rect::from_min_max(pos2(rect.left() + text_x, top), pos2(rect.right(), f32::INFINITY));
                 let mut child = ui.new_child(
                     egui::UiBuilder::new()
@@ -327,7 +329,7 @@ impl Timeline {
                 );
                 content(&mut child);
                 let used = child.min_rect().height() + 6.0;
-                ui.allocate_space(vec2(width, used));
+                ui.allocate_space(vec2(width, used + gap));
             }
         }
         // the line joining each icon to the next, under them

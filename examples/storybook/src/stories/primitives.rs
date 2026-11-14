@@ -61,6 +61,8 @@ pub fn button(_: &mut State, ui: &mut Ui) {
 }
 
 pub fn field(state: &mut State, ui: &mut Ui) {
+    // a form's column, as the web's stories hold their fields (`max-w-md`)
+    ui.set_max_width(448.0);
     section(ui, "Help");
     ui.add(TextField::new("Name", &mut state.job).help("Lowercase words joined by dashes."));
     section(ui, "Placeholder");

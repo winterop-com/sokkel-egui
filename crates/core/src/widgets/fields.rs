@@ -391,3 +391,18 @@ impl Widget for DueText {
         .inner
     }
 }
+
+/// A form's actions at its end, after sokkel-ui's `FormBar` (`placement="end"`): a muted note at the
+/// row's start, the actions at its end 8 apart, the row wrapping where they do not fit together.
+pub fn form_bar<R>(ui: &mut egui::Ui, note: Option<&str>, actions: impl FnOnce(&mut egui::Ui) -> R) -> R {
+    let t = crate::tokens(ui.ctx());
+    ui.horizontal_wrapped(|ui| {
+        ui.spacing_mut().item_spacing.x = 8.0;
+        if let Some(note) = note {
+            ui.label(crate::TextRole::Body.rich(&t, note).color(t.color("muted-foreground")));
+        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| actions(ui))
+            .inner
+    })
+    .inner
+}

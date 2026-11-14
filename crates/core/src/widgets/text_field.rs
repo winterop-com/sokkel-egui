@@ -11,7 +11,8 @@ pub struct TextField<'a> {
     placeholder: Option<String>,
     help: Option<String>,
     error: Option<String>,
-    width: f32,
+    /// Its width; when `None` the room it is given down a column, as the web's `w-full`, and 280 in a row.
+    width: Option<f32>,
 }
 
 impl<'a> TextField<'a> {
@@ -22,7 +23,7 @@ impl<'a> TextField<'a> {
             placeholder: None,
             help: None,
             error: None,
-            width: 280.0,
+            width: None,
         }
     }
 
@@ -42,8 +43,9 @@ impl<'a> TextField<'a> {
         self
     }
 
+    /// A width of its own, rather than the room it is given.
     pub fn width(mut self, width: f32) -> Self {
-        self.width = width;
+        self.width = Some(width);
         self
     }
 }
@@ -51,10 +53,19 @@ impl<'a> TextField<'a> {
 impl Widget for TextField<'_> {
     fn ui(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
+        // the room it is given down a column; in a row, 280 unless given a width
+        let width = self.width.unwrap_or_else(|| {
+            if ui.layout().is_horizontal() {
+                280.0
+            } else {
+                ui.available_width()
+            }
+        });
         ui.vertical(|ui| {
             ui.spacing_mut().item_spacing.y = 6.0;
             let label = ui.label(TextRole::Label.rich(&t, &self.label).color(t.color("foreground")));
-            let mut input = Input::new(self.value).width(self.width).invalid(self.error.is_some());
+            let mut input = Input::new(self.value).invalid(self.error.is_some());
+            input.width = Some(width);
             if let Some(placeholder) = &self.placeholder {
                 input = input.placeholder(placeholder.clone());
             }
@@ -82,7 +93,8 @@ pub struct Input<'a> {
     placeholder: Option<String>,
     invalid: bool,
     enabled: bool,
-    width: f32,
+    /// Its width; when `None` the room it is given down a column, as the web's `w-full`, and 280 in a row.
+    width: Option<f32>,
 }
 
 impl<'a> Input<'a> {
@@ -92,7 +104,7 @@ impl<'a> Input<'a> {
             placeholder: None,
             invalid: false,
             enabled: true,
-            width: 280.0,
+            width: None,
         }
     }
 
@@ -111,8 +123,9 @@ impl<'a> Input<'a> {
         self
     }
 
+    /// A width of its own, rather than the room it is given.
     pub fn width(mut self, width: f32) -> Self {
-        self.width = width;
+        self.width = Some(width);
         self
     }
 }
@@ -126,11 +139,20 @@ impl Widget for Input<'_> {
         } else {
             t.color_at("foreground", 0.5)
         };
+        // the room it is given down a column; in a row, where the room is everything after it,
+        // 280 unless given a width
+        let width = self.width.unwrap_or_else(|| {
+            if ui.layout().is_horizontal() {
+                280.0
+            } else {
+                ui.available_width()
+            }
+        });
         let mut edit = TextEdit::singleline(self.value)
             .font(body.font(&t))
             .text_color(ink)
             .frame(Frame::NONE)
-            .desired_width(self.width - 20.0)
+            .desired_width(width - 20.0)
             .margin(Margin::symmetric(0, 0));
         if let Some(placeholder) = &self.placeholder {
             edit = edit.hint_text(body.rich(&t, placeholder).color(t.color("muted-foreground")));
@@ -141,8 +163,11 @@ impl Widget for Input<'_> {
             (false, false) => t.color_at("input", 0.5),
             (false, true) => t.color_at("input", 0.8),
         };
+        // the edge's width is set before the content is laid out, so the frame takes the room it
+        // is given; its color follows focus once the content has drawn
         let frame = Frame::new()
             .fill(ground)
+            .stroke(Stroke::new(1.0, t.color("input")))
             .corner_radius(t.radius("control"))
             .inner_margin(Margin::symmetric(
                 10,
