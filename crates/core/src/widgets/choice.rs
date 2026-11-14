@@ -289,6 +289,12 @@ impl Widget for Segmented<'_> {
             SegmentedVariant::Tint => (0.0, 2.0, 28.0),
             SegmentedVariant::Outline | SegmentedVariant::Solid => (1.0, 0.0, 26.0),
         };
+        // each option a finger tall on a phone, where it is pressed
+        let height = if super::is_phone(ui.ctx()) {
+            t.length("spacing-finger")
+        } else {
+            height
+        };
         let width = widths.iter().sum::<f32>() + gap * (widths.len().saturating_sub(1)) as f32 + 2.0 * inset;
         let (rect, mut response) = ui.allocate_exact_size(vec2(width, height + 2.0 * inset), Sense::hover());
         let control = t.radius("control");

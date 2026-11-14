@@ -9,6 +9,28 @@ use crate::{Day, Icon, Switch, TextRole, icons, tokens};
 pub fn toolbar(ui: &mut Ui, start: impl FnOnce(&mut Ui), end: impl FnOnce(&mut Ui)) {
     let t = tokens(ui.ctx());
     let height = t.density("control");
+    // narrower than 28rem, as the web's `@md/toolbar`: the start across the whole row, and the end
+    // on a row of its own under it, 8 down, at its end
+    if ui.available_width() < 448.0 {
+        let gap = ui.spacing().item_spacing.y;
+        ui.spacing_mut().item_spacing.y = 8.0;
+        ui.allocate_ui_with_layout(
+            vec2(ui.available_width(), height),
+            Layout::left_to_right(Align::Center).with_main_justify(true),
+            start,
+        );
+        // the page's own gap after the toolbar
+        ui.spacing_mut().item_spacing.y = gap;
+        ui.allocate_ui_with_layout(
+            vec2(ui.available_width(), height),
+            Layout::right_to_left(Align::Center),
+            |ui| {
+                ui.spacing_mut().item_spacing.x = 12.0;
+                end(ui);
+            },
+        );
+        return;
+    }
     ui.allocate_ui_with_layout(
         vec2(ui.available_width(), height),
         Layout::left_to_right(Align::Center),
@@ -56,7 +78,13 @@ impl<'a> QuickAdd<'a> {
 
     pub fn show(self, ui: &mut Ui) -> Option<String> {
         let t = tokens(ui.ctx());
-        let (rect, _) = ui.allocate_exact_size(vec2(self.width, t.density("control")), Sense::hover());
+        // across the row it is given where that row asks it to fill (a narrow toolbar)
+        let width = if ui.layout().main_justify {
+            ui.available_width()
+        } else {
+            self.width
+        };
+        let (rect, _) = ui.allocate_exact_size(vec2(width, t.density("control")), Sense::hover());
         let response = icon_field(
             ui,
             rect,

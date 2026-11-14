@@ -47,3 +47,13 @@ fn escape_closes_the_drawer() {
     harness.run_steps(3);
     assert!(!drawer_open(&harness));
 }
+
+#[test]
+fn a_stacked_rows_box_marks_its_task_done() {
+    let mut harness = phone();
+    let before = harness.state().tasks.iter().filter(|task| task.done()).count();
+    harness.get_all_by_label("Done").next().unwrap().click();
+    harness.run_steps(3);
+    let after = harness.state().tasks.iter().filter(|task| task.done()).count();
+    assert_eq!(after, before + 1);
+}

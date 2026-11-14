@@ -7,10 +7,10 @@ use eframe::egui::{self, Color32, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, Appearance, AppearanceCommandWords, Board, BoardCard, BoardColumn, BoardMove, Cell,
     Column, CommandGroup, CommandPalette, ConfirmAnswer, ConfirmDialog, DataTable, Day, Editor, Empty, Icon, MenuItem,
-    PageHeader, QuickAdd, Rail, RailEntry, RailGroup, Segmented, SegmentedVariant, Select, SettingsDialog,
-    SettingsSection, Shell, ShellPart, StatusLine, Switch, SwitchField, TableState, TableVariant, ThemeWords, TopBar,
-    appearance_commands, install, palette_shortcut, place_commands, place_of, run_appearance_command, setting_row,
-    theme_settings, tokens, toolbar,
+    Page, PageHeader, QuickAdd, Rail, RailEntry, RailGroup, Segmented, SegmentedVariant, Select, SettingsDialog,
+    SettingsSection, Shell, ShellPart, Stack, StackLayout, StatusLine, Switch, SwitchField, TableState, TableVariant,
+    ThemeWords, TopBar, appearance_commands, install, palette_shortcut, place_commands, place_of,
+    run_appearance_command, setting_row, theme_settings, tokens, toolbar,
 };
 
 mod data;
@@ -306,53 +306,43 @@ impl TasksApp {
     }
 
     fn page(&mut self, ui: &mut Ui) {
-        let t = tokens(ui.ctx());
-        let inset = t.density("page-inset-wide");
         let label = self.list().label;
         let open = self
             .tasks
             .iter()
             .filter(|task| !task.done() && holds(&self.list, task, self.today))
             .count();
-        egui::Frame::new()
-            .inner_margin(egui::Margin {
-                left: inset as i8,
-                right: inset as i8,
-                top: t.density("page-top") as i8,
-                bottom: 40,
-            })
-            .show(ui, |ui| {
-                ui.spacing_mut().item_spacing.y = t.density("page-gap");
-                PageHeader::new(label).count(format!("{open} open")).show(ui, |_| {});
-                let mut added = None;
-                let mut view = if self.prefs.view == View::List { 0 } else { 1 };
-                let mut show_done = self.prefs.show_done;
-                let list_view = self.prefs.view == View::List;
-                toolbar(
-                    ui,
-                    |ui| {
-                        added = QuickAdd::new("quick-add", &mut self.quick)
-                            .placeholder("Add a task")
-                            .show(ui)
-                    },
-                    |ui| {
-                        ui.add(Segmented::new(&mut view, ["List", "Board"]).variant(SegmentedVariant::Track));
-                        if list_view {
-                            ui.add_space(4.0);
-                            ui.add(SwitchField::new(&mut show_done, "Show done"));
-                        }
-                    },
-                );
-                self.prefs.view = if view == 0 { View::List } else { View::Board };
-                self.prefs.show_done = show_done;
-                if let Some(title) = added {
-                    self.add(title);
-                }
-                match self.prefs.view {
-                    View::List => self.rows(ui),
-                    View::Board => self.board(ui),
-                }
-            });
+        Page::show(ui, |ui| {
+            PageHeader::new(label).count(format!("{open} open")).show(ui, |_| {});
+            let mut added = None;
+            let mut view = if self.prefs.view == View::List { 0 } else { 1 };
+            let mut show_done = self.prefs.show_done;
+            let list_view = self.prefs.view == View::List;
+            toolbar(
+                ui,
+                |ui| {
+                    added = QuickAdd::new("quick-add", &mut self.quick)
+                        .placeholder("Add a task")
+                        .show(ui)
+                },
+                |ui| {
+                    ui.add(Segmented::new(&mut view, ["List", "Board"]).variant(SegmentedVariant::Track));
+                    if list_view {
+                        ui.add_space(4.0);
+                        ui.add(SwitchField::new(&mut show_done, "Show done"));
+                    }
+                },
+            );
+            self.prefs.view = if view == 0 { View::List } else { View::Board };
+            self.prefs.show_done = show_done;
+            if let Some(title) = added {
+                self.add(title);
+            }
+            match self.prefs.view {
+                View::List => self.rows(ui),
+                View::Board => self.board(ui),
+            }
+        });
     }
 
     fn rows(&mut self, ui: &mut Ui) {
@@ -368,7 +358,7 @@ impl TasksApp {
             WeekStart::Sunday => sokkel_ui_egui::WeekStart::Sunday,
         };
         let columns = [
-            Column::new("Done", 48.0).sortable(false),
+            Column::new("Done", 48.0).sortable(false).stack(Stack::Lead),
             Column::new("Title", 224.0)
                 .fill()
                 .sortable(false)
@@ -438,6 +428,7 @@ impl TasksApp {
                     });
             })
             .keys(shown.iter().map(|task| &task.id))
+            .stack_layout(StackLayout::Compact)
             .footer(false)
             .stretch(true)
             .today(now)

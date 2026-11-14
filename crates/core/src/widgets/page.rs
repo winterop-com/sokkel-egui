@@ -6,6 +6,36 @@ use egui::{Align, Frame, Layout, Margin, Stroke, Ui, vec2};
 use super::spinner;
 use crate::{Button, ButtonSize, ButtonVariant, Icon, TextRole, icons, tokens};
 
+/// The content's own padding for a page to sit in, after sokkel-ui's `Page`: the density's page
+/// inset across (the wide one where the room is 640 or wider, the phone-sized one below it), the
+/// page top over it and 40 under it, its parts the page gap apart.
+pub struct Page;
+
+impl Page {
+    pub fn show<R>(ui: &mut Ui, content: impl FnOnce(&mut Ui) -> R) -> R {
+        let t = tokens(ui.ctx());
+        // the room the page's scroller gives, its thin track included, as the web's `100cqi`
+        let room = ui.available_width() + super::frame::SCROLL_GUTTER;
+        let inset = if room >= 640.0 {
+            t.density("page-inset-wide")
+        } else {
+            t.density("page-inset-narrow")
+        };
+        Frame::new()
+            .inner_margin(Margin {
+                left: inset as i8,
+                right: inset as i8,
+                top: t.density("page-top") as i8,
+                bottom: 40,
+            })
+            .show(ui, |ui| {
+                ui.spacing_mut().item_spacing.y = t.density("page-gap");
+                content(ui)
+            })
+            .inner
+    }
+}
+
 /// A page's head: its title (with a count, and a code under it), a description, and the page's
 /// actions at the end of the row.
 pub struct PageHeader {

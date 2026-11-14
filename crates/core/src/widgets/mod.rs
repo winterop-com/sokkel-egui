@@ -33,7 +33,7 @@ pub use fields::{DueState, DueText, QuickAdd, SearchField, SwitchField, due_stat
 pub use frame::{Rail, RailEntry, RailGroup, Shell, ShellPart, ShellWords, StatusLine, StatusTone, TopBar, is_phone};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use overlay::{ConfirmAnswer, ConfirmDialog, Dialog, Select, tooltip, tooltip_shown};
-pub use page::{PageHeader, PageState, PageStateTone, PageStateWords};
+pub use page::{Page, PageHeader, PageState, PageStateTone, PageStateWords};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
 pub use settings::{
     SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, ThemeWords, setting_row, setting_row_found_by,
@@ -41,7 +41,8 @@ pub use settings::{
 };
 pub use switch::Switch;
 pub use table::{
-    Cell, CellEdit, Column, DataTable, RowActions, TableOutput, TableState, TableVariant, TableWords, Validate,
+    Cell, CellEdit, Column, DataTable, RowActions, Stack, StackLayout, TableOutput, TableState, TableVariant,
+    TableWords, Validate,
 };
 pub use table_edit::{EditWords, Editor};
 pub use text_field::{Input, TextField};

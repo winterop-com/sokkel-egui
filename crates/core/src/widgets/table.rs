@@ -27,6 +27,30 @@ pub struct Column {
     /// How its cells are edited in place; `None` for a column that is not edited.
     pub edit: Option<Editor>,
     pub validate: Option<Validate>,
+    /// Where its cells go when the rows stack.
+    pub stack: Stack,
+}
+
+/// Where a column's cells go in a stacked row, as sokkel-ui's column `stack`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Stack {
+    /// Before the title, such as a box that marks a row done.
+    Lead,
+    /// A line of its own; in the compact layout, one of the quiet facts under the title.
+    #[default]
+    Line,
+    /// Left out of a stacked row.
+    None,
+}
+
+/// How a narrow table stacks its rows, as sokkel-ui's `stackLayout`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum StackLayout {
+    /// The rows stay rows however narrow the table is.
+    #[default]
+    Never,
+    /// The title over one quiet line of the other columns, for short things on a phone.
+    Compact,
 }
 
 impl Column {
@@ -39,7 +63,14 @@ impl Column {
             fill: false,
             edit: None,
             validate: None,
+            stack: Stack::Line,
         }
+    }
+
+    /// Where the column's cells go when the rows stack: `Stack::Lead` before the title.
+    pub fn stack(mut self, stack: Stack) -> Self {
+        self.stack = stack;
+        self
     }
 
     /// Figures: set at the cell's end, and sorted as numbers.
@@ -247,6 +278,7 @@ pub struct DataTable<'a> {
     stretch: bool,
     today: Day,
     keys: Vec<Id>,
+    stack_layout: StackLayout,
 }
 
 /// How wide a row's grip is, in the first column before its content.
@@ -274,6 +306,7 @@ impl<'a> DataTable<'a> {
             stretch: false,
             today: Day::today(),
             keys: Vec::new(),
+            stack_layout: StackLayout::Never,
         }
     }
 
@@ -333,6 +366,28 @@ impl<'a> DataTable<'a> {
         self
     }
 
+    /// Stack the rows as cards where a list's columns no longer fit, or it is narrower than 576:
+    /// `StackLayout::Compact` draws each as its leads and title over one quiet line of the rest.
+    pub fn stack_layout(mut self, layout: StackLayout) -> Self {
+        self.stack_layout = layout;
+        self
+    }
+
+    /// Whether the rows stack at `width`: a list stacks below 576 or once its columns no longer
+    /// fit, whichever is wider, so it never scrolls sideways.
+    fn stacks(&self, width: f32, pad: f32, select_width: f32) -> bool {
+        if self.stack_layout == StackLayout::Never || self.variant != TableVariant::List {
+            return false;
+        }
+        let columns: f32 = self.columns.iter().map(|c| c.width).sum::<f32>()
+            + GAP * self.columns.len().saturating_sub(1) as f32
+            + 2.0 * pad
+            + select_width
+            + if self.reorder { GRIP } else { 0.0 }
+            + if self.actions.is_some() { ACTIONS } else { 0.0 };
+        width < columns.max(576.0)
+    }
+
     pub fn today(mut self, today: Day) -> Self {
         self.today = today;
         self
@@ -345,6 +400,94 @@ impl<'a> DataTable<'a> {
     }
 
     /// The rows' order under the current sort, as indices into the rows given.
+    /// A row stacked in the compact layout: its grip, its leads and its title on a 24 line, and
+    /// under the title one 20 line of the other columns' values, small and quiet, a faint dot
+    /// between them. True when a lead's box was pressed.
+    fn stacked_row(&self, ui: &mut Ui, t: &crate::Tokens, rect: Rect, index: usize, pad: f32, lead: f32) -> bool {
+        let mut toggled = false;
+        // `lead`: the room a select box takes at the start
+        let line = Rect::from_min_size(
+            pos2(rect.left() + pad + lead, rect.top() + 8.0),
+            vec2(rect.width(), 24.0),
+        );
+        let mut x = line.left();
+        if self.reorder {
+            let grip = Rect::from_min_size(pos2(x, line.top()), vec2(GRIP, line.height()));
+            let hit = ui.interact(grip, self.id.with(("grip", index)), Sense::drag());
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Move"));
+            if hit.hovered() || hit.dragged() {
+                ui.ctx().set_cursor_icon(if hit.dragged() {
+                    CursorIcon::Grabbing
+                } else {
+                    CursorIcon::Grab
+                });
+            }
+            if hit.drag_started()
+                && let Some(position) = self.order().iter().position(|r| *r == index)
+            {
+                ui.ctx().data_mut(|d| d.insert_temp(self.id.with("dragging"), position));
+            }
+            icons::paint(
+                ui.painter(),
+                pos2(x + 5.0, line.center().y),
+                Icon::GripVertical,
+                14.0,
+                t.color("muted-foreground"),
+            );
+            x += GRIP + 8.0;
+        }
+        let row = &self.rows[index];
+        for (c, column) in self.columns.iter().enumerate() {
+            if column.stack == Stack::Lead {
+                let place = Rect::from_min_size(pos2(x, line.top()), vec2(16.0, line.height()));
+                if paint_cell(ui, t, &row[c], place, false, self.id.with(("cell", index, c))).is_some() {
+                    toggled = true;
+                }
+                x += 16.0 + 8.0;
+            }
+        }
+        // the title runs to 8 before the menu's 24 box at the row's end
+        let end = rect.right() - pad - if self.actions.is_some() { 24.0 + 8.0 } else { 0.0 };
+        let title = self.columns.iter().position(|c| c.stack != Stack::Lead);
+        if let Some(c) = title {
+            let place = Rect::from_min_max(pos2(x, line.top()), pos2(end, line.bottom()));
+            paint_cell(ui, t, &row[c], place, false, self.id.with(("cell", index, c)));
+        }
+        // the facts: every other column but those left out, on one quiet line
+        let mut fx = x;
+        let facts = Rect::from_min_size(pos2(x, line.bottom()), vec2(end - x, 20.0));
+        let mut first = true;
+        for (c, column) in self.columns.iter().enumerate() {
+            if Some(c) == title || column.stack != Stack::Line || matches!(row[c], Cell::Empty | Cell::Check(_)) {
+                continue;
+            }
+            if !first {
+                let dot = WidgetText::from(TextRole::Help.rich(t, "·")).into_galley(
+                    ui,
+                    None,
+                    f32::INFINITY,
+                    TextRole::Help.font(t),
+                );
+                fx += 6.0;
+                ui.painter().galley(
+                    pos2(fx, facts.center().y - dot.size().y / 2.0),
+                    dot.clone(),
+                    t.color("faint"),
+                );
+                fx += dot.size().x + 6.0;
+            }
+            first = false;
+            fx += paint_fact(
+                ui,
+                t,
+                &row[c],
+                pos2(fx, facts.center().y),
+                (facts.right() - fx).max(1.0),
+            );
+        }
+        toggled
+    }
+
     fn order(&self) -> Vec<usize> {
         let mut order: Vec<usize> = (0..self.rows.len()).collect();
         if let Some((column, ascending)) = self.state.sort {
@@ -423,6 +566,14 @@ impl<'a> DataTable<'a> {
             TableVariant::List => t.density("panel-pad"),
         };
         let select_width = if self.selectable { 28.0 } else { 0.0 };
+        let stacked = self.stacks(ui.available_width(), pad, select_width);
+        // a stacked row: 8 over and under a 24 title line and a 20 line of facts, and its rule
+        let row_height = if stacked {
+            8.0 + 24.0 + 20.0 + 8.0 + 1.0
+        } else {
+            row_height
+        };
+        let head_height = if stacked { 0.0 } else { head_height };
         let keys: Vec<Id> = (0..self.rows.len())
             .map(|index| match self.keys.get(index) {
                 Some(key) if self.keys.len() == self.rows.len() => *key,
@@ -490,113 +641,116 @@ impl<'a> DataTable<'a> {
                     empty(ui);
                     return;
                 }
-                // the head
+                // the head, which a stacked table has none of
                 let (head, _) = ui.allocate_exact_size(vec2(ui.available_width(), head_height), Sense::hover());
-                let top = CornerRadius { sw: 0, se: 0, ..radius };
-                ui.painter()
-                    .rect_filled(head, top, t.color_or("table-head-ground", t.color("card")));
-                ui.painter().hline(
-                    head.x_range(),
-                    head.bottom() - 0.5,
-                    Stroke::new(1.0, t.color_or("table-head-line", t.color("border"))),
-                );
-                let upper = t.word("table-head-transform") == Some("uppercase");
-                let places = self.layout(head.left() + pad + select_width, head.right() - pad);
-                if self.selectable {
-                    let all = !self.rows.is_empty() && self.state.selected.len() == self.rows.len();
-                    let some = !self.state.selected.is_empty() && !all;
-                    let mut checked = all;
-                    let place = Rect::from_min_size(pos2(head.left() + pad, head.center().y - 8.0), vec2(16.0, 16.0));
-                    let box_response = put_at(
-                        ui,
-                        place,
-                        Checkbox::new(&mut checked, self.words.select_all.clone())
-                            .hide_label()
-                            .indeterminate(some),
-                    );
-                    if box_response.clicked() {
-                        self.state.selected = if all {
-                            BTreeSet::new()
-                        } else {
-                            (0..self.rows.len()).collect()
-                        };
-                    }
-                }
-                let last = self.columns.len().saturating_sub(1);
-                for (index, column) in self.columns.iter().enumerate() {
-                    let (x, w) = places[index];
-                    let cell = Rect::from_min_size(pos2(x, head.top()), vec2(w, head.height()));
-                    let hit = ui.interact(
-                        cell,
-                        self.id.with(("head", index)),
-                        if column.sortable {
-                            Sense::click()
-                        } else {
-                            Sense::hover()
-                        },
-                    );
-                    let sorted = self.state.sort.filter(|(c, _)| *c == index);
-                    if column.sortable && hit.clicked() {
-                        // ascending, then descending, then as given
-                        self.state.sort = match sorted {
-                            None => Some((index, true)),
-                            Some((_, true)) => Some((index, false)),
-                            Some((_, false)) => None,
-                        };
-                    }
-                    let ink = if sorted.is_some() || (column.sortable && hit.hovered()) {
-                        t.color("foreground")
-                    } else {
-                        t.color_or("table-head-ink", t.color("muted-foreground"))
-                    };
-                    let title = if upper {
-                        column.title.to_uppercase()
-                    } else {
-                        column.title.clone()
-                    };
-                    let galley = WidgetText::from(TextRole::Head.rich(&t, title)).into_galley(
-                        ui,
-                        Some(TextWrapMode::Truncate),
-                        w - 16.0,
-                        TextRole::Head.font(&t),
-                    );
-                    // a head over a row's grip stands after it
-                    let lead = if index == 0 && self.reorder { GRIP + 6.0 } else { 0.0 };
-                    let text_x = if column.numeric {
-                        cell.right() - galley.size().x - if sorted.is_some() { 16.0 } else { 0.0 }
-                    } else {
-                        cell.left() + lead
-                    };
-                    let text_w = galley.size().x;
+                if !stacked {
+                    let top = CornerRadius { sw: 0, se: 0, ..radius };
                     ui.painter()
-                        .galley(pos2(text_x, cell.center().y - galley.size().y / 2.0), galley, ink);
-                    if let Some((_, ascending)) = sorted {
-                        let arrow = if ascending { Icon::ArrowUp } else { Icon::ArrowDown };
-                        icons::paint(
-                            ui.painter(),
-                            pos2(text_x + text_w + 10.0, cell.center().y),
-                            arrow,
-                            14.0,
-                            ink,
+                        .rect_filled(head, top, t.color_or("table-head-ground", t.color("card")));
+                    ui.painter().hline(
+                        head.x_range(),
+                        head.bottom() - 0.5,
+                        Stroke::new(1.0, t.color_or("table-head-line", t.color("border"))),
+                    );
+                    let upper = t.word("table-head-transform") == Some("uppercase");
+                    let places = self.layout(head.left() + pad + select_width, head.right() - pad);
+                    if self.selectable {
+                        let all = !self.rows.is_empty() && self.state.selected.len() == self.rows.len();
+                        let some = !self.state.selected.is_empty() && !all;
+                        let mut checked = all;
+                        let place =
+                            Rect::from_min_size(pos2(head.left() + pad, head.center().y - 8.0), vec2(16.0, 16.0));
+                        let box_response = put_at(
+                            ui,
+                            place,
+                            Checkbox::new(&mut checked, self.words.select_all.clone())
+                                .hide_label()
+                                .indeterminate(some),
                         );
+                        if box_response.clicked() {
+                            self.state.selected = if all {
+                                BTreeSet::new()
+                            } else {
+                                (0..self.rows.len()).collect()
+                            };
+                        }
                     }
-                    // the resize handle in the gap after the column
-                    if index != last {
-                        let edge = Rect::from_center_size(
-                            pos2(cell.right() + GAP / 2.0, cell.center().y),
-                            vec2(8.0, cell.height()),
+                    let last = self.columns.len().saturating_sub(1);
+                    for (index, column) in self.columns.iter().enumerate() {
+                        let (x, w) = places[index];
+                        let cell = Rect::from_min_size(pos2(x, head.top()), vec2(w, head.height()));
+                        let hit = ui.interact(
+                            cell,
+                            self.id.with(("head", index)),
+                            if column.sortable {
+                                Sense::click()
+                            } else {
+                                Sense::hover()
+                            },
                         );
-                        let drag = ui.interact(edge, self.id.with(("resize", index)), Sense::drag());
-                        if drag.hovered() || drag.dragged() {
-                            ui.ctx().set_cursor_icon(CursorIcon::ResizeHorizontal);
-                            ui.painter()
-                                .vline(edge.center().x, cell.y_range(), Stroke::new(2.0, t.color("ring")));
+                        let sorted = self.state.sort.filter(|(c, _)| *c == index);
+                        if column.sortable && hit.clicked() {
+                            // ascending, then descending, then as given
+                            self.state.sort = match sorted {
+                                None => Some((index, true)),
+                                Some((_, true)) => Some((index, false)),
+                                Some((_, false)) => None,
+                            };
                         }
-                        if drag.dragged() {
-                            self.state.widths[index] = (self.state.widths[index] + drag.drag_delta().x).max(64.0);
+                        let ink = if sorted.is_some() || (column.sortable && hit.hovered()) {
+                            t.color("foreground")
+                        } else {
+                            t.color_or("table-head-ink", t.color("muted-foreground"))
+                        };
+                        let title = if upper {
+                            column.title.to_uppercase()
+                        } else {
+                            column.title.clone()
+                        };
+                        let galley = WidgetText::from(TextRole::Head.rich(&t, title)).into_galley(
+                            ui,
+                            Some(TextWrapMode::Truncate),
+                            w - 16.0,
+                            TextRole::Head.font(&t),
+                        );
+                        // a head over a row's grip stands after it
+                        let lead = if index == 0 && self.reorder { GRIP + 6.0 } else { 0.0 };
+                        let text_x = if column.numeric {
+                            cell.right() - galley.size().x - if sorted.is_some() { 16.0 } else { 0.0 }
+                        } else {
+                            cell.left() + lead
+                        };
+                        let text_w = galley.size().x;
+                        ui.painter()
+                            .galley(pos2(text_x, cell.center().y - galley.size().y / 2.0), galley, ink);
+                        if let Some((_, ascending)) = sorted {
+                            let arrow = if ascending { Icon::ArrowUp } else { Icon::ArrowDown };
+                            icons::paint(
+                                ui.painter(),
+                                pos2(text_x + text_w + 10.0, cell.center().y),
+                                arrow,
+                                14.0,
+                                ink,
+                            );
                         }
-                        if drag.double_clicked() {
-                            self.state.widths[index] = column.width;
+                        // the resize handle in the gap after the column
+                        if index != last {
+                            let edge = Rect::from_center_size(
+                                pos2(cell.right() + GAP / 2.0, cell.center().y),
+                                vec2(8.0, cell.height()),
+                            );
+                            let drag = ui.interact(edge, self.id.with(("resize", index)), Sense::drag());
+                            if drag.hovered() || drag.dragged() {
+                                ui.ctx().set_cursor_icon(CursorIcon::ResizeHorizontal);
+                                ui.painter()
+                                    .vline(edge.center().x, cell.y_range(), Stroke::new(2.0, t.color("ring")));
+                            }
+                            if drag.dragged() {
+                                self.state.widths[index] = (self.state.widths[index] + drag.drag_delta().x).max(64.0);
+                            }
+                            if drag.double_clicked() {
+                                self.state.widths[index] = column.width;
+                            }
                         }
                     }
                 }
@@ -696,8 +850,11 @@ impl<'a> DataTable<'a> {
                                     }
                                 }
                             }
+                            if stacked && self.stacked_row(ui, &t, rect, index, pad, select_width) {
+                                out.toggled = Some(index);
+                            }
                             let places = self.layout(rect.left() + pad + select_width, rect.right() - pad);
-                            for (c, column) in self.columns.iter().enumerate() {
+                            for (c, column) in self.columns.iter().enumerate().filter(|_| !stacked) {
                                 let (x, w) = places[c];
                                 let mut cell = Rect::from_min_size(pos2(x, rect.top()), vec2(w, rect.height()));
                                 if c == 0 && self.reorder {
@@ -810,7 +967,13 @@ impl<'a> DataTable<'a> {
                                     pos2(rect.right() - pad - ACTIONS, rect.top()),
                                     vec2(ACTIONS, rect.height()),
                                 );
-                                let button = Rect::from_center_size(place.center(), vec2(28.0, 28.0));
+                                // stacked, the menu stands at the row's end on the title's line, a 24 box
+                                let middle = if stacked {
+                                    pos2(rect.right() - pad - 12.0, rect.top() + 8.0 + 12.0)
+                                } else {
+                                    place.center()
+                                };
+                                let button = Rect::from_center_size(middle, vec2(28.0, 28.0));
                                 let trigger = ui.interact(button, self.id.with(("actions", index)), Sense::click());
                                 trigger.widget_info(|| {
                                     egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Actions")
@@ -984,6 +1147,43 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
         Cell::Empty => {}
     }
     None
+}
+
+/// A value on a stacked row's facts line, small and quiet, its start at `at` (on the line's middle):
+/// the width it took.
+fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room: f32) -> f32 {
+    let quiet = t.color("muted-foreground");
+    let text = |ui: &mut Ui, rich: egui::RichText, ink: egui::Color32, x: f32, room: f32| {
+        let galley =
+            WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), room.max(1.0), TextRole::Help.font(t));
+        let width = galley.size().x;
+        ui.painter().galley(pos2(x, at.y - galley.size().y / 2.0), galley, ink);
+        width
+    };
+    match cell {
+        Cell::Text(label) | Cell::Chip(label, _) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
+        Cell::Struck(label) => text(ui, TextRole::Help.rich(t, label).strikethrough(), quiet, at.x, room),
+        Cell::Mono(label) => {
+            let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
+            text(ui, rich, quiet, at.x, room)
+        }
+        Cell::Due { date, now, done } => {
+            let (rich, ink) = DueText::new(*date, *now).done(*done).role(TextRole::Help).rich(t);
+            text(ui, rich, ink, at.x, room)
+        }
+        Cell::Person(name) => {
+            let avatar = Rect::from_min_size(pos2(at.x, at.y - 8.0), vec2(16.0, 16.0));
+            super::person::paint_avatar(ui, t, avatar, name, AvatarSize::Xxs, false);
+            20.0 + text(
+                ui,
+                TextRole::Help.rich(t, name),
+                quiet,
+                avatar.right() + 4.0,
+                room - 20.0,
+            )
+        }
+        Cell::Check(_) | Cell::Empty => 0.0,
+    }
 }
 
 /// Add `widget` at `rect` in a child of `ui` that leaves `ui`'s own layout where it was, so a cell's

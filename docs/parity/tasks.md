@@ -37,7 +37,7 @@ counterpart.
 | inbox, today, upcoming, project | Within a point or two of the web; the frame follows sokkel-design's rail, top bar and status line specs (814e3af), and the page header its spec (689452c): the count on the title's baseline. Frame, rail, top bar, toolbar, all five columns, the grip, due tones, avatars, the row's action and the status line all line up. |
 | today_empty | `Empty` in the table's frame without its heads: the list's icon, "Nothing in Today", the count of hidden done tasks in balanced lines, and Show done. |
 | inbox_dark | The same, in the dark scheme. |
-| phone | Below 768 (`is_phone`), as sokkel-design's shell pattern says: no rail in the frame, the top bar across the window with the menu button at its start, its last crumb alone and the palette's button a magnifier on a finger square, and the status line across the window. The page under it is still the desktop's (What is left, 2). |
+| phone | Below 768 (`is_phone`), as sokkel-design's shell pattern says: no rail in the frame, the top bar across the window with the menu button at its start, its last crumb alone and the palette's button a magnifier on a finger square, and the status line across the window. The page lines up with the web's: `Page` takes the narrow inset (16) under 640, `toolbar` puts the add field across the row and its end on a row of its own under 448, `Segmented` options are a finger tall, and the list stacks (`StackLayout::Compact`, the box a `Stack::Lead`) as the title over a quiet line of due, assignee and project, the menu at the row's end. A stacked row is not edited in place yet, and egui fades the last row the list cuts, where the web cuts it plainly. |
 | phone_drawer | The menu button opens the rail as a drawer over a scrim (`Shell` holds it): expanded, without its edge, finger-tall entries, the close at its head's end and the account at its foot. A place chosen in it, Escape, the close or a press on the scrim closes it. The menu button's hover and focus wait on sokkel-design's question 2. |
 | board | Columns, heads, counts and cards match, the cards' feet included. egui breaks a title only at spaces, where the web also breaks after a hyphen ("send-" / "digest"). |
 | board_menu | A card's menu from its button, shown with the grip while the card is hovered: Move to with each column's icon (the card's own disabled), then Delete. Cards drag between and within columns (`Board`); where the web's other cards slide aside, ours show a line where the card lands. |
@@ -54,10 +54,7 @@ counterpart.
 1. **A save's spinner** while editing in place: an egui save is done when the app's handler
    returns, so there is nothing to wait on yet; a typed character, Backspace and Delete open a
    cell, and the calendar moves by its keys, as the web's do.
-2. **The page on a phone** (phone): the frame is done (phone, phone_drawer above), but the page keeps its desktop
-   gutters (32 against the web's 16), the toolbar does not wrap under the add field, and the
-   table's rows do not stack into a title line and a due, assignee and project line.
-3. **Behavior the screens do not show**: The one shortcut
+2. **Behavior the screens do not show**: The one shortcut
    the example binds, the shell's Mod+K for the palette, is answered as the web's is: Cmd or Ctrl
    on macOS (not both), Ctrl elsewhere, and in a field too; whether it closes an open palette
    waits on sokkel-design's question 22.
