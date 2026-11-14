@@ -165,7 +165,7 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
             if *destructive {
                 t.color_at("destructive", 0.1)
             } else {
-                t.color("accent")
+                super::ground(t, "dropdown-menu.base.highlighted.item", "accent")
             },
         );
     }

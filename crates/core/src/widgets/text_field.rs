@@ -207,12 +207,22 @@ impl Widget for Input<'_> {
         }
         let response = prepared.content_ui.add_enabled(self.enabled, edit);
         let focused = response.has_focus();
-        let edge = match (self.invalid, focused) {
-            (true, true) => t.color("critical"),
-            (true, false) => t.color_at("critical", 0.8),
-            (false, true) => t.color("ring"),
-            (false, false) => t.color("input"),
+        // the control's edge in its state, as sokkel-design paints it
+        let state = match (self.invalid, focused) {
+            (true, true) => "invalid+focus",
+            (true, false) => "invalid",
+            (false, true) => "focus",
+            (false, false) => "rest",
         };
+        let edge = t
+            .paint(&format!("text-field.base.{state}.control"))
+            .and_then(|p| p.edge)
+            .unwrap_or_else(|| match (self.invalid, focused) {
+                (true, true) => t.color("critical"),
+                (true, false) => t.color_at("critical", 0.8),
+                (false, true) => t.color("ring"),
+                (false, false) => t.color("input"),
+            });
         prepared.frame.stroke = Stroke::new(1.0, edge);
         let outer = prepared.end(ui);
         if focused {

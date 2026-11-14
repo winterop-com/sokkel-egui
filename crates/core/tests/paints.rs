@@ -1,11 +1,11 @@
 //! sokkel-design's resolved paints (D10): every paint egui reads is there in every theme and
 //! scheme, so no part falls back to a choice of its own.
 
-use sokkel_ui_egui::{Appearance, ButtonVariant, Scheme, Tokens, themes};
+use sokkel_ui_egui::{Appearance, ButtonVariant, PAINTS_READ, Scheme, Tokens, themes};
 
 /// Every paint key egui's parts read.
 fn read_by_egui() -> Vec<String> {
-    let mut keys = Vec::new();
+    let mut keys: Vec<String> = PAINTS_READ.iter().map(|k| (*k).to_owned()).collect();
     for variant in [
         ButtonVariant::Default,
         ButtonVariant::Outline,

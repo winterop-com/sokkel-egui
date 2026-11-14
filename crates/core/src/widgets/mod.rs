@@ -110,12 +110,55 @@ pub(crate) fn focus_ring_inset(
     }
 }
 
+/// A paint's ground, as sokkel-design resolves it for a part in a state; the token `or` names
+/// where a theme lacks the paint (the paint check fails a paint egui reads that is missing).
+pub(crate) fn ground(tokens: &Tokens, key: &str, or: &str) -> Color32 {
+    tokens
+        .paint(key)
+        .and_then(|p| p.ground)
+        .unwrap_or_else(|| tokens.color(or))
+}
+
+/// A paint's edge, as `ground`.
+pub(crate) fn edge(tokens: &Tokens, key: &str, or: &str) -> Color32 {
+    tokens
+        .paint(key)
+        .and_then(|p| p.edge)
+        .unwrap_or_else(|| tokens.color(or))
+}
+
+/// A paint's ink, as `ground`.
+pub(crate) fn ink(tokens: &Tokens, key: &str, or: &str) -> Color32 {
+    tokens
+        .paint(key)
+        .and_then(|p| p.ink)
+        .unwrap_or_else(|| tokens.color(or))
+}
+
+/// The paint keys egui's parts read, for the paint check.
+pub const PAINTS_READ: &[&str] = &[
+    "dropdown-menu.base.rest.popup",
+    "dropdown-menu.base.highlighted.item",
+    "dialog.base.rest.box",
+    "dialog.base.rest.backdrop",
+    "dialog.base.rest.footer",
+    "tooltip.base.rest.box",
+    "select.base.highlighted.row",
+    "text-field.base.rest.control",
+    "text-field.base.focus.control",
+    "text-field.base.invalid.control",
+    "text-field.base.invalid+focus.control",
+];
+
 /// A popup's surface (a select's list, a menu, a submenu, the account menu): the popover's
 /// ground, the surface's corners, a 1px `border-strong` edge and `elevation-pop`'s shadow.
 pub(crate) fn popup_frame(tokens: &Tokens) -> egui::Frame {
     egui::Frame::new()
-        .fill(tokens.color("popover"))
-        .stroke(Stroke::new(1.0, tokens.color("border-strong")))
+        .fill(ground(tokens, "dropdown-menu.base.rest.popup", "popover"))
+        .stroke(Stroke::new(
+            1.0,
+            edge(tokens, "dropdown-menu.base.rest.popup", "border-strong"),
+        ))
         .corner_radius(tokens.radius("surface"))
         .shadow(tokens.shadow("elevation-pop"))
 }

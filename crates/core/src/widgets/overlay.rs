@@ -41,7 +41,7 @@ fn show_tooltip(response: Response, text: String, always: bool) -> Response {
         response.has_focus()
     } || always;
     let frame = Frame::new()
-        .fill(t.color("foreground"))
+        .fill(super::ground(&t, "tooltip.base.rest.box", "foreground"))
         .corner_radius(t.radius("md"))
         .inner_margin(Margin::symmetric(12, 6));
     let shown = Popup::from_response(&response)
@@ -263,12 +263,16 @@ impl Widget for Select<'_> {
                     // lit in the accent, as every list of choices is
                     let lit = hit.hovered() || hit.has_focus();
                     let ink = if lit {
-                        t.color("accent-foreground")
+                        super::ink(&t, "select.base.highlighted.row", "accent-foreground")
                     } else {
                         t.color("popover-foreground")
                     };
                     if lit {
-                        ui.painter().rect_filled(row, t.radius("md"), t.color("accent"));
+                        ui.painter().rect_filled(
+                            row,
+                            t.radius("md"),
+                            super::ground(&t, "select.base.highlighted.row", "accent"),
+                        );
                     }
                     if let Some(swatches) = &self.swatches {
                         paint_swatch(
@@ -360,12 +364,16 @@ impl Dialog {
         // below 768 a sheet over the whole window, with no corners, edge or shadow
         let sheet = self.sheet && super::is_phone(ctx);
         let frame = if sheet {
-            Frame::new().fill(t.color("popover"))
+            Frame::new().fill(super::ground(&t, "dialog.base.rest.box", "popover"))
         } else {
             super::dialog_frame(&t)
         };
         let response = egui::Modal::new(self.id)
-            .backdrop_color(t.color_at("shade", 0.1))
+            .backdrop_color(
+                t.paint("dialog.base.rest.backdrop")
+                    .and_then(|p| p.ground)
+                    .unwrap_or_else(|| t.color_at("shade", 0.1)),
+            )
             .frame(frame)
             .show(ctx, |ui| {
                 let window = ctx.content_rect();
@@ -411,8 +419,13 @@ impl Dialog {
                 // the footer band: muted at half, a rule above, the surface's lower corners
                 let (band, _) = ui.allocate_exact_size(vec2(width, band_height), Sense::hover());
                 let radius = if sheet { CornerRadius::ZERO } else { t.radius("surface") };
-                ui.painter()
-                    .rect_filled(band, CornerRadius { nw: 0, ne: 0, ..radius }, t.color_at("muted", 0.5));
+                ui.painter().rect_filled(
+                    band,
+                    CornerRadius { nw: 0, ne: 0, ..radius },
+                    t.paint("dialog.base.rest.footer")
+                        .and_then(|p| p.ground)
+                        .unwrap_or_else(|| t.color_at("muted", 0.5)),
+                );
                 ui.painter()
                     .hline(band.x_range(), band.top() + 0.5, Stroke::new(1.0, t.color("border")));
                 let inner = Rect::from_min_max(band.min + vec2(16.0, 0.0), band.max - vec2(16.0, 0.0));

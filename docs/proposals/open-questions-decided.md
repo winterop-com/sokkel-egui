@@ -82,5 +82,8 @@ keys), F1 and F2 (the frame's focus and the menu button), F9 (the count), F11 (r
 F14 and F15 (the tooltip), F16 and F19 (popups and dialogs, from a resolved `elevation-pop`), F17
 (sheets below 768), F20, F21, F22 and F24 (the lists of choices). F3 to F8, F10, F13 and F18 need
 nothing here: egui already draws them so. F23's dialog half is in (a busy `ConfirmDialog` releases after `busy-release` with "Stop waiting");
-its palette half waits for an egui command that can run long. D7's
-list and D10's paint check are egui's next work after these.
+its palette half waits for an egui command that can run long. D10 is under way: egui reads the
+resolved paints (`Tokens::paint`) for the button, the text field's edge, the popup and dialog
+surfaces with the dialog's shade and footer, the tooltip, and the menu's and select's highlighted
+row, and `crates/core/tests/paints.rs` fails a paint egui reads that a theme or scheme lacks;
+none of these drew differently from its paint. D7's list is egui's work after these.
