@@ -130,10 +130,11 @@ there so the screen matches the web's, but nothing answers it yet, until the arr
 - Resolve, Reopen and Assign to the person on call in an incident's menu and on its page;
   Subscribe on the public page brings the form into view.
 
-sokkel-ui 0.28.1's touch behaviors (a tooltip held on a tap, a shut button's reason on a tap)
-and the palette's search wait (`wait-shown`) do not reach egui yet: its apps run with a mouse,
-and its palette's commands answer at once. The tokens carry `tip-hold` and `wait-shown` for when
-they do.
+sokkel-ui 0.28.1 is met: a tap by touch on a tooltip's trigger (a shut button's reason
+included) holds the tooltip for `tip-hold` or until the next press, a mouse press leaving it as
+it was; the palette holds while an app's command runs (Stop waiting after `busy-release`) and
+says Searching after `wait-shown`; and the parts egui draws read their resolved paints, checked
+in `crates/core/tests/paints.rs`.
 
 ## Last checked
 

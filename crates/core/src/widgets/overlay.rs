@@ -29,7 +29,10 @@ fn show_tooltip(response: Response, text: String, always: bool) -> Response {
     let id = response.id.with("tooltip");
     let rest = ctx.data(|d| d.get_temp::<f64>(id));
     let now = ctx.input(|i| i.time);
-    let show = if response.hovered() {
+    let held = tap_held(&ctx, &response, id, now, &t);
+    let show = if held {
+        true
+    } else if response.hovered() {
         let since = rest.unwrap_or(now);
         ctx.data_mut(|d| d.insert_temp(id, since));
         if now - since < TOOLTIP_DELAY {
@@ -75,6 +78,56 @@ fn show_tooltip(response: Response, text: String, always: bool) -> Response {
         ));
     }
     response
+}
+
+/// A tap by touch or pen on the trigger, as 0.28.1's `tap`: a press that ends on the trigger
+/// shows the tooltip and holds it for `tip-hold`, or until the next press anywhere or a second tap
+/// on the trigger. A mouse press, hover and focus are left as they were. It reads the pointer's
+/// place, not the trigger's sense, so a shut button's reason shows on a tap too.
+fn tap_held(ctx: &Context, response: &Response, id: Id, now: f64, t: &crate::Tokens) -> bool {
+    #[derive(Clone, Copy, Default)]
+    struct Tap {
+        /// A touch press began on the trigger.
+        pressed: bool,
+        /// Held until this time.
+        until: Option<f64>,
+        /// The press that began ends the hold, and its release does not open it again.
+        closing: bool,
+    }
+    let key = id.with("tap");
+    let mut tap: Tap = ctx.data(|d| d.get_temp(key)).unwrap_or_default();
+    let (pressed, released, touch, at) = ctx.input(|i| {
+        (
+            i.pointer.any_pressed(),
+            i.pointer.any_released(),
+            i.any_touches(),
+            i.pointer.interact_pos(),
+        )
+    });
+    let on_trigger = at.is_some_and(|p| response.rect.contains(p));
+    if pressed {
+        if tap.until.is_some() {
+            // the next press anywhere ends the hold; on the trigger, its release does not reopen it
+            tap.until = None;
+            tap.closing = on_trigger;
+        } else if touch && on_trigger {
+            tap.pressed = true;
+        }
+    }
+    if released {
+        if tap.pressed && on_trigger && !tap.closing {
+            let hold = f64::from(t.duration("tip-hold").unwrap_or(4000.0)) / 1000.0;
+            tap.until = Some(now + hold);
+            ctx.request_repaint_after(std::time::Duration::from_secs_f64(hold));
+        }
+        tap.pressed = false;
+        tap.closing = false;
+    }
+    if tap.until.is_some_and(|until| now >= until) {
+        tap.until = None;
+    }
+    ctx.data_mut(|d| d.insert_temp(key, tap));
+    tap.until.is_some()
 }
 
 /// One choice from a list in a popup under a trigger that looks like an input: `field` ground,
