@@ -4,7 +4,7 @@
 use dashboard::{ALL, Asking, DashboardApp, model::Metric};
 use eframe::egui;
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::Appearance;
+use sokkel_ui_egui::{Appearance, toasts};
 
 fn render(setup: impl FnOnce(&mut DashboardApp)) -> Harness<'static, DashboardApp> {
     let mut app = DashboardApp::on(Appearance::default());
@@ -73,6 +73,12 @@ fn a_dashboard_made_from_a_copy_duplicated_and_deleted() {
     harness.run_steps(4);
     assert!(harness.state().boards.iter().all(|b| b.id != id));
     assert!(!harness.state().prefs.order.contains(&id));
+    // each said so in a toast
+    let said: Vec<String> = toasts(&harness.ctx).into_iter().map(|t| t.title).collect();
+    assert_eq!(
+        said,
+        ["Night shift made", "Night shift copy made", "Night shift deleted"]
+    );
 }
 
 #[test]

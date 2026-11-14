@@ -26,6 +26,10 @@ their structure, never by their figures.
 - The list of dashboards: reordered by their grips, each row's menu to open, rename, duplicate or
   delete (asked first). The rail follows the list's order.
 - Settings: live updates and their pace, editing, appearance, and resetting the demo.
+- A toast says what was done, as the web's `actions.ts`: a dashboard made, its copy made, or
+  deleted.
+- The uptime bars show the latest days that fit their width, as sokkel-ui's `UptimeBar` does, so
+  in a third-wide panel the first day reads "81 days ago", not 89.
 
 ## What it brought into the library
 
@@ -35,10 +39,13 @@ their structure, never by their figures.
   code). Stories: Patterns/Activity list, Bar list, Log view, Markdown.
 - `ArrangeItem`, so `DashboardArrange` and `DashboardEdit` take any app's widgets.
 - `DataTable::framed`, `Gap::Xs`, and a `Checkbox` whose label wraps.
+- `Toast` and `Toaster`, after sokkel-ui's toast: kinds by icon, the newest in front and two
+  peeking, apart while pointed at, a close button and a timeout that stops while pointed at.
+  Story: Primitives/Overlays/Toast.
 
 ## Next
 
-- The map widget's popup on a site, and toasts after an action.
-- The uptime widget's oldest day reads "81 days ago"; check it against the web's window.
+- The map widget's popup on a site.
+- Toasts do not slide in and out yet, and are not swiped away.
 - The list's Holds column is narrower than the web's.
 - A parity board against the web's screens, as tasks and status have.

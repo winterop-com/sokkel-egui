@@ -12,7 +12,7 @@ use sokkel_ui_egui::{
     ConfirmDialog, DashboardArrange, DashboardEdit, DashboardEditActions, DashboardWidget, DataTable, DesktopWindow,
     DropdownMenu, Empty, Gap, Icon, IconButton, MenuItem, Page, PageHeader, Rail, RailEntry, RailGroup, Segmented,
     SettingsDialog, SettingsSection, Shell, ShellPart, Stack, StackPlace, StatusLine, StatusTone, Switch, TableState,
-    TableVariant, ThemeWords, TopBar, install, move_item, setting_row, theme_settings,
+    TableVariant, ThemeWords, Toast, Toaster, TopBar, install, move_item, setting_row, theme_settings,
 };
 
 use dialogs::{ConfigureForm, NameForm};
@@ -59,6 +59,8 @@ pub struct DashboardApp {
     pub list: TableState,
     /// The running app's clock at the last tick, in milliseconds.
     last_tick: Option<f64>,
+    /// What the app has said since the last frame, shown as toasts on the next.
+    pub said: Vec<Toast>,
 }
 
 impl DashboardApp {
@@ -89,6 +91,7 @@ impl DashboardApp {
             widgets: WidgetState::default(),
             list: TableState::default(),
             last_tick: None,
+            said: Vec::new(),
         }
     }
 
@@ -139,6 +142,7 @@ impl DashboardApp {
             created: self.live.at,
         });
         self.prefs.order.push(id.clone());
+        self.said.push(Toast::success(format!("{name} made")));
         self.open(&id);
     }
 
@@ -184,6 +188,7 @@ impl DashboardApp {
             .position(|o| o == id)
             .map_or(self.prefs.order.len(), |i| i + 1);
         self.prefs.order.insert(at, made.clone());
+        self.said.push(Toast::success(format!("{} copy made", board.name)));
         self.open(&made);
     }
 
@@ -195,6 +200,7 @@ impl DashboardApp {
         let board = self.boards.remove(index);
         self.todos.retain(|t| !board.widgets.iter().any(|w| w.id == t.widget));
         self.prefs.order.retain(|o| o != id);
+        self.said.push(Toast::new(format!("{} deleted", board.name)));
         let first = self.in_order().first().map(|b| b.id.clone());
         self.place = String::new();
         self.open(&first.unwrap_or_else(|| ALL.to_owned()));
@@ -346,6 +352,10 @@ impl DashboardApp {
             _ => {}
         }
         self.overlays(ui.ctx());
+        for toast in self.said.drain(..) {
+            toast.show(ui.ctx());
+        }
+        Toaster::new().show(ui.ctx());
     }
 
     fn board_page(&mut self, ui: &mut Ui) {
