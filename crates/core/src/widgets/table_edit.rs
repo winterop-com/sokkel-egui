@@ -295,7 +295,12 @@ pub(crate) fn date(
             place.center(),
             icon,
             if which == 0 { 14.0 } else { 16.0 },
-            t.color("muted-foreground"),
+            // muted, and the foreground's ink under the pointer
+            if hit.hovered() {
+                t.color("foreground")
+            } else {
+                t.color("muted-foreground")
+            },
         );
         if hit.clicked() {
             if which == 0 {

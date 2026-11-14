@@ -77,6 +77,8 @@ fn every_screen() {
     let mut harness = render(Scheme::System, |app| app.table.edit(0, 2));
     harness.get_by_label("Choose a date").click();
     harness.run_steps(3);
+    harness.remove_cursor();
+    harness.run_steps(2);
     results.add(harness.try_snapshot("edit_due_calendar"));
 
     // a card's menu on the board, opened from its button as the pointer rests on the card
