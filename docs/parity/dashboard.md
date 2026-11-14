@@ -28,6 +28,8 @@ their structure, never by their figures.
 - Settings: live updates and their pace, editing, appearance, and resetting the demo.
 - A toast says what was done, as the web's `actions.ts`: a dashboard made, its copy made, or
   deleted.
+- The sites map draws its points alone, as the web's point layer; a point pressed opens its card
+  (`MapPopup`): the city, its country, its state and its round trip.
 - The uptime bars show the latest days that fit their width, as sokkel-ui's `UptimeBar` does, so
   in a third-wide panel the first day reads "81 days ago", not 89.
 
@@ -42,10 +44,11 @@ their structure, never by their figures.
 - `Toast` and `Toaster`, after sokkel-ui's toast: kinds by icon, the newest in front and two
   peeking, apart while pointed at, a close button and a timeout that stops while pointed at.
   Story: Primitives/Overlays/Toast.
+- In the maps add-on, `MapPopup` and `MapPopupRow`, after sokkel-ui-maps' `MapPopup`, and a
+  `MapView` whose markers are chosen by pressing them (`Marker::id`, `MapView::selected`).
 
 ## Next
 
-- The map widget's popup on a site.
 - Toasts do not slide in and out yet, and are not swiped away.
 - The list's Holds column is narrower than the web's.
 - A parity board against the web's screens, as tasks and status have.

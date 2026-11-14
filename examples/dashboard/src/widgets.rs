@@ -13,7 +13,7 @@ use sokkel_ui_egui::{
     UptimeBar, tokens,
 };
 use sokkel_ui_egui_charts::{BarPanel, Fill, GaugePanel, Series, TimeSeriesPanel};
-use sokkel_ui_egui_maps::{MapLegend, MapView, Marker};
+use sokkel_ui_egui_maps::{MapLegend, MapPopup, MapPopupRow, MapView, Marker};
 
 use crate::live::{Health, Live, RunState, Tone, clock_of, on_call, upcoming};
 use crate::model::{Group, JOBS, Metric, PEOPLE, PROJECTS, SERVICES, Style, Todo, Widget, WidgetKind};
@@ -359,7 +359,8 @@ pub fn draw(
             let markers: Vec<Marker> = live
                 .sites
                 .iter()
-                .map(|s| Marker::new(s.at[1], s.at[0], s.city).color(color(s.state)))
+                // points alone, as the web's point layer; a point pressed opens its card
+                .map(|s| Marker::new(s.at[1], s.at[0], "").id(s.id).color(color(s.state)))
                 .collect();
             let count = |h: Health| live.sites.iter().filter(|s| s.state == h).count();
             let legend = MapLegend::new("Sites")
@@ -378,6 +379,19 @@ pub fn draw(
                     let size = egui::vec2(ui.available_width(), 320.0);
                     let response = map.show(ui, size, &markers, &[]);
                     legend.show(ui, response.rect);
+                    let chosen = map.selected.clone();
+                    if let Some(site) = live.sites.iter().find(|s| Some(s.id) == chosen.as_deref()) {
+                        let words = match site.state {
+                            Health::Operational => "Operational",
+                            Health::Degraded => "Slow",
+                            Health::Outage => "Down",
+                        };
+                        MapPopup::new(site.city)
+                            .description(site.country)
+                            .row(MapPopupRow::new("State", words).color(color(site.state)))
+                            .row(MapPopupRow::new("Round trip", format!("{:.0} ms", site.latency)))
+                            .show(ui, map);
+                    }
                 });
         }
         WidgetKind::Note => {
