@@ -237,6 +237,11 @@ pub const STORIES: &[Story] = &[
         show: overlays::tooltips,
     },
     Story {
+        path: "Primitives/Overlays/Toast",
+        doc: "Short notes at the window's corner: the newest in front, two peeking above it; pointed at, they stand apart and stop counting down. Notify adds one that goes after five seconds.",
+        show: overlays::toasts,
+    },
+    Story {
         path: "Primitives/Menus/Dropdown menu",
         doc: "A menu under its trigger, open with the story: the account menu, with a label, icons, shortcuts, a separator and a destructive action.",
         show: menus::dropdown,
