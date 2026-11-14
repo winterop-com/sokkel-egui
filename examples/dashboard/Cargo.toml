@@ -1,0 +1,10 @@
+[package]
+name = "dashboard"
+description = "sokkel-ui's dashboard example ported to egui: Tidevann's home of live dashboards, each a grid of widgets to arrange and configure."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-ui-egui.workspace = true
