@@ -8,6 +8,9 @@
 
 use egui::{Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2, WidgetText, pos2, vec2};
 use sokkel_ui_egui::{Icon, TextRole, Tokens, icons, tokens};
+mod popup;
+pub use popup::{MapPopup, MapPopupResponse, MapPopupRow, MapPopupWords};
+
 use walkers::{
     HttpOptions, HttpTiles, Layer, Map, MapMemory, Position, Projector, Style, TileId, Tiles, lat_lon,
     sources::{Attribution, OpenFreeMap, TileSource},
@@ -23,6 +26,8 @@ pub use walkers::install_renderer as install;
 /// An empty label draws the point alone.
 #[derive(Clone, Debug)]
 pub struct Marker {
+    /// What the map calls the point when it is chosen; its label when not given.
+    pub id: String,
     pub lat: f64,
     pub lon: f64,
     pub label: String,
@@ -32,10 +37,12 @@ pub struct Marker {
 
 impl Marker {
     pub fn new(lat: f64, lon: f64, label: impl Into<String>) -> Self {
+        let label = label.into();
         Self {
+            id: label.clone(),
             lat,
             lon,
-            label: label.into(),
+            label,
             series: 0,
             color: None,
         }
@@ -43,6 +50,12 @@ impl Marker {
 
     pub fn series(mut self, series: usize) -> Self {
         self.series = series;
+        self
+    }
+
+    /// What the map calls the point when it is chosen, such as a site's id.
+    pub fn id(mut self, id: impl Into<String>) -> Self {
+        self.id = id.into();
         self
     }
 
@@ -182,6 +195,11 @@ pub struct MapView {
     framed: bool,
     /// The bounds to frame once the map's size is known, as `[west, south, east, north]`.
     pending: Option<Option<[f64; 4]>>,
+    /// The marker chosen by pressing it, by its id; pressing the map elsewhere lets it go.
+    pub selected: Option<String>,
+    /// Where each marker was drawn on the last frame, by its id, and the map's room.
+    points: Vec<(String, Pos2)>,
+    room: Rect,
 }
 
 impl MapView {
@@ -199,6 +217,9 @@ impl MapView {
             zoom,
             framed: true,
             pending: None,
+            selected: None,
+            points: Vec::new(),
+            room: Rect::NOTHING,
         }
     }
 
@@ -297,6 +318,7 @@ impl MapView {
         let home = self.home;
         self.tiles_for(&t, dark);
         let tiles = self.tiles.as_mut().map(|tiles| tiles as &mut dyn Tiles);
+        let mut points = Vec::new();
         let response = ui
             .allocate_ui(size, |ui| {
                 ui.set_min_size(size);
@@ -311,6 +333,10 @@ impl MapView {
                             ground(&painter, &t, response.rect, projector);
                         }
                         overlays(&painter, &t, projector, markers, routes);
+                        points = markers
+                            .iter()
+                            .map(|m| (m.id.clone(), projector.project(lat_lon(m.lat, m.lon)).to_pos2()))
+                            .collect();
                         if has_tiles {
                             attribution(ui, &painter, &t, response.rect);
                         }
@@ -319,6 +345,27 @@ impl MapView {
             })
             .inner;
         let rect = response.rect;
+        // a marker pressed is chosen, the map pressed elsewhere lets it go
+        let near = |pos: Pos2| {
+            points
+                .iter()
+                .filter(|(_, at)| at.distance(pos) <= 10.0)
+                .min_by(|a, b| a.1.distance(pos).total_cmp(&b.1.distance(pos)))
+                .map(|(id, _)| id.clone())
+        };
+        if response.hover_pos().and_then(near).is_some() {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+        }
+        if response.clicked() {
+            self.selected = response.interact_pointer_pos().and_then(near);
+        }
+        if let Some(chosen) = &self.selected
+            && !points.iter().any(|(id, _)| id == chosen)
+        {
+            self.selected = None;
+        }
+        self.points = points;
+        self.room = rect;
         if self.framed {
             ui.painter().rect_stroke(
                 rect,
@@ -329,6 +376,16 @@ impl MapView {
         }
         self.zoom_buttons(ui, &t, rect);
         response
+    }
+
+    /// Where the marker with this id was drawn on the last frame.
+    pub fn point_of(&self, id: &str) -> Option<Pos2> {
+        self.points.iter().find(|(one, _)| one == id).map(|(_, at)| *at)
+    }
+
+    /// The map's room on the last frame.
+    pub fn room(&self) -> Rect {
+        self.room
     }
 
     fn zoom_buttons(&mut self, ui: &mut Ui, t: &Tokens, rect: Rect) {
