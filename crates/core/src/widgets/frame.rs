@@ -340,6 +340,21 @@ fn frame_control(painter: &egui::Painter, t: &crate::Tokens, rect: Rect, hit: &R
     super::focus_ring(painter, t, rect, t.radius("md"), hit);
 }
 
+/// A top bar control on a phone: as `frame_control`, its focus outline inside it, since the bar is
+/// barely taller than the control and an outline outside would be cut off at the window's top.
+fn phone_control(painter: &egui::Painter, t: &crate::Tokens, rect: Rect, hit: &Response, icon: Icon) {
+    if hit.hovered() {
+        painter.rect_filled(rect, t.radius("md"), t.color("hover"));
+    }
+    let ink = if hit.hovered() {
+        t.color("foreground")
+    } else {
+        t.color("muted-foreground")
+    };
+    icons::paint(painter, rect.center(), icon, 16.0, ink);
+    super::focus_ring_inset(painter, t, rect, t.radius("md"), hit);
+}
+
 fn galley(ui: &Ui, role: TextRole, text: &str, width: f32) -> std::sync::Arc<egui::Galley> {
     let t = tokens(ui.ctx());
     WidgetText::from(role.rich(&t, text)).into_galley(ui, Some(TextWrapMode::Truncate), width.max(1.0), role.font(&t))
@@ -443,12 +458,7 @@ fn search_icon(ui: &mut Ui, word: &str) -> Response {
     let finger = t.length("spacing-finger");
     let (rect, response) = ui.allocate_exact_size(vec2(finger, finger), Sense::click());
     response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, word));
-    let ink = if response.hovered() {
-        t.color("foreground")
-    } else {
-        t.color("muted-foreground")
-    };
-    icons::paint(ui.painter(), rect.center(), Icon::Search, 16.0, ink);
+    phone_control(ui.painter(), &t, rect, &response, Icon::Search);
     response
 }
 
@@ -843,8 +853,8 @@ impl Shell {
         );
         let menu_hit = ui.interact(menu, drawer_id().with("menu"), Sense::click());
         menu_hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.menu));
-        // as the rail's head control looks
-        frame_control(ui.painter(), &t, menu, &menu_hit, Icon::Menu);
+        // as the rail's head control looks, its focus outline inside it
+        phone_control(ui.painter(), &t, menu, &menu_hit, Icon::Menu);
         if menu_hit.clicked() {
             set_drawer(&ctx, |d| d.open = true);
         }

@@ -82,6 +82,29 @@ pub(crate) fn focus_ring(painter: &Painter, tokens: &Tokens, rect: Rect, radius:
     }
 }
 
+/// The keyboard focus outline drawn inside a control, for one at the window's edge whose outline
+/// outside would be cut off (the top bar's buttons on a phone, the spec's `phone+focus`):
+/// `focus-ring-width` in `ring`, `focus-ring-offset` inside the control's edge.
+pub(crate) fn focus_ring_inset(
+    painter: &Painter,
+    tokens: &Tokens,
+    rect: Rect,
+    radius: CornerRadius,
+    response: &Response,
+) {
+    if response.has_focus() {
+        let width = tokens.length("focus-ring-width");
+        let inset = tokens.length("focus-ring-offset") + width;
+        let inner = CornerRadius::from(radius.nw.saturating_sub(inset as u8));
+        painter.rect_stroke(
+            rect.shrink(inset),
+            inner,
+            Stroke::new(width, tokens.color("ring")),
+            StrokeKind::Outside,
+        );
+    }
+}
+
 /// A popup's surface (a select's list, a menu, a submenu, the account menu): the popover's
 /// ground, the surface's corners, a 1px `border-strong` edge and `elevation-pop`'s shadow.
 pub(crate) fn popup_frame(tokens: &Tokens) -> egui::Frame {
