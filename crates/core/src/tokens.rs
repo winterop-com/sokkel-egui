@@ -39,6 +39,19 @@ struct SchemeSource {
     numbers: HashMap<String, f32>,
     words: HashMap<String, String>,
     text: HashMap<String, TextSpec>,
+    /// Box shadows as layers, the way sokkel-design resolves them (`elevation-pop`, ...).
+    #[serde(default)]
+    elevations: HashMap<String, Vec<Layer>>,
+}
+
+/// One layer of a box shadow.
+#[derive(Clone, Debug, Deserialize)]
+struct Layer {
+    x: f32,
+    y: f32,
+    blur: f32,
+    spread: f32,
+    color: String,
 }
 
 /// A text role as the tokens set it: size and line height in points, weight, tracking in em.
@@ -179,6 +192,7 @@ pub struct Tokens {
     words: HashMap<String, String>,
     text: HashMap<String, TextSpec>,
     density: HashMap<String, f32>,
+    elevations: HashMap<String, Vec<egui::Shadow>>,
 }
 
 impl Tokens {
@@ -227,6 +241,22 @@ impl Tokens {
             words: scheme.words.clone(),
             text: scheme.text.clone(),
             density: density.clone(),
+            elevations: scheme
+                .elevations
+                .iter()
+                .map(|(key, layers)| {
+                    let shadows = layers
+                        .iter()
+                        .map(|l| egui::Shadow {
+                            offset: [l.x.round() as i8, l.y.round() as i8],
+                            blur: l.blur.round().clamp(0.0, 255.0) as u8,
+                            spread: l.spread.round().clamp(0.0, 255.0) as u8,
+                            color: parse_hex(&l.color),
+                        })
+                        .collect();
+                    (key.clone(), shadows)
+                })
+                .collect(),
         }
     }
 
@@ -300,6 +330,10 @@ impl Tokens {
     /// A box-shadow token, such as `elevation-pop`, as egui shadows, one per layer in the order
     /// written (`x y blur [spread] color`, comma-separated); none for a token the theme lacks.
     pub fn shadows(&self, key: &str) -> Vec<egui::Shadow> {
+        // sokkel-design resolves them into layers; a box-shadow written as words is read too
+        if let Some(layers) = self.elevations.get(key) {
+            return layers.clone();
+        }
         let Some(value) = self.word(key) else {
             return Vec::new();
         };

@@ -85,10 +85,10 @@ pub(crate) fn popup_frame(tokens: &Tokens) -> egui::Frame {
 /// A boxed dialog's surface (a dialog, the settings dialog, the palette): a popup's, wearing
 /// `elevation-dialog`, or `elevation-pop` until a theme has the dialog's own.
 pub(crate) fn dialog_frame(tokens: &Tokens) -> egui::Frame {
-    let shadow = if tokens.word("elevation-dialog").is_some() {
-        tokens.shadow("elevation-dialog")
-    } else {
+    let shadow = if tokens.shadows("elevation-dialog").is_empty() {
         tokens.shadow("elevation-pop")
+    } else {
+        tokens.shadow("elevation-dialog")
     };
     popup_frame(tokens).shadow(shadow)
 }

@@ -25,17 +25,16 @@ sokkel-ui's components. Research stage; `docs/plan.md` says what was learned and
 
 ## Tokens
 
-- `crates/core/tokens/tokens.resolved.json` is generated here by `make tokens`
-  (`scripts/resolve.ts`, `scripts/resolve-tokens.ts`) from sokkel-ui's `tokens.json` as GitHub has
-  it: every script reads sokkel-ui from `.parity/sokkel-ui`, a clone fetched on each run
-  (`scripts/sokkel.ts`; `SOKKEL_UI_REF` pins a commit, `SOKKEL_UI_OFFLINE` skips the fetch). Never
-  edit it. `make tokens-check` fails when it is not
-  what sokkel-ui's tokens make.
-- After sokkel-ui's tokens change, run `make tokens` and `make verify-colors` (Chromium against
-  sokkel-ui's own CSS). A token the resolver cannot settle fails `make tokens`; teach
-  `scripts/resolve-tokens.ts` its form, or add it to `CSS_ONLY` in `scripts/resolve.ts` if only CSS
-  can use it.
-- sokkel-ui is read, never written: it is under heavy development by its own sessions. Questions
+- `crates/core/tokens/tokens.resolved.json` is sokkel-design's (`tokens/tokens.resolved.json`, made
+  there from the sokkel-ui commit it pins, its resolver and `verify-colors` run in its CI), copied
+  in by `make tokens` (`scripts/design.ts`) from `.parity/sokkel-design`, a clone fetched on each
+  run (`SOKKEL_DESIGN_REF` pins a commit, `SOKKEL_DESIGN_OFFLINE` skips the fetch). Never edit it.
+  `make tokens-check` fails when it is not sokkel-design's.
+- After sokkel-design's contract moves, run `make tokens`. A token egui cannot read is a question
+  for sokkel-design, not a resolver of egui's own.
+- sokkel-ui is read from `.parity/sokkel-ui` (`scripts/sokkel.ts`; `SOKKEL_UI_REF`,
+  `SOKKEL_UI_OFFLINE`) by the parity scripts.
+- sokkel-ui and sokkel-design are read, never written: they are under heavy development by its own sessions. Questions
   about its tokens or parts go to the sokkel-ui session; a change it might want later is kept as a
   proposal in `docs/proposals/`.
 - Every color, corner, size and text style a widget draws comes from `tokens(ctx)`: never a color

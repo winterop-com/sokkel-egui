@@ -183,7 +183,13 @@ impl Widget for Rail<'_> {
         } else {
             t.density("row")
         };
-        let mut y = head.bottom();
+        // a first group without a title keeps 4 over its first entry, so the entry's focus is whole
+        let untitled_top = if self.groups.first().is_some_and(|g| g.title.is_none()) {
+            4.0
+        } else {
+            0.0
+        };
+        let mut y = head.bottom() + untitled_top;
         for group in self.groups {
             if let Some(title) = &group.title {
                 // the entries before end 4 above `y`; a title stands 16 under them (`pt-4`), its

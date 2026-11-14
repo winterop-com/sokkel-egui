@@ -50,6 +50,12 @@ counterpart.
 | settings_demo | The section has no Reset to defaults (`SettingsSection::reset(false)`). |
 | settings_reset | `ConfirmDialog` over the settings, 384 wide (`sm`; a `Dialog` is 512 by default, as the dialog spec says) with its 65 footer, its detail wrapping one word earlier than the web's. |
 
+## Tokens
+
+The tokens are sokkel-design's (contract 0.28.0 at `854c502`, made from sokkel-ui `3e043c08`),
+copied in by `make tokens`; elevations are read as its layers. The rail keeps 4 over an untitled
+first group (`untitledTop`), as sokkel-ui now does.
+
 ## Decided ahead of the web
 
 sokkel-design's open questions were decided on 2026-11-14 (`docs/proposals/open-questions-decided.md`,

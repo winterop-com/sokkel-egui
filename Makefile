@@ -1,13 +1,12 @@
-# The resolved tokens are made from a sokkel-ui checkout's tokens.json, read and never written.
-# sokkel-ui is read from .parity/sokkel-ui, a clone fetched from GitHub on every run
-# (scripts/sokkel.ts): SOKKEL_UI_REF pins a commit, SOKKEL_UI_OFFLINE skips the fetch.
+# The resolved tokens are sokkel-design's, copied from .parity/sokkel-design (scripts/design.ts),
+# and sokkel-ui is read from .parity/sokkel-ui (scripts/sokkel.ts): clones fetched from GitHub on
+# every run, read and never written.
 
-.PHONY: help tokens tokens-check verify-colors parity parity-web fmt fmt-check check test snapshots storybook runs tasks status apps all
+.PHONY: help tokens tokens-check parity parity-web fmt fmt-check check test snapshots storybook runs tasks status apps all
 
 help:
-	@echo "make tokens        resolve sokkel-ui's tokens, as GitHub has them, into plain values"
-	@echo "make tokens-check  fail when they are not what sokkel-ui's tokens make"
-	@echo "make verify-colors  draw sokkel-ui's CSS in Chromium and compare every resolved color"
+	@echo "make tokens        copy sokkel-design's resolved tokens, as GitHub has them, into the core crate"
+	@echo "make tokens-check  fail when the copy is not sokkel-design's"
 	@echo "make parity        what changed in sokkel-ui's tasks example since it was ported, and the board"
 	@echo "make parity-web    rebuild the web tasks example and shoot its screens"
 	@echo "make fmt           format the workspace"
@@ -22,13 +21,10 @@ help:
 	@echo "make all           fmt-check, check and test"
 
 tokens:
-	bun scripts/resolve.ts
+	bun scripts/design.ts
 
 tokens-check:
-	bun scripts/resolve.ts --check
-
-verify-colors:
-	bun scripts/verify-colors.ts
+	bun scripts/design.ts --check
 
 parity:
 	bun scripts/parity.ts check tasks
