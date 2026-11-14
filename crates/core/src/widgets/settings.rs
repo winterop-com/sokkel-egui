@@ -123,12 +123,14 @@ impl<'a> SettingsDialog<'a> {
     pub fn show(self, ctx: &Context, mut rows: impl FnMut(&str, &mut Ui)) -> SettingsOutcome {
         let t = tokens(ctx);
         let mut outcome = SettingsOutcome::default();
-        // 896 wide and as tall as the window leaves under the overlay's inset, at most 704
+        // 896 wide and 704 tall, at most the window less 32 across and 64 down
         let window = ctx.content_rect();
         let (width, height) = (
             896.0_f32.min(window.width() - 32.0),
-            704.0_f32.min(window.height() - 96.0),
+            704.0_f32.min(window.height() - 64.0),
         );
+        // the footer: 16 over and under Done, and its rule
+        let foot_height = 16.0 + t.density("control") + 16.0 + 1.0;
         let radius = t.radius("surface");
         let frame = Frame::new()
             .fill(t.color("popover"))
@@ -148,7 +150,7 @@ impl<'a> SettingsDialog<'a> {
             .show(ctx, |ui| {
                 let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
                 let head = Rect::from_min_size(rect.min, vec2(width, 48.0));
-                let foot = Rect::from_min_max(pos2(rect.left(), rect.bottom() - 65.0), rect.max);
+                let foot = Rect::from_min_max(pos2(rect.left(), rect.bottom() - foot_height), rect.max);
                 let nav = Rect::from_min_max(pos2(rect.left(), head.bottom()), pos2(rect.left() + 224.0, foot.top()));
                 let body = Rect::from_min_max(pos2(nav.right(), head.bottom()), pos2(rect.right(), foot.top()));
                 let painter = ui.painter().clone();
@@ -178,8 +180,8 @@ impl<'a> SettingsDialog<'a> {
                     outcome.close = true;
                 }
 
-                // the column: the search, then the sections under their group titles
-                painter.rect_filled(nav, CornerRadius::ZERO, t.color_at("muted", 0.3));
+                // the column, on the dialog's own ground: the search, then the sections under
+                // their group titles
                 painter.vline(nav.right() - 0.5, nav.y_range(), rule);
                 let field = Rect::from_min_size(
                     pos2(nav.left() + 12.0, nav.top() + 12.0),
@@ -192,8 +194,8 @@ impl<'a> SettingsDialog<'a> {
                 for (index, section) in self.sections.iter().enumerate() {
                     if section.group.is_some() && section.group.as_ref() != group {
                         group = section.group.as_ref();
-                        // a group's title: 12 above, its line 20 tall, 10 before its sections
-                        y += 12.0;
+                        // a group's title: 16 above, its line 20 tall, 4 and the entries' 2 under it
+                        y += 16.0;
                         let label = egui::WidgetText::from(TextRole::Badge.rich(&t, group.unwrap_or(&String::new())))
                             .into_galley(
                                 ui,
@@ -206,7 +208,7 @@ impl<'a> SettingsDialog<'a> {
                             label,
                             t.color("muted-foreground"),
                         );
-                        y += 30.0;
+                        y += 26.0;
                     } else if section.group.is_none() {
                         // ungrouped sections: the first keeps the same 12 from the search as a group title
                         y += if index == 0 { 12.0 } else { 2.0 };
@@ -365,6 +367,13 @@ pub fn setting_row_found_by(
     control: impl FnOnce(&mut Ui),
 ) {
     let t = tokens(ui.ctx());
+    let rule = |ui: &mut Ui| {
+        let (rule, _) = ui.allocate_exact_size(vec2(ui.available_width(), 1.0), Sense::hover());
+        ui.painter()
+            .hline(rule.x_range(), rule.center().y, Stroke::new(1.0, t.color("border")));
+    };
+    // in the settings dialog, a rule between two rows: none over the first or under the last
+    let mut ruled_after = true;
     if let Some(mut state) = ui.ctx().data(|d| d.get_temp::<RowsState>(rows_state_id())) {
         let words = format!("{title} {description} {}", keywords.join(" ")).to_lowercase();
         let matches = state.query.is_empty() || words.contains(&state.query);
@@ -380,6 +389,10 @@ pub fn setting_row_found_by(
             );
             ui.add_space(4.0);
         }
+        if state.shown > 0 {
+            rule(ui);
+        }
+        ruled_after = false;
         state.shown += 1;
         ui.ctx().data_mut(|d| d.insert_temp(rows_state_id(), state));
     }
@@ -398,10 +411,10 @@ pub fn setting_row_found_by(
             });
         });
     });
-    // the rule under the row, a line of its own
-    let (rule, _) = ui.allocate_exact_size(vec2(ui.available_width(), 1.0), Sense::hover());
-    ui.painter()
-        .hline(rule.x_range(), rule.center().y, Stroke::new(1.0, t.color("border")));
+    // outside the dialog, the rule under the row, a line of its own
+    if ruled_after {
+        rule(ui);
+    }
 }
 
 /// The words the appearance rows say, English by default, as sokkel-ui's `ThemePickerWords`.

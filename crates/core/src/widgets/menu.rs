@@ -169,7 +169,8 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
     if lit {
         painter.rect_filled(
             row,
-            t.radius("md"),
+            // a menu's rows round as radius-md; the palette's, in a dialog, as radius-lg
+            t.radius(if look == RowLook::Menu { "md" } else { "lg" }),
             if *destructive {
                 t.color_at("destructive", 0.1)
             } else if look == RowLook::Menu {

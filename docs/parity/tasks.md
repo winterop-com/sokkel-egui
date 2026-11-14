@@ -40,12 +40,12 @@ counterpart.
 | board | Columns, heads, counts and cards match, the cards' feet included. egui breaks a title only at spaces, where the web also breaks after a hyphen ("send-" / "digest"). |
 | board_menu | A card's menu from its button, shown with the grip while the card is hovered: Move to with each column's icon (the card's own disabled), then Delete. Cards drag between and within columns (`Board`); where the web's other cards slide aside, ours show a line where the card lands. |
 | edit_title, edit_due, edit_due_calendar, edit_assignee | Editing in place (`Column::editable`): the text editor over its cell with its line under it, the date typed with Clear and a calendar under the cell, and the select's list over the cell with the chosen option where the value was. Selected text keeps its ink as the browser's does, on our token ground rather than the browser's own blue (sokkel-ui has no selection token). Rows are known by the task's id (`DataTable::keys`, the web's `rowKey`): an open editor, the active cell and a refused draft stay with their task when the rows move under them. |
-| palette | The palette a third down the window, 384 wide, its search on the input's tint, and the web's groups: Tasks, Lists and Go to from the rail (`place_commands`), Scheme, Density and Theme with the one in use hinted (`appearance_commands`), and Demo. |
+| palette | The palette a third down the window, 384 wide, its search on the input's tint, its rows rounded as radius-lg, and the web's groups: Tasks, Lists and Go to from the rail (`place_commands`), Scheme, Density and Theme with the one in use hinted (`appearance_commands`), and Demo. |
 | account | The account menu from the rail's foot: the account with where it is signed in, Settings, and the scheme with each one's icon, the one worn checked. |
-| settings | The dialog's size, head, column, search (filtering every section), group titles, rows and footer line up. The web blurs the page behind it; egui cannot blur, so ours only dims. |
+| settings | The dialog's size (896 by 704, at most the window less 32 across and 64 down), head, column on the dialog's own ground, search (filtering every section), group titles 16 under the search, rows ruled only between each other, and footer line up, as sokkel-design's settings-dialog spec says. The web blurs the page behind it; egui cannot blur, so ours only dims. |
 | settings_appearance | `theme_settings` as the web's `themeSettings`: the theme select with each theme's sample, scheme, density and motion, the options as wide as the widest. |
 | settings_demo | The section has no Reset to defaults (`SettingsSection::reset(false)`). |
-| settings_reset | `ConfirmDialog` over the settings, its detail wrapping one word earlier than the web's. |
+| settings_reset | `ConfirmDialog` over the settings, 384 wide (`sm`; a `Dialog` is 512 by default, as the dialog spec says) with its 65 footer, its detail wrapping one word earlier than the web's. |
 
 ## What is left, largest first
 

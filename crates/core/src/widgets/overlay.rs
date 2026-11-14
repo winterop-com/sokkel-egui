@@ -305,7 +305,7 @@ impl Dialog {
             id: Id::new(id),
             title: title.into(),
             description: None,
-            width: 384.0,
+            width: 512.0,
         }
     }
 
@@ -314,6 +314,8 @@ impl Dialog {
         self
     }
 
+    /// The box's width, 512 by default (sokkel-ui's `md`): 384 `sm`, 672 `lg`, 896 `xl`. It is at
+    /// most the window less 32.
     pub fn width(mut self, width: f32) -> Self {
         self.width = width;
         self
@@ -342,10 +344,15 @@ impl Dialog {
             .backdrop_color(t.color_at("shade", 0.1))
             .frame(frame)
             .show(ctx, |ui| {
-                ui.set_width(self.width);
+                let window = ctx.content_rect();
+                let width = self.width.min(window.width() - 32.0);
+                // the footer: 16 over and under a control, and its rule
+                let band_height = 1.0 + 16.0 + t.density("control") + 16.0;
+                let top = ui.cursor().top();
+                ui.set_width(width);
                 ui.spacing_mut().item_spacing.y = 0.0;
                 Frame::new().inner_margin(Margin::same(16)).show(ui, |ui| {
-                    ui.set_width(self.width - 32.0);
+                    ui.set_width(width - 32.0);
                     ui.spacing_mut().item_spacing.y = 8.0;
                     ui.label(
                         TextRole::DetailTitle
@@ -357,11 +364,17 @@ impl Dialog {
                     }
                     if let Some(body) = body {
                         ui.add_space(8.0);
-                        body(ui);
+                        // the box at most the window less 64 tall: the body scrolls in what is left
+                        let room = window.height() - 64.0 - (ui.cursor().top() - top) - 16.0 - band_height;
+                        egui::ScrollArea::vertical()
+                            .id_salt(self.id.with("body"))
+                            .max_height(room.max(t.density("control")))
+                            .auto_shrink([false, true])
+                            .show(ui, body);
                     }
                 });
                 // the footer band: muted at half, a rule above, the surface's lower corners
-                let (band, _) = ui.allocate_exact_size(vec2(self.width, 64.0), Sense::hover());
+                let (band, _) = ui.allocate_exact_size(vec2(width, band_height), Sense::hover());
                 let radius = t.radius("surface");
                 ui.painter()
                     .rect_filled(band, CornerRadius { nw: 0, ne: 0, ..radius }, t.color_at("muted", 0.5));
@@ -444,7 +457,8 @@ impl ConfirmDialog {
     pub fn show(self, ctx: &Context) -> Option<ConfirmAnswer> {
         let mut answer = None;
         let busy = self.busy.is_some();
-        let mut dialog = Dialog::new(self.id, self.question.clone());
+        // sokkel-ui's ConfirmDialog is `sm`
+        let mut dialog = Dialog::new(self.id, self.question.clone()).width(384.0);
         if let Some(detail) = &self.detail {
             dialog = dialog.description(detail.clone());
         }
