@@ -600,14 +600,21 @@ impl Widget for StatusLine {
             let center = pos2(x + 4.0, rect.center().y);
             painter.circle_filled(center, 4.0, ink);
             // a second dot at half strength pulsing out from it, as `animate-ping`: twice its size and
-            // gone by three quarters of each second; still while motion is off
+            // gone by three quarters of each second; still while motion is off. Each frame redraws
+            // the window, so the pulse asks for 20 a second while it shows and none in the quarter
+            // second it is gone
             if ui.style().animation_time > 0.0 {
-                let time = ui.input(|i| i.time);
-                let p = ((time % 1.0) / 0.75).min(1.0) as f32;
-                // cubic-bezier(0, 0, 0.2, 1), near enough: a cubic ease out
-                let eased = 1.0 - (1.0 - p).powi(3);
-                painter.circle_filled(center, 4.0 * (1.0 + eased), ink.gamma_multiply(0.5 * (1.0 - eased)));
-                ui.ctx().request_repaint_after(std::time::Duration::from_millis(16));
+                let phase = ui.input(|i| i.time) % 1.0;
+                if phase < 0.75 {
+                    let p = (phase / 0.75) as f32;
+                    // cubic-bezier(0, 0, 0.2, 1), near enough: a cubic ease out
+                    let eased = 1.0 - (1.0 - p).powi(3);
+                    painter.circle_filled(center, 4.0 * (1.0 + eased), ink.gamma_multiply(0.5 * (1.0 - eased)));
+                    ui.ctx().request_repaint_after(std::time::Duration::from_millis(50));
+                } else {
+                    ui.ctx()
+                        .request_repaint_after(std::time::Duration::from_secs_f64(1.0 - phase));
+                }
             }
             x += 16.0;
         }
