@@ -15,6 +15,9 @@ struct Source {
     default: Defaults,
     themes: serde_json::Map<String, serde_json::Value>,
     density: HashMap<String, HashMap<String, f32>>,
+    /// Each part's paints in each state, resolved per theme and scheme by sokkel-design.
+    #[serde(default)]
+    paints: HashMap<String, HashMap<String, HashMap<String, serde_json::Value>>>,
 }
 
 #[derive(Deserialize)]
@@ -80,6 +83,54 @@ struct Catalog {
     default_density: String,
     themes: Vec<(ThemeInfo, ThemeSource)>,
     density: HashMap<String, HashMap<String, f32>>,
+    /// Theme, then `light` or `dark`, then the paint's key.
+    paints: HashMap<String, HashMap<String, HashMap<String, Paint>>>,
+}
+
+/// A part's colors in one state, as sokkel-design resolves them (`paints` in the resolved tokens):
+/// its ground, its edge and its ink, and the focus outline or invalid ring it wears there. A field
+/// sokkel-design leaves to the part's surroundings (`inherit`) is `None`.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Paint {
+    pub ground: Option<Color32>,
+    pub edge: Option<Color32>,
+    pub ink: Option<Color32>,
+    /// The focus outline: its color, width and offset (negative drawn inside the part).
+    pub outline: Option<(Color32, f32, f32)>,
+    /// The invalid ring: its color and width.
+    pub ring: Option<(Color32, f32)>,
+}
+
+impl Paint {
+    fn read(value: &serde_json::Value) -> Self {
+        let color = |key: &str| {
+            value
+                .get(key)
+                .and_then(|v| v.as_str())
+                .filter(|v| v.starts_with('#'))
+                .map(parse_hex)
+        };
+        let outline = value.get("outline").and_then(|o| {
+            let width = o.get("width")?.as_f64()? as f32;
+            let offset = o.get("offset").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+            let inside = o.get("inset").is_some();
+            Some((
+                parse_hex(o.get("color")?.as_str()?),
+                width,
+                if inside { -offset } else { offset },
+            ))
+        });
+        let ring = value
+            .get("ring")
+            .and_then(|r| Some((parse_hex(r.get("color")?.as_str()?), r.get("width")?.as_f64()? as f32)));
+        Self {
+            ground: color("ground"),
+            edge: color("edge"),
+            ink: color("ink"),
+            outline,
+            ring,
+        }
+    }
 }
 
 fn catalog() -> &'static Catalog {
@@ -104,6 +155,17 @@ fn catalog() -> &'static Catalog {
             default_density: source.default.density,
             themes,
             density: source.density,
+            paints: source
+                .paints
+                .into_iter()
+                .map(|(theme, schemes)| {
+                    let schemes = schemes
+                        .into_iter()
+                        .map(|(scheme, keys)| (scheme, keys.iter().map(|(k, v)| (k.clone(), Paint::read(v))).collect()))
+                        .collect();
+                    (theme, schemes)
+                })
+                .collect(),
         }
     })
 }
@@ -197,6 +259,7 @@ pub struct Tokens {
     density: HashMap<String, f32>,
     elevations: HashMap<String, Vec<egui::Shadow>>,
     durations: HashMap<String, f32>,
+    paints: HashMap<String, Paint>,
 }
 
 impl Tokens {
@@ -243,6 +306,12 @@ impl Tokens {
             length_order: scheme.lengths.keys().cloned().collect(),
             numbers: scheme.numbers.clone(),
             durations: scheme.durations.clone(),
+            paints: catalog
+                .paints
+                .get(&info.name)
+                .and_then(|s| s.get(if dark { "dark" } else { "light" }))
+                .cloned()
+                .unwrap_or_default(),
             words: scheme.words.clone(),
             text: scheme.text.clone(),
             density: density.clone(),
@@ -320,6 +389,16 @@ impl Tokens {
             Some(length) => *length,
             None => panic!("no density token `{key}`"),
         }
+    }
+
+    /// A part's paint in a state, as sokkel-design resolves it: `button.outline.hover.container`.
+    pub fn paint(&self, key: &str) -> Option<Paint> {
+        self.paints.get(key).copied()
+    }
+
+    /// Every paint key the theme and scheme carry.
+    pub fn paint_keys(&self) -> impl Iterator<Item = &str> {
+        self.paints.keys().map(String::as_str)
     }
 
     /// A duration token in milliseconds, such as `busy-release`.

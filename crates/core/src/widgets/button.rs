@@ -18,6 +18,20 @@ pub enum ButtonVariant {
     Link,
 }
 
+impl ButtonVariant {
+    /// The variant's name in sokkel-design's paints: `button.<key>.<state>.container`.
+    pub fn key(self) -> &'static str {
+        match self {
+            Self::Default => "default",
+            Self::Outline => "outline",
+            Self::Secondary => "secondary",
+            Self::Ghost => "ghost",
+            Self::Destructive => "destructive",
+            Self::Link => "link",
+        }
+    }
+}
+
 /// How big a button is, as sokkel-ui's `Button` `size`: as tall as the density's
 /// `control-xs`, `control-sm`, `control` and `control-lg` (24, 28, 32 and 36 at regular).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -191,6 +205,16 @@ impl Widget for Button {
         };
         // under the pointer the hover ground takes the place of the rest ground, as `hover:bg-*` does
         let ground = if hot && hover != none { hover } else { fill };
+        // sokkel-design's resolved paint for the variant in this state, where the tokens carry it
+        let state = if hot { "hover" } else { "rest" };
+        let (ground, border, ink) = match t.paint(&format!("button.{}.{state}.container", self.variant.key())) {
+            Some(paint) => (
+                paint.ground.unwrap_or(ground),
+                paint.edge.unwrap_or(border),
+                paint.ink.unwrap_or(ink),
+            ),
+            None => (ground, border, ink),
+        };
         let painter = ui.painter();
         painter.rect(
             rect,
