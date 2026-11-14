@@ -69,6 +69,8 @@ differ on purpose until then; a difference listed here is not drift to undo:
   account trigger, the drawer's close, the top bar's menu button) take the button's keyboard focus,
   a 2px `ring` outline 2 off, where the web's rail takes the browser's outline in `ring/50`; the
   menu button and the drawer's close turn `foreground` under the pointer.
+- F14, F15: one tooltip, the inverted one, with its 10 arrow toward the trigger; 500 ms under the
+  pointer, at once on keyboard focus. The web's rail tooltips still wear the popover look.
 - F18: no blur behind a dialog, on either side once the web drops its own.
 
 ## What is left, largest first

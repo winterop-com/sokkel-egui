@@ -44,16 +44,36 @@ fn show_tooltip(response: Response, text: String, always: bool) -> Response {
         .fill(t.color("foreground"))
         .corner_radius(t.radius("md"))
         .inner_margin(Margin::symmetric(12, 6));
-    Popup::from_response(&response)
+    let shown = Popup::from_response(&response)
         .kind(PopupKind::Tooltip)
         .open(show)
         .frame(frame)
-        .gap(4.0)
+        .gap(6.0)
         .align(RectAlign::BOTTOM)
         .show(|ui| {
             ui.set_max_width(320.0);
             ui.label(TextRole::Help.rich(&t, &text).color(t.color("background")));
         });
+    // the arrow, 10 wide, from the tooltip's side that faces the trigger toward it
+    if let Some(shown) = shown {
+        let tip = shown.response.rect;
+        let x = response.rect.center().x.clamp(tip.left() + 10.0, tip.right() - 10.0);
+        let (edge, toward) = if tip.center().y > response.rect.center().y {
+            (tip.top(), -1.0)
+        } else {
+            (tip.bottom(), 1.0)
+        };
+        let painter = ctx.layer_painter(shown.response.layer_id);
+        painter.add(egui::Shape::convex_polygon(
+            vec![
+                pos2(x - 5.0, edge - toward),
+                pos2(x + 5.0, edge - toward),
+                pos2(x, edge + toward * 5.0),
+            ],
+            t.color("foreground"),
+            Stroke::NONE,
+        ));
+    }
     response
 }
 
