@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 
-use crate::data::SERVICES;
+use crate::data::{SERVICES, SITES, Site};
 
 /// How many readings each chart keeps.
 pub const KEEP: usize = 60;
@@ -66,6 +66,10 @@ impl Health {
 pub struct Live {
     pub readings: Vec<Vec<Reading>>,
     pub health: Vec<Health>,
+    /// Each site's round trips, oldest first, in milliseconds.
+    pub sites: Vec<Vec<f64>>,
+    /// Each site's state by its latest round trips.
+    pub site_health: Vec<Health>,
     wandered: HashMap<String, f64>,
     seed: u64,
 }
@@ -76,6 +80,8 @@ impl Live {
         let mut live = Self {
             readings: Vec::new(),
             health: vec![Health::Operational; SERVICES.len()],
+            sites: Vec::new(),
+            site_health: vec![Health::Operational; SITES.len()],
             wandered: HashMap::new(),
             seed: 20261116,
         };
@@ -86,7 +92,16 @@ impl Live {
                     .collect()
             })
             .collect();
+        live.sites = SITES
+            .iter()
+            .map(|site| (0..KEEP).map(|_| live.round_trip(site)).collect())
+            .collect();
         live
+    }
+
+    /// A site's round trip with nothing wrong.
+    fn round_trip(&mut self, site: &Site) -> f64 {
+        site.latency * self.wander(site.id.to_owned(), 0.04)
     }
 
     /// The next reading of every service, at `at`, the oldest let go.
@@ -98,6 +113,15 @@ impl Live {
             if readings.len() > KEEP {
                 readings.remove(0);
             }
+        }
+        for (index, site) in SITES.iter().enumerate() {
+            let trip = self.round_trip(site);
+            let trips = &mut self.sites[index];
+            trips.push(trip);
+            if trips.len() > KEEP {
+                trips.remove(0);
+            }
+            self.site_health[index] = site_health_of(site, trips);
         }
     }
 
@@ -135,5 +159,23 @@ impl Live {
             errors,
             load,
         }
+    }
+}
+
+/// The mean of the last three values, as the web's `recent`.
+fn recent(values: &[f64]) -> f64 {
+    let tail = &values[values.len().saturating_sub(3)..];
+    tail.iter().sum::<f64>() / tail.len().max(1) as f64
+}
+
+/// How a site is doing by its latest round trips, as the web's `siteHealthOf`.
+pub fn site_health_of(site: &Site, trips: &[f64]) -> Health {
+    let factor = recent(trips) / site.latency;
+    if factor >= 3.2 {
+        Health::Outage
+    } else if factor >= 1.7 {
+        Health::Degraded
+    } else {
+        Health::Operational
     }
 }

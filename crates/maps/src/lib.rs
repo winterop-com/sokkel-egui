@@ -18,13 +18,15 @@ use walkers::{
 /// street map's names.
 pub use walkers::install_renderer as install;
 
-/// A point on the map with a label, in a chart color (0 to 4 for `chart-1` to `chart-5`).
+/// A point on the map with a label, in a series' chart color or a color of its own (a state's).
+/// An empty label draws the point alone.
 #[derive(Clone, Debug)]
 pub struct Marker {
     pub lat: f64,
     pub lon: f64,
     pub label: String,
     pub series: usize,
+    pub color: Option<Color32>,
 }
 
 impl Marker {
@@ -34,12 +36,111 @@ impl Marker {
             lon,
             label: label.into(),
             series: 0,
+            color: None,
         }
     }
 
     pub fn series(mut self, series: usize) -> Self {
         self.series = series;
         self
+    }
+
+    /// The point in this color rather than its series', such as its state's.
+    pub fn color(mut self, color: Color32) -> Self {
+        self.color = Some(color);
+        self
+    }
+}
+
+/// What a map's corner says its points' colors mean, after sokkel-ui's `MapLegend`: a title, a
+/// line under it, and a row per class with its dot, its words and how many points are in it.
+pub struct MapLegend {
+    title: String,
+    description: Option<String>,
+    rows: Vec<(Color32, String, usize)>,
+}
+
+impl MapLegend {
+    pub fn new(title: impl Into<String>) -> Self {
+        Self {
+            title: title.into(),
+            description: None,
+            rows: Vec::new(),
+        }
+    }
+
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
+        self
+    }
+
+    pub fn row(mut self, color: Color32, label: impl Into<String>, count: usize) -> Self {
+        self.rows.push((color, label.into(), count));
+        self
+    }
+
+    /// Draws the legend in the bottom-left corner of `map`, 12 in, 224 wide.
+    pub fn show(self, ui: &Ui, map: Rect) {
+        let t = tokens(ui.ctx());
+        let font = TextRole::Help.font(&t);
+        let line = t.text("help").line_height;
+        let rows = self.rows.len() as f32;
+        let height = 12.0 + line + self.description.as_ref().map_or(0.0, |_| line) + 8.0 + rows * 24.0 + 8.0;
+        let width = 224.0_f32.min(map.width() - 24.0);
+        let card = Rect::from_min_size(
+            pos2(map.left() + 12.0, map.bottom() - 12.0 - height),
+            vec2(width, height),
+        );
+        let painter = ui.painter_at(map);
+        painter.rect(
+            card,
+            t.radius("surface"),
+            t.color("popover"),
+            Stroke::new(1.0, t.color("border-strong")),
+            StrokeKind::Inside,
+        );
+        let ink = t.color("popover-foreground");
+        let muted = t.color("muted-foreground");
+        let x = card.left() + 12.0;
+        let mut y = card.top() + 12.0;
+        let title = WidgetText::from(TextRole::Help.rich(&t, &self.title).variation("wght", 500.0)).into_galley(
+            ui,
+            Some(egui::TextWrapMode::Truncate),
+            width - 24.0,
+            font.clone(),
+        );
+        painter.galley(pos2(x, y + (line - title.size().y) / 2.0), title, ink);
+        y += line;
+        if let Some(description) = &self.description {
+            painter.text(
+                pos2(x, y + line / 2.0),
+                egui::Align2::LEFT_CENTER,
+                description,
+                font.clone(),
+                muted,
+            );
+            y += line;
+        }
+        y += 8.0;
+        for (color, label, count) in &self.rows {
+            let middle = y + 12.0;
+            painter.circle_filled(pos2(x + 6.0, middle), 6.0, *color);
+            painter.text(
+                pos2(x + 20.0, middle),
+                egui::Align2::LEFT_CENTER,
+                label,
+                font.clone(),
+                ink,
+            );
+            painter.text(
+                pos2(card.right() - 12.0, middle),
+                egui::Align2::RIGHT_CENTER,
+                count.to_string(),
+                font.clone(),
+                muted,
+            );
+            y += 24.0;
+        }
     }
 }
 
@@ -73,7 +174,12 @@ pub struct MapView {
     tiles: Option<HttpTiles>,
     styled: Option<[Color32; 2]>,
     home: Position,
+    /// Where the map was made to look.
+    start: Position,
     zoom: f64,
+    framed: bool,
+    /// The bounds to frame once the map's size is known, as `[west, south, east, north]`.
+    pending: Option<Option<[f64; 4]>>,
 }
 
 impl MapView {
@@ -87,8 +193,46 @@ impl MapView {
             tiles: None,
             styled: None,
             home: lat_lon(lat, lon),
+            start: lat_lon(lat, lon),
             zoom,
+            framed: true,
+            pending: None,
         }
+    }
+
+    /// Whether the map draws its own border and corners; off for a map that fills a pane.
+    pub fn framed(mut self, framed: bool) -> Self {
+        self.framed = framed;
+        self
+    }
+
+    /// Frame `bounds` (`[west, south, east, north]` in degrees) the next time the map is drawn, or,
+    /// with `None`, the place and zoom it was made with.
+    pub fn frame(&mut self, bounds: Option<[f64; 4]>) {
+        self.pending = Some(bounds);
+    }
+
+    /// Look at `bounds` within a map `size` large: their middle, at the deepest zoom that shows them whole.
+    fn fit(&mut self, bounds: [f64; 4], size: Vec2) {
+        let [west, south, east, north] = bounds;
+        let y = |lat: f64| {
+            let r = lat.clamp(-85.0, 85.0).to_radians();
+            (1.0 - (r.tan() + 1.0 / r.cos()).ln() / std::f64::consts::PI) / 2.0
+        };
+        let (top, bottom) = (y(north), y(south));
+        let wide = ((east - west) / 360.0).max(1e-6);
+        let tall = (bottom - top).max(1e-6);
+        // 48 of room around the bounds, as a map frames its data
+        let room = |side: f32| f64::from((side - 96.0).max(side * 0.5));
+        let zoom = (room(size.x) / (wide * 256.0))
+            .log2()
+            .min((room(size.y) / (tall * 256.0)).log2())
+            .clamp(0.0, 18.0);
+        let middle = (top + bottom) / 2.0;
+        let lat = (std::f64::consts::PI * (1.0 - 2.0 * middle)).sinh().atan().to_degrees();
+        self.home = lat_lon(lat, (west + east) / 2.0);
+        self.memory = MapMemory::default();
+        let _ = self.memory.set_zoom(zoom);
     }
 
     /// Draw OpenFreeMap's vector street map under the map, light or dark by the scheme, as
@@ -132,6 +276,7 @@ impl MapView {
 
     /// Look at the place and zoom the map was made with again.
     pub fn reset(&mut self) {
+        self.home = self.start;
         self.memory = MapMemory::default();
         let _ = self.memory.set_zoom(self.zoom);
     }
@@ -142,6 +287,11 @@ impl MapView {
         let t = tokens(ui.ctx());
         let has_tiles = self.source.is_some();
         let dark = ui.visuals().dark_mode;
+        match self.pending.take() {
+            Some(Some(bounds)) => self.fit(bounds, size),
+            Some(None) => self.reset(),
+            None => {}
+        }
         let home = self.home;
         self.tiles_for(&t, dark);
         let tiles = self.tiles.as_mut().map(|tiles| tiles as &mut dyn Tiles);
@@ -167,12 +317,14 @@ impl MapView {
             })
             .inner;
         let rect = response.rect;
-        ui.painter().rect_stroke(
-            rect,
-            t.radius("surface"),
-            Stroke::new(1.0, t.color("border")),
-            StrokeKind::Inside,
-        );
+        if self.framed {
+            ui.painter().rect_stroke(
+                rect,
+                t.radius("surface"),
+                Stroke::new(1.0, t.color("border")),
+                StrokeKind::Inside,
+            );
+        }
         self.zoom_buttons(ui, &t, rect);
         response
     }
@@ -304,24 +456,33 @@ fn street_style(t: &Tokens, dark: bool) -> Style {
     style
 }
 
-/// The ground without tiles: `card`, and a graticule every degree in the foreground at 14% over it.
+/// The ground without tiles: `card`, and a graticule in the foreground at 14% over it, its lines
+/// at least 64 apart (every 1, 2, 5, 10, 15, 30 or 45 degrees, as the zoom allows) across the view.
 fn ground(painter: &egui::Painter, t: &Tokens, rect: Rect, projector: &Projector) {
     painter.rect_filled(rect, CornerRadius::ZERO, t.color("card"));
-    let center = projector.unproject(rect.center().to_vec2());
-    let (lat0, lon0) = (center.y().round(), center.x().round());
     let stroke = Stroke::new(1.0, t.color_at("foreground", 0.14));
-    // parallels a degree apart, then meridians, each far enough to cross any view
-    for d in -60..=60 {
-        let lat = lat0 + d as f64;
-        if lat.abs() <= 85.0 {
-            let a = projector.project(lat_lon(lat, lon0 - 90.0)).to_pos2();
-            let b = projector.project(lat_lon(lat, lon0 + 90.0)).to_pos2();
-            painter.line_segment([a, b], stroke);
-        }
-        let lon = lon0 + d as f64;
-        let a = projector.project(lat_lon((lat0 - 80.0).max(-85.0), lon)).to_pos2();
-        let b = projector.project(lat_lon((lat0 + 80.0).min(85.0), lon)).to_pos2();
+    let corner = |p: Pos2| projector.unproject(p.to_vec2());
+    let (nw, se) = (corner(rect.left_top()), corner(rect.right_bottom()));
+    let (west, east) = (nw.x(), se.x());
+    let (north, south) = (nw.y().min(85.0), se.y().max(-85.0));
+    let per_degree = f64::from(rect.width()) / (east - west).max(1e-6);
+    let step = [1.0, 2.0, 5.0, 10.0, 15.0, 30.0, 45.0]
+        .into_iter()
+        .find(|step| step * per_degree >= 64.0)
+        .unwrap_or(90.0);
+    let mut lat = (south / step).floor() * step;
+    while lat <= north {
+        let a = projector.project(lat_lon(lat, west)).to_pos2();
+        let b = projector.project(lat_lon(lat, east)).to_pos2();
         painter.line_segment([a, b], stroke);
+        lat += step;
+    }
+    let mut lon = (west / step).floor() * step;
+    while lon <= east {
+        let a = projector.project(lat_lon(north, lon)).to_pos2();
+        let b = projector.project(lat_lon(south, lon)).to_pos2();
+        painter.line_segment([a, b], stroke);
+        lon += step;
     }
 }
 
@@ -348,10 +509,13 @@ fn overlays(painter: &egui::Painter, t: &Tokens, projector: &Projector, markers:
         let point = at(marker.lat, marker.lon);
         painter.circle(
             point,
-            6.0,
-            series_color(t, marker.series),
-            Stroke::new(2.0, t.color("background")),
+            7.0,
+            marker.color.unwrap_or_else(|| series_color(t, marker.series)),
+            Stroke::new(1.5, t.color("card")),
         );
+        if marker.label.is_empty() {
+            continue;
+        }
         let galley = painter.layout_no_wrap(marker.label.clone(), font.clone(), t.color("popover-foreground"));
         let pill = Rect::from_min_size(pos2(point.x + 10.0, point.y - 10.0), galley.size() + vec2(12.0, 4.0));
         painter.rect(

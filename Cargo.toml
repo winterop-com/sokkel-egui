@@ -16,7 +16,7 @@ egui = "0.36.2"
 egui_extras = { version = "0.36.2", default-features = false, features = ["svg"] }
 lucide-icons = "0.575"
 walkers = { version = "0.60", features = ["mvt"] }
-eframe = { version = "0.36.2", default-features = false, features = ["wgpu", "persistence", "default_fonts", "accesskit", "wayland", "x11"] }
+eframe = { version = "0.36.2", features = ["persistence"] }
 egui_kittest = { version = "0.36.2", features = ["eframe", "snapshot", "wgpu"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }

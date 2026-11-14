@@ -9,6 +9,7 @@ publish.workspace = true
 [dependencies]
 sokkel-ui-egui.workspace = true
 sokkel-ui-egui-charts.workspace = true
+sokkel-ui-egui-maps.workspace = true
 eframe.workspace = true
 
 [dev-dependencies]

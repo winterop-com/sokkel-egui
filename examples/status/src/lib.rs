@@ -9,16 +9,17 @@ pub mod live;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
-    AccountAction, AccountMenu, Appearance, AsideWidth, Button, ButtonSize, ButtonVariant, Cell, ChipTone, Column,
-    Columns, DashboardGrid, DashboardPanel, DataTable, Day, Editor, Gap, Icon, KpiRow, MenuItem, Page, PageHeader,
-    PanelSpan, PersonRow, Rail, RailEntry, RailGroup, Section, Segmented, Shell, ShellPart, Split, Stack, StackLayout,
-    StackPlace, Stat, StatusLine, StatusTone, TableState, TableVariant, TextRole, Timeline, TimelineEvent, TopBar,
-    UptimeBar, UptimeDay, format_uptime, install, overall_uptime, relative_time,
+    AccountAction, AccountMenu, Appearance, AsideWidth, Button, ButtonSize, ButtonVariant, Cell, ChipBar, ChipTone,
+    Column, Columns, DashboardGrid, DashboardPanel, DataTable, Day, Editor, Gap, Icon, KpiRow, MenuItem, Page,
+    PageHeader, PanelSpan, PersonRow, Rail, RailEntry, RailGroup, Section, Segmented, Shell, ShellPart, Split,
+    SplitPane, Stack, StackLayout, StackPlace, Stat, StatusLine, StatusTone, TableState, TableVariant, TextRole,
+    Timeline, TimelineEvent, TopBar, UptimeBar, UptimeDay, format_uptime, install, overall_uptime, relative_time,
 };
 
 use data::SERVICES;
 use live::Live;
 use sokkel_ui_egui_charts::{Series, TimeSeriesPanel};
+use sokkel_ui_egui_maps::{MapLegend, MapView, Marker};
 
 /// Tidevann's mark, as sokkel-ui's examples draw it (`tidevann-shared/mark`).
 pub const TIDEVANN_MARK: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="currentColor"><path d="M12 4c-1 1.8-3 3.5-3 5a3 3 0 0 0 6 0c0-1.5-2-3.2-3-5Z"/><path d="M5 13c2-2 4 2 7 0s5-2 7 0v1a7 7 0 0 1-14 0Z"/></svg>"#;
@@ -64,6 +65,12 @@ pub struct StatusApp {
     pub incident_search: String,
     /// The services in the person's own order, by their index in `SERVICES`, and their table.
     pub service_order: Vec<usize>,
+    /// The region the Regions page frames, or "All".
+    pub region: String,
+    /// The site chosen on the map or in the table.
+    pub selected_site: Option<usize>,
+    pub sites_table: TableState,
+    pub sites_map: MapView,
     pub services_table: TableState,
     /// The board's day, the rotation, the handovers and the rotation's table.
     pub today: Day,
@@ -75,8 +82,16 @@ pub struct StatusApp {
 }
 
 impl StatusApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
-        Self::on(Appearance::default())
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        let mut app = Self::on(Appearance::default());
+        // the street map only in the running app: tests draw the map without the network
+        sokkel_ui_egui_maps::install(cc.wgpu_render_state.as_ref());
+        app.sites_map = std::mem::replace(&mut app.sites_map, MapView::new(0.0, 0.0, 1.0)).with_tiles(
+            &cc.egui_ctx,
+            "tidevann-status/0.1 (an example app of a component library)",
+            std::env::temp_dir().join("sokkel-ui-egui-tiles").into(),
+        );
+        app
     }
 
     /// The board as the demo starts: 09:00, the seeded incidents, grace on call.
@@ -105,6 +120,14 @@ impl StatusApp {
             handovers: data::seed_handovers(9.0 * 3600.0 * 1000.0),
             rotation_table: TableState::default(),
             live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
+            region: "All".into(),
+            selected_site: None,
+            sites_table: TableState::default(),
+            sites_map: {
+                let mut map = MapView::new(30.0, 10.0, 1.0).framed(false);
+                map.frame(Some(bounds_of(&data::SITES.iter().collect::<Vec<_>>())));
+                map
+            },
         }
     }
 
@@ -293,9 +316,7 @@ impl StatusApp {
                 Stack::new(Gap::Section).show(ui, |ui| self.incidents_page(ui));
             }
             ("regions", _) => {
-                PageHeader::new("Regions")
-                    .count("11 of 11 sites operational")
-                    .show(ui, |_| {});
+                Stack::new(Gap::Section).show(ui, |ui| self.regions_page(ui));
             }
             ("on-call", _) => {
                 Stack::new(Gap::Page).show(ui, |ui| self.on_call_page(ui));
@@ -538,6 +559,114 @@ impl StatusApp {
         if let Some((from, to)) = output.reordered {
             let moved = self.service_order.remove(from);
             self.service_order.insert(to, moved);
+        }
+    }
+
+    /// Every site on a map and in a table, both live: a region frames its sites, and a site chosen
+    /// in the table is chosen on the map.
+    fn regions_page(&mut self, ui: &mut Ui) {
+        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let working = self
+            .live_world
+            .site_health
+            .iter()
+            .filter(|h| **h == live::Health::Operational)
+            .count();
+        PageHeader::new("Regions")
+            .count(format!("{working} of {} sites operational", data::SITES.len()))
+            .show(ui, |_| {});
+        let mut regions: Vec<&str> = vec!["All"];
+        for site in &data::SITES {
+            if !regions.contains(&site.region) {
+                regions.push(site.region);
+            }
+        }
+        let chips: Vec<(&str, &str)> = regions.iter().map(|r| (*r, *r)).collect();
+        if ChipBar::new("regions", &chips).show(ui, &mut self.region) {
+            self.selected_site = None;
+            let listed: Vec<&data::Site> = data::SITES
+                .iter()
+                .filter(|s| self.region == "All" || s.region == self.region)
+                .collect();
+            self.sites_map.frame(Some(bounds_of(&listed)));
+        }
+        let listed: Vec<usize> = (0..data::SITES.len())
+            .filter(|i| self.region == "All" || data::SITES[*i].region == self.region)
+            .collect();
+        let markers: Vec<Marker> = data::SITES
+            .iter()
+            .enumerate()
+            .map(|(i, site)| {
+                Marker::new(site.at[1], site.at[0], "").color(t.color(self.live_world.site_health[i].color()))
+            })
+            .collect();
+        let count = |h: live::Health| self.live_world.site_health.iter().filter(|x| **x == h).count();
+        let legend = MapLegend::new("Sites")
+            .description(format!("{} cities", data::SITES.len()))
+            .row(t.color("good"), "Operational", count(live::Health::Operational))
+            .row(t.color("warning"), "Degraded", count(live::Health::Degraded))
+            .row(t.color("critical"), "Outage", count(live::Health::Outage));
+        let columns = [
+            Column::new("City", 128.0).fill(),
+            Column::new("State", 136.0).stack(StackPlace::Secondary),
+            Column::new("Country", 128.0).stack(StackPlace::Secondary),
+            Column::new("Round trip", 120.0).sortable(false).stack(StackPlace::None),
+            Column::new("Now", 88.0).numeric().stack(StackPlace::Secondary),
+        ];
+        let rows: Vec<Vec<Cell>> = listed
+            .iter()
+            .map(|&i| {
+                let site = &data::SITES[i];
+                let health = self.live_world.site_health[i];
+                let trips = &self.live_world.sites[i];
+                let tone = if health == live::Health::Operational {
+                    "primary"
+                } else {
+                    "critical"
+                };
+                vec![
+                    Cell::Text(site.city.into()),
+                    Cell::Chip(health.words().to_lowercase(), health_tone(health)),
+                    Cell::Text(site.country.into()),
+                    Cell::Trend(trips.clone(), t.color(tone)),
+                    Cell::Text(format!("{} ms", trips.last().copied().unwrap_or(0.0).round())),
+                ]
+            })
+            .collect();
+        let keys: Vec<&str> = listed.iter().map(|i| data::SITES[*i].id).collect();
+        let map = &mut self.sites_map;
+        let table = &mut self.sites_table;
+        let mut chosen = None;
+        SplitPane::new("status-regions")
+            .default_share(0.6)
+            .min_share(0.35)
+            .max_share(0.75)
+            .show(
+                ui,
+                |ui| {
+                    let size = ui.available_size().max(egui::vec2(1.0, 320.0));
+                    let response = map.show(ui, size, &markers, &[]);
+                    legend.show(ui, response.rect);
+                },
+                |ui| {
+                    let output = DataTable::new("sites", &columns, &rows, table)
+                        .keys(keys)
+                        .bar(true)
+                        .stack_layout(StackLayout::Labeled)
+                        .actions(|_| vec![MenuItem::action("Show on the map")])
+                        .footer(false)
+                        .stretch(true)
+                        .show(ui);
+                    if let Some((row, _)) = output.action {
+                        chosen = Some(listed[row]);
+                    }
+                },
+            );
+        if let Some(site) = chosen {
+            self.selected_site = Some(site);
+            let s = &data::SITES[site];
+            self.sites_map
+                .frame(Some([s.at[0] - 6.0, s.at[1] - 6.0, s.at[0] + 6.0, s.at[1] + 6.0]));
         }
     }
 
@@ -922,4 +1051,18 @@ impl eframe::App for StatusApp {
 fn clock_of(at: f64) -> String {
     let at = (at / 1000.0) as u64;
     format!("{:02}:{:02}:{:02}", at / 3600 % 24, at / 60 % 60, at % 60)
+}
+
+/// The box around some sites for the map to frame, `[west, south, east, north]`: a region's with
+/// a margin of 6 degrees as the web's `boundsOf`, every site's as they lie.
+fn bounds_of(sites: &[&data::Site]) -> [f64; 4] {
+    let margin = if sites.len() == data::SITES.len() { 0.0 } else { 6.0 };
+    let lons = sites.iter().map(|s| s.at[0]);
+    let lats = sites.iter().map(|s| s.at[1]);
+    [
+        lons.clone().fold(f64::INFINITY, f64::min) - margin,
+        lats.clone().fold(f64::INFINITY, f64::min) - margin,
+        lons.fold(f64::NEG_INFINITY, f64::max) + margin,
+        lats.fold(f64::NEG_INFINITY, f64::max) + margin,
+    ]
 }

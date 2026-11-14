@@ -155,3 +155,106 @@ impl Split {
         });
     }
 }
+
+/// Two panes side by side with a rule between them that drags to share the room, after sokkel-ui's
+/// `SplitPane`: the first holding `default_share` of the width, kept between `min_share` and
+/// `max_share`, the rule (`border-strong`) dragged or double-clicked back to the default. Both
+/// panes fill the height they are given. Narrower than `narrow_below` (640) the panes stack, the
+/// first over the second, each half the height.
+pub struct SplitPane {
+    id: egui::Id,
+    default_share: f32,
+    min_share: f32,
+    max_share: f32,
+    narrow_below: f32,
+}
+
+impl SplitPane {
+    pub fn new(id_salt: impl std::hash::Hash + std::fmt::Debug) -> Self {
+        Self {
+            id: egui::Id::new(("sokkel-split-pane", id_salt)),
+            default_share: 0.5,
+            min_share: 0.2,
+            max_share: 0.8,
+            narrow_below: 640.0,
+        }
+    }
+
+    pub fn default_share(mut self, share: f32) -> Self {
+        self.default_share = share;
+        self
+    }
+
+    pub fn min_share(mut self, share: f32) -> Self {
+        self.min_share = share;
+        self
+    }
+
+    pub fn max_share(mut self, share: f32) -> Self {
+        self.max_share = share;
+        self
+    }
+
+    pub fn narrow_below(mut self, width: f32) -> Self {
+        self.narrow_below = width;
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui, first: impl FnOnce(&mut Ui), second: impl FnOnce(&mut Ui)) {
+        let t = crate::tokens(ui.ctx());
+        let room = ui.available_rect_before_wrap();
+        let rule = t.color("border-strong");
+        let pane = |ui: &mut Ui, rect: egui::Rect, salt: &str, add: Box<dyn FnOnce(&mut Ui) + '_>| {
+            let mut child = ui.new_child(
+                egui::UiBuilder::new()
+                    .id_salt((self.id, salt))
+                    .max_rect(rect)
+                    .layout(egui::Layout::top_down(egui::Align::Min)),
+            );
+            child.set_clip_rect(rect.intersect(ui.clip_rect()));
+            add(&mut child);
+        };
+        if room.width() < self.narrow_below {
+            let half = room.height() / 2.0;
+            let top = egui::Rect::from_min_size(room.min, vec2(room.width(), half));
+            let bottom = egui::Rect::from_min_max(egui::pos2(room.left(), top.bottom() + 1.0), room.max);
+            pane(ui, top, "first", Box::new(first));
+            ui.painter()
+                .hline(room.x_range(), top.bottom() + 0.5, egui::Stroke::new(1.0, rule));
+            pane(ui, bottom, "second", Box::new(second));
+            ui.allocate_rect(room, egui::Sense::hover());
+            return;
+        }
+        let clamp = |share: f32| share.clamp(self.min_share, self.max_share);
+        let mut share = clamp(ui.data(|d| d.get_temp::<f32>(self.id)).unwrap_or(self.default_share));
+        // the rule's handle: 8 wide over the rule, dragged to share the room
+        let at = room.left() + (room.width() * share).round();
+        let handle = egui::Rect::from_center_size(egui::pos2(at, room.center().y), vec2(8.0, room.height()));
+        let response = ui
+            .interact(handle, self.id.with("handle"), egui::Sense::click_and_drag())
+            .on_hover_cursor(egui::CursorIcon::ResizeHorizontal);
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Other, true, "Resize"));
+        if response.dragged()
+            && let Some(pos) = response.interact_pointer_pos()
+        {
+            share = clamp((pos.x - room.left()) / room.width());
+        }
+        if response.double_clicked() {
+            share = clamp(self.default_share);
+        }
+        ui.data_mut(|d| d.insert_temp(self.id, share));
+        let at = room.left() + (room.width() * share).round();
+        let left = egui::Rect::from_min_max(room.min, egui::pos2(at, room.bottom()));
+        let right = egui::Rect::from_min_max(egui::pos2(at + 1.0, room.top()), room.max);
+        pane(ui, left, "first", Box::new(first));
+        pane(ui, right, "second", Box::new(second));
+        let ink = if response.hovered() || response.dragged() {
+            t.color("ring")
+        } else {
+            rule
+        };
+        ui.painter()
+            .vline(at + 0.5, room.y_range(), egui::Stroke::new(1.0, ink));
+        ui.allocate_rect(room, egui::Sense::hover());
+    }
+}

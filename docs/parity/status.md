@@ -59,6 +59,15 @@ and never chase a difference made of numbers.
   (`SERIES_ORDER`, from `chart-2`), a line's points sit on the axis' ends, and the value axis
   steps as ECharts picks (1, 2, 3 or 5 times a power of ten, about five apart). The dependency
   graph, deploys and maintenance follow.
+- Regions is the web's: the head counting the sites operational, a `ChipBar` of the regions
+  (choosing one frames its sites with 6 degrees about them, All frames every site), and a
+  `SplitPane` (60% to the map, 35 to 75, the rule dragged or double-clicked back) of the map and
+  the sites table. The map (`MapView::framed(false)`, OpenFreeMap's street map in the tokens'
+  colors) draws each site in its state's color with the `MapLegend` in its corner (Operational,
+  Degraded, Outage, each counted); the table stacks as labeled cards (city, state, country, round
+  trip now), its menu showing a site on the map. The sites' round trips are live (`live.rs`, the
+  web's `siteHealthOf`). Still to come: the map's locate, full screen and basemap buttons, the
+  site's popup, and Simulate trouble here, which waits on the scenarios.
 - The busy palette and busy confirm's way out (F23 as the owner refined it: after a wait, a "Stop
   waiting" and Escape again) comes with the overlays batch's specs; egui's palette commands do
   not run long yet, its busy `ConfirmDialog` does.
