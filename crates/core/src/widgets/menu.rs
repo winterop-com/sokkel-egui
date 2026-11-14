@@ -124,8 +124,8 @@ fn popover_frame(t: &Tokens) -> Frame {
 }
 
 /// Draw one action row; true when it was pressed.
-/// How a row of actions is drawn: a dropdown menu's (30 tall, 6 in, lit in the accent) or the
-/// palette's (34 tall, 8 in, lit in the muted ground).
+/// How a row of actions is drawn: a dropdown menu's (a control tall, 6 in) or the palette's (34
+/// tall, 8 in); both a finger tall on a phone, and lit in the accent, as every list of choices is.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum RowLook {
     Menu,
@@ -147,7 +147,8 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
         unreachable!()
     };
     let (height, pad) = match look {
-        RowLook::Menu => (30.0, 6.0),
+        RowLook::Menu => (super::choice_row_height(ui.ctx(), t), 6.0),
+        RowLook::Palette if super::is_phone(ui.ctx()) => (t.length("spacing-finger"), 8.0),
         RowLook::Palette => (34.0, 8.0),
     };
     let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
@@ -163,15 +164,13 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
             t.radius(if look == RowLook::Menu { "md" } else { "lg" }),
             if *destructive {
                 t.color_at("destructive", 0.1)
-            } else if look == RowLook::Menu {
-                t.color("accent")
             } else {
-                t.color("muted")
+                t.color("accent")
             },
         );
     }
-    // a lit menu row's text and icon take the accent's ink
-    let accent_ink = lit && look == RowLook::Menu && !*destructive;
+    // a lit row's icon, label and hint take the accent's ink
+    let accent_ink = lit && !*destructive;
     let ink = super::dim(
         if *destructive {
             t.color("destructive")
@@ -198,7 +197,8 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
                 !*disabled,
             ),
         );
-        x += if look == RowLook::Menu { 22.0 } else { 24.0 };
+        // the icon, then 8 to the label
+        x += 16.0 + 8.0;
     }
     // the shortcut (or the hint) first, so the label takes only the room it leaves
     let keys = shortcut
@@ -219,7 +219,12 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
         .galley(pos2(x, row.center().y - galley.size().y / 2.0), galley, ink);
     if let Some(keys) = keys {
         let at = pos2(row.right() - 8.0 - keys.size().x, row.center().y - keys.size().y / 2.0);
-        ui.painter().galley(at, keys, t.color("muted-foreground"));
+        let quiet = if accent_ink {
+            t.color("accent-foreground")
+        } else {
+            t.color("muted-foreground")
+        };
+        ui.painter().galley(at, keys, quiet);
     }
     let pressed = hit.clicked();
     (hit, pressed)
@@ -394,6 +399,10 @@ impl Default for PaletteWords {
 /// Mod+K, consumed: true on the frame it is pressed. Mod is Ctrl, and on macOS Cmd or Ctrl but not
 /// both, as sokkel-ui's shell binds it (`alsoCtrl`); it is heard in a field too.
 pub fn palette_shortcut(ctx: &Context) -> bool {
+    // an open palette takes the key itself, and closes
+    if palette_open(ctx) {
+        return false;
+    }
     let mac = ctx.os() == egui::os::OperatingSystem::Mac;
     let chord = |m: &Modifiers| {
         // `command` is Cmd on macOS and Ctrl elsewhere; `mac_cmd` is Cmd itself
@@ -410,6 +419,26 @@ pub fn palette_shortcut(ctx: &Context) -> bool {
         );
         at.map(|at| i.events.remove(at)).is_some()
     })
+}
+
+fn palette_seen_id() -> Id {
+    Id::new("sokkel-palette-seen")
+}
+
+/// A palette was drawn on the frame before this one.
+fn palette_open(ctx: &Context) -> bool {
+    let pass = ctx.cumulative_pass_nr();
+    ctx.data(|d| d.get_temp::<u64>(palette_seen_id()))
+        .is_some_and(|seen| seen + 1 >= pass)
+}
+
+/// Mod+K pressed, consumed, whether or not a palette is open: what an open palette closes on.
+fn mod_k(ctx: &Context) -> bool {
+    ctx.data_mut(|d| d.remove::<u64>(palette_seen_id()));
+    let pressed = palette_shortcut(ctx);
+    let pass = ctx.cumulative_pass_nr();
+    ctx.data_mut(|d| d.insert_temp(palette_seen_id(), pass));
+    pressed
 }
 
 /// The command palette: a search over the page's commands in their groups, narrowed as one types,
@@ -464,25 +493,41 @@ impl<'a> CommandPalette<'a> {
                 })
             })
             .collect();
-        let (down, up, enter) = ctx.input_mut(|i| {
+        // Mod+K closes an open palette, as it opens a closed one
+        let toggled = mod_k(ctx);
+        let (down, up, home, end, enter) = ctx.input_mut(|i| {
             (
                 i.consume_key(Modifiers::NONE, Key::ArrowDown),
                 i.consume_key(Modifiers::NONE, Key::ArrowUp),
+                i.consume_key(Modifiers::NONE, Key::Home),
+                i.consume_key(Modifiers::NONE, Key::End),
                 i.consume_key(Modifiers::NONE, Key::Enter),
             )
         });
         if shown.is_empty() {
             *self.highlight = 0;
         } else {
+            // the arrows stop at the first and the last row; Home and End reach them
+            let last = shown.len() - 1;
             if down {
-                *self.highlight = (*self.highlight + 1) % shown.len();
+                *self.highlight = (*self.highlight + 1).min(last);
             }
             if up {
-                *self.highlight = (*self.highlight + shown.len() - 1) % shown.len();
+                *self.highlight = self.highlight.saturating_sub(1);
             }
-            *self.highlight = (*self.highlight).min(shown.len() - 1);
+            if home {
+                *self.highlight = 0;
+            }
+            if end {
+                *self.highlight = last;
+            }
+            *self.highlight = (*self.highlight).min(last);
         }
         let mut outcome = PaletteOutcome::default();
+        if toggled {
+            outcome.close = true;
+            return outcome;
+        }
         if enter && let Some(choice) = shown.get(*self.highlight) {
             outcome.run = Some(*choice);
         }

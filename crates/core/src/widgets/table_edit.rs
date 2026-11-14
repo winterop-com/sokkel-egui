@@ -361,9 +361,6 @@ fn popover_frame(t: &Tokens) -> Frame {
     super::popup_frame(t)
 }
 
-/// How tall a select's option is.
-const OPTION: f32 = 30.0;
-
 /// The open select over `cell`: the cell as the select's trigger, and its list over it with the
 /// chosen option where the cell's value was. A choice is the draft; the move is `Save`.
 pub(crate) fn select(ui: &mut Ui, cell: Rect, open: &mut OpenCell, id: Id, options: &[String]) -> EditMove {
@@ -387,12 +384,20 @@ pub(crate) fn select(ui: &mut Ui, cell: Rect, open: &mut OpenCell, id: Id, optio
             EditMove::Stay
         }
     });
+    // the arrows stop at the first and the last option; Home and End reach them
     ui.input_mut(|i| {
+        let last = options.len().saturating_sub(1);
         if i.consume_key(egui::Modifiers::NONE, Key::ArrowDown) {
-            open.highlight = (open.highlight + 1).min(options.len().saturating_sub(1));
+            open.highlight = (open.highlight + 1).min(last);
         }
         if i.consume_key(egui::Modifiers::NONE, Key::ArrowUp) {
             open.highlight = open.highlight.saturating_sub(1);
+        }
+        if i.consume_key(egui::Modifiers::NONE, Key::Home) {
+            open.highlight = 0;
+        }
+        if i.consume_key(egui::Modifiers::NONE, Key::End) {
+            open.highlight = last;
         }
     });
     if moved == EditMove::Save
@@ -400,9 +405,11 @@ pub(crate) fn select(ui: &mut Ui, cell: Rect, open: &mut OpenCell, id: Id, optio
     {
         open.draft = option.clone();
     }
-    // the list: 5 in from the cell, 10 wider, the chosen option over the cell's middle
+    // the list: 5 in from the cell, 10 wider, the chosen option over the cell's middle; each option
+    // a control tall, a finger tall on a phone
+    let option_height = super::choice_row_height(ui.ctx(), &t);
     let width = cell.width() + 10.0;
-    let top = cell.center().y - (chosen.unwrap_or(0) as f32 + 0.5) * OPTION - 1.0;
+    let top = cell.center().y - (chosen.unwrap_or(0) as f32 + 0.5) * option_height - 1.0;
     let mut picked = None;
     let area = Area::new(id.with("list"))
         .order(Order::Foreground)
@@ -411,7 +418,7 @@ pub(crate) fn select(ui: &mut Ui, cell: Rect, open: &mut OpenCell, id: Id, optio
             popover_frame(&t).show(ui, |ui| {
                 ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
                 for (index, option) in options.iter().enumerate() {
-                    let (row, hit) = ui.allocate_exact_size(vec2(width - 2.0, OPTION), Sense::click());
+                    let (row, hit) = ui.allocate_exact_size(vec2(width - 2.0, option_height), Sense::click());
                     let marked = Some(index) == chosen;
                     hit.widget_info(|| {
                         egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, marked, option)

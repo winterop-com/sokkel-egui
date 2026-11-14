@@ -60,6 +60,11 @@ differ on purpose until then; a difference listed here is not drift to undo:
   web's select list and menus still wear Tailwind's `shadow-md` and a faint edge); dialogs, the
   settings dialog and the palette wear `elevation-dialog` (at first `elevation-pop`) and the same
   edge, where the web's dialogs are flat. The drawer wears `elevation-pop`.
+- F11, F12, F20, F21, F22, F24: every list of choices (menus, the select's list, the table's
+  select, the account menu) has rows a control tall (32, 28 compact; a finger on a phone) and 8
+  from a lead to its label; the palette's active row is lit in `accent` with `accent-foreground`
+  ink, as the menus' are (the web's is `muted`); the palette's arrows stop at its ends, Home and
+  End reach them, and Mod+K closes an open palette.
 - F18: no blur behind a dialog, on either side once the web drops its own.
 
 ## What is left, largest first

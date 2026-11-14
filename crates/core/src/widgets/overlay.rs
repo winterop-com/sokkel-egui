@@ -227,14 +227,22 @@ impl Widget for Select<'_> {
             .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
             .show(|ui| {
                 ui.spacing_mut().item_spacing.y = 0.0;
+                let row_height = super::choice_row_height(ui.ctx(), &t);
                 for (index, option) in self.options.iter().enumerate() {
-                    let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), height - 4.0), Sense::click());
+                    let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), row_height), Sense::click());
                     let chosen = index == *self.chosen;
                     hit.widget_info(|| {
                         egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, chosen, option)
                     });
-                    if hit.hovered() || hit.has_focus() {
-                        ui.painter().rect_filled(row, t.radius("md"), t.color("hover"));
+                    // lit in the accent, as every list of choices is
+                    let lit = hit.hovered() || hit.has_focus();
+                    let ink = if lit {
+                        t.color("accent-foreground")
+                    } else {
+                        t.color("popover-foreground")
+                    };
+                    if lit {
+                        ui.painter().rect_filled(row, t.radius("md"), t.color("accent"));
                     }
                     if let Some(swatches) = &self.swatches {
                         paint_swatch(
@@ -253,7 +261,7 @@ impl Widget for Select<'_> {
                     ui.painter().galley(
                         pos2(row.left() + 8.0 + lead, row.center().y - galley.size().y / 2.0),
                         galley,
-                        t.color("popover-foreground"),
+                        ink,
                     );
                     if chosen {
                         icons::paint(
@@ -261,7 +269,7 @@ impl Widget for Select<'_> {
                             pos2(row.right() - 14.0, row.center().y),
                             Icon::Check,
                             16.0,
-                            t.color("popover-foreground"),
+                            ink,
                         );
                     }
                     if hit.clicked() {

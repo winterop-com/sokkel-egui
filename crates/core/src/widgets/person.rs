@@ -335,12 +335,8 @@ fn separator(ui: &mut Ui, t: &Tokens) {
 
 /// One row of a menu: an icon, a label and a check when it is the one chosen.
 pub(crate) fn menu_row(ui: &mut Ui, t: &Tokens, icon: Option<Icon>, label: &str, checked: bool) -> Response {
-    // 32 tall, a finger tall on a phone
-    let height = if super::is_phone(ui.ctx()) {
-        t.length("spacing-finger")
-    } else {
-        32.0
-    };
+    // a control tall, a finger tall on a phone, as every list of choices
+    let height = super::choice_row_height(ui.ctx(), t);
     let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
     hit.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::Button, true, checked, label));
     if hit.hovered() || hit.has_focus() {

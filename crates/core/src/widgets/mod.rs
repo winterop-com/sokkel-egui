@@ -89,6 +89,16 @@ pub(crate) fn dialog_frame(tokens: &Tokens) -> egui::Frame {
     popup_frame(tokens).shadow(shadow)
 }
 
+/// How tall a one-line row of a list of choices (a menu, a select's list) is: a control tall, as
+/// the density sets it, and a finger tall on a phone.
+pub(crate) fn choice_row_height(ctx: &egui::Context, tokens: &Tokens) -> f32 {
+    if is_phone(ctx) {
+        tokens.length("spacing-finger")
+    } else {
+        tokens.density("control")
+    }
+}
+
 /// A color as a disabled control shows it.
 pub(crate) fn dim(color: Color32, enabled: bool) -> Color32 {
     if enabled { color } else { color.gamma_multiply(DISABLED) }
