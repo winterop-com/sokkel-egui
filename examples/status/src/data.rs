@@ -27,7 +27,16 @@ pub struct Service {
 
 /// The board's own order of its services, as the web's `SERVICE_IDS`: the order the overview's
 /// tiles and the services table stand in until the person drags them.
-pub const SERVICE_IDS: [&str; 8] = ["web", "api", "worker", "scheduler", "queue", "storage", "search", "mail"];
+pub const SERVICE_IDS: [&str; 8] = [
+    "web",
+    "api",
+    "worker",
+    "scheduler",
+    "queue",
+    "storage",
+    "search",
+    "mail",
+];
 
 /// The board's own order as indices into `SERVICES`.
 pub fn board_order() -> Vec<usize> {
