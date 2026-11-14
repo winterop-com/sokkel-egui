@@ -2,7 +2,7 @@
 # sokkel-ui is read from .parity/sokkel-ui, a clone fetched from GitHub on every run
 # (scripts/sokkel.ts): SOKKEL_UI_REF pins a commit, SOKKEL_UI_OFFLINE skips the fetch.
 
-.PHONY: help tokens tokens-check verify-colors parity parity-web fmt fmt-check check test snapshots storybook runs tasks apps all
+.PHONY: help tokens tokens-check verify-colors parity parity-web fmt fmt-check check test snapshots storybook runs tasks status apps all
 
 help:
 	@echo "make tokens        resolve sokkel-ui's tokens, as GitHub has them, into plain values"
@@ -17,6 +17,7 @@ help:
 	@echo "make storybook     run the storybook"
 	@echo "make runs          run the example app"
 	@echo "make tasks         run sokkel-ui's tasks example, ported one to one"
+	@echo "make status        run sokkel-ui's status example, being ported one to one"
 	@echo "make apps          build every example app in release and bundle each as a macOS .app in dist/apps/"
 	@echo "make all           fmt-check, check and test"
 
@@ -59,6 +60,9 @@ runs:
 
 tasks:
 	cargo run -p tasks
+
+status:
+	cargo run -p status
 
 apps:
 	scripts/bundle.sh

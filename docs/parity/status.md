@@ -1,8 +1,22 @@
 # Status: sokkel-ui's status example in egui
 
 sokkel-ui's status example (a live board of services, regions and incidents, on call, and the
-public status page) is the next to port one to one, after tasks. Nothing is ported yet: this page
-holds what the port starts from.
+public status page), ported one to one as `examples/status` (`make status`). Its screens are
+drawn by `examples/status/tests/screens.rs` and laid beside the web's by
+`bun scripts/parity.ts board status`.
+
+## Where it stands
+
+- The frame lines up with the web's: the rail with each place's description under its label
+  (`RailEntry::description`), the Customers group, the top bar's Live button, and the status line
+  live with operational, open and on call.
+- Each page has its head (title, count or description, actions) and nothing under it yet.
+- Next, largest first: the overview's KPI row (`Stat`), the service tiles with their sparklines,
+  the dashboard under them; the incidents table; the services table; the map of sites; on call's
+  rotation; the public page; settings; the live simulation behind all of them. The header's actions
+  stand at its top where the web centers them on it.
+
+## Groundwork
 
 - **Manifest:** `parity/status.json`: the example's 70 library parts, 32 with an egui counterpart,
   and eight screens (overview, incidents, services, one service, regions, on call, the public page,

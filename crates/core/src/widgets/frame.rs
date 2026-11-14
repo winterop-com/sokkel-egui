@@ -15,6 +15,8 @@ pub struct RailEntry {
     pub label: String,
     pub icon: Icon,
     pub count: Option<u32>,
+    /// A line under the label, small and muted: what the place holds ("Everything at a glance").
+    pub description: Option<String>,
 }
 
 impl RailEntry {
@@ -24,11 +26,18 @@ impl RailEntry {
             label: label.into(),
             icon,
             count: None,
+            description: None,
         }
     }
 
     pub fn count(mut self, count: u32) -> Self {
         self.count = Some(count);
+        self
+    }
+
+    /// The line under the label; an expanded rail draws the entry two lines tall.
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
         self
     }
 }
@@ -206,10 +215,18 @@ impl Widget for Rail<'_> {
                 }
             }
             for entry in &group.entries {
+                // a described entry: 6 over and under its 22 label line and its 20 description
+                let described = !narrow && entry.description.is_some();
+                let height = if described { 6.0 + 22.0 + 20.0 + 6.0 } else { row };
                 let bounds = if narrow {
                     Rect::from_center_size(pos2(rect.center().x, y + row / 2.0), vec2(36.0, row))
                 } else {
-                    Rect::from_min_max(pos2(rect.left() + 8.0, y), pos2(rect.right() - 9.0, y + row))
+                    Rect::from_min_max(pos2(rect.left() + 8.0, y), pos2(rect.right() - 9.0, y + height))
+                };
+                let line = if described {
+                    bounds.top() + 6.0 + 11.0
+                } else {
+                    bounds.center().y
                 };
                 let hit = ui.interact(bounds, response.id.with(&entry.id), Sense::click());
                 let active = *self.active == entry.id;
@@ -266,20 +283,21 @@ impl Widget for Rail<'_> {
                 if narrow {
                     icons::paint(&painter, bounds.center(), entry.icon, 16.0, ink);
                 } else {
-                    icons::paint(
-                        &painter,
-                        pos2(bounds.left() + 12.0 + 8.0, bounds.center().y),
-                        entry.icon,
-                        16.0,
-                        ink,
-                    );
+                    icons::paint(&painter, pos2(bounds.left() + 12.0 + 8.0, line), entry.icon, 16.0, ink);
                     let role = if active { TextRole::Action } else { TextRole::Body };
                     let label = galley(ui, role, &entry.label, bounds.width() - 80.0);
-                    painter.galley(
-                        pos2(bounds.left() + 40.0, bounds.center().y - label.size().y / 2.0),
-                        label,
-                        ink,
-                    );
+                    painter.galley(pos2(bounds.left() + 40.0, line - label.size().y / 2.0), label, ink);
+                    if let Some(description) = entry.description.as_deref().filter(|_| described) {
+                        let words = galley(ui, TextRole::Help, description, bounds.width() - 52.0);
+                        painter.galley(
+                            pos2(
+                                bounds.left() + 40.0,
+                                bounds.top() + 6.0 + 22.0 + 10.0 - words.size().y / 2.0,
+                            ),
+                            words,
+                            t.color("muted-foreground"),
+                        );
+                    }
                     if let Some(count) = entry.count {
                         // the count at 600
                         let rich = TextRole::Badge.rich(&t, count.to_string()).variation("wght", 600.0);
@@ -289,14 +307,11 @@ impl Widget for Rail<'_> {
                             60.0,
                             TextRole::Badge.font(&t),
                         );
-                        let at = pos2(
-                            bounds.right() - 12.0 - figure.size().x,
-                            bounds.center().y - figure.size().y / 2.0,
-                        );
+                        let at = pos2(bounds.right() - 12.0 - figure.size().x, line - figure.size().y / 2.0);
                         painter.galley(at, figure, t.color("foreground"));
                     }
                 }
-                y += row + 4.0;
+                y += if narrow { row } else { height } + 4.0;
             }
         }
         response
