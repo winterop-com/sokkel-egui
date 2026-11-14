@@ -406,3 +406,23 @@ pub fn form_bar<R>(ui: &mut egui::Ui, note: Option<&str>, actions: impl FnOnce(&
     })
     .inner
 }
+
+/// A label over any control, after sokkel-ui's `Field`: the label, a quiet hint beside it (such as
+/// "on call" for the person a choice defaults to), and the control 6 under them.
+pub fn field<R>(ui: &mut egui::Ui, label: &str, hint: Option<&str>, control: impl FnOnce(&mut egui::Ui) -> R) -> R {
+    let t = crate::tokens(ui.ctx());
+    ui.vertical(|ui| {
+        ui.spacing_mut().item_spacing.y = 6.0;
+        ui.horizontal(|ui| {
+            // the row as tall as its words, not a control's height
+            ui.spacing_mut().interact_size.y = 0.0;
+            ui.spacing_mut().item_spacing.x = 6.0;
+            ui.label(crate::TextRole::Label.rich(&t, label).color(t.color("foreground")));
+            if let Some(hint) = hint {
+                ui.label(crate::TextRole::Help.rich(&t, hint).color(t.color("muted-foreground")));
+            }
+        });
+        control(ui)
+    })
+    .inner
+}

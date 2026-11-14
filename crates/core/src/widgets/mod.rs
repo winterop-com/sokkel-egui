@@ -38,7 +38,7 @@ pub use dashboard::{DashboardGrid, DashboardPanel, GridCells, PanelSpan, cell_he
 pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton};
 pub use empty::Empty;
 pub(crate) use fields::search_field;
-pub use fields::{DueState, DueText, QuickAdd, SearchField, SwitchField, due_state, form_bar, toolbar};
+pub use fields::{DueState, DueText, QuickAdd, SearchField, SwitchField, due_state, field, form_bar, toolbar};
 pub use frame::{
     AppBar, DesktopWindow, Rail, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine, StatusTone,
     TopBar, desktop_viewport, is_phone,

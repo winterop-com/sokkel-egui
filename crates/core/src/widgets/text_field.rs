@@ -13,6 +13,8 @@ pub struct TextField<'a> {
     error: Option<String>,
     /// Its width; when `None` the room it is given down a column, as the web's `w-full`, and 280 in a row.
     width: Option<f32>,
+    /// A text area that grows with its text, at least 112 tall, rather than one line.
+    multiline: bool,
 }
 
 impl<'a> TextField<'a> {
@@ -24,6 +26,7 @@ impl<'a> TextField<'a> {
             help: None,
             error: None,
             width: None,
+            multiline: false,
         }
     }
 
@@ -48,6 +51,13 @@ impl<'a> TextField<'a> {
         self.width = Some(width);
         self
     }
+
+    /// A text area that grows with its text, at least 112 tall (`min-h-28`), as the web's
+    /// `multiline` field.
+    pub fn multiline(mut self, multiline: bool) -> Self {
+        self.multiline = multiline;
+        self
+    }
 }
 
 impl Widget for TextField<'_> {
@@ -66,6 +76,7 @@ impl Widget for TextField<'_> {
             let label = ui.label(TextRole::Label.rich(&t, &self.label).color(t.color("foreground")));
             let mut input = Input::new(self.value).invalid(self.error.is_some());
             input.width = Some(width);
+            input.multiline = self.multiline;
             if let Some(placeholder) = &self.placeholder {
                 input = input.placeholder(placeholder.clone());
             }
@@ -95,6 +106,8 @@ pub struct Input<'a> {
     enabled: bool,
     /// Its width; when `None` the room it is given down a column, as the web's `w-full`, and 280 in a row.
     width: Option<f32>,
+    /// A text area that grows with its text, at least 112 tall, rather than one line.
+    multiline: bool,
 }
 
 impl<'a> Input<'a> {
@@ -105,6 +118,7 @@ impl<'a> Input<'a> {
             invalid: false,
             enabled: true,
             width: None,
+            multiline: false,
         }
     }
 
@@ -128,6 +142,13 @@ impl<'a> Input<'a> {
         self.width = Some(width);
         self
     }
+
+    /// A text area that grows with its text, at least 112 tall (`min-h-28`), as the web's
+    /// `multiline` field.
+    pub fn multiline(mut self, multiline: bool) -> Self {
+        self.multiline = multiline;
+        self
+    }
 }
 
 impl Widget for Input<'_> {
@@ -148,7 +169,12 @@ impl Widget for Input<'_> {
                 ui.available_width()
             }
         });
-        let mut edit = TextEdit::singleline(self.value)
+        let edit = if self.multiline {
+            TextEdit::multiline(self.value).desired_rows(1)
+        } else {
+            TextEdit::singleline(self.value)
+        };
+        let mut edit = edit
             .font(body.font(&t))
             .text_color(ink)
             .frame(Frame::NONE)
@@ -169,11 +195,16 @@ impl Widget for Input<'_> {
             .fill(ground)
             .stroke(Stroke::new(1.0, t.color("input")))
             .corner_radius(t.radius("control"))
-            .inner_margin(Margin::symmetric(
-                10,
-                ((height - body.font(&t).size * 1.4) / 2.0).max(0.0) as i8,
-            ));
+            .inner_margin(if self.multiline {
+                Margin::symmetric(10, 8)
+            } else {
+                Margin::symmetric(10, ((height - body.font(&t).size * 1.4) / 2.0).max(0.0) as i8)
+            });
         let mut prepared = frame.begin(ui);
+        if self.multiline {
+            // at least 112 tall with its edge, as the web's `min-h-28`, growing with its text
+            prepared.content_ui.set_min_height(112.0 - 16.0 - 2.0);
+        }
         let response = prepared.content_ui.add_enabled(self.enabled, edit);
         let focused = response.has_focus();
         let edge = match (self.invalid, focused) {

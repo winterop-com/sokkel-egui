@@ -96,10 +96,16 @@ and never chase a difference made of numbers.
 ## What does not work yet
 
 sokkel-ui's examples keep one rule: every button does what it says. These stand on egui's screens
-so they match the web's, but nothing answers them yet, until their parts are ported: Report
-incident and Edit on the overview; Report incident, Schedule maintenance and Deploy on a service's
-page; New on the incidents page. Resolve, Reopen and Assign to the person on call in an incident's
-menu work, and Subscribe on the public page brings the form into view.
+so they match the web's, but nothing answers them yet, until their parts are ported: Edit on the
+overview; Schedule maintenance and Deploy on a service's page. Report incident (the overview, a
+service's page) and New (the incidents page) open the new incident dialog, the web's
+`NewIncidentDialog`: what is wrong, the severity, the services it touches, where, who takes it
+(the person on call by default, `field` saying so), the first update (`TextField::multiline`) and
+whether the status page shows it, Open incident refused in the web's words until it can open. An
+incident opened goes to the incidents list, until the incident's own page is ported; its first
+field stands 7 lower under the field above than the web's 16, the text field allocating a few
+pixels past its frame. Resolve, Reopen and Assign to the person on call in an incident's menu
+work, and Subscribe on the public page brings the form into view.
 
 ## Last checked
 

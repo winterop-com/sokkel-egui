@@ -6,6 +6,7 @@
 pub mod data;
 pub mod history;
 pub mod live;
+pub mod new_incident;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
@@ -84,6 +85,8 @@ pub struct StatusApp {
     pub shifts: Vec<data::Shift>,
     pub handovers: Vec<data::Handover>,
     pub maintenance: Vec<data::Maintenance>,
+    /// The new incident dialog, while it is open.
+    pub new_incident: Option<new_incident::NewIncident>,
     /// The public page's form, and the addresses it has subscribed.
     pub subscribe: Subscribe,
     pub rotation_table: TableState,
@@ -137,6 +140,7 @@ impl StatusApp {
             handovers: data::seed_handovers(9.0 * 3600.0 * 1000.0),
             maintenance: data::seed_maintenance(),
             subscribe: Subscribe::default(),
+            new_incident: None,
             rotation_table: TableState::default(),
             live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
             region: "All".into(),
@@ -330,6 +334,20 @@ impl StatusApp {
         } else if place != shown {
             self.go(&place);
         }
+        // the new incident dialog over whatever the board shows; opened, it goes to the incidents
+        if let Some(form) = self.new_incident.as_mut() {
+            let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+            match form.show(ui.ctx(), &self.incidents, now, ME) {
+                Some(new_incident::Answer::Open(made)) => {
+                    self.incidents.insert(0, made);
+                    self.new_incident = None;
+                    self.shown = 0;
+                    self.go("incidents");
+                }
+                Some(new_incident::Answer::Cancel) => self.new_incident = None,
+                None => {}
+            }
+        }
         match account {
             Some(AccountAction::Settings) => self.settings = true,
             Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
@@ -365,8 +383,9 @@ impl StatusApp {
                 } else {
                     format!("Paused at {clock}.")
                 };
+                let mut report = false;
                 PageHeader::new("Overview").description(description).show(ui, |ui| {
-                    ui.add(Button::new("Report incident").icon(Icon::Siren));
+                    report = ui.add(Button::new("Report incident").icon(Icon::Siren)).clicked();
                     ui.add(Button::new("Edit").icon(Icon::Pencil).variant(ButtonVariant::Outline));
                     let (icon, word) = if live {
                         (Icon::Pause, "Pause")
@@ -377,6 +396,9 @@ impl StatusApp {
                         .add(Button::new(word).icon(icon).variant(ButtonVariant::Outline))
                         .clicked();
                 });
+                if report {
+                    self.report_incident(None);
+                }
                 self.kpis(ui);
                 if let Some(id) = self.tiles(ui) {
                     self.go(&format!("services/{id}"));
@@ -427,7 +449,9 @@ impl StatusApp {
         PageHeader::new("Incidents")
             .count(format!("{open} open"))
             .show(ui, |ui| {
-                ui.add(Button::new("New").icon(Icon::Plus));
+                if ui.add(Button::new("New").icon(Icon::Plus)).clicked() {
+                    self.report_incident(None);
+                }
             });
         let t = sokkel_ui_egui::tokens(ui.ctx());
         let all = self.incidents.len();
@@ -514,6 +538,11 @@ impl StatusApp {
                 _ => self.assign_to_on_call(id),
             }
         }
+    }
+
+    /// Open the new incident dialog, fresh, the service it was opened from ticked.
+    pub fn report_incident(&mut self, service: Option<&str>) {
+        self.new_incident = Some(new_incident::NewIncident::new(service, &self.on_call));
     }
 
     /// Resolve an open incident, or reopen a resolved one, with an update saying so, as the web's
@@ -727,7 +756,11 @@ impl StatusApp {
                     ui.vertical(|ui| {
                         ui.set_width(column - 32.0);
                         Stack::new(Gap::Xl).show(ui, |ui| {
-                            for incident in self.incidents.iter().filter(|i| i.state != data::State::Resolved) {
+                            for incident in self
+                                .incidents
+                                .iter()
+                                .filter(|i| i.public && i.state != data::State::Resolved)
+                            {
                                 let mut updates: Vec<&data::Update> = incident.updates.iter().collect();
                                 updates.sort_by(|a, b| b.at.total_cmp(&a.at));
                                 let events: Vec<TimelineEvent> = updates
@@ -783,7 +816,7 @@ impl StatusApp {
                                     let happened: Vec<&data::Incident> = self
                                         .incidents
                                         .iter()
-                                        .filter(|i| i.opened >= start && i.opened < start + 86_400_000.0)
+                                        .filter(|i| i.public && i.opened >= start && i.opened < start + 86_400_000.0)
                                         .collect();
                                     let title = self.today.plus(-back).full();
                                     if happened.is_empty() {
@@ -1095,6 +1128,7 @@ impl StatusApp {
         let overall = overall_uptime(&days);
         let health = self.live_world.health[index];
         let last = self.live_world.readings[index].last().copied();
+        let mut report = false;
         let head = PageHeader::new(service.id)
             .back("Services")
             .code(service.host)
@@ -1107,14 +1141,19 @@ impl StatusApp {
                         .icon(Icon::CalendarClock)
                         .variant(ButtonVariant::Outline),
                 );
-                ui.add(
-                    Button::new("Report incident")
-                        .icon(Icon::Siren)
-                        .variant(ButtonVariant::Outline),
-                );
+                report = ui
+                    .add(
+                        Button::new("Report incident")
+                            .icon(Icon::Siren)
+                            .variant(ButtonVariant::Outline),
+                    )
+                    .clicked();
             });
         if head.back {
             self.go("services");
+        }
+        if report {
+            self.report_incident(Some(service.id));
         }
         let value = |f: &dyn Fn(live::Reading) -> String| last.map_or("-".to_owned(), f);
         KpiRow::new([

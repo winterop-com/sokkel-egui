@@ -474,6 +474,8 @@ pub struct Incident {
     /// When it was resolved, or `None` while it is open.
     pub resolved: Option<f64>,
     pub updates: Vec<Update>,
+    /// Whether the public status page shows it.
+    pub public: bool,
 }
 
 const MINUTE: f64 = 60_000.0;
@@ -493,6 +495,7 @@ pub fn seed_incidents(now: f64) -> Vec<Incident> {
         assignee: "grace",
         opened: now - 48.0 * MINUTE,
         resolved: None,
+        public: true,
         updates: [
             (
                 9.0,
@@ -534,6 +537,7 @@ pub fn seed_incidents(now: f64) -> Vec<Incident> {
             assignee: one.assignee,
             opened,
             resolved: Some(resolved),
+            public: true,
             updates: one
                 .steps
                 .iter()
