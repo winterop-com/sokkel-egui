@@ -94,3 +94,23 @@ fn a_stacked_rows_assignee_is_chosen_from_its_fact() {
         .unwrap();
     assert_eq!(task.assignee, "margaret");
 }
+
+#[test]
+fn a_long_stacked_list_draws_only_the_rows_in_view_while_one_is_edited() {
+    let mut harness = phone();
+    {
+        let app = harness.state_mut();
+        let first = app.tasks[0].clone();
+        for n in 0..300 {
+            let mut task = first.clone();
+            task.id = format!("more-{n}");
+            task.title = format!("Rerun nightly-export, part {n}");
+            task.rank += 1000.0 + n as f64;
+            app.tasks.push(task);
+        }
+        app.table.edit(0, 1);
+    }
+    harness.run_steps(4);
+    let drawn = harness.query_all_by_label("Actions").count();
+    assert!(drawn > 5 && drawn < 30, "{drawn} rows drawn");
+}

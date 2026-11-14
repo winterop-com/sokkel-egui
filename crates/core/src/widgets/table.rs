@@ -918,6 +918,13 @@ impl<'a> DataTable<'a> {
                         None => 0.0,
                     }
                 };
+                // where the taller row stands in the order shown, and by how much, computed before the
+                // rows borrow the state
+                let taller: Option<(usize, f32)> = self.state.open.as_ref().and_then(|o| {
+                    let extra = grown(self.state, o.row);
+                    let position = order.iter().position(|r| *r == o.row)?;
+                    (extra > 0.0).then_some((position, extra))
+                });
                 let area = egui::ScrollArea::vertical()
                     .id_salt(self.id.with("rows"))
                     .max_height(if self.stretch {
@@ -1120,11 +1127,38 @@ impl<'a> DataTable<'a> {
                         }
                     }
                 };
-                // stacked rows differ in height while one holds an open field, so all are drawn
-                if stacked {
-                    area.show(ui, |ui| body(ui, 0..count));
-                } else {
-                    area.show_rows(ui, row_height, count, body);
+                match taller {
+                    // one stacked row is taller while it holds an open field: only the rows in
+                    // view are drawn still, each placed past the taller one by its extra
+                    Some((tall, extra)) => {
+                        let top_of =
+                            |position: usize| position as f32 * row_height + if position > tall { extra } else { 0.0 };
+                        let at = |y: f32| {
+                            let y = if y > top_of(tall) + row_height + extra {
+                                y - extra
+                            } else {
+                                y.min(top_of(tall))
+                            };
+                            (y / row_height).floor().max(0.0) as usize
+                        };
+                        area.show_viewport(ui, |ui, viewport| {
+                            ui.set_height(count as f32 * row_height + extra);
+                            let first = at(viewport.min.y).min(count);
+                            let last = (at(viewport.max.y) + 1).min(count);
+                            let top = ui.max_rect().top();
+                            let rect = Rect::from_x_y_ranges(
+                                ui.max_rect().x_range(),
+                                top + top_of(first)..=top + top_of(last),
+                            );
+                            ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
+                                ui.skip_ahead_auto_ids(first);
+                                body(ui, first..last);
+                            });
+                        });
+                    }
+                    None => {
+                        area.show_rows(ui, row_height, count, body);
+                    }
                 }
                 // a dragged row: the line where it lands, and its move on release
                 if let Some(from) = dragging {
