@@ -105,15 +105,29 @@ and never chase a difference made of numbers.
 
 ## What does not work yet
 
-sokkel-ui's examples keep one rule: every button does what it says. These stand on egui's screens
-so they match the web's, but nothing answers them yet, until their parts are ported: Edit on the
-overview; Schedule maintenance and Deploy on a service's page. Report incident (the overview, a
-service's page) and New (the incidents page) open the new incident dialog, the web's
-`NewIncidentDialog`: what is wrong, the severity, the services it touches, where, who takes it
-(the person on call by default, `field` saying so), the first update (`TextField::multiline`) and
-whether the status page shows it, Open incident refused in the web's words until it can open.  An
-incident opened goes to its own page, as the web's. Resolve, Reopen and Assign to the person on call in an incident's menu
-work, and Subscribe on the public page brings the form into view.
+sokkel-ui's examples keep one rule: every button does what it says. Edit on the overview stands
+there so the screen matches the web's, but nothing answers it yet, until the arranged board
+(`DashboardArrange`) is ported. Everything else works:
+
+- Report incident (the overview, a service's page) and New (the incidents page) open the new
+  incident dialog, the web's `NewIncidentDialog`, opened on its own page.
+- Schedule maintenance opens the web's `MaintenanceDialog`: what the work is, and when it starts
+  and ends in two `DateTimeField`s (typed as `2026-11-17 02:00`, or picked on a calendar beside
+  the day's times every 15 minutes; a moment that cannot be read, or before the earliest, said
+  under the field), tomorrow from two in the night by default, Schedule refused in the web's
+  words. The window goes on the status page's maintenance ahead.
+- Deploy opens the web's `DeployDialog`: the version, one patch on by default, and what it
+  changes, refused until the version is written as one and new. A deploy runs 8 s of the
+  board's clock, then succeeds, and is the version the service's figures say it runs
+  (`data::seed_deploys` gives every service its last three, as the web's). The service page's
+  Deploys and Maintenance panels are still to come.
+- Resolve, Reopen and Assign to the person on call in an incident's menu and on its page;
+  Subscribe on the public page brings the form into view.
+
+sokkel-ui 0.28.1's touch behaviors (a tooltip held on a tap, a shut button's reason on a tap)
+and the palette's search wait (`wait-shown`) do not reach egui yet: its apps run with a mouse,
+and its palette's commands answer at once. The tokens carry `tip-hold` and `wait-shown` for when
+they do.
 
 ## Last checked
 

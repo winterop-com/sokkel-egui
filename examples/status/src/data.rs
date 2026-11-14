@@ -619,9 +619,9 @@ pub fn seed_handovers(monday_nine: f64) -> Vec<Handover> {
 /// A window a service is taken down for work, its times in milliseconds of the board's clock.
 #[derive(Clone, Debug)]
 pub struct Maintenance {
-    pub id: &'static str,
+    pub id: String,
     pub service: &'static str,
-    pub title: &'static str,
+    pub title: String,
     pub starts: f64,
     pub ends: f64,
     pub by: &'static str,
@@ -641,31 +641,112 @@ pub fn seed_maintenance() -> Vec<Maintenance> {
     let at = |days: f64, hour: f64| days * DAY + hour * 60.0 * MINUTE;
     vec![
         Maintenance {
-            id: "maintenance-1",
+            id: "maintenance-1".into(),
             service: "search",
-            title: "Moving the search index to larger disks",
+            title: "Moving the search index to larger disks".into(),
             starts: at(2.0, 2.0),
             ends: at(2.0, 4.0),
             by: "linus",
             cancelled: false,
         },
         Maintenance {
-            id: "maintenance-2",
+            id: "maintenance-2".into(),
             service: "queue",
-            title: "Upgrading the queue",
+            title: "Upgrading the queue".into(),
             starts: at(6.0, 1.0),
             ends: at(6.0, 2.0),
             by: "ada",
             cancelled: false,
         },
         Maintenance {
-            id: "maintenance-3",
+            id: "maintenance-3".into(),
             service: "mail",
-            title: "A new sending address for send-digest",
+            title: "A new sending address for send-digest".into(),
             starts: at(-12.0, 3.0),
             ends: at(-12.0, 4.0),
             by: "margaret",
             cancelled: false,
         },
     ]
+}
+
+/// How a deploy went.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DeployState {
+    Running,
+    Succeeded,
+    Failed,
+}
+
+/// A version of a service put out, as the board keeps it.
+#[derive(Clone, Debug)]
+pub struct Deploy {
+    pub id: String,
+    pub service: &'static str,
+    pub version: String,
+    /// When it started, in milliseconds of the board's clock.
+    pub at: f64,
+    pub by: &'static str,
+    pub state: DeployState,
+    pub note: String,
+}
+
+/// A version one patch on: `v2.41.2` gives `v2.41.3`.
+pub fn next_version(version: &str) -> String {
+    let parts: Vec<u64> = version
+        .trim_start_matches('v')
+        .split('.')
+        .map(|p| p.parse().unwrap_or(0))
+        .collect();
+    let part = |i: usize| parts.get(i).copied().unwrap_or(0);
+    format!("v{}.{}.{}", part(0), part(1), part(2) + 1)
+}
+
+/// A version one patch before, never below zero.
+pub fn previous_version(version: &str) -> String {
+    let parts: Vec<u64> = version
+        .trim_start_matches('v')
+        .split('.')
+        .map(|p| p.parse().unwrap_or(0))
+        .collect();
+    let part = |i: usize| parts.get(i).copied().unwrap_or(0);
+    format!("v{}.{}.{}", part(0), part(1), part(2).saturating_sub(1))
+}
+
+const DEPLOY_NOTES: [&str; 5] = [
+    "Faster pages of results",
+    "Retries on a failed upload step",
+    "A fix for a slow validate step",
+    "Smaller exports",
+    "Logs in the new format",
+];
+
+/// The deploys the demo starts with, as the web's `seedDeploys`: each service's last three, the
+/// middle one failed for every third service.
+pub fn seed_deploys(now: f64) -> Vec<Deploy> {
+    SERVICES
+        .iter()
+        .enumerate()
+        .flat_map(|(service_index, service)| {
+            (0..3usize).map(move |back| {
+                let mut version = service.version.to_owned();
+                for _ in 0..back {
+                    version = previous_version(&version);
+                }
+                Deploy {
+                    id: format!("deploy-{}-{back}", service.id),
+                    service: service.id,
+                    version,
+                    at: now - (back as f64 * 3.0 + service_index as f64 * 0.4 + 0.5) * DAY,
+                    by: PEOPLE[(service_index + back) % PEOPLE.len()],
+                    state: if back == 1 && service_index % 3 == 0 {
+                        DeployState::Failed
+                    } else {
+                        DeployState::Succeeded
+                    },
+                    note: DEPLOY_NOTES[(service_index + back) % DEPLOY_NOTES.len()].into(),
+                }
+            })
+        })
+        .collect()
 }

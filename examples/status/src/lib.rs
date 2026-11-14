@@ -4,6 +4,7 @@
 //! stands.
 
 pub mod data;
+pub mod dialogs;
 pub mod history;
 pub mod live;
 pub mod new_incident;
@@ -85,6 +86,11 @@ pub struct StatusApp {
     pub shifts: Vec<data::Shift>,
     pub handovers: Vec<data::Handover>,
     pub maintenance: Vec<data::Maintenance>,
+    /// Every service's deploys, the newest last.
+    pub deploys: Vec<data::Deploy>,
+    /// A service's dialogs, while one is open.
+    pub maintenance_form: Option<dialogs::MaintenanceForm>,
+    pub deploy_form: Option<dialogs::DeployForm>,
     /// The incident an incident's page shows.
     pub incident: Option<String>,
     /// Its page's next update: the state after it, and what it says.
@@ -146,6 +152,9 @@ impl StatusApp {
             maintenance: data::seed_maintenance(),
             subscribe: Subscribe::default(),
             new_incident: None,
+            deploys: data::seed_deploys(9.0 * 3600.0 * 1000.0),
+            maintenance_form: None,
+            deploy_form: None,
             incident: None,
             post_state: 0,
             post_message: String::new(),
@@ -204,6 +213,30 @@ impl StatusApp {
         self.readings += 1;
         let at = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
         self.live_world.tick(at);
+        // a deploy runs 8 s of the board's clock, then succeeds, as the web's `DEPLOY_TIME`
+        for deploy in &mut self.deploys {
+            if deploy.state == data::DeployState::Running && at - deploy.at >= 8_000.0 {
+                deploy.state = data::DeployState::Succeeded;
+            }
+        }
+    }
+
+    /// The version a service runs: its last deploy that succeeded, or the board's own.
+    pub fn running(&self, service: &str) -> String {
+        self.deploys
+            .iter()
+            .filter(|d| d.service == service && d.state == data::DeployState::Succeeded)
+            .max_by(|a, b| a.at.total_cmp(&b.at))
+            .map_or_else(
+                || {
+                    SERVICES
+                        .iter()
+                        .find(|s| s.id == service)
+                        .map_or("", |s| s.version)
+                        .to_owned()
+                },
+                |d| d.version.clone(),
+            )
     }
 
     /// The last reading's time, `HH:MM:SS`.
@@ -360,6 +393,35 @@ impl StatusApp {
             self.settings = true;
         } else if place != shown {
             self.go(&place);
+        }
+        // a service's dialogs over its page
+        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        if let Some(form) = self.maintenance_form.as_mut() {
+            let wall = sokkel_ui_egui::Moment {
+                day: self.today,
+                minutes: (now / 60_000.0) as u32,
+            };
+            match form.show(ui.ctx(), self.today, wall) {
+                Some(dialogs::Answer::Done(())) => {
+                    if let Some(window) = form.make(self.today, ME, self.maintenance.len()) {
+                        self.maintenance.push(window);
+                    }
+                    self.maintenance_form = None;
+                }
+                Some(dialogs::Answer::Cancel) => self.maintenance_form = None,
+                None => {}
+            }
+        }
+        if let Some(form) = self.deploy_form.as_mut() {
+            match form.show(ui.ctx()) {
+                Some(dialogs::Answer::Done(())) => {
+                    let made = form.make(now, ME, self.deploys.len());
+                    self.deploys.push(made);
+                    self.deploy_form = None;
+                }
+                Some(dialogs::Answer::Cancel) => self.deploy_form = None,
+                None => {}
+            }
         }
         // the new incident dialog over whatever the board shows; opened, it goes to the incidents
         if let Some(form) = self.new_incident.as_mut() {
@@ -1045,7 +1107,7 @@ impl StatusApp {
                                 let events: Vec<TimelineEvent> = ahead
                                     .iter()
                                     .map(|w| TimelineEvent {
-                                        title: w.title.into(),
+                                        title: w.title.clone(),
                                         at: if w.going_on(now) {
                                             "now".into()
                                         } else {
@@ -1380,18 +1442,21 @@ impl StatusApp {
         let health = self.live_world.health[index];
         let last = self.live_world.readings[index].last().copied();
         let mut report = false;
+        let (mut deploy, mut schedule) = (false, false);
         let head = PageHeader::new(service.id)
             .back("Services")
             .code(service.host)
             .description(service.description)
             .chip(health.words().to_lowercase(), health_tone(health))
             .show(ui, |ui| {
-                ui.add(Button::new("Deploy").icon(Icon::Rocket));
-                ui.add(
-                    Button::new("Schedule maintenance")
-                        .icon(Icon::CalendarClock)
-                        .variant(ButtonVariant::Outline),
-                );
+                deploy = ui.add(Button::new("Deploy").icon(Icon::Rocket)).clicked();
+                schedule = ui
+                    .add(
+                        Button::new("Schedule maintenance")
+                            .icon(Icon::CalendarClock)
+                            .variant(ButtonVariant::Outline),
+                    )
+                    .clicked();
                 report = ui
                     .add(
                         Button::new("Report incident")
@@ -1406,6 +1471,12 @@ impl StatusApp {
         if report {
             self.report_incident(Some(service.id));
         }
+        if schedule {
+            self.maintenance_form = Some(dialogs::MaintenanceForm::new(service.id, self.today));
+        }
+        if deploy {
+            self.deploy_form = Some(dialogs::DeployForm::new(service.id, &self.running(service.id)));
+        }
         let value = |f: &dyn Fn(live::Reading) -> String| last.map_or("-".to_owned(), f);
         KpiRow::new([
             Stat::new("State", health.words()),
@@ -1415,7 +1486,7 @@ impl StatusApp {
             Stat::new("Errors", value(&|r| rate(r.errors))).note(format!("usually {}", rate(service.errors))),
             Stat::new("Requests", value(&|r| group(r.load.round() as u64))).unit("/s"),
             Stat::new("Uptime, 90 days", overall.map_or("-".to_owned(), format_uptime)),
-            Stat::new("Running", service.version),
+            Stat::new("Running", self.running(service.id)),
         ])
         .show(ui);
         let readings = &self.live_world.readings[index];
