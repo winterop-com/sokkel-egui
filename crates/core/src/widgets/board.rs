@@ -329,11 +329,20 @@ impl BoardCard {
                 ui.spacing_mut().item_spacing.y = 8.0;
                 // the title at the section title's size, on lines 20 tall, at most three
                 let spec = t.text("section-title");
-                let rich = egui::RichText::new(&self.title)
-                    .size(spec.size)
-                    .line_height(Some(20.0))
-                    .variation("wght", spec.weight)
-                    .color(t.color("card-foreground"));
+                let rich = |text: &str| {
+                    egui::RichText::new(text)
+                        .size(spec.size)
+                        .line_height(Some(20.0))
+                        .variation("wght", spec.weight)
+                        .color(t.color("card-foreground"))
+                };
+                let broken = break_like_web(&self.title, width - 26.0 - 64.0, |text| {
+                    WidgetText::from(rich(text))
+                        .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextStyle::Body)
+                        .size()
+                        .x
+                });
+                let rich = rich(&broken);
                 // wrapped a little short of the card, as the web's title leaves room for its menu,
                 // each line 20 tall
                 let galley = WidgetText::from(rich).into_galley(
@@ -450,4 +459,37 @@ impl BoardCard {
         }
         CardResponse { response, chosen }
     }
+}
+
+/// `text` with a line break wherever a browser would wrap it at `width`: after a space or a hyphen,
+/// at the last one that keeps the line within `width`. egui breaks after a hyphen only where a line
+/// has no space, so "send-digest" stays whole where the web puts "send-" at a line's end.
+fn break_like_web(text: &str, width: f32, measure: impl Fn(&str) -> f32) -> String {
+    // the pieces a line may end after: each word with its space, or up to and with its hyphen
+    let mut pieces: Vec<&str> = Vec::new();
+    let mut start = 0;
+    for (i, c) in text.char_indices() {
+        if c == ' ' || c == '-' {
+            pieces.push(&text[start..i + c.len_utf8()]);
+            start = i + c.len_utf8();
+        }
+    }
+    if start < text.len() {
+        pieces.push(&text[start..]);
+    }
+    let mut lines: Vec<String> = Vec::new();
+    let mut line = String::new();
+    for piece in pieces {
+        let tried = format!("{line}{piece}");
+        if !line.is_empty() && measure(tried.trim_end()) > width {
+            lines.push(line.trim_end().to_owned());
+            line = piece.to_owned();
+        } else {
+            line = tried;
+        }
+    }
+    if !line.is_empty() {
+        lines.push(line.trim_end().to_owned());
+    }
+    lines.join("\n")
 }
