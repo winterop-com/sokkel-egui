@@ -121,6 +121,23 @@ fn every_screen() {
     harness.run_steps(2);
     results.add(harness.try_snapshot("phone_drawer"));
 
+    // settings on a phone: a sheet over the window, its sections a list to go into
+    let mut harness = render_at(phone, Scheme::System, |app| app.go("settings"));
+    results.add(harness.try_snapshot("phone_settings"));
+    harness.get_by_label("Appearance").click();
+    harness.run_steps(3);
+    harness.remove_cursor();
+    harness.run_steps(2);
+    results.add(harness.try_snapshot("phone_settings_section"));
+    let mut harness = render_at(phone, Scheme::System, |app| app.go("settings"));
+    harness.get_by_label("Demo data").click();
+    harness.run_steps(3);
+    harness.get_by_label("Reset").click();
+    harness.run_steps(3);
+    harness.remove_cursor();
+    harness.run_steps(2);
+    results.add(harness.try_snapshot("phone_settings_reset"));
+
     // keyboard focus on the menu button, which looks like the rail's head control
     let mut harness = render_at(phone, Scheme::System, |_| {});
     harness.get_by_label("Open the navigation").focus();

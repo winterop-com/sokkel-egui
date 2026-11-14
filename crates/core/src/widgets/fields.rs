@@ -182,7 +182,8 @@ impl<'a> SearchField<'a> {
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
-        let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), t.density("control")), Sense::hover());
+        let height = super::finger_tall(ui.ctx(), &t, t.density("control"));
+        let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
         icon_field(
             ui,
             rect,

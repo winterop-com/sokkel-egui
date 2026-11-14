@@ -135,7 +135,7 @@ impl Widget for Input<'_> {
         if let Some(placeholder) = &self.placeholder {
             edit = edit.hint_text(body.rich(&t, placeholder).color(t.color("muted-foreground")));
         }
-        let height = t.density("control");
+        let height = super::finger_tall(ui.ctx(), &t, t.density("control"));
         let ground = match (self.enabled, t.dark) {
             (true, _) => t.color("field"),
             (false, false) => t.color_at("input", 0.5),

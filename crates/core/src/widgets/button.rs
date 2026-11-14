@@ -99,6 +99,12 @@ impl Widget for Button {
             ButtonSize::Default => (t.density("control"), 10.0, TextRole::Action, f32::INFINITY, 16.0),
             ButtonSize::Lg => (t.density("control-lg"), 10.0, TextRole::Action, f32::INFINITY, 16.0),
         };
+        // a finger tall on a phone, the extra small size aside
+        let height = if self.size == ButtonSize::Xs {
+            height
+        } else {
+            super::finger_tall(ui.ctx(), &t, height)
+        };
         // the icon's room, or the spinner's in its place: the glyph and the gap after it
         let gap = if self.size == ButtonSize::Xs || self.size == ButtonSize::Sm {
             4.0

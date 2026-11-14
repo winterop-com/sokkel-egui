@@ -193,7 +193,38 @@
             "steps": [
                 "button:Rerun nightly-export for last week"
             ]
+        },
+        {
+            "name": "phone_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 390,
+                "height": 844
+            }
+        },
+        {
+            "name": "phone_settings_section",
+            "route": "settings",
+            "viewport": {
+                "width": 390,
+                "height": 844
+            },
+            "steps": [
+                "button:Appearance"
+            ]
+        },
+        {
+            "name": "phone_settings_reset",
+            "route": "settings",
+            "viewport": {
+                "width": 390,
+                "height": 844
+            },
+            "steps": [
+                "button:Demo data",
+                "button:Reset"
+            ]
         }
     ],
-    "shot": "014d46013a92e9f6d8a5cfd3d17c86aacb87ece2"
+    "shot": "d812023ae4a1a0417e19dba303c62e53fa2567db"
 }

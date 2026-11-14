@@ -175,8 +175,14 @@ fn paint_swatch(painter: &egui::Painter, t: &crate::Tokens, left_center: egui::P
 impl Widget for Select<'_> {
     fn ui(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
-        let height = t.density("control");
-        let (rect, mut response) = ui.allocate_exact_size(vec2(self.width, height), Sense::click());
+        let height = super::finger_tall(ui.ctx(), &t, t.density("control"));
+        // across the row it is given where that row asks it to fill (a setting's control under its words)
+        let width = if ui.layout().main_justify {
+            ui.available_width()
+        } else {
+            self.width
+        };
+        let (rect, mut response) = ui.allocate_exact_size(vec2(width, height), Sense::click());
         response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::ComboBox, true, &self.label));
         let popup_id = response.id.with("list");
         let opened_once = response.id.with("opened-once");
@@ -243,7 +249,7 @@ impl Widget for Select<'_> {
             .id(popup_id)
             .frame(frame)
             .gap(4.0)
-            .width(self.width)
+            .width(rect.width())
             .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
             .show(|ui| {
                 ui.spacing_mut().item_spacing.y = 0.0;
@@ -315,6 +321,8 @@ pub struct Dialog {
     title: String,
     description: Option<String>,
     width: f32,
+    /// A full-screen sheet on a phone; a confirm dialog stays a box sized to its words.
+    sheet: bool,
 }
 
 impl Dialog {
@@ -324,6 +332,7 @@ impl Dialog {
             title: title.into(),
             description: None,
             width: 512.0,
+            sheet: true,
         }
     }
 
@@ -348,15 +357,27 @@ impl Dialog {
     /// The dialog with no body: its title and description, 16 over the footer.
     fn draw(self, ctx: &Context, body: Option<impl FnOnce(&mut Ui)>, footer: impl FnOnce(&mut Ui)) -> bool {
         let t = tokens(ctx);
-        let frame = super::dialog_frame(&t);
+        // below 768 a sheet over the whole window, with no corners, edge or shadow
+        let sheet = self.sheet && super::is_phone(ctx);
+        let frame = if sheet {
+            Frame::new().fill(t.color("popover"))
+        } else {
+            super::dialog_frame(&t)
+        };
         let response = egui::Modal::new(self.id)
             .backdrop_color(t.color_at("shade", 0.1))
             .frame(frame)
             .show(ctx, |ui| {
                 let window = ctx.content_rect();
-                let width = self.width.min(window.width() - 32.0);
-                // the footer: 16 over and under a control, and its rule
-                let band_height = 1.0 + 16.0 + t.density("control") + 16.0;
+                let width = if sheet {
+                    window.width()
+                } else {
+                    self.width.min(window.width() - 32.0)
+                };
+                // a sheet's body scrolls in all the window leaves; a box's in the window less 64
+                let room_down = if sheet { 0.0 } else { 64.0 };
+                // the footer: 16 over and under a control (a finger tall on a phone), and its rule
+                let band_height = 1.0 + 16.0 + super::finger_tall(ctx, &t, t.density("control")) + 16.0;
                 let top = ui.cursor().top();
                 ui.set_width(width);
                 ui.spacing_mut().item_spacing.y = 0.0;
@@ -374,7 +395,7 @@ impl Dialog {
                     if let Some(body) = body {
                         ui.add_space(8.0);
                         // the box at most the window less 64 tall: the body scrolls in what is left
-                        let room = window.height() - 64.0 - (ui.cursor().top() - top) - 16.0 - band_height;
+                        let room = window.height() - room_down - (ui.cursor().top() - top) - 16.0 - band_height;
                         egui::ScrollArea::vertical()
                             .id_salt(self.id.with("body"))
                             .max_height(room.max(t.density("control")))
@@ -382,9 +403,14 @@ impl Dialog {
                             .show(ui, body);
                     }
                 });
+                // a sheet's footer stands at the window's foot
+                if sheet {
+                    let used = ui.cursor().top() - top;
+                    ui.add_space((window.height() - used - band_height).max(0.0));
+                }
                 // the footer band: muted at half, a rule above, the surface's lower corners
                 let (band, _) = ui.allocate_exact_size(vec2(width, band_height), Sense::hover());
-                let radius = t.radius("surface");
+                let radius = if sheet { CornerRadius::ZERO } else { t.radius("surface") };
                 ui.painter()
                     .rect_filled(band, CornerRadius { nw: 0, ne: 0, ..radius }, t.color_at("muted", 0.5));
                 ui.painter()
@@ -466,8 +492,9 @@ impl ConfirmDialog {
     pub fn show(self, ctx: &Context) -> Option<ConfirmAnswer> {
         let mut answer = None;
         let busy = self.busy.is_some();
-        // sokkel-ui's ConfirmDialog is `sm`
+        // sokkel-ui's ConfirmDialog is `sm`, and a box on a phone too
         let mut dialog = Dialog::new(self.id, self.question.clone()).width(384.0);
+        dialog.sheet = false;
         if let Some(detail) = &self.detail {
             dialog = dialog.description(detail.clone());
         }

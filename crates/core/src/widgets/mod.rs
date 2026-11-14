@@ -89,6 +89,16 @@ pub(crate) fn dialog_frame(tokens: &Tokens) -> egui::Frame {
     popup_frame(tokens).shadow(shadow)
 }
 
+/// A control's height on this window: `height`, and at least a finger on a phone, as the web's
+/// `max-md:min-h-finger` (buttons, inputs, search fields, a select's trigger).
+pub(crate) fn finger_tall(ctx: &egui::Context, tokens: &Tokens, height: f32) -> f32 {
+    if is_phone(ctx) {
+        height.max(tokens.length("spacing-finger"))
+    } else {
+        height
+    }
+}
+
 /// How tall a one-line row of a list of choices (a menu, a select's list) is: a control tall, as
 /// the density sets it, and a finger tall on a phone.
 pub(crate) fn choice_row_height(ctx: &egui::Context, tokens: &Tokens) -> f32 {

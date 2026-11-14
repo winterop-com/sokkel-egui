@@ -74,6 +74,12 @@ differ on purpose until then; a difference listed here is not drift to undo:
 - F0: a table that edits in place sorts by keys: Up from the first row reaches the head, Left and
   Right choose a column, Enter or Space cycles its sort, Down goes back (the tasks example's
   columns do not sort, so its screens show none of it).
+- F17 (phone_settings, phone_settings_section, phone_settings_reset): below 768 a dialog is a
+  full-screen sheet and settings a list of sections to go into (finger-tall entries with a chevron,
+  none marked; Back before the title in a section; the pane 16 in; a row's control under its words
+  below 512, a select across it), while a ConfirmDialog stays a box; buttons, inputs, search fields
+  and a select's trigger are a finger tall on a phone. The web makes its sheets below 640 until it
+  takes F17; at 390 both sides agree.
 - F18: no blur behind a dialog, on either side once the web drops its own.
 
 ## What is left, largest first
