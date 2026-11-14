@@ -3,7 +3,7 @@
 
 use std::sync::Arc;
 
-use egui::{Galley, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
+use egui::{Color32, Galley, Rect, Response, Sense, Shape, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
 
 use crate::{Icon, TextRole, icons, tokens};
 
@@ -17,6 +17,9 @@ pub struct Stat {
     unit: Option<String>,
     change: Option<(String, Option<bool>)>,
     note: Option<String>,
+    dot: Option<Color32>,
+    trend: Option<(Vec<f64>, Color32)>,
+    emphasis: bool,
 }
 
 impl Stat {
@@ -27,7 +30,108 @@ impl Stat {
             unit: None,
             change: None,
             note: None,
+            dot: None,
+            trend: None,
+            emphasis: false,
         }
+    }
+
+    /// A dot before the label in `color`, such as a state's.
+    pub fn dot(mut self, color: Color32) -> Self {
+        self.dot = Some(color);
+        self
+    }
+
+    /// A small line under the number: its last values, in `ink` (a `Sparkline`).
+    pub fn trend(mut self, values: impl IntoIterator<Item = f64>, ink: Color32) -> Self {
+        self.trend = Some((values.into_iter().collect(), ink));
+        self
+    }
+
+    /// Edges a tile in its dot's color: the number that asks for work.
+    pub fn emphasis(mut self, emphasis: bool) -> Self {
+        self.emphasis = emphasis;
+        self
+    }
+
+    /// The stat as a card of its own, `width` wide, pressed as one (`Stat` `variant="tile"` with an
+    /// `href`): the label in the label's type after its dot, the number at the statistic's size, 4
+    /// further down, the note in the help's type, and the trend 4 under it.
+    pub fn tile(self, ui: &mut Ui, width: f32) -> Response {
+        let t = tokens(ui.ctx());
+        let inner = width - 32.0;
+        let lay = |rich: egui::RichText, role: TextRole, wrap: TextWrapMode| {
+            WidgetText::from(rich).into_galley(ui, Some(wrap), inner.max(1.0), role.font(&t))
+        };
+        // a large dot, 10 across, 8 before the label
+        let lead = if self.dot.is_some() { 18.0 } else { 0.0 };
+        let label = WidgetText::from(TextRole::Label.rich(&t, &self.label)).into_galley(
+            ui,
+            Some(TextWrapMode::Truncate),
+            (inner - lead).max(1.0),
+            TextRole::Label.font(&t),
+        );
+        let value = lay(
+            TextRole::Statistic.rich(&t, &self.value),
+            TextRole::Statistic,
+            TextWrapMode::Truncate,
+        );
+        let unit = self
+            .unit
+            .as_ref()
+            .map(|unit| lay(TextRole::Body.rich(&t, unit), TextRole::Body, TextWrapMode::Extend));
+        let note = self
+            .note
+            .as_ref()
+            .map(|note| lay(TextRole::Help.rich(&t, note), TextRole::Help, TextWrapMode::Wrap));
+        let height = 16.0
+            + label.size().y
+            + 8.0
+            + value.size().y
+            + note.as_ref().map_or(0.0, |n| 4.0 + n.size().y)
+            + self.trend.as_ref().map_or(0.0, |_| 8.0 + SPARK.y)
+            + 16.0;
+        let (rect, response) = ui.allocate_exact_size(vec2(width, height), Sense::click());
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.label));
+        let painter = ui.painter();
+        let radius = t.radius("surface");
+        let hot = response.hovered();
+        painter.rect_filled(rect, radius, if hot { t.color("hover") } else { t.color("card") });
+        let edge = match (self.emphasis, self.dot) {
+            (true, Some(dot)) => dot.gamma_multiply(0.55),
+            _ if hot => t.color_at("foreground", 0.25),
+            _ => t.color("border-strong"),
+        };
+        painter.rect_stroke(rect, radius, Stroke::new(1.0, edge), egui::StrokeKind::Inside);
+        let mut y = rect.top() + 16.0;
+        let x = rect.left() + 16.0;
+        if let Some(dot) = self.dot {
+            painter.circle_filled(pos2(x + 5.0, y + label.size().y / 2.0), 5.0, dot);
+        }
+        painter.galley(pos2(x + lead, y), label.clone(), t.color("foreground"));
+        y += label.size().y + 8.0;
+        let line = baseline(&value);
+        painter.galley(pos2(x, y), value.clone(), t.color("card-foreground"));
+        if let Some(unit) = unit {
+            painter.galley(
+                pos2(x + value.size().x + 8.0, y + line - baseline(&unit)),
+                unit,
+                t.color("muted-foreground"),
+            );
+        }
+        y += value.size().y;
+        if let Some(note) = note {
+            y += 4.0;
+            let height = note.size().y;
+            painter.galley(pos2(x, y), note, t.color("muted-foreground"));
+            y += height;
+        }
+        if let Some((values, ink)) = &self.trend {
+            y += 8.0;
+            sparkline(painter, Rect::from_min_size(pos2(x, y), SPARK), values, *ink);
+        }
+        super::focus_ring(painter, &t, rect, radius, &response);
+        response
     }
 
     /// What the number is counted in, after it: `/s`, `ms`.
@@ -137,6 +241,38 @@ impl Stat {
             painter.galley(pos2(at.x, y + 4.0), note, t.color("faint"));
         }
     }
+}
+
+/// A sparkline's size, as the web's default: 120 by 28.
+const SPARK: egui::Vec2 = egui::vec2(120.0, 28.0);
+
+/// A line of values drawn small in `rect`, with no axes, its last value marked with a dot, after
+/// sokkel-ui's `Sparkline`: the trend under a stat. Values are spaced evenly, 2 in from the edges.
+pub fn sparkline(painter: &egui::Painter, rect: Rect, values: &[f64], ink: Color32) {
+    if values.is_empty() {
+        return;
+    }
+    let min = values.iter().copied().fold(f64::INFINITY, f64::min);
+    let max = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let span = if max - min == 0.0 { 1.0 } else { max - min };
+    let step = if values.len() > 1 {
+        (rect.width() - 4.0) / (values.len() - 1) as f32
+    } else {
+        0.0
+    };
+    let points: Vec<egui::Pos2> = values
+        .iter()
+        .enumerate()
+        .map(|(i, v)| {
+            pos2(
+                rect.left() + 2.0 + i as f32 * step,
+                rect.top() + 2.0 + (rect.height() - 4.0) * (1.0 - ((v - min) / span) as f32),
+            )
+        })
+        .collect();
+    let last = *points.last().unwrap_or(&rect.center());
+    painter.add(Shape::line(points, Stroke::new(1.5, ink)));
+    painter.circle_filled(last, 2.25, ink);
 }
 
 /// Where a galley's first line stands, from its top.

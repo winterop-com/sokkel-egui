@@ -4,14 +4,16 @@
 //! stands.
 
 pub mod data;
+pub mod live;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
-    AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, Icon, KpiRow, Page, PageHeader, Rail,
-    RailEntry, RailGroup, Shell, ShellPart, Stat, StatusLine, StatusTone, TopBar, install,
+    AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, Columns, Icon, KpiRow, Page, PageHeader,
+    Rail, RailEntry, RailGroup, Shell, ShellPart, Stat, StatusLine, StatusTone, TopBar, install,
 };
 
 use data::SERVICES;
+use live::Live;
 
 /// Tidevann's mark, as sokkel-ui's examples draw it (`tidevann-shared/mark`).
 pub const TIDEVANN_MARK: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="currentColor"><path d="M12 4c-1 1.8-3 3.5-3 5a3 3 0 0 0 6 0c0-1.5-2-3.2-3-5Z"/><path d="M5 13c2-2 4 2 7 0s5-2 7 0v1a7 7 0 0 1-14 0Z"/></svg>"#;
@@ -48,6 +50,8 @@ pub struct StatusApp {
     pub on_call: String,
     /// The incidents still open, by code.
     pub open: Vec<String>,
+    /// The live world the readings come from.
+    pub live_world: Live,
 }
 
 impl StatusApp {
@@ -67,6 +71,7 @@ impl StatusApp {
             readings: 0,
             on_call: "grace".into(),
             open: vec!["INC-41".into()],
+            live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
         }
     }
 
@@ -84,6 +89,13 @@ impl StatusApp {
             }
             _ => self.place = "overview".into(),
         }
+    }
+
+    /// Take the next reading, `INTERVAL` on.
+    pub fn tick(&mut self) {
+        self.readings += 1;
+        let at = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        self.live_world.tick(at);
     }
 
     /// The last reading's time, `HH:MM:SS`.
@@ -248,6 +260,9 @@ impl StatusApp {
                         .clicked();
                 });
                 self.kpis(ui);
+                if let Some(id) = self.tiles(ui) {
+                    self.go(&format!("services/{id}"));
+                }
             }
         }
         if toggled {
@@ -278,6 +293,34 @@ impl StatusApp {
             Stat::new("On call", &self.on_call).note("Hand over on the On call page"),
         ])
         .show(ui);
+    }
+}
+
+impl StatusApp {
+    /// Each service as a tile: its state, its latency now with its last readings as a line, and its
+    /// uptime (none yet: the incident history it is read from is still to port).
+    fn tiles(&self, ui: &mut Ui) -> Option<&'static str> {
+        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let mut opened = None;
+        Columns::new(4)
+            .min(160.0)
+            .gap(12.0)
+            .show(ui, SERVICES.len(), |ui, index, width| {
+                let service = SERVICES[index];
+                let health = self.live_world.health[index];
+                let readings = &self.live_world.readings[index];
+                let last = readings.last().map_or("-".to_owned(), |r| format!("{}", r.p95.round()));
+                let stat = Stat::new(service.id, last)
+                    .dot(t.color(health.color()))
+                    .emphasis(health != live::Health::Operational)
+                    .unit("ms p95")
+                    .note(format!("{} · no data over 90 days", health.words()))
+                    .trend(readings.iter().map(|r| r.p95), t.color(health.tone()));
+                if stat.tile(ui, width).clicked() {
+                    opened = Some(service.id);
+                }
+            });
+        opened
     }
 }
 

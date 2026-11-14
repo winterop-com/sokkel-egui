@@ -10,7 +10,8 @@ use status::StatusApp;
 fn render(route: &str) -> Harness<'static, StatusApp> {
     let mut app = StatusApp::on(Appearance::default());
     // the web's shot runs 5 s of its clock: two readings, the last at 09:00:04
-    app.readings = 2;
+    app.tick();
+    app.tick();
     app.go(route);
     let mut harness = Harness::builder().with_size([1280.0, 800.0]).build_ui_state(
         |ui, app: &mut StatusApp| {

@@ -15,7 +15,11 @@ drawn by `examples/status/tests/screens.rs` and laid beside the web's by
 - The overview's figures stand in a `KpiRow` of `Stat`s, at the web's places; until the live
   readings are ported, requests and the api's latency are the services' resting values and uptime
   reads "-".
-- Next, largest first: the service tiles with their sparklines,
+- The service tiles stand as the web's: a `Stat` tile each (`Stat::tile`, its dot, unit, note and
+  `sparkline`), four to a row in `Columns`, pressed to open the service. The readings come from
+  `live.rs`, the web's calm readings ported (a seeded generator, so egui's numbers are its own);
+  the notes say "no data over 90 days" until the incident history uptime is read from is ported.
+- Next, largest first:
   the dashboard under them; the incidents table; the services table; the map of sites; on call's
   rotation; the public page; settings; the live simulation behind all of them.
 
