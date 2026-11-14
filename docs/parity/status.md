@@ -41,6 +41,12 @@ and never chase a difference made of numbers.
   its weeks, each week's person chosen in place, and the Handovers `Timeline` beside them. The page
   scrolls as the web's `main` does (`Page::scroll`); the listings that fill the page with a table
   (incidents, services, regions) keep `Page::show`, their tables scrolling inside it.
+- A service's page has its head (`PageHeader::back`, the host as its code, `PageHeader::chip` for
+  its state, Report incident, Schedule maintenance and Deploy) and its figures; its latency and
+  errors charts, the dependency graph and the uptime bar follow.
+- The busy palette and busy confirm's way out (F23 as the owner refined it: after a wait, a "Stop
+  waiting" and Escape again) comes with the overlays batch's specs; egui's palette commands do
+  not run long yet, its busy `ConfirmDialog` does.
 - Next, largest first:
   the dashboard under them; the incidents table (a stacked, labeled list under a bar with its search, row count and sort; `StatusChip`, `TagChips`, `RelativeTime`); the map of sites; the public page; settings; the live simulation behind all of them.
 

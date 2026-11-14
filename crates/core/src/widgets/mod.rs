@@ -38,7 +38,7 @@ pub use frame::{Rail, RailEntry, RailGroup, Shell, ShellPart, ShellWords, Status
 pub use layout::{AsideWidth, Columns, Gap, Split, Stack};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use overlay::{ConfirmAnswer, ConfirmDialog, Dialog, Select, tooltip, tooltip_shown};
-pub use page::{Page, PageHeader, PageState, PageStateTone, PageStateWords};
+pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
 pub use section::{PersonRow, Section, Timeline, TimelineEvent};
 pub use settings::{

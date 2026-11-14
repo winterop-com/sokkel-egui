@@ -267,10 +267,8 @@ impl StatusApp {
         let mut toggled = false;
         match (self.place.as_str(), self.service.as_deref()) {
             ("services", Some(id)) => {
-                let service = SERVICES.iter().find(|s| s.id == id).copied().unwrap_or(SERVICES[0]);
-                PageHeader::new(service.id)
-                    .description(service.description)
-                    .show(ui, |_| {});
+                let id = id.to_owned();
+                Stack::new(Gap::Page).show(ui, |ui| self.service_page(ui, &id));
             }
             ("services", None) => {
                 Stack::new(Gap::Section).show(ui, |ui| self.services_page(ui));
@@ -278,9 +276,11 @@ impl StatusApp {
             ("incidents", _) => {
                 Stack::new(Gap::Section).show(ui, |ui| self.incidents_page(ui));
             }
-            ("regions", _) => PageHeader::new("Regions")
-                .count("11 of 11 sites operational")
-                .show(ui, |_| {}),
+            ("regions", _) => {
+                PageHeader::new("Regions")
+                    .count("11 of 11 sites operational")
+                    .show(ui, |_| {});
+            }
             ("on-call", _) => {
                 Stack::new(Gap::Page).show(ui, |ui| self.on_call_page(ui));
             }
@@ -521,6 +521,48 @@ impl StatusApp {
             let moved = self.service_order.remove(from);
             self.service_order.insert(to, moved);
         }
+    }
+
+    /// One service: its head with its host, what it does and its state, the way back to the
+    /// services and its actions; its figures; its charts, graph and uptime as they are ported.
+    fn service_page(&mut self, ui: &mut Ui, id: &str) {
+        let index = SERVICES.iter().position(|s| s.id == id).unwrap_or(0);
+        let service = SERVICES[index];
+        let health = self.live_world.health[index];
+        let last = self.live_world.readings[index].last().copied();
+        let head = PageHeader::new(service.id)
+            .back("Services")
+            .code(service.host)
+            .description(service.description)
+            .chip(health.words().to_lowercase(), health_tone(health))
+            .show(ui, |ui| {
+                ui.add(Button::new("Deploy").icon(Icon::Rocket));
+                ui.add(
+                    Button::new("Schedule maintenance")
+                        .icon(Icon::CalendarClock)
+                        .variant(ButtonVariant::Outline),
+                );
+                ui.add(
+                    Button::new("Report incident")
+                        .icon(Icon::Siren)
+                        .variant(ButtonVariant::Outline),
+                );
+            });
+        if head.back {
+            self.go("services");
+        }
+        let value = |f: &dyn Fn(live::Reading) -> String| last.map_or("-".to_owned(), f);
+        KpiRow::new([
+            Stat::new("State", health.words()),
+            Stat::new("Latency p95", value(&|r| format!("{}", r.p95.round())))
+                .unit("ms")
+                .note(format!("usually {} ms", service.latency.round())),
+            Stat::new("Errors", value(&|r| rate(r.errors))).note(format!("usually {}", rate(service.errors))),
+            Stat::new("Requests", value(&|r| group(r.load.round() as u64))).unit("/s"),
+            Stat::new("Uptime, 90 days", "-"),
+            Stat::new("Running", service.version),
+        ])
+        .show(ui);
     }
 
     /// On call: who answers now, the escalation and the next week; the rotation, each week's person

@@ -54,6 +54,15 @@ pub struct PageHeader {
     count: Option<String>,
     code: Option<String>,
     description: Option<String>,
+    back: Option<String>,
+    chip: Option<(String, crate::ChipTone)>,
+}
+
+/// What a page header was asked this frame.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct PageHeaderResponse {
+    /// Its back button was pressed.
+    pub back: bool,
 }
 
 impl PageHeader {
@@ -63,7 +72,22 @@ impl PageHeader {
             count: None,
             code: None,
             description: None,
+            back: None,
+            chip: None,
         }
+    }
+
+    /// A back button before the title, named `label` ("Back"): the way to the page this one is in.
+    pub fn back(mut self, label: impl Into<String>) -> Self {
+        self.back = Some(label.into());
+        self
+    }
+
+    /// A chip under the description, 8 down: the thing's state (sokkel-ui's `meta` with a
+    /// `StatusChip`).
+    pub fn chip(mut self, label: impl Into<String>, tone: crate::ChipTone) -> Self {
+        self.chip = Some((label.into(), tone));
+        self
     }
 
     /// How many the page lists, after its title in figures.
@@ -84,10 +108,32 @@ impl PageHeader {
     }
 
     /// Draw the head, with `actions` laid out from the row's end.
-    pub fn show(self, ui: &mut Ui, actions: impl FnOnce(&mut Ui)) {
+    pub fn show(self, ui: &mut Ui, actions: impl FnOnce(&mut Ui)) -> PageHeaderResponse {
         let t = tokens(ui.ctx());
         let ink = t.color_or("page-title-ink", t.color("foreground"));
+        let mut answer = PageHeaderResponse::default();
         ui.horizontal_top(|ui| {
+            // the back button on the title's line, the title 8 after it
+            if let Some(label) = &self.back {
+                ui.spacing_mut().item_spacing.x = 8.0;
+                let line = TextRole::PageTitle.font(&t).size * 1.25;
+                let (slot, _) = ui.allocate_exact_size(egui::vec2(28.0, line), egui::Sense::hover());
+                let button = egui::Rect::from_center_size(slot.center(), egui::vec2(28.0, 28.0));
+                let hit = ui.interact(button, ui.id().with("page-back"), egui::Sense::click());
+                hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, label));
+                if hit.hovered() {
+                    ui.painter().rect_filled(button, t.radius("control"), t.color("hover"));
+                }
+                icons::paint(
+                    ui.painter(),
+                    button.center(),
+                    Icon::ChevronLeft,
+                    16.0,
+                    t.color("muted-foreground"),
+                );
+                super::focus_ring(ui.painter(), &t, button, t.radius("control"), &hit);
+                answer.back = hit.clicked();
+            }
             let block = ui.vertical(|ui| {
                 // the code right under the title, the description 4 under what is over it
                 ui.spacing_mut().item_spacing.y = 0.0;
@@ -131,6 +177,10 @@ impl PageHeader {
                     ui.set_max_width(640.0);
                     ui.label(TextRole::Body.rich(&t, description).color(t.color("muted-foreground")));
                 }
+                if let Some((label, tone)) = &self.chip {
+                    ui.add_space(8.0);
+                    ui.add(crate::Chip::new(label.clone()).tone(*tone));
+                }
             });
             // the actions at the row's end, 8 apart, level with the title block's foot
             let height = block.response.rect.height();
@@ -143,6 +193,7 @@ impl PageHeader {
                 },
             );
         });
+        answer
     }
 }
 
