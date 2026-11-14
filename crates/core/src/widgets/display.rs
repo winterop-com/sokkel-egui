@@ -367,3 +367,68 @@ impl Widget for Skeleton {
         response
     }
 }
+
+/// A banner's tone: what it says about.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BannerTone {
+    Critical,
+    Warning,
+    Info,
+    Good,
+}
+
+/// A line across the page about how things stand, after sokkel-ui's `Banner`: its tone's icon and
+/// words in the tone's ink, over the tone at 12% with a rule of it at 35% under it, 12 in and 6 over
+/// and under.
+pub struct Banner {
+    tone: BannerTone,
+    text: String,
+}
+
+impl Banner {
+    pub fn new(tone: BannerTone, text: impl Into<String>) -> Self {
+        Self {
+            tone,
+            text: text.into(),
+        }
+    }
+
+    pub fn show(self, ui: &mut egui::Ui) -> egui::Response {
+        let t = crate::tokens(ui.ctx());
+        let (key, icon) = match self.tone {
+            BannerTone::Critical => ("critical", crate::Icon::CircleAlert),
+            BannerTone::Warning => ("warning", crate::Icon::TriangleAlert),
+            BannerTone::Info => ("info", crate::Icon::Info),
+            BannerTone::Good => ("good", crate::Icon::CircleCheck),
+        };
+        let ink = t.color(&format!("{key}-ink"));
+        let width = ui.available_width();
+        let words = egui::WidgetText::from(crate::TextRole::Body.rich(&t, &self.text)).into_galley(
+            ui,
+            Some(egui::TextWrapMode::Wrap),
+            (width - 24.0 - 24.0).max(1.0),
+            crate::TextRole::Body.font(&t),
+        );
+        let height = words.size().y.max(20.0) + 12.0;
+        let (rect, response) = ui.allocate_exact_size(egui::vec2(width, height), egui::Sense::hover());
+        // what it says, for a screen reader
+        let said = self.text.clone();
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, &said));
+        let painter = ui.painter();
+        painter.rect_filled(rect, egui::CornerRadius::ZERO, t.color_at(key, 0.12));
+        painter.hline(
+            rect.x_range(),
+            rect.bottom() - 0.5,
+            egui::Stroke::new(1.0, t.color_at(key, 0.35)),
+        );
+        crate::icons::paint(
+            painter,
+            egui::pos2(rect.left() + 12.0 + 8.0, rect.top() + 6.0 + 10.0),
+            icon,
+            16.0,
+            ink,
+        );
+        painter.galley(egui::pos2(rect.left() + 12.0 + 24.0, rect.top() + 6.0), words, ink);
+        response
+    }
+}

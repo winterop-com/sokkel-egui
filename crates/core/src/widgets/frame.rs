@@ -201,26 +201,7 @@ impl Widget for Rail<'_> {
                 *toggle = false;
             }
         } else {
-            match self.mark {
-                Some(svg) => {
-                    // the mark's ink is `currentColor`: drawn white, then tinted with the tile's ink
-                    let white = svg.replace("currentColor", "#ffffff");
-                    let uri = format!("bytes://rail-mark-{}.svg", egui::Id::new(svg).value());
-                    egui::Image::from_bytes(uri, white.into_bytes())
-                        .tint(t.color("primary-foreground"))
-                        .paint_at(ui, Rect::from_center_size(mark.center(), vec2(16.0, 16.0)));
-                }
-                None => {
-                    let initial: String = self.name.chars().take(1).collect();
-                    painter.text(
-                        mark.center(),
-                        egui::Align2::CENTER_CENTER,
-                        initial,
-                        TextRole::Head.font(&t),
-                        t.color("primary-foreground"),
-                    );
-                }
-            }
+            paint_mark(ui, &painter, &t, mark, self.mark, &self.name);
         }
         // open and collapsible, a button at the head's end narrows the rail (in the drawer, the
         // drawer's close stands there instead)
@@ -415,6 +396,30 @@ impl Widget for Rail<'_> {
     }
 }
 
+/// The app's mark on its tile's ink: the SVG, drawn in `currentColor`, or the name's initial.
+fn paint_mark(ui: &Ui, painter: &egui::Painter, t: &crate::Tokens, tile: Rect, svg: Option<&str>, name: &str) {
+    match svg {
+        Some(svg) => {
+            // the mark's ink is `currentColor`: drawn white, then tinted with the tile's ink
+            let white = svg.replace("currentColor", "#ffffff");
+            let uri = format!("bytes://rail-mark-{}.svg", egui::Id::new(svg).value());
+            egui::Image::from_bytes(uri, white.into_bytes())
+                .tint(t.color("primary-foreground"))
+                .paint_at(ui, Rect::from_center_size(tile.center(), vec2(16.0, 16.0)));
+        }
+        None => {
+            let initial: String = name.chars().take(1).collect();
+            painter.text(
+                tile.center(),
+                egui::Align2::CENTER_CENTER,
+                initial,
+                TextRole::Head.font(t),
+                t.color("primary-foreground"),
+            );
+        }
+    }
+}
+
 /// A control of the frame's own, such as the rail head's or the top bar's menu button: an icon in
 /// `muted-foreground`, under the pointer the `hover` ground and the `foreground` ink, and the
 /// frame's keyboard focus, the button's.
@@ -456,6 +461,62 @@ fn galley(ui: &Ui, role: TextRole, text: &str, width: f32) -> std::sync::Arc<egu
 pub struct TopBar<'a> {
     trail: &'a [&'a str],
     search: Option<(String, String)>,
+    mark: Option<&'static str>,
+}
+
+/// The frame's top bar alone, for a screen without the shell, after sokkel-ui's `AppBar`: the
+/// app's mark, the trail and the actions, in the bar the shell draws (`spacing-shell-top` tall, the
+/// sidebar's ground, a strong rule under it), so the screen reads as the same app. With `desktop`
+/// it is the window's title strip, as the shell's is.
+pub struct AppBar<'a> {
+    bar: TopBar<'a>,
+    desktop: Option<DesktopWindow>,
+}
+
+impl<'a> AppBar<'a> {
+    pub fn new(trail: &'a [&'a str]) -> Self {
+        Self {
+            bar: TopBar::new(trail),
+            desktop: None,
+        }
+    }
+
+    pub fn mark(mut self, svg: &'static str) -> Self {
+        self.bar = self.bar.mark(svg);
+        self
+    }
+
+    pub fn desktop(mut self, desktop: DesktopWindow) -> Self {
+        self.desktop = Some(desktop);
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui, actions: impl FnOnce(&mut Ui)) -> TopBarResponse {
+        let t = tokens(ui.ctx());
+        let rect = Rect::from_min_size(
+            ui.cursor().min,
+            vec2(ui.available_width(), t.length("spacing-shell-top")),
+        );
+        let room = self
+            .desktop
+            .and_then(|d| d.traffic_lights)
+            .map(|room| room.unwrap_or_else(|| t.length("spacing-traffic-lights")));
+        ui.ctx().data_mut(|d| d.insert_temp(desktop_id(), room));
+        if self.desktop.is_some() {
+            let title = ui.interact(rect, desktop_id().with("app-bar"), Sense::click_and_drag());
+            if title.double_clicked() {
+                let zoomed = ui.ctx().input(|i| i.viewport().maximized.unwrap_or(false));
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Maximized(!zoomed));
+            } else if title.drag_started() {
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
+            }
+        }
+        let shown = ui
+            .scope_builder(UiBuilder::new().max_rect(rect), |ui| self.bar.show(ui, actions))
+            .inner;
+        ui.advance_cursor_after_rect(rect);
+        shown
+    }
 }
 
 /// What the top bar was asked this frame.
@@ -467,13 +528,24 @@ pub struct TopBarResponse {
 
 impl<'a> TopBar<'a> {
     pub fn new(trail: &'a [&'a str]) -> Self {
-        Self { trail, search: None }
+        Self {
+            trail,
+            search: None,
+            mark: None,
+        }
     }
 
     /// The palette's button at the bar's end, a field-like button with its word and the keys that
     /// open the palette, as sokkel-ui's top bar draws it in a shell with a palette.
     pub fn search(mut self, word: impl Into<String>, keys: impl Into<String>) -> Self {
         self.search = Some((word.into(), keys.into()));
+        self
+    }
+
+    /// The app's mark on a 28 tile before the trail, for a screen without the rail that carries it
+    /// (an `AppBar`), as SVG drawn in `currentColor`.
+    pub fn mark(mut self, svg: &'static str) -> Self {
+        self.mark = Some(svg);
         self
     }
 
@@ -504,6 +576,12 @@ impl<'a> TopBar<'a> {
                 .max_rect(inner)
                 .layout(Layout::left_to_right(Align::Center)),
             |ui| {
+                if let Some(svg) = self.mark {
+                    let (tile, _) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::hover());
+                    ui.painter().rect_filled(tile, t.radius("md"), t.color("primary"));
+                    paint_mark(ui, ui.painter(), &t, tile, Some(svg), "");
+                    ui.add_space(12.0 - ui.spacing().item_spacing.x);
+                }
                 // crumbs and chevrons 4 apart
                 ui.spacing_mut().item_spacing.x = 4.0;
                 let last = self.trail.len().saturating_sub(1);

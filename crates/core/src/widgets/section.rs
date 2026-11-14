@@ -5,23 +5,34 @@ use egui::{CornerRadius, Rect, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2
 
 use crate::{AvatarSize, TextRole, tokens};
 
+/// Something drawn into a part's room later: a section head's controls, an event's content.
+pub type Tools<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
+
 /// A boxed section: a head bar with its title, a meta beside it and a description under it, over
 /// its body, in one box with the surface's corners.
-pub struct Section {
+pub struct Section<'a> {
     title: String,
     meta: Option<String>,
     description: Option<String>,
     flush: bool,
+    actions: Option<Tools<'a>>,
 }
 
-impl Section {
+impl<'a> Section<'a> {
     pub fn new(title: impl Into<String>) -> Self {
         Self {
             title: title.into(),
             meta: None,
             description: None,
             flush: false,
+            actions: None,
         }
+    }
+
+    /// Controls at the head's end, such as a state's chip.
+    pub fn actions(mut self, actions: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.actions = Some(Box::new(actions));
+        self
     }
 
     /// A count or a short fact 8 after the title, quieter than it.
@@ -118,6 +129,19 @@ impl Section {
                     ui.painter()
                         .galley(pos2(x, top + line), description, t.color("muted-foreground"));
                 }
+                if let Some(actions) = self.actions {
+                    // level with the title's line, at the head's end
+                    let end =
+                        egui::Rect::from_min_max(pos2(head.left() + pad, top), pos2(head.right() - pad, top + line));
+                    let mut tools = ui.new_child(
+                        egui::UiBuilder::new()
+                            .id_salt("section-actions")
+                            .max_rect(end)
+                            .layout(egui::Layout::right_to_left(egui::Align::Center)),
+                    );
+                    tools.spacing_mut().item_spacing.x = 8.0;
+                    actions(&mut tools);
+                }
                 // the body, padded unless flush
                 let margin = if self.flush { 0 } else { pad as i8 };
                 egui::Frame::new()
@@ -198,13 +222,18 @@ impl PersonRow {
 }
 
 /// One event on a `Timeline`.
-#[derive(Clone, Debug)]
+#[derive(Default)]
 pub struct TimelineEvent {
-    pub icon: crate::Icon,
+    /// An icon in place of the dot.
+    pub icon: Option<crate::Icon>,
+    /// The dot's color: the state the event left things in; a faint dot when `None`.
+    pub tone: Option<egui::Color32>,
     pub title: String,
     /// When, in words ("now", "last week").
     pub at: String,
     pub detail: Option<String>,
+    /// More under the detail, such as a day's incidents.
+    pub content: Option<Tools<'static>>,
 }
 
 /// Events one under another, newest first, after sokkel-ui's `Timeline`: each its icon, its title
@@ -248,16 +277,26 @@ impl Timeline {
                 )
             });
             let height = 24.0 + detail.as_ref().map_or(0.0, |d| d.size().y);
-            let gap = if index + 1 < count { 12.0 } else { 0.0 };
+            // 16 under each event but the last, as the web's `pb-4`
+            let gap = if index + 1 < count { 16.0 } else { 0.0 };
             let (rect, _) = ui.allocate_exact_size(vec2(width, height + gap), Sense::hover());
             let middle = rect.top() + 12.0;
-            crate::icons::paint(
-                ui.painter(),
-                pos2(rect.left() + 8.0, middle),
-                event.icon,
-                16.0,
-                t.color("muted-foreground"),
-            );
+            match event.icon {
+                Some(icon) => crate::icons::paint(
+                    ui.painter(),
+                    pos2(rect.left() + 8.0, middle),
+                    icon,
+                    16.0,
+                    event.tone.unwrap_or(t.color("muted-foreground")),
+                ),
+                None => {
+                    ui.painter().circle_filled(
+                        pos2(rect.left() + 8.0, middle),
+                        4.0,
+                        event.tone.unwrap_or(t.color("border-strong")),
+                    );
+                }
+            }
             icons_at.push(middle);
             ui.painter().galley(
                 pos2(rect.left() + text_x, middle - title.size().y / 2.0),
@@ -275,6 +314,20 @@ impl Timeline {
                     detail,
                     t.color("muted-foreground"),
                 );
+            }
+            if let Some(content) = event.content {
+                // 6 under the title or the detail, as far in as the title
+                let top = rect.top() + height - gap + 6.0;
+                let room = egui::Rect::from_min_max(pos2(rect.left() + text_x, top), pos2(rect.right(), f32::INFINITY));
+                let mut child = ui.new_child(
+                    egui::UiBuilder::new()
+                        .id_salt(("timeline-content", index))
+                        .max_rect(room)
+                        .layout(egui::Layout::top_down(egui::Align::Min)),
+                );
+                content(&mut child);
+                let used = child.min_rect().height() + 6.0;
+                ui.allocate_space(vec2(width, used));
             }
         }
         // the line joining each icon to the next, under them

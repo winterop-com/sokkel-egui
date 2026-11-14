@@ -94,6 +94,16 @@ impl Day {
         format!("{} {day}", MONTHS[month as usize - 1])
     }
 
+    /// `Monday, November 16`, as `Intl.DateTimeFormat`'s long weekday, long month and day in English.
+    pub fn full(self) -> String {
+        let (_, month, day) = self.ymd();
+        format!(
+            "{}, {} {day}",
+            WEEKDAYS[self.weekday() as usize],
+            MONTH_NAMES[month as usize - 1]
+        )
+    }
+
     /// `Nov 3, 2026`, as `Intl.DateTimeFormat`'s medium date in English.
     pub fn medium(self) -> String {
         let (year, _, _) = self.ymd();

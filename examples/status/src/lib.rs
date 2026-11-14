@@ -9,11 +9,12 @@ pub mod live;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
-    AccountAction, AccountMenu, Appearance, AsideWidth, Button, ButtonSize, ButtonVariant, Cell, ChipBar, ChipTone,
-    Column, Columns, DashboardGrid, DashboardPanel, DataTable, Day, DesktopWindow, Editor, Gap, Icon, KpiRow, MenuItem,
-    Page, PageHeader, PanelSpan, PersonRow, Rail, RailEntry, RailGroup, Section, Segmented, Shell, ShellPart, Split,
-    SplitPane, Stack, StackLayout, StackPlace, Stat, StatusLine, StatusTone, TableState, TableVariant, TextRole,
-    Timeline, TimelineEvent, TopBar, UptimeBar, UptimeDay, format_uptime, install, overall_uptime, relative_time,
+    AccountAction, AccountMenu, AppBar, Appearance, AsideWidth, Banner, BannerTone, Button, ButtonSize, ButtonVariant,
+    Cell, ChipBar, ChipTone, Column, Columns, DashboardGrid, DashboardPanel, DataTable, Day, DesktopWindow, Editor,
+    Gap, Icon, IconButton, KpiRow, MenuItem, Page, PageHeader, PanelSpan, PersonRow, Rail, RailEntry, RailGroup,
+    Section, Segmented, Shell, ShellPart, Split, SplitPane, Stack, StackLayout, StackPlace, Stat, StatusLine,
+    StatusTone, TableState, TableVariant, TextRole, Timeline, TimelineEvent, TopBar, UptimeBar, UptimeDay,
+    format_uptime, install, overall_uptime, relative_time,
 };
 
 use data::SERVICES;
@@ -82,6 +83,7 @@ pub struct StatusApp {
     pub today: Day,
     pub shifts: Vec<data::Shift>,
     pub handovers: Vec<data::Handover>,
+    pub maintenance: Vec<data::Maintenance>,
     pub rotation_table: TableState,
     /// The live world the readings come from.
     pub live_world: Live,
@@ -131,6 +133,7 @@ impl StatusApp {
             today,
             shifts: data::seed_shifts(today),
             handovers: data::seed_handovers(9.0 * 3600.0 * 1000.0),
+            maintenance: data::seed_maintenance(),
             rotation_table: TableState::default(),
             live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
             region: "All".into(),
@@ -155,6 +158,8 @@ impl StatusApp {
         let mut parts = route.split('/');
         match parts.next().unwrap_or("overview") {
             "settings" => self.settings = true,
+            // what customers see: a page of its own, outside the board's frame
+            "public" => self.place = "public".into(),
             place if PLACES.iter().any(|(id, _)| *id == place) => {
                 self.place = place.to_owned();
                 self.service = parts
@@ -228,6 +233,10 @@ impl StatusApp {
 
     pub fn show(&mut self, ui: &mut Ui) {
         install(ui.ctx(), &self.appearance);
+        if self.place == "public" {
+            self.public_page(ui);
+            return;
+        }
         let groups = self.groups();
         let mut place = if self.settings {
             "settings".to_owned()
@@ -315,7 +324,7 @@ impl StatusApp {
         }
         if place == "settings" {
             self.settings = true;
-        } else if place != shown && place != "public" {
+        } else if place != shown {
             self.go(&place);
         }
         match account {
@@ -559,6 +568,236 @@ impl StatusApp {
         if let Some((from, to)) = output.reordered {
             let moved = self.service_order.remove(from);
             self.service_order.insert(to, moved);
+        }
+    }
+
+    /// What customers see, as the web's `PublicPage`: the bar with the mark and the page's title, a
+    /// line on how everything is, then in a column 768 wide the incidents going on with their
+    /// updates, the maintenance ahead, each service with its last ninety days, and what happened
+    /// each of the last seven days.
+    fn public_page(&mut self, ui: &mut Ui) {
+        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let window = ui.ctx().content_rect();
+        let mut page = ui.new_child(
+            egui::UiBuilder::new()
+                .max_rect(window)
+                .layout(egui::Layout::top_down(egui::Align::Min)),
+        );
+        page.set_clip_rect(window);
+        let ui = &mut page;
+        ui.painter().rect_filled(window, 0.0, t.color("background"));
+        ui.spacing_mut().item_spacing.y = 0.0;
+        let trail = ["Tidevann status"];
+        let mut bar = AppBar::new(&trail).mark(TIDEVANN_MARK);
+        if self.desktop {
+            bar = bar.desktop(DesktopWindow::native());
+        }
+        let mut board = false;
+        bar.show(ui, |ui| {
+            board = ui
+                .add(IconButton::new(Icon::LayoutDashboard, "Open the board"))
+                .clicked();
+            ui.add(
+                Button::new("Subscribe")
+                    .icon(Icon::BellRing)
+                    .variant(ButtonVariant::Outline)
+                    .size(ButtonSize::Sm),
+            );
+        });
+        let overall = self
+            .live_world
+            .health
+            .iter()
+            .copied()
+            .max_by_key(|h| match h {
+                live::Health::Operational => 0,
+                live::Health::Maintenance => 1,
+                live::Health::Degraded => 2,
+                live::Health::Outage => 3,
+            })
+            .unwrap_or(live::Health::Operational);
+        let (tone, words) = match overall {
+            live::Health::Operational => (BannerTone::Good, "All systems operational"),
+            live::Health::Maintenance => (BannerTone::Info, "Maintenance in progress"),
+            live::Health::Degraded => (BannerTone::Warning, "Some systems are degraded"),
+            live::Health::Outage => (BannerTone::Critical, "Some systems are down"),
+        };
+        Banner::new(tone, format!("{words}, as of {}", self.clock())).show(ui);
+        let moment = |at: f64| {
+            let day = self.today.plus((at / 86_400_000.0).floor() as i32);
+            let minutes = (at.rem_euclid(86_400_000.0) / 60_000.0) as u64;
+            format!("{}, {:02}:{:02}", day.with_weekday(), minutes / 60, minutes % 60)
+        };
+        let affects = |incident: &data::Incident| {
+            let mut parts: Vec<String> = incident.services.iter().map(|s| s.to_string()).collect();
+            parts.extend(incident.sites.iter().map(|id| {
+                data::SITES
+                    .iter()
+                    .find(|s| s.id == *id)
+                    .map_or(*id, |s| s.city)
+                    .to_string()
+            }));
+            if parts.is_empty() {
+                String::new()
+            } else {
+                format!("Affects {}", parts.join(", "))
+            }
+        };
+        let uptime = self.uptime();
+        let health = self.live_world.health.clone();
+        let services: Vec<usize> = (0..SERVICES.len()).collect();
+        egui::ScrollArea::vertical()
+            .id_salt("public")
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                let room = ui.available_width();
+                let column = room.min(768.0);
+                let inset = ((room - column) / 2.0).max(0.0);
+                ui.add_space(32.0);
+                ui.horizontal(|ui| {
+                    ui.add_space(inset + 16.0);
+                    ui.vertical(|ui| {
+                        ui.set_width(column - 32.0);
+                        Stack::new(Gap::Xl).show(ui, |ui| {
+                            for incident in self.incidents.iter().filter(|i| i.state != data::State::Resolved) {
+                                let mut updates: Vec<&data::Update> = incident.updates.iter().collect();
+                                updates.sort_by(|a, b| b.at.total_cmp(&a.at));
+                                let events: Vec<TimelineEvent> = updates
+                                    .iter()
+                                    .map(|u| TimelineEvent {
+                                        title: u.message.clone(),
+                                        at: moment(u.at),
+                                        detail: Some(state_name(u.state).into()),
+                                        tone: Some(t.color(state_color(u.state))),
+                                        ..Default::default()
+                                    })
+                                    .collect();
+                                let state = incident.state;
+                                Section::new(&incident.title)
+                                    .description(affects(incident))
+                                    .actions(move |ui| {
+                                        ui.add(
+                                            sokkel_ui_egui::Chip::new(state_words(state).to_lowercase())
+                                                .tone(state_tone(state)),
+                                        );
+                                    })
+                                    .show(ui, |ui| Timeline::new(events).show(ui));
+                            }
+                            let mut ahead: Vec<&data::Maintenance> = self
+                                .maintenance
+                                .iter()
+                                .filter(|w| !w.cancelled && w.ends > now)
+                                .collect();
+                            ahead.sort_by(|a, b| a.starts.total_cmp(&b.starts));
+                            if !ahead.is_empty() {
+                                let events: Vec<TimelineEvent> = ahead
+                                    .iter()
+                                    .map(|w| TimelineEvent {
+                                        title: w.title.into(),
+                                        at: if w.going_on(now) {
+                                            "now".into()
+                                        } else {
+                                            moment(w.starts)
+                                        },
+                                        detail: Some(format!("{}, until {}", w.service, moment(w.ends))),
+                                        tone: Some(t.color("info")),
+                                        ..Default::default()
+                                    })
+                                    .collect();
+                                Section::new("Scheduled maintenance").show(ui, |ui| Timeline::new(events).show(ui));
+                            }
+                            Section::new("Services").meta("the last 90 days").show(ui, |ui| {
+                                uptime_list(ui, &services, &health, &uptime);
+                            });
+                            let events: Vec<TimelineEvent> = (0..7)
+                                .map(|back| {
+                                    let start = -f64::from(back) * 86_400_000.0;
+                                    let happened: Vec<&data::Incident> = self
+                                        .incidents
+                                        .iter()
+                                        .filter(|i| i.opened >= start && i.opened < start + 86_400_000.0)
+                                        .collect();
+                                    let title = self.today.plus(-back).full();
+                                    if happened.is_empty() {
+                                        return TimelineEvent {
+                                            title,
+                                            detail: Some("No incidents reported.".into()),
+                                            ..Default::default()
+                                        };
+                                    }
+                                    let worst = if happened.iter().any(|i| i.severity != data::Severity::Minor) {
+                                        "critical"
+                                    } else {
+                                        "warning"
+                                    };
+                                    let lines: Vec<(String, data::State, String)> = happened
+                                        .iter()
+                                        .map(|i| {
+                                            let latest = i
+                                                .updates
+                                                .iter()
+                                                .max_by(|a, b| a.at.total_cmp(&b.at))
+                                                .map_or(String::new(), |u| u.message.clone());
+                                            let meta = [latest, affects(i)]
+                                                .into_iter()
+                                                .filter(|s| !s.is_empty())
+                                                .collect::<Vec<_>>()
+                                                .join(" · ");
+                                            (i.title.clone(), i.state, meta)
+                                        })
+                                        .collect();
+                                    TimelineEvent {
+                                        title,
+                                        tone: Some(t.color(worst)),
+                                        content: Some(Box::new(move |ui: &mut Ui| {
+                                            let t = sokkel_ui_egui::tokens(ui.ctx());
+                                            Stack::new(Gap::Md).show(ui, |ui| {
+                                                for (title, state, meta) in lines {
+                                                    ui.vertical(|ui| {
+                                                        ui.spacing_mut().item_spacing.y = 2.0;
+                                                        ui.horizontal(|ui| {
+                                                            ui.label(
+                                                                TextRole::Body.rich(&t, title).variation("wght", 500.0),
+                                                            );
+                                                            ui.add(
+                                                                sokkel_ui_egui::Chip::new(
+                                                                    state_words(state).to_lowercase(),
+                                                                )
+                                                                .tone(state_tone(state)),
+                                                            );
+                                                        });
+                                                        ui.label(
+                                                            TextRole::Help
+                                                                .rich(&t, meta)
+                                                                .color(t.color("muted-foreground")),
+                                                        );
+                                                    });
+                                                }
+                                            });
+                                        })),
+                                        ..Default::default()
+                                    }
+                                })
+                                .collect();
+                            Section::new("Past incidents")
+                                .meta("the last 7 days")
+                                .show(ui, |ui| Timeline::new(events).show(ui));
+                            ui.label(
+                                TextRole::Help
+                                    .rich(
+                                        &t,
+                                        format!("Times are in your own time zone · {} services", SERVICES.len()),
+                                    )
+                                    .color(t.color("muted-foreground")),
+                            );
+                        });
+                    });
+                });
+                ui.add_space(32.0);
+            });
+        if board {
+            self.go("overview");
         }
     }
 
@@ -834,7 +1073,7 @@ impl StatusApp {
                     .iter()
                     .filter(|i| i.services.contains(&id) && i.opened < to && i.resolved.unwrap_or(now) > from)
                     .map(|i| TimelineEvent {
-                        icon: Icon::Siren,
+                        tone: Some(t.color(state_color(i.state))),
                         title: format!("{} {}", i.code, i.title),
                         at: day.medium(),
                         detail: Some(format!(
@@ -842,6 +1081,7 @@ impl StatusApp {
                             severity_words(i.severity).to_lowercase(),
                             state_words(i.state).to_lowercase()
                         )),
+                        ..Default::default()
                     })
                     .collect()
             })
@@ -927,13 +1167,14 @@ impl StatusApp {
             .handovers
             .iter()
             .map(|h| TimelineEvent {
-                icon: Icon::PhoneCall,
+                icon: Some(Icon::PhoneCall),
                 title: format!("{} to {}", h.from, h.to),
                 at: {
                     let words = relative_time(h.at - self.start as f64 * 1000.0);
                     if words == "now" { "now".into() } else { words }
                 },
                 detail: Some(h.note.clone()),
+                ..Default::default()
             })
             .collect();
         let handover_count = self.handovers.len().to_string();
@@ -1057,6 +1298,16 @@ impl StatusApp {
 }
 
 /// An incident's state in words, as the web's status map says it.
+/// An incident's state as a sentence names it, as the web's `INCIDENT_WORDS`.
+fn state_name(state: data::State) -> &'static str {
+    match state {
+        data::State::Investigating => "Investigating",
+        data::State::Identified => "Identified",
+        data::State::Monitoring => "Monitoring",
+        data::State::Resolved => "Resolved",
+    }
+}
+
 fn state_words(state: data::State) -> &'static str {
     match state {
         data::State::Investigating => "investigating",
@@ -1067,6 +1318,16 @@ fn state_words(state: data::State) -> &'static str {
 }
 
 /// An incident state's tone, as the web's `STATUSES` colors it.
+/// An incident state's color token, as the board's status map gives it.
+fn state_color(state: data::State) -> &'static str {
+    match state {
+        data::State::Investigating => "critical",
+        data::State::Identified => "warning",
+        data::State::Monitoring => "info",
+        data::State::Resolved => "good",
+    }
+}
+
 fn state_tone(state: data::State) -> ChipTone {
     match state {
         data::State::Investigating => ChipTone::Critical,

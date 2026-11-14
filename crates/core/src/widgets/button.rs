@@ -218,3 +218,42 @@ impl Widget for Button {
         response
     }
 }
+
+/// A button that is an icon alone, after sokkel-ui's `IconButton`: a ghost square a control tall,
+/// the icon in `muted-foreground`, under the pointer the `hover` ground and the foreground ink; its
+/// label is what a screen reader hears and what the pointer is told.
+pub struct IconButton {
+    icon: crate::Icon,
+    label: String,
+}
+
+impl IconButton {
+    pub fn new(icon: crate::Icon, label: impl Into<String>) -> Self {
+        Self {
+            icon,
+            label: label.into(),
+        }
+    }
+}
+
+impl egui::Widget for IconButton {
+    fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        let t = crate::tokens(ui.ctx());
+        let side = super::finger_tall(ui.ctx(), &t, t.density("control"));
+        let (rect, response) = ui.allocate_exact_size(egui::vec2(side, side), egui::Sense::click());
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.label));
+        let hot = response.hovered();
+        if hot {
+            ui.painter().rect_filled(rect, t.radius("control"), t.color("hover"));
+        }
+        let ink = if hot {
+            t.color("foreground")
+        } else {
+            t.color("muted-foreground")
+        };
+        crate::icons::paint(ui.painter(), rect.center(), self.icon, 16.0, ink);
+        super::focus_ring(ui.painter(), &t, rect, t.radius("control"), &response);
+        let label = self.label;
+        response.on_hover_text(label)
+    }
+}

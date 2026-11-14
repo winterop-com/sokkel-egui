@@ -67,6 +67,13 @@ and never chase a difference made of numbers.
   panels (latency, requests, errors, on call, maintenance, deploys) are still to come.
 - A place chosen inside a page (All, a service's tile, a day) now stays chosen: the shell went
   back to the place the rail started the frame on whenever the page moved elsewhere.
+- The public status page is the web's, a page of its own outside the board's frame: an `AppBar`
+  (the mark, the page's title, Subscribe and the board's `IconButton`), a `Banner` saying how
+  everything is, then in a column 768 wide the incidents going on (a `Section` with its state's
+  chip in `Section::actions`, its updates on a `Timeline` with dots in their states' colors), the
+  maintenance ahead (`data::seed_maintenance`, the web's windows), every service's ninety days,
+  and the last seven days, each day's incidents as `TimelineEvent::content`. The subscribe form
+  is still to come.
 - Regions is the web's: the head counting the sites operational, a `ChipBar` of the regions
   (choosing one frames its sites with 6 degrees about them, All frames every site), and a
   `SplitPane` (60% to the map, 35 to 75, the rule dragged or double-clicked back) of the map and

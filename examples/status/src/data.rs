@@ -611,3 +611,57 @@ pub fn seed_handovers(monday_nine: f64) -> Vec<Handover> {
         },
     ]
 }
+
+/// A window a service is taken down for work, its times in milliseconds of the board's clock.
+#[derive(Clone, Debug)]
+pub struct Maintenance {
+    pub id: &'static str,
+    pub service: &'static str,
+    pub title: &'static str,
+    pub starts: f64,
+    pub ends: f64,
+    pub by: &'static str,
+    pub cancelled: bool,
+}
+
+impl Maintenance {
+    /// Whether the window is going on at `now`.
+    pub fn going_on(&self, now: f64) -> bool {
+        !self.cancelled && self.starts <= now && now < self.ends
+    }
+}
+
+/// The windows the demo starts with, as the web's `seedMaintenance`: days from the board's day at
+/// an hour, its midnight the clock's zero.
+pub fn seed_maintenance() -> Vec<Maintenance> {
+    let at = |days: f64, hour: f64| days * DAY + hour * 60.0 * MINUTE;
+    vec![
+        Maintenance {
+            id: "maintenance-1",
+            service: "search",
+            title: "Moving the search index to larger disks",
+            starts: at(2.0, 2.0),
+            ends: at(2.0, 4.0),
+            by: "linus",
+            cancelled: false,
+        },
+        Maintenance {
+            id: "maintenance-2",
+            service: "queue",
+            title: "Upgrading the queue",
+            starts: at(6.0, 1.0),
+            ends: at(6.0, 2.0),
+            by: "ada",
+            cancelled: false,
+        },
+        Maintenance {
+            id: "maintenance-3",
+            service: "mail",
+            title: "A new sending address for send-digest",
+            starts: at(-12.0, 3.0),
+            ends: at(-12.0, 4.0),
+            by: "margaret",
+            cancelled: false,
+        },
+    ]
+}

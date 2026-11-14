@@ -35,6 +35,7 @@ fn every_screen() {
         ("service", "services/api"),
         ("regions", "regions"),
         ("on_call", "on-call"),
+        ("public", "public"),
     ] {
         let mut harness = render(route);
         results.add(harness.try_snapshot(name));

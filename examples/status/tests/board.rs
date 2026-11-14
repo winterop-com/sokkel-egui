@@ -45,3 +45,19 @@ fn a_tile_opens_its_service() {
     assert_eq!(harness.state().place, "services");
     assert_eq!(harness.state().service.as_deref(), Some("api"));
 }
+
+#[test]
+fn the_status_page_opens_from_the_rail_and_leads_back() {
+    let mut harness = render();
+    harness.get_by_label("Status page").click();
+    harness.run_steps(3);
+    assert_eq!(harness.state().place, "public");
+    assert!(
+        harness
+            .query_by_label("All systems operational, as of 09:00:04")
+            .is_some()
+    );
+    harness.get_by_label("Open the board").click();
+    harness.run_steps(3);
+    assert_eq!(harness.state().place, "overview");
+}
