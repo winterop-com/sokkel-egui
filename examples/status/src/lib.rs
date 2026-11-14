@@ -88,6 +88,9 @@ pub struct StatusApp {
     pub maintenance: Vec<data::Maintenance>,
     /// Every service's deploys, the newest last.
     pub deploys: Vec<data::Deploy>,
+    /// The service page's tables of deploys and windows.
+    pub deploys_table: TableState,
+    pub windows_table: TableState,
     /// A service's dialogs, while one is open.
     pub maintenance_form: Option<dialogs::MaintenanceForm>,
     pub deploy_form: Option<dialogs::DeployForm>,
@@ -155,6 +158,8 @@ impl StatusApp {
             deploys: data::seed_deploys(9.0 * 3600.0 * 1000.0),
             maintenance_form: None,
             deploy_form: None,
+            deploys_table: TableState::default(),
+            windows_table: TableState::default(),
             incident: None,
             post_state: 0,
             post_message: String::new(),
@@ -1518,6 +1523,54 @@ impl StatusApp {
             })
             .unwrap_or_default();
         let mut pressed = None;
+        // the service's deploys, newest first, and its windows, latest first, as the web's
+        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let running = self.running(id);
+        let mut mine: Vec<&data::Deploy> = self.deploys.iter().filter(|d| d.service == id).collect();
+        mine.sort_by(|a, b| b.at.total_cmp(&a.at));
+        let deploy_rows: Vec<Vec<Cell>> = mine
+            .iter()
+            .map(|d| {
+                vec![
+                    Cell::Mono(d.version.clone()),
+                    deploy_chip(d.state),
+                    Cell::Text(if d.note.is_empty() { "-".into() } else { d.note.clone() }),
+                    Cell::Person(d.by.into()),
+                    Cell::Relative { at: d.at, now },
+                ]
+            })
+            .collect();
+        let deploy_menus: Vec<Option<String>> = mine
+            .iter()
+            .map(|d| {
+                (d.state == data::DeployState::Succeeded && d.version == running)
+                    .then(|| data::previous_version(&d.version))
+            })
+            .collect();
+        let deploy_keys: Vec<String> = mine.iter().map(|d| d.id.clone()).collect();
+        let mut windows: Vec<&data::Maintenance> = self.maintenance.iter().filter(|w| w.service == id).collect();
+        windows.sort_by(|a, b| b.starts.total_cmp(&a.starts));
+        let window_states: Vec<WindowState> = windows.iter().map(|w| window_state(w, now)).collect();
+        let window_rows: Vec<Vec<Cell>> = windows
+            .iter()
+            .zip(&window_states)
+            .map(|(w, state)| {
+                let ends = self.moment(w.ends);
+                vec![
+                    Cell::Text(w.title.clone()),
+                    state.chip(),
+                    Cell::Text(format!("{} to {}", self.moment(w.starts), &ends[ends.len() - 5..])),
+                ]
+            })
+            .collect();
+        let window_keys: Vec<String> = windows.iter().map(|w| w.id.clone()).collect();
+        let scheduled = window_states.iter().filter(|s| **s == WindowState::Scheduled).count();
+        let (deploys_table, windows_table) = (&mut self.deploys_table, &mut self.windows_table);
+        let mut deploy_action = None;
+        let mut window_action = None;
+        let mut schedule_more = false;
+        let (deploy_menus_r, deploy_keys_r, window_keys_r, window_states_r) =
+            (&deploy_menus, &deploy_keys, &window_keys, &window_states);
         DashboardGrid::new("service").show(ui, |grid| {
             let x2 = x.clone();
             grid.cell(PanelSpan::Half, move |ui| {
@@ -1567,7 +1620,123 @@ impl StatusApp {
                     });
                 });
             });
+            let deploy_action = &mut deploy_action;
+            grid.cell(PanelSpan::Half, move |ui| {
+                DashboardPanel::new("Deploys")
+                    .subtitle(format!("{running} running"))
+                    .flush(true)
+                    .show(ui, |ui| {
+                        let columns = [
+                            Column::new("Version", 104.0),
+                            Column::new("State", 120.0).stack(StackPlace::Secondary),
+                            Column::new("What it changed", 128.0).fill().stack(StackPlace::Primary),
+                            Column::new("By", 104.0).stack(StackPlace::Secondary),
+                            Column::new("When", 120.0).stack(StackPlace::Secondary),
+                        ];
+                        let output = DataTable::new("deploys", &columns, &deploy_rows, deploys_table)
+                            .keys(deploy_keys_r.to_vec())
+                            .variant(TableVariant::List)
+                            .stack_layout(StackLayout::Labeled)
+                            .stack_below(420.0)
+                            .actions(|row| {
+                                deploy_menus_r[row]
+                                    .iter()
+                                    .map(|back| MenuItem::action(format!("Roll back to {back}")).icon(Icon::Undo2))
+                                    .collect()
+                            })
+                            .empty(|ui| {
+                                let t = sokkel_ui_egui::tokens(ui.ctx());
+                                ui.label(
+                                    TextRole::Body
+                                        .rich(&t, "No deploys yet.")
+                                        .color(t.color("muted-foreground")),
+                                );
+                            })
+                            .footer(false)
+                            .show(ui);
+                        if let Some((row, _)) = output.action {
+                            *deploy_action = Some(row);
+                        }
+                    });
+            });
+            let window_action = &mut window_action;
+            let schedule_more = &mut schedule_more;
+            grid.cell(PanelSpan::Half, move |ui| {
+                DashboardPanel::new("Maintenance")
+                    .subtitle(format!("{scheduled} scheduled"))
+                    .flush(true)
+                    .actions(|ui| {
+                        *schedule_more = ui
+                            .add(
+                                Button::new("Schedule")
+                                    .variant(ButtonVariant::Ghost)
+                                    .size(ButtonSize::Sm),
+                            )
+                            .clicked();
+                    })
+                    .show(ui, |ui| {
+                        let columns = [
+                            Column::new("Work", 128.0).fill(),
+                            Column::new("State", 128.0).stack(StackPlace::Secondary),
+                            Column::new("When", 192.0).stack(StackPlace::Secondary),
+                        ];
+                        let output = DataTable::new("windows", &columns, &window_rows, windows_table)
+                            .keys(window_keys_r.to_vec())
+                            .variant(TableVariant::List)
+                            .stack_layout(StackLayout::Labeled)
+                            .stack_below(420.0)
+                            .actions(|row| window_states_r[row].actions())
+                            .empty(|ui| {
+                                let t = sokkel_ui_egui::tokens(ui.ctx());
+                                ui.label(
+                                    TextRole::Body
+                                        .rich(&t, "Nothing scheduled.")
+                                        .color(t.color("muted-foreground")),
+                                );
+                            })
+                            .footer(false)
+                            .show(ui);
+                        if let Some((row, which)) = output.action {
+                            *window_action = Some((row, which));
+                        }
+                    });
+            });
         });
+        if let Some(row) = deploy_action
+            && let Some(back) = &deploy_menus[row]
+        {
+            let made = data::Deploy {
+                id: format!("deploy-{id}-new-{}", self.deploys.len()),
+                service: service.id,
+                version: back.clone(),
+                at: now,
+                by: ME,
+                state: data::DeployState::Running,
+                note: format!("Rolled back from {}", mine_version(&deploy_keys[row], &self.deploys)),
+            };
+            self.deploys.push(made);
+        }
+        if schedule_more {
+            self.maintenance_form = Some(dialogs::MaintenanceForm::new(service.id, self.today));
+        }
+        if let Some((row, which)) = window_action
+            && let Some(key) = window_keys.get(row)
+            && let Some(window) = self.maintenance.iter_mut().find(|w| &w.id == key)
+        {
+            match (window_state(window, now), which) {
+                // start now, for two minutes
+                (WindowState::Scheduled, 0) => {
+                    window.starts = now;
+                    window.ends = now + 2.0 * 60_000.0;
+                }
+                (WindowState::Scheduled, _) => window.cancelled = true,
+                (WindowState::InProgress, _) => window.ends = now,
+                _ => {
+                    let key = key.clone();
+                    self.maintenance.retain(|w| w.id != key);
+                }
+            }
+        }
         if let Some(day) = pressed {
             self.go(&format!("services/{id}/{day}"));
         }
@@ -2139,4 +2308,65 @@ fn moment_of(today: Day, at: f64) -> String {
     let day = today.plus((at / 86_400_000.0).floor() as i32);
     let minutes = (at.rem_euclid(86_400_000.0) / 60_000.0) as u64;
     format!("{}, {:02}:{:02}", day.with_weekday(), minutes / 60, minutes % 60)
+}
+
+/// The version a deploy put out, by its id.
+fn mine_version(id: &str, deploys: &[data::Deploy]) -> String {
+    deploys
+        .iter()
+        .find(|d| d.id == id)
+        .map_or_else(String::new, |d| d.version.clone())
+}
+
+/// A deploy's state as its chip, in the status map's colors.
+fn deploy_chip(state: data::DeployState) -> Cell {
+    match state {
+        data::DeployState::Running => Cell::Chip("running".into(), ChipTone::Status("running")),
+        data::DeployState::Succeeded => Cell::Chip("succeeded".into(), ChipTone::Status("succeeded")),
+        data::DeployState::Failed => Cell::Chip("failed".into(), ChipTone::Status("failed")),
+    }
+}
+
+/// Where a maintenance window stands now, as the web's `windowState`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum WindowState {
+    Scheduled,
+    InProgress,
+    Completed,
+    Cancelled,
+}
+
+impl WindowState {
+    fn chip(self) -> Cell {
+        match self {
+            Self::Scheduled => Cell::Chip("scheduled".into(), ChipTone::Info),
+            Self::InProgress => Cell::Chip("in progress".into(), ChipTone::Status("running")),
+            Self::Completed => Cell::Chip("completed".into(), ChipTone::Status("succeeded")),
+            Self::Cancelled => Cell::Chip("cancelled".into(), ChipTone::Status("cancelled")),
+        }
+    }
+
+    /// The window's menu by where it stands, as the web's `windowActions`.
+    fn actions(self) -> Vec<MenuItem> {
+        match self {
+            Self::Scheduled => vec![
+                MenuItem::action("Start now, for two minutes").icon(Icon::Play),
+                MenuItem::action("Cancel").icon(Icon::X).destructive(),
+            ],
+            Self::InProgress => vec![MenuItem::action("End now").icon(Icon::CircleStop)],
+            _ => vec![MenuItem::action("Remove").icon(Icon::X).destructive()],
+        }
+    }
+}
+
+fn window_state(window: &data::Maintenance, now: f64) -> WindowState {
+    if window.cancelled {
+        WindowState::Cancelled
+    } else if window.going_on(now) {
+        WindowState::InProgress
+    } else if window.ends <= now {
+        WindowState::Completed
+    } else {
+        WindowState::Scheduled
+    }
 }

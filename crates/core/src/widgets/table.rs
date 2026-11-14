@@ -314,6 +314,8 @@ pub struct DataTable<'a> {
     today: Day,
     keys: Vec<Id>,
     stack_layout: StackLayout,
+    /// The width below which the rows stack, in place of 480 and the columns' own.
+    stack_below: Option<f32>,
     search: Option<&'a mut String>,
     bar: bool,
 }
@@ -346,6 +348,7 @@ impl<'a> DataTable<'a> {
             today: Day::today(),
             keys: Vec::new(),
             stack_layout: StackLayout::Never,
+            stack_below: None,
             search: None,
             bar: false,
         }
@@ -428,6 +431,13 @@ impl<'a> DataTable<'a> {
         self
     }
 
+    /// Stack the rows below `width` alone, the columns shrinking to fit above it, as the web's
+    /// `stackBelow` (a table in a half-width panel, `stackBelow={420}`).
+    pub fn stack_below(mut self, width: f32) -> Self {
+        self.stack_below = Some(width);
+        self
+    }
+
     /// Whether the rows stack at `width`: a list stacks below 576 or once its columns no longer
     /// fit, whichever is wider, so it never scrolls sideways.
     fn stacks(&self, width: f32, pad: f32, select_width: f32) -> bool {
@@ -439,6 +449,9 @@ impl<'a> DataTable<'a> {
         };
         if !stacks {
             return false;
+        }
+        if let Some(below) = self.stack_below {
+            return width < below;
         }
         let columns: f32 = self.columns.iter().map(|c| c.width).sum::<f32>()
             + GAP * self.columns.len().saturating_sub(1) as f32

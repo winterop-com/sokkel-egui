@@ -119,8 +119,13 @@ there so the screen matches the web's, but nothing answers it yet, until the arr
 - Deploy opens the web's `DeployDialog`: the version, one patch on by default, and what it
   changes, refused until the version is written as one and new. A deploy runs 8 s of the
   board's clock, then succeeds, and is the version the service's figures say it runs
-  (`data::seed_deploys` gives every service its last three, as the web's). The service page's
-  Deploys and Maintenance panels are still to come.
+  (`data::seed_deploys` gives every service its last three, as the web's). The service page has
+  its Deploys panel (each deploy's version, state, what it changed, who and when; Roll back on the
+  version running) and its Maintenance panel (Schedule at its head; Start now for two minutes,
+  Cancel, End now or Remove by where the window stands), their tables stacking below 420
+  (`DataTable::stack_below`, the web's `stackBelow`). Open: the web's tables shrink their columns
+  to fit a half-width panel (`minWidth="auto"`), and egui's do not yet, so the Deploys table runs
+  past its panel's edge until they do.
 - Resolve, Reopen and Assign to the person on call in an incident's menu and on its page;
   Subscribe on the public page brings the form into view.
 
