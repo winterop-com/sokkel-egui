@@ -120,6 +120,10 @@
             "route": "incidents"
         },
         {
+            "name": "incident",
+            "route": "incidents/incident-41"
+        },
+        {
             "name": "services",
             "route": "services"
         },

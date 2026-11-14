@@ -30,7 +30,7 @@ mod uptime;
 pub use board::{BOARD_COLUMN, Board, BoardCard, BoardColumn, BoardMove, CardResponse};
 pub use button::{Button, ButtonSize, ButtonVariant, IconButton};
 pub use calendar::{Calendar, CalendarWords, WeekStart, calendar_forget};
-pub use chip::{Chip, ChipTone};
+pub use chip::{Chip, ChipTone, TagChips};
 pub use chip_bar::ChipBar;
 pub use choice::{Checkbox, Choice, ChoiceList, Segmented, SegmentedVariant, Tabs, TabsVariant, checkbox_list};
 pub use commands::{AppearanceCommandWords, appearance_commands, place_commands, place_of, run_appearance_command};
@@ -48,7 +48,7 @@ pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutc
 pub use overlay::{ConfirmAnswer, ConfirmDialog, Dialog, Select, tooltip, tooltip_shown};
 pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
-pub use section::{PersonRow, Section, Timeline, TimelineEvent};
+pub use section::{DescriptionList, PersonRow, Section, Timeline, TimelineEvent};
 pub use settings::{
     SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, ThemeWords, setting_row, setting_row_found_by,
     theme_settings,

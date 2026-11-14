@@ -42,7 +42,8 @@ fn report_incident_opens_the_dialog_over_the_board() {
     );
     harness.run_steps(4);
     harness.get_by_label("Report incident").click();
-    harness.run_steps(4);
+    // the dialog settles over a few frames after it opens, as its sizes are measured
+    harness.run_steps(10);
     assert!(harness.state().new_incident.is_some());
     harness.snapshot("new_incident");
     harness.get_by_label("Cancel").click();

@@ -142,3 +142,38 @@ pub(crate) fn paint_tag_at(ui: &Ui, left: f32, center_y: f32, text: &str) -> f32
     paint(ui.painter(), &t, rect, galley, ChipTone::Neutral, false);
     rect.width()
 }
+
+/// Tags, after sokkel-ui's `TagChips`: each a neutral chip in the code face at the help's size,
+/// 20 tall, 4 apart, wrapping onto lines 4 apart where they run out of room.
+pub struct TagChips<'a> {
+    tags: &'a [String],
+}
+
+impl<'a> TagChips<'a> {
+    pub fn new(tags: &'a [String]) -> Self {
+        Self { tags }
+    }
+}
+
+impl egui::Widget for TagChips<'_> {
+    fn ui(self, ui: &mut Ui) -> egui::Response {
+        let t = tokens(ui.ctx());
+        let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+        ui.horizontal_wrapped(|ui| {
+            ui.spacing_mut().item_spacing = vec2(4.0, 4.0);
+            ui.spacing_mut().interact_size.y = 20.0;
+            for tag in self.tags {
+                let width = ui
+                    .painter()
+                    .layout_no_wrap(tag.clone(), mono.clone(), t.color("foreground"))
+                    .size()
+                    .x
+                    + 12.0;
+                let (rect, response) = ui.allocate_exact_size(vec2(width, 20.0), egui::Sense::hover());
+                response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, tag));
+                paint_tag_at(ui, rect.left(), rect.center().y, tag);
+            }
+        })
+        .response
+    }
+}

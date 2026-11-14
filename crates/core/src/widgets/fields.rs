@@ -413,15 +413,20 @@ pub fn field<R>(ui: &mut egui::Ui, label: &str, hint: Option<&str>, control: imp
     let t = crate::tokens(ui.ctx());
     ui.vertical(|ui| {
         ui.spacing_mut().item_spacing.y = 6.0;
-        ui.horizontal(|ui| {
-            // the row as tall as its words, not a control's height
-            ui.spacing_mut().interact_size.y = 0.0;
-            ui.spacing_mut().item_spacing.x = 6.0;
-            ui.label(crate::TextRole::Label.rich(&t, label).color(t.color("foreground")));
-            if let Some(hint) = hint {
-                ui.label(crate::TextRole::Help.rich(&t, hint).color(t.color("muted-foreground")));
-            }
-        });
+        // the label and its hint as one line of words, 6 apart, so the line is as tall as its words
+        let mut job = egui::text::LayoutJob::default();
+        crate::TextRole::Label
+            .rich(&t, label)
+            .color(t.color("foreground"))
+            .append_to(&mut job, ui.style(), egui::FontSelection::Default, egui::Align::Center);
+        if let Some(hint) = hint {
+            job.append("", 6.0, egui::TextFormat::default());
+            crate::TextRole::Help
+                .rich(&t, hint)
+                .color(t.color("muted-foreground"))
+                .append_to(&mut job, ui.style(), egui::FontSelection::Default, egui::Align::Center);
+        }
+        ui.label(job);
         control(ui)
     })
     .inner

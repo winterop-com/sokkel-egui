@@ -59,6 +59,16 @@ and never chase a difference made of numbers.
   (`SERIES_ORDER`, from `chart-2`), a line's points sit on the axis' ends, and the value axis
   steps as ECharts picks (1, 2, 3 or 5 times a power of ten, about five apart). The dependency
   graph, deploys and maintenance follow.
+- An incident's page (`incidents/<id>`, a row of the incidents table pressed, or a new incident
+  opened) is the web's: the head with its code, back to the incidents, its state and severity
+  chips and how long it has been open (`PageHeader` taking several chips and a `meta`), Resolve or
+  Reopen and Status page; Post an update (the state after it, the words, Posted as ada, Post
+  refused until something is written) over the updates on a `Timeline`, whose titles now wrap as
+  the web's do; and beside them the details (a stacked `DescriptionList`: severity, assignee with
+  Assign to the person on call, what it touches as `TagChips`, opened, resolved, on the status
+  page), each changed in place. Still the web's and not egui's: the title edited in place
+  (`InlineEdit`, which also stands the head 8 lower), the code crumb in the code face, and each
+  update's author's avatar.
 - Under the overview's tiles stands the web's board as it comes, in a `DashboardGrid`: Sites (two
   thirds, the map of the sites in their states with its legend), Open incidents (a third, the
   compact incident table and its All, `DashboardPanel::actions`), and Uptime (the whole row,
@@ -101,10 +111,8 @@ overview; Schedule maintenance and Deploy on a service's page. Report incident (
 service's page) and New (the incidents page) open the new incident dialog, the web's
 `NewIncidentDialog`: what is wrong, the severity, the services it touches, where, who takes it
 (the person on call by default, `field` saying so), the first update (`TextField::multiline`) and
-whether the status page shows it, Open incident refused in the web's words until it can open. An
-incident opened goes to the incidents list, until the incident's own page is ported; its first
-field stands 7 lower under the field above than the web's 16, the text field allocating a few
-pixels past its frame. Resolve, Reopen and Assign to the person on call in an incident's menu
+whether the status page shows it, Open incident refused in the web's words until it can open.  An
+incident opened goes to its own page, as the web's. Resolve, Reopen and Assign to the person on call in an incident's menu
 work, and Subscribe on the public page brings the form into view.
 
 ## Last checked

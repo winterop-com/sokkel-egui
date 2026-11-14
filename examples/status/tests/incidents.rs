@@ -55,3 +55,31 @@ fn an_incident_resolves_reopens_and_goes_to_the_person_on_call() {
         "linus"
     );
 }
+
+#[test]
+fn an_update_posted_moves_the_incident_on() {
+    use eframe::egui;
+    use egui_kittest::{Harness, kittest::Queryable};
+    let mut app = status::StatusApp::on(sokkel_ui_egui::Appearance::default());
+    app.go("incidents/incident-41");
+    assert_eq!(app.post_state, 3, "the form starts on the state after monitoring");
+    app.post_state = 2;
+    let mut harness = Harness::builder().with_size([1280.0, 900.0]).build_ui_state(
+        |ui, app: &mut status::StatusApp| {
+            egui::CentralPanel::default()
+                .frame(egui::Frame::NONE)
+                .show(ui, |ui| app.show(ui));
+        },
+        app,
+    );
+    harness.run_steps(3);
+    harness.state_mut().post_message = "Exports are caught up.".into();
+    harness.run_steps(2);
+    harness.get_by_label("Post").click();
+    harness.run_steps(3);
+    let app = harness.state();
+    let incident = app.incidents.iter().find(|i| i.id == "incident-41").unwrap();
+    assert_eq!(incident.updates.len(), 4);
+    assert_eq!(incident.updates[0].message, "Exports are caught up.");
+    assert!(app.post_message.is_empty());
+}

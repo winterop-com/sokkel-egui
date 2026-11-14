@@ -264,7 +264,7 @@ impl Timeline {
             );
             let title = WidgetText::from(TextRole::Body.rich(&t, &event.title)).into_galley(
                 ui,
-                Some(TextWrapMode::Truncate),
+                Some(TextWrapMode::Wrap),
                 (width - text_x - at.size().x - 8.0).max(1.0),
                 TextRole::Body.font(&t),
             );
@@ -276,7 +276,9 @@ impl Timeline {
                     TextRole::Help.font(&t),
                 )
             });
-            let height = 24.0 + detail.as_ref().map_or(0.0, |d| d.size().y);
+            // the title's lines, a line of 24 for one, the detail under the last
+            let line = title.size().y.max(20.0) + 4.0;
+            let height = line + detail.as_ref().map_or(0.0, |d| d.size().y);
             // 16 under each event but the last, as the web's `pb-4`
             let gap = if index + 1 < count { 16.0 } else { 0.0 };
             // the gap after an event comes after its content, where it has some
@@ -301,7 +303,7 @@ impl Timeline {
             }
             icons_at.push(middle);
             ui.painter().galley(
-                pos2(rect.left() + text_x, middle - title.size().y / 2.0),
+                pos2(rect.left() + text_x, rect.top() + 2.0),
                 title,
                 t.color("foreground"),
             );
@@ -312,7 +314,7 @@ impl Timeline {
             );
             if let Some(detail) = detail {
                 ui.painter().galley(
-                    pos2(rect.left() + text_x, rect.top() + 24.0),
+                    pos2(rect.left() + text_x, rect.top() + line),
                     detail,
                     t.color("muted-foreground"),
                 );
@@ -341,5 +343,53 @@ impl Timeline {
                 Stroke::new(1.0, t.color("border")),
             );
         }
+    }
+}
+
+/// A term over its value, after sokkel-ui's `DescriptionList` with `layout="stacked"`: the term in
+/// the small muted words, the value 2 under it (words, or any control), each pair 8 under the one
+/// before it.
+pub struct DescriptionList<'a> {
+    items: Vec<(String, Tools<'a>)>,
+}
+
+impl<'a> Default for DescriptionList<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<'a> DescriptionList<'a> {
+    pub fn new() -> Self {
+        Self { items: Vec::new() }
+    }
+
+    /// A pair whose value is plain words.
+    pub fn text(self, term: impl Into<String>, value: impl Into<String>) -> Self {
+        let value = value.into();
+        self.item(term, move |ui| {
+            let t = tokens(ui.ctx());
+            ui.label(TextRole::Body.rich(&t, value).color(t.color("foreground")));
+        })
+    }
+
+    /// A pair whose value is drawn by `value`, such as a select or a switch.
+    pub fn item(mut self, term: impl Into<String>, value: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.items.push((term.into(), Box::new(value)));
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui) {
+        let t = tokens(ui.ctx());
+        ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.y = 8.0;
+            for (term, value) in self.items {
+                ui.vertical(|ui| {
+                    ui.spacing_mut().item_spacing.y = 2.0;
+                    ui.label(TextRole::Help.rich(&t, term).color(t.color("muted-foreground")));
+                    value(ui);
+                });
+            }
+        });
     }
 }

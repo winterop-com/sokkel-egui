@@ -31,6 +31,7 @@ fn every_screen() {
     for (name, route) in [
         ("overview", "overview"),
         ("incidents", "incidents"),
+        ("incident", "incidents/incident-41"),
         ("services", "services"),
         ("service", "services/api"),
         ("regions", "regions"),

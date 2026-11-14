@@ -55,7 +55,8 @@ pub struct PageHeader {
     code: Option<String>,
     description: Option<String>,
     back: Option<String>,
-    chip: Option<(String, crate::ChipTone)>,
+    chips: Vec<(String, crate::ChipTone)>,
+    meta: Option<String>,
 }
 
 /// What a page header was asked this frame.
@@ -73,7 +74,8 @@ impl PageHeader {
             code: None,
             description: None,
             back: None,
-            chip: None,
+            chips: Vec::new(),
+            meta: None,
         }
     }
 
@@ -84,9 +86,15 @@ impl PageHeader {
     }
 
     /// A chip under the description, 8 down: the thing's state (sokkel-ui's `meta` with a
-    /// `StatusChip`).
+    /// `StatusChip`); each call adds one more on the line.
     pub fn chip(mut self, label: impl Into<String>, tone: crate::ChipTone) -> Self {
-        self.chip = Some((label.into(), tone));
+        self.chips.push((label.into(), tone));
+        self
+    }
+
+    /// Words after the chips on their line, muted, such as how long the thing has been open.
+    pub fn meta(mut self, meta: impl Into<String>) -> Self {
+        self.meta = Some(meta.into());
         self
     }
 
@@ -177,9 +185,23 @@ impl PageHeader {
                     ui.set_max_width(640.0);
                     ui.label(TextRole::Body.rich(&t, description).color(t.color("muted-foreground")));
                 }
-                if let Some((label, tone)) = &self.chip {
+                if !self.chips.is_empty() || self.meta.is_some() {
+                    // the chips and the meta on one line, `gap-xs` apart, 8 down
                     ui.add_space(8.0);
-                    ui.add(crate::Chip::new(label.clone()).tone(*tone));
+                    // the line as tall as its chips, not a control's height: set before the row is made
+                    let kept = ui.spacing().interact_size.y;
+                    ui.spacing_mut().interact_size.y = 0.0;
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().interact_size.y = kept;
+                        ui.spacing_mut().item_spacing.x = 6.0;
+                        for (label, tone) in &self.chips {
+                            ui.add(crate::Chip::new(label.clone()).tone(*tone));
+                        }
+                        if let Some(meta) = &self.meta {
+                            ui.label(TextRole::Help.rich(&t, meta).color(t.color("muted-foreground")));
+                        }
+                    });
+                    ui.spacing_mut().interact_size.y = kept;
                 }
             });
             // the actions at the row's end, 8 apart, level with the title block's foot

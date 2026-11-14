@@ -12,10 +12,10 @@ use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, AppBar, Appearance, AsideWidth, Banner, BannerTone, Button, ButtonSize, ButtonVariant,
     Cell, ChipBar, ChipTone, Choice, ChoiceList, Column, Columns, DashboardGrid, DashboardPanel, DataTable, Day,
-    DesktopWindow, Editor, Gap, Icon, IconButton, KpiRow, MenuItem, Page, PageHeader, PanelSpan, PersonRow, Rail,
-    RailEntry, RailGroup, Section, Segmented, Shell, ShellPart, Split, SplitPane, Stack, StackLayout, StackPlace, Stat,
-    StatusLine, StatusTone, TableState, TableVariant, TextRole, Timeline, TimelineEvent, TopBar, UptimeBar, UptimeDay,
-    checkbox_list, form_bar, format_uptime, install, overall_uptime, relative_time,
+    DescriptionList, DesktopWindow, Editor, Gap, Icon, IconButton, KpiRow, MenuItem, Page, PageHeader, PanelSpan,
+    PersonRow, Rail, RailEntry, RailGroup, Section, Segmented, Select, Shell, ShellPart, Split, SplitPane, Stack,
+    StackLayout, StackPlace, Stat, StatusLine, StatusTone, TableState, TableVariant, TextRole, Timeline, TimelineEvent,
+    TopBar, UptimeBar, UptimeDay, checkbox_list, form_bar, format_uptime, install, overall_uptime, relative_time,
 };
 
 use data::SERVICES;
@@ -85,6 +85,11 @@ pub struct StatusApp {
     pub shifts: Vec<data::Shift>,
     pub handovers: Vec<data::Handover>,
     pub maintenance: Vec<data::Maintenance>,
+    /// The incident an incident's page shows.
+    pub incident: Option<String>,
+    /// Its page's next update: the state after it, and what it says.
+    pub post_state: usize,
+    pub post_message: String,
     /// The new incident dialog, while it is open.
     pub new_incident: Option<new_incident::NewIncident>,
     /// The public page's form, and the addresses it has subscribed.
@@ -141,6 +146,9 @@ impl StatusApp {
             maintenance: data::seed_maintenance(),
             subscribe: Subscribe::default(),
             new_incident: None,
+            incident: None,
+            post_state: 0,
+            post_message: String::new(),
             rotation_table: TableState::default(),
             live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
             region: "All".into(),
@@ -169,10 +177,22 @@ impl StatusApp {
             "public" => self.place = "public".into(),
             place if PLACES.iter().any(|(id, _)| *id == place) => {
                 self.place = place.to_owned();
-                self.service = parts
-                    .next()
+                let second = parts.next();
+                self.service = second
                     .filter(|id| place == "services" && SERVICES.iter().any(|s| s.id == *id))
                     .map(str::to_owned);
+                self.incident = second
+                    .filter(|id| place == "incidents" && self.incidents.iter().any(|i| i.id == *id))
+                    .map(str::to_owned);
+                if let Some(incident) = self
+                    .incident
+                    .as_deref()
+                    .and_then(|id| self.incidents.iter().find(|i| i.id == id))
+                {
+                    // the form starts on the state after the one the incident is in
+                    self.post_state = (state_index(incident.state) + 1).min(3);
+                    self.post_message.clear();
+                }
                 self.service_day = parts.next().and_then(Day::parse);
             }
             _ => self.place = "overview".into(),
@@ -257,9 +277,16 @@ impl StatusApp {
             .find(|(id, _)| *id == self.place)
             .map_or("Overview", |(_, label)| *label);
         let service = self.service.clone();
-        let trail: Vec<&str> = match &service {
-            Some(id) => vec!["Status", "Services", id],
-            None => vec!["Status", label],
+        let code = self
+            .incident
+            .as_deref()
+            .filter(|_| self.place == "incidents")
+            .and_then(|id| self.incidents.iter().find(|i| i.id == id))
+            .map(|i| i.code.clone());
+        let trail: Vec<&str> = match (&service, &code) {
+            (Some(id), _) => vec!["Status", "Services", id],
+            (None, Some(code)) => vec!["Status", "Incidents", code],
+            (None, None) => vec!["Status", label],
         };
         let mut account = None;
         let mut toggled = false;
@@ -302,8 +329,8 @@ impl StatusApp {
                 // scroll as a whole
                 let fills = matches!(
                     (self.place.as_str(), self.service.as_ref()),
-                    ("incidents", _) | ("services", None) | ("regions", _)
-                );
+                    ("services", None) | ("regions", _)
+                ) || (self.place == "incidents" && self.incident.is_none());
                 if fills {
                     Page::show(ui, |ui| self.page(ui));
                 } else {
@@ -339,10 +366,10 @@ impl StatusApp {
             let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
             match form.show(ui.ctx(), &self.incidents, now, ME) {
                 Some(new_incident::Answer::Open(made)) => {
+                    let id = made.id.clone();
                     self.incidents.insert(0, made);
                     self.new_incident = None;
-                    self.shown = 0;
-                    self.go("incidents");
+                    self.go(&format!("incidents/{id}"));
                 }
                 Some(new_incident::Answer::Cancel) => self.new_incident = None,
                 None => {}
@@ -367,6 +394,9 @@ impl StatusApp {
             }
             ("services", None) => {
                 Stack::new(Gap::Section).show(ui, |ui| self.services_page(ui));
+            }
+            ("incidents", _) if self.incident.is_some() => {
+                Stack::new(Gap::Page).show(ui, |ui| self.incident_page(ui));
             }
             ("incidents", _) => {
                 Stack::new(Gap::Section).show(ui, |ui| self.incidents_page(ui));
@@ -530,6 +560,12 @@ impl StatusApp {
             .footer(false)
             .stretch(true)
             .show(ui);
+        // a row pressed opens its incident
+        if let Some(row) = self.incidents_table.opened.take()
+            && let Some(id) = keys.get(row)
+        {
+            self.go(&format!("incidents/{id}"));
+        }
         if let Some((row, action)) = output.action
             && let Some(id) = keys.get(row)
         {
@@ -537,6 +573,224 @@ impl StatusApp {
                 0 => self.resolve_or_reopen(id),
                 _ => self.assign_to_on_call(id),
             }
+        }
+    }
+
+    /// A moment of the board's clock as the web's `formatMoment`: `Mon, Nov 16, 08:51`.
+    pub fn moment(&self, at: f64) -> String {
+        moment_of(self.today, at)
+    }
+
+    /// One incident, as the web's `Incident` page: its head with its state, severity and how long
+    /// it has been open, Resolve or Reopen; a form to post the next update and the updates so far;
+    /// and beside them its details, each changed in place.
+    fn incident_page(&mut self, ui: &mut Ui) {
+        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let Some(index) = self
+            .incident
+            .as_deref()
+            .and_then(|id| self.incidents.iter().position(|i| i.id == id))
+        else {
+            return;
+        };
+        let id = self.incidents[index].id.clone();
+        let (resolved, public) = {
+            let i = &self.incidents[index];
+            (i.state == data::State::Resolved, i.public)
+        };
+        let lasted = self.incidents[index].resolved.unwrap_or(now) - self.incidents[index].opened;
+        let (mut status_page, mut toggle) = (false, false);
+        let head = {
+            let i = &self.incidents[index];
+            PageHeader::new(&i.title)
+                .back("Incidents")
+                .code(&i.code)
+                .chip(state_words(i.state), state_tone(i.state))
+                .chip(severity_words(i.severity).to_lowercase(), severity_tone(i.severity))
+                .meta(format!(
+                    "{} {}",
+                    if resolved { "Lasted" } else { "Open for" },
+                    duration(lasted)
+                ))
+                .show(ui, |ui| {
+                    let (icon, word, variant) = if resolved {
+                        (Icon::RotateCcw, "Reopen", ButtonVariant::Outline)
+                    } else {
+                        (Icon::Check, "Resolve", ButtonVariant::Default)
+                    };
+                    toggle = ui.add(Button::new(word).icon(icon).variant(variant)).clicked();
+                    if public {
+                        status_page = ui
+                            .add(
+                                Button::new("Status page")
+                                    .icon(Icon::ExternalLink)
+                                    .variant(ButtonVariant::Outline),
+                            )
+                            .clicked();
+                    }
+                })
+        };
+        if head.back {
+            self.go("incidents");
+            return;
+        }
+        if status_page {
+            self.go("public");
+            return;
+        }
+        if toggle {
+            self.resolve_or_reopen(&id);
+        }
+        let on_call = self.on_call.clone();
+        let mut post = false;
+        let moments: Vec<String> = self.incidents[index]
+            .updates
+            .iter()
+            .map(|u| self.moment(u.at))
+            .collect();
+        let opened_at = self.moment(self.incidents[index].opened);
+        let resolved_at = self.incidents[index].resolved.map(|r| self.moment(r));
+        let (post_state, post_message) = (&mut self.post_state, &mut self.post_message);
+        let incident = &mut self.incidents[index];
+        Split::new(AsideWidth::Lg).show(
+            ui,
+            |ui| {
+                Stack::new(Gap::Section).show(ui, |ui| {
+                    Section::new("Post an update")
+                        .description(
+                            "It goes on the timeline, and on the status page while the incident is shown there.",
+                        )
+                        .show(ui, |ui| {
+                            Stack::new(Gap::Md).show(ui, |ui| {
+                                ui.add(Segmented::new(
+                                    post_state,
+                                    ["Investigating", "Identified", "Monitoring", "Resolved"],
+                                ));
+                                let placeholder = if *post_state == 3 {
+                                    "What fixed it."
+                                } else {
+                                    "What you know now, and what happens next."
+                                };
+                                ui.add(
+                                    sokkel_ui_egui::TextField::new("Update", post_message)
+                                        .placeholder(placeholder)
+                                        .multiline(true),
+                                );
+                                form_bar(ui, Some(&format!("Posted as {ME}")), |ui| {
+                                    let mut button = Button::new("Post").icon(Icon::Send);
+                                    if post_message.trim().is_empty() {
+                                        button = button.reason("Write what changed first.");
+                                    }
+                                    post = ui.add(button).clicked() && !post_message.trim().is_empty();
+                                });
+                            });
+                        });
+                    let events: Vec<TimelineEvent> = incident
+                        .updates
+                        .iter()
+                        .zip(&moments)
+                        .map(|(u, at)| TimelineEvent {
+                            title: u.message.clone(),
+                            at: relative_time(u.at - now),
+                            detail: Some(format!("{} · {} · {at}", u.by, state_name(u.state))),
+                            tone: Some(t.color(state_color(u.state))),
+                            ..Default::default()
+                        })
+                        .collect();
+                    Section::new("Updates")
+                        .meta(incident.updates.len().to_string())
+                        .show(ui, |ui| Timeline::new(events).show(ui));
+                });
+            },
+            |ui| {
+                Section::new("Details").show(ui, |ui| {
+                    let mut severity = match incident.severity {
+                        data::Severity::Minor => 0,
+                        data::Severity::Major => 1,
+                        data::Severity::Critical => 2,
+                    };
+                    let mut assignee = data::PEOPLE.iter().position(|p| *p == incident.assignee).unwrap_or(0);
+                    let mut shown = incident.public;
+                    let mut take = false;
+                    let touches: Vec<String> = incident
+                        .services
+                        .iter()
+                        .map(|s| s.to_string())
+                        .chain(incident.sites.iter().map(|id| {
+                            data::SITES
+                                .iter()
+                                .find(|s| s.id == *id)
+                                .map_or(*id, |s| s.city)
+                                .to_string()
+                        }))
+                        .collect();
+                    let theirs = incident.assignee == on_call;
+                    DescriptionList::new()
+                        .item("Severity", |ui| {
+                            ui.add(Segmented::new(&mut severity, ["Minor", "Major", "Critical"]));
+                        })
+                        .item("Assignee", |ui| {
+                            let width = ui.available_width();
+                            ui.add(Select::new(&mut assignee, data::PEOPLE, "Assignee").width(width));
+                            if !theirs {
+                                ui.add_space(4.0);
+                                take = ui
+                                    .add(
+                                        Button::new(format!("Assign to {on_call}, on call"))
+                                            .icon(Icon::PhoneCall)
+                                            .variant(ButtonVariant::Outline)
+                                            .size(ButtonSize::Sm),
+                                    )
+                                    .clicked();
+                            }
+                        })
+                        .item("Touches", |ui| {
+                            ui.add(sokkel_ui_egui::TagChips::new(&touches));
+                        })
+                        .text("Opened", opened_at.clone())
+                        .text("Resolved", resolved_at.clone().unwrap_or_else(|| "Not yet".into()))
+                        .item("On the status page", |ui| {
+                            ui.add(sokkel_ui_egui::Switch::new(&mut shown, "On the status page"));
+                        })
+                        .show(ui);
+                    incident.severity =
+                        [data::Severity::Minor, data::Severity::Major, data::Severity::Critical][severity];
+                    incident.assignee = if take {
+                        data::PEOPLE
+                            .iter()
+                            .find(|p| **p == on_call)
+                            .copied()
+                            .unwrap_or(incident.assignee)
+                    } else {
+                        data::PEOPLE[assignee]
+                    };
+                    incident.public = shown;
+                });
+            },
+        );
+        if post {
+            let state = [
+                data::State::Investigating,
+                data::State::Identified,
+                data::State::Monitoring,
+                data::State::Resolved,
+            ][self.post_state];
+            let message = self.post_message.trim().to_owned();
+            let incident = &mut self.incidents[index];
+            incident.state = state;
+            incident.resolved = (state == data::State::Resolved).then_some(now);
+            incident.updates.insert(
+                0,
+                data::Update {
+                    at: now,
+                    state,
+                    message,
+                    by: ME,
+                },
+            );
+            self.post_message.clear();
+            self.post_state = (state_index(state) + 1).min(3);
         }
     }
 
@@ -720,11 +974,8 @@ impl StatusApp {
             live::Health::Outage => (BannerTone::Critical, "Some systems are down"),
         };
         Banner::new(tone, format!("{words}, as of {}", self.clock())).show(ui);
-        let moment = |at: f64| {
-            let day = self.today.plus((at / 86_400_000.0).floor() as i32);
-            let minutes = (at.rem_euclid(86_400_000.0) / 60_000.0) as u64;
-            format!("{}, {:02}:{:02}", day.with_weekday(), minutes / 60, minutes % 60)
-        };
+        let today = self.today;
+        let moment = move |at: f64| moment_of(today, at);
         let affects = |incident: &data::Incident| {
             let mut parts: Vec<String> = incident.services.iter().map(|s| s.to_string()).collect();
             parts.extend(incident.sites.iter().map(|id| {
@@ -1800,4 +2051,21 @@ fn subscribe_form(ui: &mut Ui, form: &mut Subscribe) {
                 }
             });
         });
+}
+
+/// An incident state's place in the board's order: investigating, identified, monitoring, resolved.
+fn state_index(state: data::State) -> usize {
+    match state {
+        data::State::Investigating => 0,
+        data::State::Identified => 1,
+        data::State::Monitoring => 2,
+        data::State::Resolved => 3,
+    }
+}
+
+/// A moment of the board's clock, its midnight on `today` the clock's zero, as `Mon, Nov 16, 08:51`.
+fn moment_of(today: Day, at: f64) -> String {
+    let day = today.plus((at / 86_400_000.0).floor() as i32);
+    let minutes = (at.rem_euclid(86_400_000.0) / 60_000.0) as u64;
+    format!("{}, {:02}:{:02}", day.with_weekday(), minutes / 60, minutes % 60)
 }
