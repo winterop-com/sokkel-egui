@@ -51,14 +51,20 @@ impl<'a> Checkbox<'a> {
 impl Widget for Checkbox<'_> {
     fn ui(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
+        // the label wraps in the room it is given, so a long one never pushes past its column
+        let room = (ui.available_width() - 16.0 - 8.0).max(48.0);
         let galley = self.show_label.then(|| {
             WidgetText::from(TextRole::Body.rich(&t, &self.label)).into_galley(
                 ui,
-                Some(TextWrapMode::Extend),
-                f32::INFINITY,
+                Some(TextWrapMode::Wrap),
+                room,
                 TextRole::Body.font(&t),
             )
         });
+        let first_row = galley
+            .as_ref()
+            .and_then(|g| g.rows.first().map(|r| r.height()))
+            .unwrap_or(16.0);
         let text_width = galley.as_ref().map_or(0.0, |g| g.size().x + 8.0);
         let height = galley.as_ref().map_or(16.0, |g| g.size().y.max(16.0));
         let sense = if self.enabled { Sense::click() } else { Sense::hover() };
@@ -73,7 +79,13 @@ impl Widget for Checkbox<'_> {
             return response;
         }
         let painter = ui.painter();
-        let mark = Rect::from_min_size(pos2(rect.left(), rect.center().y - 8.0), vec2(16.0, 16.0));
+        // the box beside the label's first line
+        let middle = if height > first_row + 1.0 {
+            rect.top() + first_row / 2.0
+        } else {
+            rect.center().y
+        };
+        let mark = Rect::from_min_size(pos2(rect.left(), middle - 8.0), vec2(16.0, 16.0));
         let radius = t.radius("sm");
         let (fill, edge) = if on {
             (t.color("primary"), t.color("primary"))

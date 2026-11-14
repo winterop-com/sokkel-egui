@@ -2,11 +2,12 @@
 
 use eframe::egui::{self, Ui, vec2};
 use sokkel_ui_egui::{
-    AppBar, Banner, BannerTone, Button, ButtonSize, ButtonVariant, CalendarEvent, Chip, ChipBar, ChipTone, Choice,
-    ChoiceList, DashboardArrange, DashboardEditActions, DashboardGrid, DashboardLayoutItem, DashboardPanel,
-    DashboardWidget, DateTimeField, Day, DescriptionList, FileKind, FilePreview, Gap, Icon, IconButton, KpiRow, Moment,
-    PanelSpan, PersonRow, SearchField, Section, SplitPane, Stack, Stat, StatPanel, Switch, TagChips, TextField,
-    TextRole, Threshold, Timeline, TimelineEvent, Tree, TreeNode, UptimeBar, UptimeDay, WeekGrid, form_bar, tokens,
+    ActivityItem, ActivityList, ActivityTone, AppBar, Banner, BannerTone, BarList, BarListItem, Button, ButtonSize,
+    ButtonVariant, CalendarEvent, Chip, ChipBar, ChipTone, Choice, ChoiceList, DashboardArrange, DashboardEditActions,
+    DashboardGrid, DashboardLayoutItem, DashboardPanel, DashboardWidget, DateTimeField, Day, DescriptionList, FileKind,
+    FilePreview, Gap, Icon, IconButton, KpiRow, LogLevel, LogLine, LogView, Markdown, Moment, PanelSpan, PersonRow,
+    SearchField, Section, SplitPane, Stack, Stat, StatPanel, Switch, TagChips, TextField, TextRole, Threshold,
+    Timeline, TimelineEvent, Tree, TreeNode, UptimeBar, UptimeDay, WeekGrid, form_bar, tokens,
 };
 use sokkel_ui_egui_charts::{BarPanel, GaugePanel, Series, TimeSeriesPanel};
 
@@ -596,4 +597,141 @@ pub fn dashboard_panels(_: &mut State, ui: &mut Ui) {
             .show(ui);
         });
     });
+}
+
+pub fn activity_list(_: &mut State, ui: &mut Ui) {
+    ui.set_max_width(448.0);
+    let item = |id: &str, text: &str, when: &str, group: &str, icon, tone, unread, action: Option<&str>| ActivityItem {
+        id: id.into(),
+        text: text.into(),
+        when: when.into(),
+        group: Some(group.into()),
+        icon: Some(icon),
+        tone,
+        unread,
+        action: action.map(Into::into),
+    };
+    let items = [
+        item(
+            "a",
+            "nightly-export failed at upload in harbor",
+            "4 min ago",
+            "Today",
+            Icon::CircleX,
+            ActivityTone::Critical,
+            true,
+            Some("Open"),
+        ),
+        item(
+            "b",
+            "grace deployed worker 2.14.0",
+            "10 min ago",
+            "Today",
+            Icon::Rocket,
+            ActivityTone::Info,
+            true,
+            None,
+        ),
+        item(
+            "c",
+            "sync-inventory succeeded in juniper",
+            "1 h ago",
+            "Today",
+            Icon::CircleCheck,
+            ActivityTone::Good,
+            false,
+            None,
+        ),
+        item(
+            "d",
+            "Oslo is slow",
+            "18 h ago",
+            "Yesterday",
+            Icon::TriangleAlert,
+            ActivityTone::Warning,
+            false,
+            None,
+        ),
+    ];
+    egui::Frame::new()
+        .fill(tokens(ui.ctx()).color("card"))
+        .stroke(egui::Stroke::new(1.0, tokens(ui.ctx()).color("border")))
+        .corner_radius(tokens(ui.ctx()).radius("surface"))
+        .show(ui, |ui| {
+            ActivityList::new(&items).show(ui);
+        });
+}
+
+pub fn bar_list(_: &mut State, ui: &mut Ui) {
+    ui.set_max_width(448.0);
+    let items = [
+        BarListItem {
+            label: "harbor".into(),
+            value: 0.41,
+            chosen: true,
+            note: Some("98 runs".into()),
+        },
+        BarListItem {
+            label: "juniper".into(),
+            value: 0.34,
+            chosen: false,
+            note: Some("82 runs".into()),
+        },
+        BarListItem {
+            label: "larkspur".into(),
+            value: 0.25,
+            chosen: false,
+            note: Some("60 runs".into()),
+        },
+    ];
+    BarList::new(&items).show(ui);
+}
+
+pub fn log_view(_: &mut State, ui: &mut Ui) {
+    let line = |at: &str, level, text: &str, project: &str, ms: &str| LogLine {
+        at: Some(at.into()),
+        level: Some(level),
+        source: Some("worker".into()),
+        text: text.into(),
+        fields: vec![("project".into(), project.into()), ("ms".into(), ms.into())],
+    };
+    let lines = [
+        line("09:00:01", LogLevel::Info, "picked up run", "harbor", "12"),
+        line("09:00:02", LogLevel::Debug, "heartbeat", "harbor", "4"),
+        line("09:00:04", LogLevel::Info, "step finished", "juniper", "88"),
+        line(
+            "09:00:05",
+            LogLevel::Warning,
+            "slow transform for sync-inventory, 6s",
+            "juniper",
+            "142",
+        ),
+        line("09:00:07", LogLevel::Info, "wrote 1,204 rows", "larkspur", "61"),
+        line(
+            "09:00:08",
+            LogLevel::Error,
+            "nightly-export failed at upload: connection reset",
+            "harbor",
+            "177",
+        ),
+        line("09:00:10", LogLevel::Info, "uploaded the archive", "harbor", "35"),
+    ];
+    LogView::new("story-log", &lines).height(200.0).show(ui);
+}
+
+pub fn markdown(_: &mut State, ui: &mut Ui) {
+    ui.set_max_width(448.0);
+    Markdown::new(
+        "### Hand-over
+
+The person on call keeps an eye on **Recent failures** and hands over at *09:00*, after `nightly-export` is done.
+
+1. Read the log of the worker
+2. Retry what failed overnight
+3. Write down what is left here
+
+- Press **Edit** to move widgets
+- Drag a widget in from the palette",
+    )
+    .show(ui);
 }

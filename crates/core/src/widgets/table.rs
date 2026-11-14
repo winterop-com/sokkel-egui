@@ -311,6 +311,7 @@ pub struct DataTable<'a> {
     empty: Option<EmptyContent<'a>>,
     footer: bool,
     stretch: bool,
+    framed: bool,
     today: Day,
     keys: Vec<Id>,
     stack_layout: StackLayout,
@@ -345,6 +346,7 @@ impl<'a> DataTable<'a> {
             empty: None,
             footer: true,
             stretch: false,
+            framed: true,
             today: Day::today(),
             keys: Vec::new(),
             stack_layout: StackLayout::Never,
@@ -396,6 +398,13 @@ impl<'a> DataTable<'a> {
 
     /// Stretch the table's frame to the bottom of the room it is given, its rows scrolling inside,
     /// as a table that fills its page.
+    /// Draws the table's own border and corners; off for a table set into a frame of its own,
+    /// such as a flush panel.
+    pub fn framed(mut self, framed: bool) -> Self {
+        self.framed = framed;
+        self
+    }
+
     pub fn stretch(mut self, stretch: bool) -> Self {
         self.stretch = stretch;
         self
@@ -1137,10 +1146,16 @@ impl<'a> DataTable<'a> {
             ui.add_space(6.0);
         }
 
-        let frame = egui::Frame::new()
-            .fill(t.color("card"))
-            .stroke(Stroke::new(1.0, t.color("border-strong")))
-            .corner_radius(radius);
+        let frame = if self.framed {
+            egui::Frame::new()
+                .fill(t.color("card"))
+                .stroke(Stroke::new(1.0, t.color("border-strong")))
+                .corner_radius(radius)
+        } else {
+            egui::Frame::new()
+                .fill(t.color("card"))
+                .inner_margin(egui::Margin::same(1))
+        };
         let drag_id = self.id.with("dragging");
         let response = frame
             .show(ui, |ui| {

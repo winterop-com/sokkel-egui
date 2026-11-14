@@ -267,6 +267,16 @@ pub const STORIES: &[Story] = &[
         show: menus::palette,
     },
     Story {
+        path: "Patterns/Activity list",
+        doc: "What happened, newest first: the unread on a wash with a dot, a way to act on one, the day's heading over its items.",
+        show: parts::activity_list,
+    },
+    Story {
+        path: "Patterns/Bar list",
+        doc: "Labeled bars of shares, the chosen one in the primary color, each value as a percent and the counts behind it.",
+        show: parts::bar_list,
+    },
+    Story {
         path: "Patterns/Banner",
         doc: "A line across the page about how things stand, in its tone.",
         show: parts::banner,
@@ -305,6 +315,16 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Shell",
         doc: "The frame every app has: the rail of its places, the top bar with the trail, the page, and the status line across the bottom. Press a place to go there.",
         show: frame::shell,
+    },
+    Story {
+        path: "Patterns/Log view",
+        doc: "A service's log on the terminal ground: lines numbered, time, level and source in columns, levels inked, the fields after the text; following, it keeps the newest line in view.",
+        show: parts::log_view,
+    },
+    Story {
+        path: "Patterns/Markdown",
+        doc: "A note written in markdown at a message's scale: a heading, paragraphs with bold, italic and code, and both kinds of list.",
+        show: parts::markdown,
     },
     Story {
         path: "Patterns/Page header",

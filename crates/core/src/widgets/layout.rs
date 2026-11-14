@@ -62,6 +62,8 @@ pub enum Gap {
     Page,
     /// The density's section gap, between the parts of one section.
     Section,
+    /// 6.
+    Xs,
     /// 8.
     Sm,
     /// 12.
@@ -77,6 +79,7 @@ impl Gap {
         match self {
             Gap::Page => tokens.density("page-gap"),
             Gap::Section => tokens.density("section-gap"),
+            Gap::Xs => 6.0,
             Gap::Sm => 8.0,
             Gap::Md => 12.0,
             Gap::Lg => 16.0,

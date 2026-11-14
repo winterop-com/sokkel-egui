@@ -1,5 +1,6 @@
 //! The primitives, each drawn from the tokens alone, after sokkel-ui's components of the same name.
 
+mod activity;
 mod arrange;
 mod board;
 mod button;
@@ -18,6 +19,7 @@ mod frame;
 mod layout;
 mod list_row;
 mod log_view;
+mod markdown;
 mod menu;
 mod overlay;
 mod page;
@@ -35,6 +37,7 @@ mod tree;
 mod uptime;
 mod week;
 
+pub use activity::{ActivityItem, ActivityList, ActivityResponse, ActivityTone, ActivityWords, BarList, BarListItem};
 pub use arrange::{
     ALL_SPANS, ArrangeItem, DashboardArrange, DashboardArrangeResponse, DashboardArrangeWords, DashboardEdit,
     DashboardEditActions, DashboardEditOutcome, DashboardEditWords, DashboardLayoutItem, DashboardWidget,
@@ -60,7 +63,8 @@ pub use frame::{
 };
 pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
 pub use list_row::{ListRow, ListRows, RowAside, RowMark};
-pub use log_view::{LogLevel, LogLine};
+pub use log_view::{LogLevel, LogLine, LogView, LogViewWords};
+pub use markdown::Markdown;
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use overlay::{ConfirmAnswer, ConfirmDialog, Dialog, Select, tooltip, tooltip_shown};
 pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
