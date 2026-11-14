@@ -106,6 +106,9 @@ impl DashboardGrid {
             rows.last_mut().expect("a row was pushed").push(cell);
         }
         let count = rows.len();
+        // the rows are `gap` apart and no more, whatever spacing the page holds its parts at
+        let spacing = ui.spacing().item_spacing.y;
+        ui.spacing_mut().item_spacing.y = 0.0;
         for (r, row) in rows.into_iter().enumerate() {
             let key = self.id.with(("row", r));
             let held = ui.data(|d| d.get_temp::<f32>(key)).unwrap_or(0.0);
@@ -136,6 +139,10 @@ impl DashboardGrid {
             if (tallest - held).abs() > 0.5 {
                 ui.data_mut(|d| d.insert_temp(key, tallest));
                 ui.ctx().request_discard("a dashboard row changed height");
+            }
+            if r + 1 == count {
+                // the grid as a whole stands its page's spacing from what follows
+                ui.spacing_mut().item_spacing.y = spacing;
             }
             ui.allocate_rect(
                 Rect::from_min_size(pos2(ui.cursor().left(), top), vec2(width, tallest)),

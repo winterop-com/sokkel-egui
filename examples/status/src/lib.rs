@@ -4,14 +4,16 @@
 //! stands.
 
 pub mod data;
+pub mod history;
 pub mod live;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, Appearance, AsideWidth, Button, ButtonSize, ButtonVariant, Cell, ChipTone, Column,
-    Columns, DashboardGrid, DataTable, Day, Editor, Gap, Icon, KpiRow, MenuItem, Page, PageHeader, PanelSpan,
-    PersonRow, Rail, RailEntry, RailGroup, Section, Segmented, Shell, ShellPart, Split, Stack, StackLayout, StackPlace,
-    Stat, StatusLine, StatusTone, TableState, TableVariant, Timeline, TimelineEvent, TopBar, install, relative_time,
+    Columns, DashboardGrid, DashboardPanel, DataTable, Day, Editor, Gap, Icon, KpiRow, MenuItem, Page, PageHeader,
+    PanelSpan, PersonRow, Rail, RailEntry, RailGroup, Section, Segmented, Shell, ShellPart, Split, Stack, StackLayout,
+    StackPlace, Stat, StatusLine, StatusTone, TableState, TableVariant, TextRole, Timeline, TimelineEvent, TopBar,
+    UptimeBar, UptimeDay, format_uptime, install, overall_uptime, relative_time,
 };
 
 use data::SERVICES;
@@ -41,6 +43,8 @@ pub struct StatusApp {
     pub place: String,
     /// The service a service page shows.
     pub service: Option<String>,
+    /// The day pressed on the service's uptime bar, its incidents listed under it.
+    pub service_day: Option<Day>,
     /// Settings open over the page.
     pub settings: bool,
     pub appearance: Appearance,
@@ -82,6 +86,7 @@ impl StatusApp {
         Self {
             place: "overview".into(),
             service: None,
+            service_day: None,
             settings: false,
             appearance,
             live: true,
@@ -114,6 +119,7 @@ impl StatusApp {
                     .next()
                     .filter(|id| place == "services" && SERVICES.iter().any(|s| s.id == *id))
                     .map(str::to_owned);
+                self.service_day = parts.next().and_then(Day::parse);
             }
             _ => self.place = "overview".into(),
         }
@@ -130,6 +136,15 @@ impl StatusApp {
     pub fn clock(&self) -> String {
         let at = self.start + self.readings * INTERVAL;
         format!("{:02}:{:02}:{:02}", at / 3600, at / 60 % 60, at % 60)
+    }
+
+    /// Every service's last ninety days, in `SERVICES`' order.
+    pub fn uptime(&self) -> Vec<Vec<UptimeDay>> {
+        let now = ((self.start + self.readings * INTERVAL) as f64) * 1000.0;
+        SERVICES
+            .iter()
+            .map(|s| history::uptime_days(s.id, &self.incidents, self.today, now, 90))
+            .collect()
     }
 
     /// The incidents not yet resolved.
@@ -322,6 +337,8 @@ impl StatusApp {
     fn kpis(&self, ui: &mut Ui) {
         let requests: f64 = SERVICES.iter().map(|s| s.load).sum();
         let api = SERVICES.iter().find(|s| s.id == "api").map_or(0.0, |s| s.latency);
+        let all: Vec<f64> = self.uptime().iter().filter_map(|d| overall_uptime(d)).collect();
+        let average = (!all.is_empty()).then(|| all.iter().sum::<f64>() / all.len() as f64);
         let opened = self.open();
         let mut open = Stat::new("Open incidents", opened.len());
         if let Some(first) = opened.first() {
@@ -331,7 +348,7 @@ impl StatusApp {
             Stat::new("Services operational", format!("{0} of {0}", SERVICES.len())),
             Stat::new("Sites operational", format!("{0} of {0}", data::SITES.len())),
             open,
-            Stat::new("Uptime, 90 days", "-"),
+            Stat::new("Uptime, 90 days", average.map_or("-".to_owned(), format_uptime)),
             Stat::new("Requests", group(requests.round() as u64))
                 .unit("/s")
                 .note(format!("api p95 {} ms", api.round())),
@@ -486,6 +503,7 @@ impl StatusApp {
                 .stack(StackPlace::Secondary),
             Column::new("Host", 192.0).stack(StackPlace::None),
         ];
+        let uptime = self.uptime();
         let rows: Vec<Vec<Cell>> = self
             .service_order
             .iter()
@@ -502,8 +520,7 @@ impl StatusApp {
                     Cell::Text(format!("{} ms", last.map_or(0.0, |r| r.p95).round())),
                     Cell::Text(rate(last.map_or(0.0, |r| r.errors))),
                     Cell::Text(format!("{}/s", group(last.map_or(0.0, |r| r.load).round() as u64))),
-                    // the uptime the incident history gives, still to port
-                    Cell::Text("-".into()),
+                    Cell::Text(overall_uptime(&uptime[index]).map_or("-".to_owned(), format_uptime)),
                     Cell::Mono(service.host.into()),
                 ]
             })
@@ -530,6 +547,8 @@ impl StatusApp {
         let index = SERVICES.iter().position(|s| s.id == id).unwrap_or(0);
         let service = SERVICES[index];
         let t = sokkel_ui_egui::tokens(ui.ctx());
+        let days = self.uptime().swap_remove(index);
+        let overall = overall_uptime(&days);
         let health = self.live_world.health[index];
         let last = self.live_world.readings[index].last().copied();
         let head = PageHeader::new(service.id)
@@ -561,7 +580,7 @@ impl StatusApp {
                 .note(format!("usually {} ms", service.latency.round())),
             Stat::new("Errors", value(&|r| rate(r.errors))).note(format!("usually {}", rate(service.errors))),
             Stat::new("Requests", value(&|r| group(r.load.round() as u64))).unit("/s"),
-            Stat::new("Uptime, 90 days", "-"),
+            Stat::new("Uptime, 90 days", overall.map_or("-".to_owned(), format_uptime)),
             Stat::new("Running", service.version),
         ])
         .show(ui);
@@ -569,6 +588,30 @@ impl StatusApp {
         let x: Vec<String> = readings.iter().map(|r| clock_of(r.at)).collect();
         let warning = t.color("warning");
         let critical = t.color("critical");
+        let picked = self.service_day;
+        let on_day: Vec<TimelineEvent> = picked
+            .map(|day| {
+                let back = f64::from(self.today.0 - day.0);
+                let from = -back * 24.0 * 3600.0 * 1000.0;
+                let to = from + 24.0 * 3600.0 * 1000.0;
+                let now = ((self.start + self.readings * INTERVAL) as f64) * 1000.0;
+                self.incidents
+                    .iter()
+                    .filter(|i| i.services.contains(&id) && i.opened < to && i.resolved.unwrap_or(now) > from)
+                    .map(|i| TimelineEvent {
+                        icon: Icon::Siren,
+                        title: format!("{} {}", i.code, i.title),
+                        at: day.medium(),
+                        detail: Some(format!(
+                            "{}, {}",
+                            severity_words(i.severity).to_lowercase(),
+                            state_words(i.state).to_lowercase()
+                        )),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        let mut pressed = None;
         DashboardGrid::new("service").show(ui, |grid| {
             let x2 = x.clone();
             grid.cell(PanelSpan::Half, move |ui| {
@@ -596,7 +639,32 @@ impl StatusApp {
                     .label_every(15)
                     .show(ui);
             });
+            let pressed = &mut pressed;
+            let days = &days;
+            grid.cell(PanelSpan::Half, move |ui| {
+                let subtitle = overall.map_or("the last 90 days".to_owned(), |o| {
+                    format!("{} over 90 days", format_uptime(o))
+                });
+                DashboardPanel::new("Uptime").subtitle(subtitle).show(ui, |ui| {
+                    Stack::new(Gap::Lg).show(ui, |ui| {
+                        *pressed = UptimeBar::new(("service", id), days).show(ui).map(|d| d.date);
+                        let muted = |text: String| TextRole::Help.rich(&t, text).color(t.color("muted-foreground"));
+                        match picked {
+                            None => {
+                                ui.label(muted("Press a day to see what happened on it.".into()));
+                            }
+                            Some(day) if on_day.is_empty() => {
+                                ui.label(muted(format!("Nothing happened to {id} on {}.", day.medium())));
+                            }
+                            Some(_) => Timeline::new(on_day).show(ui),
+                        }
+                    });
+                });
+            });
         });
+        if let Some(day) = pressed {
+            self.go(&format!("services/{id}/{day}"));
+        }
     }
 
     /// On call: who answers now, the escalation and the next week; the rotation, each week's person
@@ -724,6 +792,7 @@ impl StatusApp {
     fn tiles(&self, ui: &mut Ui) -> Option<&'static str> {
         let t = sokkel_ui_egui::tokens(ui.ctx());
         let mut opened = None;
+        let uptime = self.uptime();
         Columns::new(4)
             .min(160.0)
             .gap(12.0)
@@ -736,7 +805,11 @@ impl StatusApp {
                     .dot(t.color(health.color()))
                     .emphasis(health != live::Health::Operational)
                     .unit("ms p95")
-                    .note(format!("{} · no data over 90 days", health.words()))
+                    .note(format!(
+                        "{} · {} over 90 days",
+                        health.words(),
+                        overall_uptime(&uptime[index]).map_or("no data".to_owned(), format_uptime)
+                    ))
                     .trend(readings.iter().map(|r| r.p95), t.color(health.tone()));
                 if stat.tile(ui, width).clicked() {
                     opened = Some(service.id);

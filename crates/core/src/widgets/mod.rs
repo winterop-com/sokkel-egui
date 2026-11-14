@@ -24,6 +24,7 @@ mod table;
 mod table_edit;
 mod text_field;
 mod time;
+mod uptime;
 
 pub use board::{BOARD_COLUMN, Board, BoardCard, BoardColumn, BoardMove, CardResponse};
 pub use button::{Button, ButtonSize, ButtonVariant};
@@ -56,6 +57,7 @@ pub use table::{
 pub use table_edit::{EditWords, Editor};
 pub use text_field::{Input, TextField};
 pub use time::relative_time;
+pub use uptime::{UptimeBar, UptimeBarWords, UptimeDay, format_uptime, overall_uptime, uptime_color};
 
 use egui::{Color32, CornerRadius, Painter, Rect, Response, Stroke, StrokeKind, Ui};
 

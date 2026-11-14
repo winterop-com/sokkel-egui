@@ -20,12 +20,13 @@ and never chase a difference made of numbers.
 - Each page has its head (title, count or description, actions), the actions level with the
   title block's foot as the page-header spec says.
 - The overview's figures stand in a `KpiRow` of `Stat`s, at the web's places; until the live
-  readings are ported, requests and the api's latency are the services' resting values and uptime
-  reads "-".
+  readings are ported, requests and the api's latency are the services' resting values; uptime is
+  the average of the services' ninety days.
 - The service tiles stand as the web's: a `Stat` tile each (`Stat::tile`, its dot, unit, note and
   `sparkline`), four to a row in `Columns`, pressed to open the service. The readings come from
   `live.rs`, the web's calm readings ported (a seeded generator, so egui's numbers are its own);
-  the notes say "no data over 90 days" until the incident history uptime is read from is ported.
+  each note says the service's uptime over ninety days. The web's second row stands queue,
+  storage, search, mail (the board's layout order), egui's still mail, queue, storage, search.
 - The incidents are the web's seed (`data::seed_incidents`: INC-41 open, eight resolved) and the
   incidents page has its filter: `Segmented` with each option's count and state dot, the page's
   parts a section's gap apart (`Stack`, `Gap::Section`).
@@ -45,11 +46,18 @@ and never chase a difference made of numbers.
   its state, Report incident, Schedule maintenance and Deploy), its figures, and its live charts
   in a `DashboardGrid`: Latency (p95 and p50) and Errors, each a `TimeSeriesPanel` from the charts
   add-on, half the row, the areas fading from each line, a clock time every 15th reading, the
-  values written with their unit and the threshold steps dashed where the axis reaches them. The
+  values written with their unit and the threshold steps dashed where the axis reaches them. Under them the Uptime panel (`DashboardPanel`) holds
+  the `UptimeBar`: ninety days from the incident history (`history.rs`, the web's `uptimeDays`:
+  each incident's time weighed by its severity, a stray minute lost on one day in twenty), the
+  days with incidents in their worst state's color, the readout saying the uptime or the day
+  pointed at, and a day pressed (`services/<id>/<date>`, as the web's route) listing its incidents
+  in a `Timeline`. The figures the history gives match the web's to the hundredth: 99.91% over
+  every service on the overview, 99.92% for api, each tile's note and the services table's
+  column. The
   charts engine follows ECharts here for every chart: the series take the web's color order
   (`SERIES_ORDER`, from `chart-2`), a line's points sit on the axis' ends, and the value axis
   steps as ECharts picks (1, 2, 3 or 5 times a power of ten, about five apart). The dependency
-  graph, the uptime bar, deploys and maintenance follow.
+  graph, deploys and maintenance follow.
 - The busy palette and busy confirm's way out (F23 as the owner refined it: after a wait, a "Stop
   waiting" and Escape again) comes with the overlays batch's specs; egui's palette commands do
   not run long yet, its busy `ConfirmDialog` does.
