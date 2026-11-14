@@ -94,6 +94,8 @@ pub struct StatusApp {
     /// A service's dialogs, while one is open.
     pub maintenance_form: Option<dialogs::MaintenanceForm>,
     pub deploy_form: Option<dialogs::DeployForm>,
+    /// When the last reading came, on the window's clock, to take the next on time.
+    last_tick: Option<f64>,
     /// The incident an incident's page shows.
     pub incident: Option<String>,
     /// Its page's next update: the state after it, and what it says.
@@ -160,6 +162,7 @@ impl StatusApp {
             deploy_form: None,
             deploys_table: TableState::default(),
             windows_table: TableState::default(),
+            last_tick: None,
             incident: None,
             post_state: 0,
             post_message: String::new(),
@@ -2000,6 +2003,19 @@ fn group(n: u64) -> String {
 
 impl eframe::App for StatusApp {
     fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
+        // a reading every INTERVAL seconds of the window's clock while live, as the web's board
+        let now = ui.ctx().input(|i| i.time);
+        let last = *self.last_tick.get_or_insert(now);
+        if self.live && now - last >= INTERVAL as f64 {
+            self.tick();
+            self.last_tick = Some(now);
+        } else if !self.live {
+            self.last_tick = Some(now);
+        }
+        if self.live {
+            let wait = (INTERVAL as f64 - (now - last)).max(0.05);
+            ui.ctx().request_repaint_after(std::time::Duration::from_secs_f64(wait));
+        }
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE)
             .show(ui, |ui| self.show(ui));

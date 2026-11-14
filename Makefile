@@ -2,7 +2,7 @@
 # and sokkel-ui is read from .parity/sokkel-ui (scripts/sokkel.ts): clones fetched from GitHub on
 # every run, read and never written.
 
-.PHONY: help tokens tokens-check parity parity-web fmt fmt-check check test snapshots storybook runs tasks status apps all
+.PHONY: help tokens tokens-check parity parity-web fmt fmt-check check test snapshots storybook runs tasks status logs apps all
 
 help:
 	@echo "make tokens        copy sokkel-design's resolved tokens, as GitHub has them, into the core crate"
@@ -59,6 +59,9 @@ tasks:
 
 status:
 	cargo run -p status
+
+logs:
+	cargo run -p logs
 
 apps:
 	scripts/bundle.sh

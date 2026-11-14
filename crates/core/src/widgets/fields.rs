@@ -165,6 +165,8 @@ pub struct SearchField<'a> {
     placeholder: String,
     id: egui::Id,
     keys: Option<String>,
+    /// Its width; the room it is given down a column, and 256 in a row such as a toolbar.
+    width: Option<f32>,
 }
 
 impl<'a> SearchField<'a> {
@@ -174,7 +176,14 @@ impl<'a> SearchField<'a> {
             placeholder: "Search".into(),
             id: egui::Id::new(id),
             keys: None,
+            width: None,
         }
+    }
+
+    /// A width of its own.
+    pub fn width(mut self, width: f32) -> Self {
+        self.width = Some(width);
+        self
     }
 
     /// The key that reaches the field, drawn at its end ("/"), and pressed while nothing else has
@@ -192,7 +201,14 @@ impl<'a> SearchField<'a> {
     pub fn show(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
         let height = super::finger_tall(ui.ctx(), &t, t.density("control"));
-        let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
+        let width = self.width.unwrap_or_else(|| {
+            if ui.layout().is_horizontal() && !ui.layout().horizontal_justify() {
+                256.0_f32.min(ui.available_width())
+            } else {
+                ui.available_width()
+            }
+        });
+        let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
         let field = self.id.with("field");
         let response = icon_field(ui, rect, self.text, Icon::Search, &self.placeholder, field);
         if let Some(keys) = &self.keys {
