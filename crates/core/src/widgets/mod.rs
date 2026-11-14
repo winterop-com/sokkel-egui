@@ -34,9 +34,9 @@ mod uptime;
 mod week;
 
 pub use arrange::{
-    ALL_SPANS, DashboardArrange, DashboardArrangeResponse, DashboardArrangeWords, DashboardEdit, DashboardEditActions,
-    DashboardEditOutcome, DashboardEditWords, DashboardLayoutItem, DashboardWidget, arranged_index, move_item,
-    panel_tools,
+    ALL_SPANS, ArrangeItem, DashboardArrange, DashboardArrangeResponse, DashboardArrangeWords, DashboardEdit,
+    DashboardEditActions, DashboardEditOutcome, DashboardEditWords, DashboardLayoutItem, DashboardWidget,
+    arranged_index, move_item, panel_tools,
 };
 pub use board::{BOARD_COLUMN, Board, BoardCard, BoardColumn, BoardMove, CardResponse};
 pub use button::{Button, ButtonSize, ButtonVariant, IconButton};

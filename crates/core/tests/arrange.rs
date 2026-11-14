@@ -170,3 +170,36 @@ fn cancel_throws_the_edits_away_and_done_keeps_them() {
     assert!(!harness.state().edit.editing());
     assert_eq!(ids(&harness.state().layout), ["failed", "queued"]);
 }
+
+#[test]
+fn a_guarded_cancel_with_edits_only_asks() {
+    let mut harness = Harness::builder().with_size([800.0, 200.0]).build_ui_state(
+        |ui, state: &mut (DashboardEdit, Vec<DashboardLayoutItem>, bool)| {
+            install(ui.ctx(), &Default::default());
+            ui.horizontal(|ui| {
+                let outcome = DashboardEditActions::new(&mut state.0, &mut state.1)
+                    .guard_cancel(true)
+                    .show(ui);
+                if outcome.cancel_asked {
+                    state.2 = true;
+                }
+            });
+        },
+        (DashboardEdit::default(), layout(), false),
+    );
+    harness.run_steps(2);
+    harness.get_by_label("Edit").click();
+    harness.run_steps(2);
+    // no edits yet: Cancel cancels
+    harness.get_by_label("Cancel").click();
+    harness.run_steps(2);
+    assert!(!harness.state().0.editing());
+    harness.get_by_label("Edit").click();
+    harness.run_steps(2);
+    let (edit, kept, _) = harness.state_mut();
+    edit.layout(kept).pop();
+    harness.get_by_label("Cancel").click();
+    harness.run_steps(2);
+    assert!(harness.state().2);
+    assert!(harness.state().0.editing());
+}

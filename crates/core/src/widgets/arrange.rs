@@ -22,6 +22,29 @@ impl DashboardLayoutItem {
     }
 }
 
+/// What an arranged dashboard places: its key and its width, as anything extending sokkel-ui's
+/// `DashboardLayoutItem` does. A dashboard of widgets with options of their own implements it on
+/// its widget, so edit mode drafts the options with the places.
+pub trait ArrangeItem: Clone + PartialEq {
+    fn id(&self) -> &str;
+    fn span(&self) -> PanelSpan;
+    fn set_span(&mut self, span: PanelSpan);
+}
+
+impl ArrangeItem for DashboardLayoutItem {
+    fn id(&self) -> &str {
+        &self.id
+    }
+
+    fn span(&self) -> PanelSpan {
+        self.span
+    }
+
+    fn set_span(&mut self, span: PanelSpan) {
+        self.span = span;
+    }
+}
+
 /// A kind of panel the palette offers, dragged onto the grid (or pressed) to add one.
 #[derive(Clone, Debug)]
 pub struct DashboardWidget {
@@ -267,24 +290,24 @@ pub struct DashboardArrangeResponse {
 /// move it a place; a menu of widths and a remove button, and with `configurable` a button that
 /// opens its options. A line at a panel's side shows where a dragged one lands. Widgets in the
 /// palette are dragged onto the grid to add a panel there, or pressed to add one at the end.
-pub struct DashboardArrange<'a> {
+pub struct DashboardArrange<'a, T: ArrangeItem = DashboardLayoutItem> {
     id: Id,
-    layout: &'a mut Vec<DashboardLayoutItem>,
-    label: &'a dyn Fn(&DashboardLayoutItem) -> String,
+    layout: &'a mut Vec<T>,
+    label: &'a dyn Fn(&T) -> String,
     arranging: bool,
     palette: &'a [DashboardWidget],
     spans: &'a [PanelSpan],
     removable: bool,
-    configurable: Option<&'a dyn Fn(&DashboardLayoutItem) -> bool>,
+    configurable: Option<&'a dyn Fn(&T) -> bool>,
     dense: bool,
     words: DashboardArrangeWords,
 }
 
-impl<'a> DashboardArrange<'a> {
+impl<'a, T: ArrangeItem> DashboardArrange<'a, T> {
     pub fn new(
         id: impl std::hash::Hash + std::fmt::Debug,
-        layout: &'a mut Vec<DashboardLayoutItem>,
-        label: &'a dyn Fn(&DashboardLayoutItem) -> String,
+        layout: &'a mut Vec<T>,
+        label: &'a dyn Fn(&T) -> String,
     ) -> Self {
         Self {
             id: Id::new(("sokkel-arrange", id)),
@@ -324,7 +347,7 @@ impl<'a> DashboardArrange<'a> {
     }
 
     /// Which panels have a configure button while arranging.
-    pub fn configurable(mut self, configurable: &'a dyn Fn(&DashboardLayoutItem) -> bool) -> Self {
+    pub fn configurable(mut self, configurable: &'a dyn Fn(&T) -> bool) -> Self {
         self.configurable = Some(configurable);
         self
     }
@@ -340,7 +363,7 @@ impl<'a> DashboardArrange<'a> {
     }
 
     /// Draws the panels, `render` drawing each in its cell: a `DashboardPanel` or a chart panel.
-    pub fn show(self, ui: &mut Ui, render: impl FnMut(&mut Ui, &DashboardLayoutItem)) -> DashboardArrangeResponse {
+    pub fn show(self, ui: &mut Ui, render: impl FnMut(&mut Ui, &T)) -> DashboardArrangeResponse {
         let t = tokens(ui.ctx());
         let mut response = DashboardArrangeResponse::default();
         let carried_key = self.id.with("carried");
@@ -370,7 +393,7 @@ impl<'a> DashboardArrange<'a> {
         // the grid, each cell's rect and tool press noted as it is drawn
         let cells: RefCell<Vec<(String, Rect, Option<ToolPress>)>> = RefCell::new(Vec::new());
         let render = RefCell::new(render);
-        let layout_now: Vec<DashboardLayoutItem> = self.layout.clone();
+        let layout_now: Vec<T> = self.layout.clone();
         let refocus = ui.data_mut(|d| d.remove_temp::<String>(grip_focus_key(self.id)));
         DashboardGrid::new(self.id).dense(self.dense).show(ui, |grid| {
             for item in &layout_now {
@@ -379,12 +402,12 @@ impl<'a> DashboardArrange<'a> {
                 let words = &self.words;
                 let label = (self.label)(item);
                 let configurable = self.configurable.is_some_and(|f| f(item));
-                let dragging = carried == Some(Carried::Panel(item.id.clone()));
+                let dragging = carried == Some(Carried::Panel(item.id().to_owned()));
                 let arranging = self.arranging;
                 let spans = self.spans;
                 let removable = self.removable;
-                let refocus = refocus.as_deref() == Some(item.id.as_str());
-                grid.cell(item.span, move |ui| {
+                let refocus = refocus.as_deref() == Some(item.id());
+                grid.cell(item.span(), move |ui| {
                     let cell = ui.id();
                     if arranging {
                         ui.data_mut(|d| {
@@ -395,7 +418,7 @@ impl<'a> DashboardArrange<'a> {
                                     size_label: (words.size)(&label),
                                     remove_label: (words.remove)(&label),
                                     configure_label: configurable.then(|| (words.configure)(&label)),
-                                    span: item.span,
+                                    span: item.span(),
                                     spans: spans.iter().map(|s| (*s, (words.span)(*s))).collect(),
                                     removable,
                                 },
@@ -419,7 +442,7 @@ impl<'a> DashboardArrange<'a> {
                         // the grip moved from the keyboard keeps the focus in its new place
                         ui.memory_mut(|m| m.request_focus(grip_id(cell)));
                     }
-                    cells.borrow_mut().push((item.id.clone(), ui.min_rect(), press));
+                    cells.borrow_mut().push((item.id().to_owned(), ui.min_rect(), press));
                 });
             }
         });
@@ -433,12 +456,12 @@ impl<'a> DashboardArrange<'a> {
         // the presses on the panels' tools
         for (id, _, press) in &cells {
             let Some(press) = press else { continue };
-            let Some(from) = self.layout.iter().position(|i| &i.id == id) else {
+            let Some(from) = self.layout.iter().position(|i| i.id() == id) else {
                 continue;
             };
             match *press {
                 ToolPress::Span(span) => {
-                    self.layout[from].span = span;
+                    self.layout[from].set_span(span);
                     response.changed = true;
                 }
                 ToolPress::Remove => {
@@ -459,7 +482,7 @@ impl<'a> DashboardArrange<'a> {
             break;
         }
         // where a carried thing would land
-        let ids: Vec<&str> = layout_now.iter().map(|i| i.id.as_str()).collect();
+        let ids: Vec<&str> = layout_now.iter().map(|i| i.id()).collect();
         let moved = match &carried {
             Some(Carried::Panel(id)) => Some(id.as_str()),
             _ => None,
@@ -518,7 +541,7 @@ impl<'a> DashboardArrange<'a> {
         // what follows the pointer: a card with the carried thing's name
         if let (Some(thing), Some(at)) = (&carried, pointer) {
             let name = match thing {
-                Carried::Panel(id) => layout_now.iter().find(|i| &i.id == id).map(|i| (self.label)(i)),
+                Carried::Panel(id) => layout_now.iter().find(|i| i.id() == id).map(|i| (self.label)(i)),
                 Carried::Widget(index) => self.palette.get(*index).map(|w| w.label.clone()),
             }
             .unwrap_or_default();
@@ -549,7 +572,7 @@ impl<'a> DashboardArrange<'a> {
         {
             match thing {
                 Carried::Panel(id) => {
-                    if let Some(from) = self.layout.iter().position(|i| i.id == id) {
+                    if let Some(from) = self.layout.iter().position(|i| i.id() == id) {
                         move_item(self.layout, from, index.min(self.layout.len() - 1));
                         response.changed = true;
                     }
@@ -662,30 +685,36 @@ impl Default for DashboardEditWords {
 /// A dashboard's edit mode, as sokkel-ui's `useDashboardEdit`: while editing, every move, width,
 /// removal and addition goes into a draft; Done keeps it, Cancel throws it away, Reset puts the
 /// default in the draft. The app holds it beside the kept layout.
-#[derive(Clone, Debug, Default)]
-pub struct DashboardEdit {
-    draft: Option<Vec<DashboardLayoutItem>>,
+#[derive(Clone, Debug)]
+pub struct DashboardEdit<T: ArrangeItem = DashboardLayoutItem> {
+    draft: Option<Vec<T>>,
 }
 
-impl DashboardEdit {
+impl<T: ArrangeItem> Default for DashboardEdit<T> {
+    fn default() -> Self {
+        Self { draft: None }
+    }
+}
+
+impl<T: ArrangeItem> DashboardEdit<T> {
     pub fn editing(&self) -> bool {
         self.draft.is_some()
     }
 
     /// The layout to draw and arrange: the draft while editing, else the kept one.
-    pub fn layout<'a>(&'a mut self, kept: &'a mut Vec<DashboardLayoutItem>) -> &'a mut Vec<DashboardLayoutItem> {
+    pub fn layout<'a>(&'a mut self, kept: &'a mut Vec<T>) -> &'a mut Vec<T> {
         match &mut self.draft {
             Some(draft) => draft,
             None => kept,
         }
     }
 
-    pub fn edit(&mut self, kept: &[DashboardLayoutItem]) {
+    pub fn edit(&mut self, kept: &[T]) {
         self.draft = Some(kept.to_vec());
     }
 
     /// Keeps the draft, when it differs, in `kept` and leaves edit mode; true when it was kept.
-    pub fn done(&mut self, kept: &mut Vec<DashboardLayoutItem>) -> bool {
+    pub fn done(&mut self, kept: &mut Vec<T>) -> bool {
         match self.draft.take() {
             Some(draft) if &draft != kept => {
                 *kept = draft;
@@ -699,12 +728,12 @@ impl DashboardEdit {
         self.draft = None;
     }
 
-    pub fn reset(&mut self, default: &[DashboardLayoutItem]) {
+    pub fn reset(&mut self, default: &[T]) {
         self.draft = Some(default.to_vec());
     }
 
     /// Whether the draft differs from the kept layout.
-    pub fn changed(&self, kept: &[DashboardLayoutItem]) -> bool {
+    pub fn changed(&self, kept: &[T]) -> bool {
         self.draft.as_deref().is_some_and(|d| d != kept)
     }
 }
@@ -714,33 +743,44 @@ impl DashboardEdit {
 pub struct DashboardEditOutcome {
     /// Done kept a changed layout.
     pub saved: bool,
+    /// Cancel was pressed with edits made, under `guard_cancel`: the app asks before throwing them away.
+    pub cancel_asked: bool,
 }
 
 /// A dashboard's edit buttons for its page header, as sokkel-ui's `DashboardEditActions`: Edit,
 /// and while editing Reset (shut while the layout is the default), Cancel and Done. Drawn in a
 /// right-to-left row such as `PageHeader`'s actions, they add themselves last first.
-pub struct DashboardEditActions<'a> {
-    edit: &'a mut DashboardEdit,
-    kept: &'a mut Vec<DashboardLayoutItem>,
-    default: Option<&'a [DashboardLayoutItem]>,
+pub struct DashboardEditActions<'a, T: ArrangeItem = DashboardLayoutItem> {
+    edit: &'a mut DashboardEdit<T>,
+    kept: &'a mut Vec<T>,
+    default: Option<&'a [T]>,
     size: ButtonSize,
+    guard_cancel: bool,
     words: DashboardEditWords,
 }
 
-impl<'a> DashboardEditActions<'a> {
-    pub fn new(edit: &'a mut DashboardEdit, kept: &'a mut Vec<DashboardLayoutItem>) -> Self {
+impl<'a, T: ArrangeItem> DashboardEditActions<'a, T> {
+    pub fn new(edit: &'a mut DashboardEdit<T>, kept: &'a mut Vec<T>) -> Self {
         Self {
             edit,
             kept,
             default: None,
             size: ButtonSize::Sm,
+            guard_cancel: false,
             words: DashboardEditWords::default(),
         }
     }
 
     /// The layout Reset puts back; no Reset without it.
-    pub fn default_layout(mut self, default: &'a [DashboardLayoutItem]) -> Self {
+    pub fn default_layout(mut self, default: &'a [T]) -> Self {
         self.default = Some(default);
+        self
+    }
+
+    /// Cancel with edits made only asks (`DashboardEditOutcome::cancel_asked`), for the app to
+    /// confirm before it calls `DashboardEdit::cancel`; without edits it cancels as ever.
+    pub fn guard_cancel(mut self, guard: bool) -> Self {
+        self.guard_cancel = guard;
         self
     }
 
@@ -786,7 +826,11 @@ impl<'a> DashboardEditActions<'a> {
             )
             .clicked()
         {
-            self.edit.cancel();
+            if self.guard_cancel && self.edit.changed(self.kept) {
+                outcome.cancel_asked = true;
+            } else {
+                self.edit.cancel();
+            }
             return outcome;
         }
         if let Some(default) = self.default {
