@@ -35,3 +35,23 @@ fn slash_reaches_the_search_and_a_word_narrows_the_rows() {
     // "Slow searches in Asia" and "Search results out of date"
     assert!(harness.query_by_label("2 rows").is_some());
 }
+
+#[test]
+fn an_incident_resolves_reopens_and_goes_to_the_person_on_call() {
+    let mut app = status::StatusApp::on(sokkel_ui_egui::Appearance::default());
+    app.resolve_or_reopen("incident-41");
+    let inc = app.incidents.iter().find(|i| i.id == "incident-41").unwrap();
+    assert_eq!(inc.state, status::data::State::Resolved);
+    assert!(inc.resolved.is_some());
+    assert_eq!(inc.updates[0].message, "This incident is resolved.");
+    app.resolve_or_reopen("incident-41");
+    let inc = app.incidents.iter().find(|i| i.id == "incident-41").unwrap();
+    assert_eq!(inc.state, status::data::State::Investigating);
+    assert!(inc.resolved.is_none());
+    app.on_call = "linus".into();
+    app.assign_to_on_call("incident-41");
+    assert_eq!(
+        app.incidents.iter().find(|i| i.id == "incident-41").unwrap().assignee,
+        "linus"
+    );
+}

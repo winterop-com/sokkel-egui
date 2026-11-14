@@ -93,6 +93,14 @@ and never chase a difference made of numbers.
 - Next, largest first:
   the dashboard under them; the incidents table (a stacked, labeled list under a bar with its search, row count and sort; `StatusChip`, `TagChips`, `RelativeTime`); the map of sites; the public page; settings; the live simulation behind all of them.
 
+## What does not work yet
+
+sokkel-ui's examples keep one rule: every button does what it says. These stand on egui's screens
+so they match the web's, but nothing answers them yet, until their parts are ported: Report
+incident and Edit on the overview; Report incident, Schedule maintenance and Deploy on a service's
+page; New on the incidents page. Resolve, Reopen and Assign to the person on call in an incident's
+menu work, and Subscribe on the public page brings the form into view.
+
 ## Last checked
 
 Against sokkel-ui `4f2cf282` (0.28.0): every web screen shot again, 45 of the example's 70 parts

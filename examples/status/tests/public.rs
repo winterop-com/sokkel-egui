@@ -66,3 +66,19 @@ fn some_services_shows_the_boxes() {
     assert_eq!(harness.state().subscribe.which, "some");
     assert_eq!(harness.query_all_by_label("scheduler").count(), before + 1);
 }
+
+#[test]
+fn subscribe_scrolls_to_the_form() {
+    let mut harness = render(800.0);
+    // the bar's Subscribe comes first; the form's is the second
+    harness
+        .get_all_by_label("Subscribe")
+        .next()
+        .expect("the bar's Subscribe")
+        .click();
+    harness.run_steps(4);
+    assert!(!harness.state().subscribe.reveal);
+    // the form's address field is now on the screen
+    let field = harness.get_by_label("Email");
+    assert!(field.rect().min.y < 800.0 && field.rect().min.y > 0.0);
+}

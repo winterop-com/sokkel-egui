@@ -479,19 +479,76 @@ impl StatusApp {
         ];
         let rows: Vec<Vec<Cell>> = listed.iter().map(|incident| incident_cells(incident, now)).collect();
         let keys: Vec<String> = listed.iter().map(|i| i.id.clone()).collect();
-        DataTable::new("incidents", &columns, &rows, &mut self.incidents_table)
-            .keys(keys)
+        // each row's menu as the web's `incidentActions`: resolve it or reopen it, give it to the
+        // person on call
+        let menus: Vec<(bool, bool)> = listed
+            .iter()
+            .map(|i| (i.state == data::State::Resolved, i.assignee == self.on_call))
+            .collect();
+        let on_call = self.on_call.clone();
+        let output = DataTable::new("incidents", &columns, &rows, &mut self.incidents_table)
+            .keys(keys.clone())
             .search(&mut self.incident_search)
             .stack_layout(StackLayout::Labeled)
-            .actions(|_| {
+            .actions(|row| {
+                let (resolved, theirs) = menus[row];
                 vec![
-                    MenuItem::action("Resolve").icon(Icon::Check),
-                    MenuItem::action("Assign to on call").icon(Icon::PhoneCall),
+                    if resolved {
+                        MenuItem::action("Reopen").icon(Icon::RotateCcw)
+                    } else {
+                        MenuItem::action("Resolve").icon(Icon::Check)
+                    },
+                    MenuItem::action(format!("Assign to {on_call}"))
+                        .icon(Icon::PhoneCall)
+                        .disabled(theirs),
                 ]
             })
             .footer(false)
             .stretch(true)
             .show(ui);
+        if let Some((row, action)) = output.action
+            && let Some(id) = keys.get(row)
+        {
+            match action {
+                0 => self.resolve_or_reopen(id),
+                _ => self.assign_to_on_call(id),
+            }
+        }
+    }
+
+    /// Resolve an open incident, or reopen a resolved one, with an update saying so, as the web's
+    /// `postUpdate`.
+    pub fn resolve_or_reopen(&mut self, id: &str) {
+        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let Some(incident) = self.incidents.iter_mut().find(|i| i.id == id) else {
+            return;
+        };
+        let (state, message) = if incident.state == data::State::Resolved {
+            (data::State::Investigating, "We are looking into this again.")
+        } else {
+            (data::State::Resolved, "This incident is resolved.")
+        };
+        incident.state = state;
+        incident.resolved = (state == data::State::Resolved).then_some(now);
+        incident.updates.insert(
+            0,
+            data::Update {
+                at: now,
+                state,
+                message: message.into(),
+                by: ME,
+            },
+        );
+    }
+
+    /// Give an incident to the person on call.
+    pub fn assign_to_on_call(&mut self, id: &str) {
+        let on_call = self.on_call.clone();
+        if let Some(incident) = self.incidents.iter_mut().find(|i| i.id == id)
+            && let Some(person) = data::PEOPLE.iter().find(|p| **p == on_call)
+        {
+            incident.assignee = person;
+        }
     }
 
     /// The services: their head with Reset order, and the table of them in the person's order.
@@ -597,17 +654,24 @@ impl StatusApp {
             bar = bar.desktop(DesktopWindow::native());
         }
         let mut board = false;
+        let mut reveal = false;
         bar.show(ui, |ui| {
             board = ui
                 .add(IconButton::new(Icon::LayoutDashboard, "Open the board"))
                 .clicked();
-            ui.add(
-                Button::new("Subscribe")
-                    .icon(Icon::BellRing)
-                    .variant(ButtonVariant::Outline)
-                    .size(ButtonSize::Sm),
-            );
+            reveal = ui
+                .add(
+                    Button::new("Subscribe")
+                        .icon(Icon::BellRing)
+                        .variant(ButtonVariant::Outline)
+                        .size(ButtonSize::Sm),
+                )
+                .clicked();
         });
+        // Subscribe brings the form into view, as the web's scrolls to it
+        if reveal {
+            self.subscribe.reveal = true;
+        }
         let overall = self
             .live_world
             .health
@@ -1530,6 +1594,8 @@ pub struct Subscribe {
     pub subscribers: Vec<Subscriber>,
     /// The subscriber just made, shown in the form's place.
     pub done: Option<Subscriber>,
+    /// The page scrolls to the form on its next frame.
+    pub reveal: bool,
 }
 
 impl Default for Subscribe {
@@ -1541,6 +1607,7 @@ impl Default for Subscribe {
             error: None,
             subscribers: Vec::new(),
             done: None,
+            reveal: false,
         }
     }
 }
@@ -1595,6 +1662,10 @@ impl Subscribe {
 /// subscribed, the address said back with Unsubscribe and Subscribe another.
 fn subscribe_form(ui: &mut Ui, form: &mut Subscribe) {
     let t = sokkel_ui_egui::tokens(ui.ctx());
+    if form.reveal {
+        ui.scroll_to_cursor(Some(egui::Align::TOP));
+        form.reveal = false;
+    }
     if let Some(done) = form.done.clone() {
         Section::new("Get notified")
             .description(format!(
