@@ -39,7 +39,10 @@ pub use display::{Alert, Badge, BadgeVariant, Card, Separator, Skeleton};
 pub use empty::Empty;
 pub(crate) use fields::search_field;
 pub use fields::{DueState, DueText, QuickAdd, SearchField, SwitchField, due_state, toolbar};
-pub use frame::{Rail, RailEntry, RailGroup, Shell, ShellPart, ShellWords, StatusLine, StatusTone, TopBar, is_phone};
+pub use frame::{
+    DesktopWindow, Rail, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine, StatusTone, TopBar,
+    desktop_viewport, is_phone,
+};
 pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use overlay::{ConfirmAnswer, ConfirmDialog, Dialog, Select, tooltip, tooltip_shown};

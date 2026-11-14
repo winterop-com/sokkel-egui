@@ -6,11 +6,11 @@
 use eframe::egui::{self, Color32, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, Appearance, AppearanceCommandWords, Board, BoardCard, BoardColumn, BoardMove, Cell,
-    Column, CommandGroup, CommandPalette, ConfirmAnswer, ConfirmDialog, DataTable, Day, Editor, Empty, Icon, MenuItem,
-    Page, PageHeader, QuickAdd, Rail, RailEntry, RailGroup, Segmented, SegmentedVariant, Select, SettingsDialog,
-    SettingsSection, Shell, ShellPart, StackLayout, StackPlace, StatusLine, Switch, SwitchField, TableState,
-    TableVariant, ThemeWords, TopBar, appearance_commands, install, palette_shortcut, place_commands, place_of,
-    run_appearance_command, setting_row, theme_settings, tokens, toolbar,
+    Column, CommandGroup, CommandPalette, ConfirmAnswer, ConfirmDialog, DataTable, Day, DesktopWindow, Editor, Empty,
+    Icon, MenuItem, Page, PageHeader, QuickAdd, Rail, RailEntry, RailGroup, Segmented, SegmentedVariant, Select,
+    SettingsDialog, SettingsSection, Shell, ShellPart, StackLayout, StackPlace, StatusLine, Switch, SwitchField,
+    TableState, TableVariant, ThemeWords, TopBar, appearance_commands, install, palette_shortcut, place_commands,
+    place_of, run_appearance_command, setting_row, theme_settings, tokens, toolbar,
 };
 
 mod data;
@@ -134,6 +134,9 @@ struct Kept {
 
 pub struct TasksApp {
     pub appearance: Appearance,
+    /// The frame stands in a desktop window with its title bar hidden: set by the running app, never
+    /// in its screenshots, which draw the frame as the browser does.
+    pub desktop: bool,
     /// The day the app counts from: the clock's, or a fixed one for its screenshots.
     pub today: Day,
     pub tasks: Vec<Task>,
@@ -161,6 +164,7 @@ impl TasksApp {
             app.next = kept.next;
             app.list = app.prefs.start_list.clone();
         }
+        app.desktop = true;
         app
     }
 
@@ -168,6 +172,7 @@ impl TasksApp {
     pub fn on(today: Day, appearance: Appearance) -> Self {
         let prefs = Prefs::default();
         Self {
+            desktop: false,
             appearance,
             today,
             tasks: seed(today),
@@ -263,7 +268,12 @@ impl TasksApp {
         let mut searched = false;
         let mut account = None;
         let all_open = self.tasks.iter().filter(|task| !task.done()).count();
-        Shell::new().show_window(ui, |part, ui| match part {
+        let shell = if self.desktop {
+            Shell::new().desktop(DesktopWindow::native())
+        } else {
+            Shell::new()
+        };
+        shell.show_window(ui, |part, ui| match part {
             ShellPart::Rail => {
                 ui.add(Rail::new("Tasks", &groups, &mut place).mark(TIDEVANN_MARK));
             }

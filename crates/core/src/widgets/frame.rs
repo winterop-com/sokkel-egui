@@ -66,7 +66,25 @@ pub struct Rail<'a> {
     groups: &'a [RailGroup],
     active: &'a mut String,
     collapsed: bool,
+    toggle: Option<&'a mut bool>,
     mark: Option<&'static str>,
+    words: RailWords,
+}
+
+/// The words a rail says.
+#[derive(Clone, Debug)]
+pub struct RailWords {
+    pub collapse: String,
+    pub expand: String,
+}
+
+impl Default for RailWords {
+    fn default() -> Self {
+        Self {
+            collapse: "Collapse the navigation".into(),
+            expand: "Expand the navigation".into(),
+        }
+    }
 }
 
 impl<'a> Rail<'a> {
@@ -76,8 +94,24 @@ impl<'a> Rail<'a> {
             groups,
             active,
             collapsed: false,
+            toggle: None,
             mark: None,
+            words: RailWords::default(),
         }
+    }
+
+    /// The reader narrows the rail to its icons and widens it again: a button at the head's end
+    /// collapses it, and collapsed, its mark expands it, showing the open-panel icon under the
+    /// pointer. `collapsed` holds the state; give the shell the same (`Shell::collapsed`).
+    pub fn collapsible(mut self, collapsed: &'a mut bool) -> Self {
+        self.collapsed = *collapsed;
+        self.toggle = Some(collapsed);
+        self
+    }
+
+    pub fn words(mut self, words: RailWords) -> Self {
+        self.words = words;
+        self
     }
 
     /// The app's mark on the tile at the rail's head, as SVG drawn in `currentColor`, the way the
@@ -99,8 +133,10 @@ impl<'a> Rail<'a> {
 }
 
 impl Widget for Rail<'_> {
-    fn ui(self, ui: &mut Ui) -> Response {
+    fn ui(mut self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
+        // the window's own buttons, where the frame stands under a hidden title bar
+        let lights = desktop_lights(ui.ctx());
         // in the shell's drawer: expanded, without its edge, its head's control closing the drawer
         let in_drawer = drawer(ui.ctx()).drawing;
         let narrow = self.collapsed && !in_drawer;
@@ -109,41 +145,95 @@ impl Widget for Rail<'_> {
         let painter = ui.painter_at(rect);
         painter.rect_filled(rect, CornerRadius::ZERO, t.color("sidebar"));
         if !in_drawer {
+            // collapsed under the window's buttons, the edge is left undrawn through the head, so
+            // the strip under the buttons reads as one title bar
+            let top = if narrow && lights.is_some() {
+                rect.top() + t.length("spacing-shell-top")
+            } else {
+                rect.top()
+            };
             painter.vline(
                 rect.right() - 0.5,
-                rect.y_range(),
+                top..=rect.bottom(),
                 Stroke::new(1.0, t.color("border-strong")),
             );
         }
 
         // the head: the app's mark, and its name when open
         let head = Rect::from_min_size(rect.min, vec2(rect.width(), t.length("spacing-shell-top")));
-        // a 32 tile, 12 in from the edge, as sokkel-ui's `size-8` mark in its `px-3` head
-        let mark = Rect::from_center_size(pos2(head.left() + 12.0 + 16.0, head.center().y), vec2(32.0, 32.0));
-        let mark = if narrow {
+        // a 32 tile, 12 in from the edge, as sokkel-ui's `size-8` mark in its `px-3` head; after the
+        // window's buttons where they stand in the head
+        let start = match lights {
+            Some(room) if !narrow && !in_drawer => room,
+            _ => 12.0,
+        };
+        let mark = Rect::from_center_size(pos2(head.left() + start + 16.0, head.center().y), vec2(32.0, 32.0));
+        // collapsed under the window's buttons, the head stays empty and the mark stands just below it
+        let under = narrow && lights.is_some();
+        let mark = if under {
+            Rect::from_center_size(pos2(head.center().x, head.bottom() + 4.0 + 16.0), mark.size())
+        } else if narrow {
             Rect::from_center_size(head.center(), mark.size())
         } else {
             mark
         };
+        // collapsed and collapsible, the mark is the button that widens the rail again
+        let expand = (narrow && self.toggle.is_some()).then(|| {
+            let hit = ui.interact(mark, response.id.with("expand"), Sense::click());
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.expand));
+            hit
+        });
         painter.rect_filled(mark, t.radius("md"), t.color("primary"));
-        match self.mark {
-            Some(svg) => {
-                // the mark's ink is `currentColor`: drawn white, then tinted with the tile's ink
-                let white = svg.replace("currentColor", "#ffffff");
-                let uri = format!("bytes://rail-mark-{}.svg", egui::Id::new(svg).value());
-                egui::Image::from_bytes(uri, white.into_bytes())
-                    .tint(t.color("primary-foreground"))
-                    .paint_at(ui, Rect::from_center_size(mark.center(), vec2(16.0, 16.0)));
+        if let Some(hit) = &expand {
+            super::focus_ring(&painter, &t, mark, t.radius("md"), hit);
+        }
+        if let Some(hit) = expand.as_ref().filter(|hit| hit.hovered()) {
+            icons::paint(
+                &painter,
+                mark.center(),
+                Icon::PanelLeftOpen,
+                16.0,
+                t.color("primary-foreground"),
+            );
+            if hit.clicked()
+                && let Some(toggle) = self.toggle.as_deref_mut()
+            {
+                *toggle = false;
             }
-            None => {
-                let initial: String = self.name.chars().take(1).collect();
-                painter.text(
-                    mark.center(),
-                    egui::Align2::CENTER_CENTER,
-                    initial,
-                    TextRole::Head.font(&t),
-                    t.color("primary-foreground"),
-                );
+        } else {
+            match self.mark {
+                Some(svg) => {
+                    // the mark's ink is `currentColor`: drawn white, then tinted with the tile's ink
+                    let white = svg.replace("currentColor", "#ffffff");
+                    let uri = format!("bytes://rail-mark-{}.svg", egui::Id::new(svg).value());
+                    egui::Image::from_bytes(uri, white.into_bytes())
+                        .tint(t.color("primary-foreground"))
+                        .paint_at(ui, Rect::from_center_size(mark.center(), vec2(16.0, 16.0)));
+                }
+                None => {
+                    let initial: String = self.name.chars().take(1).collect();
+                    painter.text(
+                        mark.center(),
+                        egui::Align2::CENTER_CENTER,
+                        initial,
+                        TextRole::Head.font(&t),
+                        t.color("primary-foreground"),
+                    );
+                }
+            }
+        }
+        // open and collapsible, a button at the head's end narrows the rail (in the drawer, the
+        // drawer's close stands there instead)
+        let collapse = (!narrow && !in_drawer && self.toggle.is_some())
+            .then(|| Rect::from_center_size(pos2(head.right() - 12.0 - 16.0, head.center().y), vec2(32.0, 32.0)));
+        if let Some(button) = collapse {
+            let hit = ui.interact(button, response.id.with("collapse"), Sense::click());
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.collapse));
+            frame_control(&painter, &t, button, &hit, Icon::PanelLeftClose);
+            if hit.clicked()
+                && let Some(toggle) = self.toggle.as_deref_mut()
+            {
+                *toggle = true;
             }
         }
         if !narrow {
@@ -157,7 +247,7 @@ impl Widget for Rail<'_> {
             let name = egui::WidgetText::from(rich).into_galley(
                 ui,
                 Some(TextWrapMode::Truncate),
-                head.width() - 60.0,
+                (collapse.map_or(head.right() - 12.0, |b| b.left() - 8.0) - mark.right() - 8.0).max(1.0),
                 TextRole::DetailTitle.font(&t),
             );
             painter.galley(
@@ -189,7 +279,8 @@ impl Widget for Rail<'_> {
         } else {
             0.0
         };
-        let mut y = head.bottom() + untitled_top;
+        // collapsed under the window's buttons, the mark's own line (`py-1`) stands over the groups
+        let mut y = head.bottom() + untitled_top + if under { 40.0 } else { 0.0 };
         for group in self.groups {
             if let Some(title) = &group.title {
                 // the entries before end 4 above `y`; a title stands 16 under them (`pt-4`), its
@@ -396,7 +487,14 @@ impl<'a> TopBar<'a> {
             rect.bottom() - 0.5,
             Stroke::new(1.0, t.color("border-strong")),
         );
-        let inner = rect.shrink2(vec2(12.0, 0.0));
+        // where no rail stands between, or a collapsed one narrower than the window's buttons, the
+        // bar leaves the rest of their room at its start
+        let window = ui.ctx().content_rect().left();
+        let lights = desktop_lights(ui.ctx()).map_or(0.0, |room| (room - (rect.left() - window)).max(0.0));
+        let inner = Rect::from_min_max(
+            pos2(rect.left() + 12.0 + lights, rect.top()),
+            pos2(rect.right() - 12.0, rect.bottom()),
+        );
         let mut searched = false;
         // on a phone the last crumb alone, and the palette's button an icon
         let phone = is_phone(ui.ctx());
@@ -722,11 +820,50 @@ pub enum ShellPart {
     Foot,
 }
 
+fn desktop_id() -> egui::Id {
+    egui::Id::new("sokkel-shell-desktop")
+}
+
+/// Room at the frame's top start for the window's own buttons, where the shell stands in a desktop
+/// window whose title bar is hidden (`Shell::desktop`).
+fn desktop_lights(ctx: &egui::Context) -> Option<f32> {
+    ctx.data(|d| d.get_temp::<Option<f32>>(desktop_id())).flatten()
+}
+
+/// A desktop window whose native title bar is hidden, its content running under where the bar
+/// was, as sokkel-ui's desktop shells open theirs (Tauri's `Overlay`, Electron's `hiddenInset`):
+/// the shell's top strip is then the window's title bar (`Shell::desktop`).
+pub fn desktop_viewport(viewport: egui::ViewportBuilder) -> egui::ViewportBuilder {
+    viewport
+        .with_fullsize_content_view(true)
+        .with_titlebar_shown(false)
+        .with_title_shown(false)
+}
+
+/// How the frame stands in a desktop window whose native title bar is hidden, after sokkel-ui's
+/// `DesktopWindow`: the frame's top strip is then the window's title bar.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct DesktopWindow {
+    /// Room at the strip's start for the window's own buttons, which macOS draws over the frame:
+    /// `spacing-traffic-lights` (80) when `Some` without a width of its own. `None` off macOS.
+    pub traffic_lights: Option<Option<f32>>,
+}
+
+impl DesktopWindow {
+    /// The window's buttons drawn over the frame's top start on macOS, nothing elsewhere.
+    pub fn native() -> Self {
+        Self {
+            traffic_lights: cfg!(target_os = "macos").then_some(None),
+        }
+    }
+}
+
 /// The frame: the rail at the start, the top bar over the page, and the status line as one bar
 /// across the bottom, within the rect it is given.
 pub struct Shell {
     collapsed: bool,
     framed: bool,
+    desktop: Option<DesktopWindow>,
     words: ShellWords,
 }
 
@@ -741,8 +878,19 @@ impl Shell {
         Self {
             collapsed: false,
             framed: false,
+            desktop: None,
             words: ShellWords::default(),
         }
+    }
+
+    /// The frame stands in a desktop window whose native title bar is hidden (eframe's
+    /// `with_titlebar_shown(false)` and `with_fullsize_content_view(true)`): its top strip, the
+    /// rail's head and the top bar, is the window's title bar, dragged to move the window and
+    /// double-clicked to zoom it, and with `traffic_lights` the rail's head leaves room at its start
+    /// for the window's own buttons.
+    pub fn desktop(mut self, desktop: DesktopWindow) -> Self {
+        self.desktop = Some(desktop);
+        self
     }
 
     pub fn words(mut self, words: ShellWords) -> Self {
@@ -773,6 +921,27 @@ impl Shell {
 
     /// Fill `rect` with the frame, asking `part` to draw each piece in its place.
     pub fn show(self, ui: &mut Ui, rect: Rect, mut part: impl FnMut(ShellPart, &mut Ui)) {
+        {
+            let t = tokens(ui.ctx());
+            let top = t.length("spacing-shell-top");
+            // in a desktop window the top strip is its title bar: sensed before the parts, so every
+            // control drawn in the strip after it takes its own presses
+            let room = self
+                .desktop
+                .and_then(|d| d.traffic_lights)
+                .map(|room| room.unwrap_or_else(|| t.length("spacing-traffic-lights")));
+            ui.ctx().data_mut(|d| d.insert_temp(desktop_id(), room));
+            if self.desktop.is_some() {
+                let strip = Rect::from_min_max(rect.min, pos2(rect.right(), rect.top() + top));
+                let title = ui.interact(strip, desktop_id().with("strip"), Sense::click_and_drag());
+                if title.double_clicked() {
+                    let zoomed = ui.ctx().input(|i| i.viewport().maximized.unwrap_or(false));
+                    ui.ctx().send_viewport_cmd(egui::ViewportCommand::Maximized(!zoomed));
+                } else if title.drag_started() {
+                    ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
+                }
+            }
+        }
         if is_phone(ui.ctx()) {
             self.show_phone(ui, rect, part);
             return;
@@ -847,8 +1016,10 @@ impl Shell {
         // the top bar's ground and rule under the menu button, then its own row after it, 8 on
         ui.painter()
             .rect_filled(top_bar, CornerRadius::ZERO, t.color("sidebar"));
+        // after the window's buttons, where they stand over the bar
+        let start = desktop_lights(&ctx).unwrap_or(12.0).max(12.0);
         let menu = Rect::from_min_size(
-            pos2(top_bar.left() + 12.0, top_bar.center().y - finger / 2.0),
+            pos2(top_bar.left() + start, top_bar.center().y - finger / 2.0),
             vec2(finger, finger),
         );
         let menu_hit = ui.interact(menu, drawer_id().with("menu"), Sense::click());

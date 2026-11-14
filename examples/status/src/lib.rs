@@ -10,8 +10,8 @@ pub mod live;
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
     AccountAction, AccountMenu, Appearance, AsideWidth, Button, ButtonSize, ButtonVariant, Cell, ChipBar, ChipTone,
-    Column, Columns, DashboardGrid, DashboardPanel, DataTable, Day, Editor, Gap, Icon, KpiRow, MenuItem, Page,
-    PageHeader, PanelSpan, PersonRow, Rail, RailEntry, RailGroup, Section, Segmented, Shell, ShellPart, Split,
+    Column, Columns, DashboardGrid, DashboardPanel, DataTable, Day, DesktopWindow, Editor, Gap, Icon, KpiRow, MenuItem,
+    Page, PageHeader, PanelSpan, PersonRow, Rail, RailEntry, RailGroup, Section, Segmented, Shell, ShellPart, Split,
     SplitPane, Stack, StackLayout, StackPlace, Stat, StatusLine, StatusTone, TableState, TableVariant, TextRole,
     Timeline, TimelineEvent, TopBar, UptimeBar, UptimeDay, format_uptime, install, overall_uptime, relative_time,
 };
@@ -41,6 +41,9 @@ const PLACES: [(&str, &str); 5] = [
 
 /// The status board: its place, a service or incident opened in it, the live clock and the look.
 pub struct StatusApp {
+    /// The frame stands in a desktop window with its title bar hidden: set by the running app, never
+    /// in its screenshots, which draw the frame as the browser does.
+    pub desktop: bool,
     pub place: String,
     /// The service a service page shows.
     pub service: Option<String>,
@@ -99,6 +102,7 @@ impl StatusApp {
             "tidevann-status/0.1 (an example app of a component library)",
             std::env::temp_dir().join("sokkel-ui-egui-tiles").into(),
         );
+        app.desktop = true;
         app
     }
 
@@ -107,6 +111,7 @@ impl StatusApp {
         // the demo's day, as the web's shots are taken on it
         let today = Day::parse("2026-11-16").expect("a day");
         Self {
+            desktop: false,
             place: "overview".into(),
             service: None,
             service_day: None,
@@ -247,7 +252,12 @@ impl StatusApp {
         let operational = SERVICES.len();
         let open = self.open().len();
         let on_call = self.on_call.clone();
-        Shell::new().show_window(ui, |part, ui| match part {
+        let shell = if self.desktop {
+            Shell::new().desktop(DesktopWindow::native())
+        } else {
+            Shell::new()
+        };
+        shell.show_window(ui, |part, ui| match part {
             ShellPart::Rail => {
                 ui.add(Rail::new("Status", &groups, &mut place).mark(TIDEVANN_MARK));
             }

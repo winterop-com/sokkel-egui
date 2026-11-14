@@ -4,10 +4,10 @@
 
 use eframe::egui::{self, Key, KeyboardShortcut, Modifiers, Ui, vec2};
 use sokkel_ui_egui::{
-    Appearance, Button, ButtonSize, ButtonVariant, Card, Chip, Column, CommandGroup, CommandPalette, DataTable, Icon,
-    MenuItem, PageHeader, Rail, RailEntry, RailGroup, SettingsDialog, SettingsSection, Shell, ShellPart, StatusLine,
-    StatusTone, TableState, TableVariant, TextRole, ThemeWords, TopBar, install, palette_shortcut, setting_row,
-    theme_settings, tokens,
+    Appearance, Button, ButtonSize, ButtonVariant, Card, Chip, Column, CommandGroup, CommandPalette, DataTable,
+    DesktopWindow, Icon, MenuItem, PageHeader, Rail, RailEntry, RailGroup, SettingsDialog, SettingsSection, Shell,
+    ShellPart, StatusLine, StatusTone, TableState, TableVariant, TextRole, ThemeWords, TopBar, install,
+    palette_shortcut, setting_row, theme_settings, tokens,
 };
 use sokkel_ui_egui_charts::{LineChart, Series, Sparkline, legend};
 
@@ -33,6 +33,11 @@ fn places() -> Vec<RailGroup> {
 
 pub struct RunsApp {
     pub appearance: Appearance,
+    /// The frame stands in a desktop window with its title bar hidden: set by the running app, never
+    /// in its screenshots, which draw the frame as the browser does.
+    pub desktop: bool,
+    /// Whether the reader narrowed the rail to its icons.
+    pub rail_collapsed: bool,
     /// The place the page shows.
     pub place: String,
     runs: Vec<data::Run>,
@@ -53,12 +58,16 @@ impl RunsApp {
             .storage
             .and_then(|s| eframe::get_value(s, APPEARANCE_KEY))
             .unwrap_or_default();
-        Self::with(appearance)
+        let mut app = Self::with(appearance);
+        app.desktop = true;
+        app
     }
 
     pub fn with(appearance: Appearance) -> Self {
         Self {
             appearance,
+            desktop: false,
+            rail_collapsed: false,
             place: "overview".into(),
             runs: data::runs(),
             runs_table: TableState::sorted(0, false),
@@ -96,9 +105,15 @@ impl RunsApp {
             .find(|e| e.id == self.place)
             .map_or(String::new(), |e| e.label.clone());
         let mut open_palette = false;
-        Shell::new().show_window(ui, |part, ui| match part {
+        let shell = if self.desktop {
+            Shell::new().desktop(DesktopWindow::native())
+        } else {
+            Shell::new()
+        }
+        .collapsed(self.rail_collapsed);
+        shell.show_window(ui, |part, ui| match part {
             ShellPart::Rail => {
-                ui.add(Rail::new("Tidevann", &groups, &mut place));
+                ui.add(Rail::new("Tidevann", &groups, &mut place).collapsible(&mut self.rail_collapsed));
             }
             ShellPart::RailFoot => {
                 sokkel_ui_egui::AccountMenu::new("ada")
