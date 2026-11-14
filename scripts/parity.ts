@@ -44,6 +44,11 @@ interface Manifest {
     screens: Screen[]
     /** The day the screens are shot on, so relative due dates read the same on both sides. */
     today: string
+    /**
+     * A live example (one whose page ticks on timers): its clock is paused, and the shot is taken
+     * after the same span of its time, so every shot catches it at the same tick.
+     */
+    live?: boolean
 }
 
 const [command, name = 'tasks'] = process.argv.slice(2)
@@ -120,8 +125,15 @@ function check(): number {
 async function web() {
     sync()
     execFileSync('bun', ['install'], { cwd: clone, stdio: 'ignore' })
-    execFileSync('bun', ['run', 'build'], { cwd: join(clone, 'packages', 'core'), stdio: 'ignore' })
     const app = join(clone, 'examples', name, 'web')
+    // the library's packages the example depends on, the core first, built as an app installs them
+    const needs = Object.values(
+        (JSON.parse(readFileSync(join(app, 'package.json'), 'utf8')) as { dependencies: Record<string, string> }).dependencies,
+    )
+        .map((spec) => /^file:\.\.\/\.\.\/\.\.\/packages\/(.+)$/.exec(spec)?.[1])
+        .filter((one): one is string => one !== undefined)
+        .sort((a, b) => (a === 'core' ? -1 : b === 'core' ? 1 : a.localeCompare(b)))
+    for (const one of needs) execFileSync('bun', ['run', 'build'], { cwd: join(clone, 'packages', one), stdio: 'ignore' })
     execFileSync('bun', ['install'], { cwd: app, stdio: 'ignore' })
     execFileSync('bun', ['--bun', 'vite', 'build'], { cwd: app, stdio: 'ignore' })
     const port = 6290
@@ -136,8 +148,24 @@ async function web() {
             const context = await browser.newContext({ viewport: screen.viewport ?? { width: 1280, height: 800 }, deviceScaleFactor: 1, colorScheme: screen.scheme ?? 'light' })
             const page = await context.newPage()
             await page.clock.install({ time: new Date(`${manifest.today}T09:00:00`) })
+            // a live example draws from Math.random: seeded, it draws the same on every shot
+            await page.addInitScript(() => {
+                let seed = 20261116
+                Math.random = () => {
+                    seed = (seed + 0x6d2b79f5) | 0
+                    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+                    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+                    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+                }
+            })
+            if (manifest.live === true) await page.clock.pauseAt(new Date(`${manifest.today}T09:00:00`))
             await page.goto(`http://127.0.0.1:${port}/#/${screen.route}`)
             await page.waitForTimeout(800)
+            // a live page runs the same 5 s of its own time on every shot, then settles
+            if (manifest.live === true) {
+                await page.clock.runFor(5000)
+                await page.waitForTimeout(300)
+            }
             for (const step of screen.steps ?? []) {
                 const [kind, ...rest] = step.split(':')
                 const what = rest.join(':')
