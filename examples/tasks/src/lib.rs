@@ -8,8 +8,8 @@ use sokkel_ui_egui::{
     AccountAction, AccountMenu, Appearance, AppearanceCommandWords, Board, BoardCard, BoardColumn, BoardMove, Cell,
     Column, CommandGroup, CommandPalette, ConfirmAnswer, ConfirmDialog, DataTable, Day, Editor, Empty, Icon, MenuItem,
     Page, PageHeader, QuickAdd, Rail, RailEntry, RailGroup, Segmented, SegmentedVariant, Select, SettingsDialog,
-    SettingsSection, Shell, ShellPart, Stack, StackLayout, StatusLine, Switch, SwitchField, TableState, TableVariant,
-    ThemeWords, TopBar, appearance_commands, install, palette_shortcut, place_commands, place_of,
+    SettingsSection, Shell, ShellPart, StackLayout, StackPlace, StatusLine, Switch, SwitchField, TableState,
+    TableVariant, ThemeWords, TopBar, appearance_commands, install, palette_shortcut, place_commands, place_of,
     run_appearance_command, setting_row, theme_settings, tokens, toolbar,
 };
 
@@ -357,7 +357,7 @@ impl TasksApp {
             WeekStart::Sunday => sokkel_ui_egui::WeekStart::Sunday,
         };
         let columns = [
-            Column::new("Done", 48.0).sortable(false).stack(Stack::Lead),
+            Column::new("Done", 48.0).sortable(false).stack(StackPlace::Lead),
             Column::new("Title", 224.0)
                 .fill()
                 .sortable(false)

@@ -232,6 +232,8 @@ pub struct Segmented<'a> {
     chosen: &'a mut usize,
     options: Vec<String>,
     variant: SegmentedVariant,
+    counts: Vec<Option<usize>>,
+    dots: Vec<Option<Color32>>,
 }
 
 impl<'a> Segmented<'a> {
@@ -240,7 +242,21 @@ impl<'a> Segmented<'a> {
             chosen,
             options: options.into_iter().map(Into::into).collect(),
             variant: SegmentedVariant::Track,
+            counts: Vec::new(),
+            dots: Vec::new(),
         }
+    }
+
+    /// How many each option holds, after its label, for options that filter a list.
+    pub fn counts(mut self, counts: impl IntoIterator<Item = Option<usize>>) -> Self {
+        self.counts = counts.into_iter().collect();
+        self
+    }
+
+    /// A small dot before each option's label in the color of the state it filters to.
+    pub fn dots(mut self, dots: impl IntoIterator<Item = Option<Color32>>) -> Self {
+        self.dots = dots.into_iter().collect();
+        self
     }
 
     pub fn variant(mut self, variant: SegmentedVariant) -> Self {
@@ -277,10 +293,32 @@ impl Widget for Segmented<'_> {
             .collect();
         // every option as wide as the widest label at medium weight, as the web lays each label
         // over the others
+        // an option's face: its dot (6, then 6), its label, and its count (6, then the count in
+        // the code face at 70 percent)
+        let count_galley = |ui: &Ui, index: usize| {
+            self.counts.get(index).copied().flatten().map(|n| {
+                let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                WidgetText::from(egui::RichText::new(n.to_string()).font(mono.clone())).into_galley(
+                    ui,
+                    Some(TextWrapMode::Extend),
+                    f32::INFINITY,
+                    mono,
+                )
+            })
+        };
+        let face = |ui: &Ui, index: usize, label: f32| {
+            let dot = if self.dots.get(index).copied().flatten().is_some() {
+                12.0
+            } else {
+                0.0
+            };
+            dot + label + count_galley(ui, index).map_or(0.0, |c| 6.0 + c.size().x)
+        };
         let widest = self
             .options
             .iter()
-            .map(|option| galley(ui, option, TextRole::Badge).size().x)
+            .enumerate()
+            .map(|(index, option)| face(ui, index, galley(ui, option, TextRole::Badge).size().x))
             .fold(0.0, f32::max);
         let widths: Vec<f32> = galleys.iter().map(|_| widest + 20.0).collect();
         // the frame's edge and padding, the gap between options, and an option's height
@@ -379,7 +417,22 @@ impl Widget for Segmented<'_> {
                     Stroke::new(1.0, t.color("border-strong")),
                 );
             }
-            painter.galley(option.center() - galley.size() / 2.0, galley, ink);
+            // the face centered: the dot, the label, the count
+            let mut fx = option.center().x - face(ui, index, galley.size().x) / 2.0;
+            if let Some(dot) = self.dots.get(index).copied().flatten() {
+                painter.circle_filled(pos2(fx + 3.0, option.center().y), 3.0, dot);
+                fx += 12.0;
+            }
+            let label_width = galley.size().x;
+            painter.galley(pos2(fx, option.center().y - galley.size().y / 2.0), galley, ink);
+            fx += label_width;
+            if let Some(count) = count_galley(ui, index) {
+                painter.galley(
+                    pos2(fx + 6.0, option.center().y - count.size().y / 2.0),
+                    count,
+                    ink.gamma_multiply(0.7),
+                );
+            }
             focus_ring(&painter, &t, option, radius, &hit);
             x += option_width + gap;
         }

@@ -28,12 +28,12 @@ pub struct Column {
     pub edit: Option<Editor>,
     pub validate: Option<Validate>,
     /// Where its cells go when the rows stack.
-    pub stack: Stack,
+    pub stack: StackPlace,
 }
 
 /// Where a column's cells go in a stacked row, as sokkel-ui's column `stack`.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum Stack {
+pub enum StackPlace {
     /// Before the title, such as a box that marks a row done.
     Lead,
     /// A line of its own; in the compact layout, one of the quiet facts under the title.
@@ -63,12 +63,12 @@ impl Column {
             fill: false,
             edit: None,
             validate: None,
-            stack: Stack::Line,
+            stack: StackPlace::Line,
         }
     }
 
-    /// Where the column's cells go when the rows stack: `Stack::Lead` before the title.
-    pub fn stack(mut self, stack: Stack) -> Self {
+    /// Where the column's cells go when the rows stack: `StackPlace::Lead` before the title.
+    pub fn stack(mut self, stack: StackPlace) -> Self {
         self.stack = stack;
         self
     }
@@ -458,7 +458,7 @@ impl<'a> DataTable<'a> {
         let table_id = self.id;
         let editor_id = |c: usize| table_id.with(("editor", editing.keys[index], c));
         // `lead`: the room a select box takes at the start
-        let title = self.columns.iter().position(|c| c.stack != Stack::Lead);
+        let title = self.columns.iter().position(|c| c.stack != StackPlace::Lead);
         // the title's line, a control tall while its field is open
         let line_height = if open.is_some() && open == title {
             t.density("control")
@@ -498,7 +498,7 @@ impl<'a> DataTable<'a> {
         let rows = self.rows;
         let row = &rows[index];
         for (c, column) in self.columns.iter().enumerate() {
-            if column.stack == Stack::Lead {
+            if column.stack == StackPlace::Lead {
                 let place = Rect::from_min_size(pos2(x, line.top()), vec2(16.0, line.height()));
                 if paint_cell(ui, t, &row[c], place, false, self.id.with(("cell", index, c))).is_some() {
                     toggled = true;
@@ -580,7 +580,7 @@ impl<'a> DataTable<'a> {
         }
         let mut first = true;
         for (c, column) in columns.iter().enumerate() {
-            if Some(c) == title || column.stack != Stack::Line || matches!(row[c], Cell::Empty | Cell::Check(_)) {
+            if Some(c) == title || column.stack != StackPlace::Line || matches!(row[c], Cell::Empty | Cell::Check(_)) {
                 continue;
             }
             if !first {
@@ -916,7 +916,7 @@ impl<'a> DataTable<'a> {
                 let dragging: Option<usize> = ui.ctx().data(|d| d.get_temp(drag_id));
                 let mut row_rects: Vec<Rect> = Vec::new();
                 // a stacked row grows to hold its open field: 8 for the title's, 12 for a fact's
-                let title_column = self.columns.iter().position(|c| c.stack != Stack::Lead);
+                let title_column = self.columns.iter().position(|c| c.stack != StackPlace::Lead);
                 let grown = |state: &TableState, index: usize| -> f32 {
                     match state.open.as_ref().filter(|o| stacked && o.row == index) {
                         Some(o) if Some(o.column) == title_column => 8.0,

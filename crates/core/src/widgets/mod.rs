@@ -33,7 +33,7 @@ pub use empty::Empty;
 pub(crate) use fields::search_field;
 pub use fields::{DueState, DueText, QuickAdd, SearchField, SwitchField, due_state, toolbar};
 pub use frame::{Rail, RailEntry, RailGroup, Shell, ShellPart, ShellWords, StatusLine, StatusTone, TopBar, is_phone};
-pub use layout::Columns;
+pub use layout::{Columns, Gap, Stack};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use overlay::{ConfirmAnswer, ConfirmDialog, Dialog, Select, tooltip, tooltip_shown};
 pub use page::{Page, PageHeader, PageState, PageStateTone, PageStateWords};
@@ -45,7 +45,7 @@ pub use settings::{
 pub use stat::{KpiRow, Stat, sparkline};
 pub use switch::Switch;
 pub use table::{
-    Cell, CellEdit, Column, DataTable, RowActions, Stack, StackLayout, TableOutput, TableState, TableVariant,
+    Cell, CellEdit, Column, DataTable, RowActions, StackLayout, StackPlace, TableOutput, TableState, TableVariant,
     TableWords, Validate,
 };
 pub use table_edit::{EditWords, Editor};

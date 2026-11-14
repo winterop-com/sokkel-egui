@@ -19,8 +19,11 @@ drawn by `examples/status/tests/screens.rs` and laid beside the web's by
   `sparkline`), four to a row in `Columns`, pressed to open the service. The readings come from
   `live.rs`, the web's calm readings ported (a seeded generator, so egui's numbers are its own);
   the notes say "no data over 90 days" until the incident history uptime is read from is ported.
+- The incidents are the web's seed (`data::seed_incidents`: INC-41 open, eight resolved) and the
+  incidents page has its filter: `Segmented` with each option's count and state dot, the page's
+  parts a section's gap apart (`Stack`, `Gap::Section`).
 - Next, largest first:
-  the dashboard under them; the incidents table; the services table; the map of sites; on call's
+  the dashboard under them; the incidents table (a stacked, labeled list under a bar with its search, row count and sort; `StatusChip`, `TagChips`, `RelativeTime`); the services table; the map of sites; on call's
   rotation; the public page; settings; the live simulation behind all of them.
 
 ## Groundwork

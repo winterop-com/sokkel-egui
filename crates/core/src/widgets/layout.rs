@@ -54,3 +54,53 @@ impl Columns {
         ui.spacing_mut().item_spacing = gap;
     }
 }
+
+/// The room between the parts of a `Stack`, as sokkel-ui's `gap`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Gap {
+    /// The density's page gap, between a page's parts.
+    Page,
+    /// The density's section gap, between the parts of one section.
+    Section,
+    /// 8.
+    Sm,
+    /// 12.
+    Md,
+    /// 16.
+    Lg,
+    /// 24.
+    Xl,
+}
+
+impl Gap {
+    pub fn length(self, tokens: &crate::Tokens) -> f32 {
+        match self {
+            Gap::Page => tokens.density("page-gap"),
+            Gap::Section => tokens.density("section-gap"),
+            Gap::Sm => 8.0,
+            Gap::Md => 12.0,
+            Gap::Lg => 16.0,
+            Gap::Xl => 24.0,
+        }
+    }
+}
+
+/// Parts one under another, `gap` apart, after sokkel-ui's `Stack`.
+pub struct Stack {
+    gap: Gap,
+}
+
+impl Stack {
+    pub fn new(gap: Gap) -> Self {
+        Self { gap }
+    }
+
+    pub fn show<R>(self, ui: &mut Ui, content: impl FnOnce(&mut Ui) -> R) -> R {
+        let gap = self.gap.length(&crate::tokens(ui.ctx()));
+        ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.y = gap;
+            content(ui)
+        })
+        .inner
+    }
+}

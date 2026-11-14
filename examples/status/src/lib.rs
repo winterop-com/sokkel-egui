@@ -8,8 +8,9 @@ pub mod live;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
-    AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, Columns, Icon, KpiRow, Page, PageHeader,
-    Rail, RailEntry, RailGroup, Shell, ShellPart, Stat, StatusLine, StatusTone, TopBar, install,
+    AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, Columns, Gap, Icon, KpiRow, Page,
+    PageHeader, Rail, RailEntry, RailGroup, Segmented, Shell, ShellPart, Stack, Stat, StatusLine, StatusTone, TopBar,
+    install,
 };
 
 use data::SERVICES;
@@ -48,8 +49,10 @@ pub struct StatusApp {
     pub readings: u32,
     /// Who answers now.
     pub on_call: String,
-    /// The incidents still open, by code.
-    pub open: Vec<String>,
+    /// Every incident, open ones first.
+    pub incidents: Vec<data::Incident>,
+    /// Which incidents the incidents page shows: open, resolved or all.
+    pub shown: usize,
     /// The live world the readings come from.
     pub live_world: Live,
 }
@@ -70,7 +73,8 @@ impl StatusApp {
             start: 9 * 3600,
             readings: 0,
             on_call: "grace".into(),
-            open: vec!["INC-41".into()],
+            incidents: data::seed_incidents(9.0 * 3600.0 * 1000.0),
+            shown: 0,
             live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
         }
     }
@@ -104,8 +108,16 @@ impl StatusApp {
         format!("{:02}:{:02}:{:02}", at / 3600, at / 60 % 60, at % 60)
     }
 
+    /// The incidents not yet resolved.
+    pub fn open(&self) -> Vec<&data::Incident> {
+        self.incidents
+            .iter()
+            .filter(|i| i.state != data::State::Resolved)
+            .collect()
+    }
+
     fn groups(&self) -> Vec<RailGroup> {
-        let open = self.open.len() as u32;
+        let open = self.open().len() as u32;
         let mut incidents = RailEntry::new("incidents", "Incidents", Icon::Siren).description("Open and past");
         if open > 0 {
             incidents = incidents.count(open);
@@ -155,7 +167,7 @@ impl StatusApp {
         let clock = self.clock();
         let live = self.live;
         let operational = SERVICES.len();
-        let open = self.open.len();
+        let open = self.open().len();
         let on_call = self.on_call.clone();
         Shell::new().show_window(ui, |part, ui| match part {
             ShellPart::Rail => {
@@ -228,11 +240,9 @@ impl StatusApp {
                     .show(ui, |_| {});
             }
             ("services", None) => PageHeader::new("Services").count("all operational").show(ui, |_| {}),
-            ("incidents", _) => PageHeader::new("Incidents")
-                .count(format!("{} open", self.open.len()))
-                .show(ui, |ui| {
-                    ui.add(Button::new("New").icon(Icon::Plus));
-                }),
+            ("incidents", _) => {
+                Stack::new(Gap::Section).show(ui, |ui| self.incidents_page(ui));
+            }
             ("regions", _) => PageHeader::new("Regions")
                 .count("11 of 11 sites operational")
                 .show(ui, |_| {}),
@@ -278,13 +288,14 @@ impl StatusApp {
     fn kpis(&self, ui: &mut Ui) {
         let requests: f64 = SERVICES.iter().map(|s| s.load).sum();
         let api = SERVICES.iter().find(|s| s.id == "api").map_or(0.0, |s| s.latency);
-        let mut open = Stat::new("Open incidents", self.open.len());
-        if let Some(first) = self.open.first() {
-            open = open.note(first.clone());
+        let opened = self.open();
+        let mut open = Stat::new("Open incidents", opened.len());
+        if let Some(first) = opened.first() {
+            open = open.note(first.code.clone());
         }
         KpiRow::new([
             Stat::new("Services operational", format!("{0} of {0}", SERVICES.len())),
-            Stat::new("Sites operational", format!("{0} of {0}", data::SITES)),
+            Stat::new("Sites operational", format!("{0} of {0}", data::SITES.len())),
             open,
             Stat::new("Uptime, 90 days", "-"),
             Stat::new("Requests", group(requests.round() as u64))
@@ -297,6 +308,23 @@ impl StatusApp {
 }
 
 impl StatusApp {
+    /// The incidents: its head, the filter of open, resolved and all, and the table of them.
+    fn incidents_page(&mut self, ui: &mut Ui) {
+        let open = self.open().len();
+        PageHeader::new("Incidents")
+            .count(format!("{open} open"))
+            .show(ui, |ui| {
+                ui.add(Button::new("New").icon(Icon::Plus));
+            });
+        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let all = self.incidents.len();
+        ui.add(
+            Segmented::new(&mut self.shown, ["Open", "Resolved", "All"])
+                .counts([Some(open), Some(all - open), Some(all)])
+                .dots([Some(t.color("critical")), Some(t.color("good")), None]),
+        );
+    }
+
     /// Each service as a tile: its state, its latency now with its last readings as a line, and its
     /// uptime (none yet: the incident history it is read from is still to port).
     fn tiles(&self, ui: &mut Ui) -> Option<&'static str> {
