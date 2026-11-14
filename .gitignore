@@ -3,3 +3,4 @@
 **/*.diff.png
 **/*.old.png
 /.parity
+/dist
