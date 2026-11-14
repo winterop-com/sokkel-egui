@@ -32,8 +32,12 @@ and never chase a difference made of numbers.
 - The incidents table stacks as the web's labeled cards (`StackLayout::Labeled`): the title and
   its menu, a line each for Touches (`Cell::Tags`), Assignee and Lasted, and the facts (code, state
   and severity chips, `relative_time`). Its bar is the web's (`DataTable::search`): the search, reached by "/" (`SearchField::keys`), narrowing by every word, the rows' count, and the sort menu, newest first by Opened (`Cell::Relative`).
+- The services table is the web's: labeled cards with a grip each (dragged to reorder, Reset order
+  putting the board's back), the description as a primary value over up to two lines
+  (`StackPlace::Primary`), the facts (state, p95, errors, uptime), the bar with the count and
+  Sort, and the latency sparkline (`Cell::Trend`) for when it does not stack.
 - Next, largest first:
-  the dashboard under them; the incidents table (a stacked, labeled list under a bar with its search, row count and sort; `StatusChip`, `TagChips`, `RelativeTime`); the services table; the map of sites; on call's
+  the dashboard under them; the incidents table (a stacked, labeled list under a bar with its search, row count and sort; `StatusChip`, `TagChips`, `RelativeTime`); the map of sites; on call's
   rotation; the public page; settings; the live simulation behind all of them.
 
 ## Groundwork

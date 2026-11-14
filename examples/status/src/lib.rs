@@ -56,6 +56,9 @@ pub struct StatusApp {
     /// The incidents' table, and what its search holds.
     pub incidents_table: TableState,
     pub incident_search: String,
+    /// The services in the person's own order, by their index in `SERVICES`, and their table.
+    pub service_order: Vec<usize>,
+    pub services_table: TableState,
     /// The live world the readings come from.
     pub live_world: Live,
 }
@@ -81,6 +84,8 @@ impl StatusApp {
             // newest first, as the web's `defaultSort` on Opened
             incidents_table: TableState::sorted(6, false),
             incident_search: String::new(),
+            service_order: (0..SERVICES.len()).collect(),
+            services_table: TableState::default(),
             live_world: Live::new(9.0 * 3600.0 * 1000.0, INTERVAL as f64 * 1000.0),
         }
     }
@@ -245,7 +250,9 @@ impl StatusApp {
                     .description(service.description)
                     .show(ui, |_| {});
             }
-            ("services", None) => PageHeader::new("Services").count("all operational").show(ui, |_| {}),
+            ("services", None) => {
+                Stack::new(Gap::Section).show(ui, |ui| self.services_page(ui));
+            }
             ("incidents", _) => {
                 Stack::new(Gap::Section).show(ui, |ui| self.incidents_page(ui));
             }
@@ -416,6 +423,86 @@ impl StatusApp {
             .show(ui);
     }
 
+    /// The services: their head with Reset order, and the table of them in the person's order.
+    fn services_page(&mut self, ui: &mut Ui) {
+        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let down = self
+            .live_world
+            .health
+            .iter()
+            .filter(|h| **h != live::Health::Operational)
+            .count();
+        let count = if down == 0 {
+            "all operational".to_owned()
+        } else {
+            format!("{down} not operational")
+        };
+        let ordered = self.service_order != (0..SERVICES.len()).collect::<Vec<_>>();
+        let mut reset = false;
+        PageHeader::new("Services").count(count).show(ui, |ui| {
+            let mut button = Button::new("Reset order")
+                .icon(Icon::RotateCcw)
+                .variant(ButtonVariant::Ghost)
+                .size(ButtonSize::Sm);
+            if !ordered {
+                button = button.reason("The services are in the board’s own order.");
+            }
+            reset = ui.add(button).clicked();
+        });
+        if reset {
+            self.service_order = (0..SERVICES.len()).collect();
+        }
+        let columns = [
+            Column::new("Service", 128.0),
+            Column::new("State", 136.0).stack(StackPlace::Secondary),
+            Column::new("What it does", 224.0).fill().stack(StackPlace::Primary),
+            Column::new("Latency", 144.0).sortable(false).stack(StackPlace::None),
+            Column::new("p95", 96.0).numeric().stack(StackPlace::Secondary),
+            Column::new("Errors", 88.0).numeric().stack(StackPlace::Secondary),
+            Column::new("Requests", 104.0).numeric().stack(StackPlace::None),
+            Column::new("Uptime, 90 days", 136.0)
+                .numeric()
+                .stack(StackPlace::Secondary),
+            Column::new("Host", 192.0).stack(StackPlace::None),
+        ];
+        let rows: Vec<Vec<Cell>> = self
+            .service_order
+            .iter()
+            .map(|&index| {
+                let service = SERVICES[index];
+                let health = self.live_world.health[index];
+                let readings = &self.live_world.readings[index];
+                let last = readings.last().copied();
+                vec![
+                    Cell::Text(service.id.into()),
+                    Cell::Chip(health.words().to_lowercase(), health_tone(health)),
+                    Cell::Text(service.description.into()),
+                    Cell::Trend(readings.iter().map(|r| r.p95).collect(), t.color(health.tone())),
+                    Cell::Text(format!("{} ms", last.map_or(0.0, |r| r.p95).round())),
+                    Cell::Text(rate(last.map_or(0.0, |r| r.errors))),
+                    Cell::Text(format!("{}/s", group(last.map_or(0.0, |r| r.load).round() as u64))),
+                    // the uptime the incident history gives, still to port
+                    Cell::Text("-".into()),
+                    Cell::Mono(service.host.into()),
+                ]
+            })
+            .collect();
+        let keys: Vec<&str> = self.service_order.iter().map(|i| SERVICES[*i].id).collect();
+        let output = DataTable::new("services", &columns, &rows, &mut self.services_table)
+            .keys(keys)
+            .bar(true)
+            .reorder(true)
+            .stack_layout(StackLayout::Labeled)
+            .actions(|_| vec![MenuItem::action("Open"), MenuItem::action("Copy the host")])
+            .footer(false)
+            .stretch(true)
+            .show(ui);
+        if let Some((from, to)) = output.reordered {
+            let moved = self.service_order.remove(from);
+            self.service_order.insert(to, moved);
+        }
+    }
+
     /// Each service as a tile: its state, its latency now with its last readings as a line, and its
     /// uptime (none yet: the incident history it is read from is still to port).
     fn tiles(&self, ui: &mut Ui) -> Option<&'static str> {
@@ -493,6 +580,25 @@ fn duration(ms: f64) -> String {
         };
     }
     format!("{} days", ((hours as f64) / 24.0).round())
+}
+
+/// A service's health as a chip's tone, as the web's `HEALTH_COLOR`.
+fn health_tone(health: live::Health) -> ChipTone {
+    match health {
+        live::Health::Operational => ChipTone::Good,
+        live::Health::Degraded => ChipTone::Warning,
+        live::Health::Outage => ChipTone::Critical,
+        live::Health::Maintenance => ChipTone::Info,
+    }
+}
+
+/// A share in percent, as the web's `formatRate`: two decimals under one, one above.
+fn rate(value: f64) -> String {
+    if value < 1.0 {
+        format!("{value:.2}%")
+    } else {
+        format!("{value:.1}%")
+    }
 }
 
 /// A count with its thousands set apart, as the web's `formatCount`: 7,230.

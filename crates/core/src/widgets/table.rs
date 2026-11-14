@@ -41,6 +41,9 @@ pub enum StackPlace {
     Line,
     /// One of the quiet facts on a stacked row's last line, in the labeled layout too.
     Secondary,
+    /// A value of its own under the title, in the body's type, with no name before it: what a
+    /// row is ("The app people sign in to").
+    Primary,
     /// Left out of a stacked row.
     None,
 }
@@ -138,6 +141,8 @@ pub enum Cell {
         at: f64,
         now: f64,
     },
+    /// Values as a sparkline 112 by 28, in `ink`.
+    Trend(Vec<f64>, egui::Color32),
     Empty,
 }
 
@@ -151,7 +156,7 @@ impl Cell {
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
             Cell::Tags(tags) => tags.join(" "),
             Cell::Relative { at, now } => super::relative_time(at - now),
-            Cell::Check(_) | Cell::Empty => String::new(),
+            Cell::Check(_) | Cell::Trend(..) | Cell::Empty => String::new(),
         }
     }
 
@@ -164,6 +169,7 @@ impl Cell {
             Cell::Due { date, .. } => date.map_or("9999".into(), |d| d.to_string()),
             Cell::Tags(tags) => tags.join(" "),
             Cell::Relative { at, .. } => format!("{:024.3}", at + 1e18),
+            Cell::Trend(values, _) => format!("{:024.3}", values.last().copied().unwrap_or(0.0) + 1e18),
             Cell::Empty => String::new(),
         }
     }
@@ -234,6 +240,8 @@ pub struct TableWords {
     pub rows: String,
     pub row: String,
     pub empty: String,
+    /// The bar's sort button while the rows stand in their own order.
+    pub sort: String,
     pub edit: EditWords,
 }
 
@@ -247,6 +255,7 @@ impl Default for TableWords {
             rows: "{count} rows".into(),
             row: "{count} row".into(),
             empty: "Nothing to show".into(),
+            sort: "Sort".into(),
             edit: EditWords::default(),
         }
     }
@@ -306,10 +315,13 @@ pub struct DataTable<'a> {
     keys: Vec<Id>,
     stack_layout: StackLayout,
     search: Option<&'a mut String>,
+    bar: bool,
 }
 
 /// How wide a row's grip is, in the first column before its content.
 const GRIP: f32 = 22.0;
+/// How many lines a primary value takes in a stacked card, as the web's `stackLines` default.
+const PRIMARY_LINES: f32 = 2.0;
 /// The room between two columns.
 const GAP: f32 = 12.0;
 /// The width of the actions' column at a row's end.
@@ -335,6 +347,7 @@ impl<'a> DataTable<'a> {
             keys: Vec::new(),
             stack_layout: StackLayout::Never,
             search: None,
+            bar: false,
         }
     }
 
@@ -398,6 +411,13 @@ impl<'a> DataTable<'a> {
     /// and a sort menu of the columns that sort; the app narrows the rows by what is typed.
     pub fn search(mut self, text: &'a mut String) -> Self {
         self.search = Some(text);
+        self.bar = true;
+        self
+    }
+
+    /// The bar over the rows without a search: the rows' count and the sort menu.
+    pub fn bar(mut self, bar: bool) -> Self {
+        self.bar = bar;
         self
     }
 
@@ -660,8 +680,13 @@ impl<'a> DataTable<'a> {
     /// The bar over the rows: the search, 256 wide, then at the end the rows' count in the code
     /// face and the sort, a ghost button naming the column it sorts by, its menu the columns that
     /// sort; 8 over and under a control, 12 across, a rule under it.
-    fn bar(&mut self, ui: &mut Ui, t: &crate::Tokens) {
-        let control = super::finger_tall(ui.ctx(), t, t.density("control"));
+    fn draw_bar(&mut self, ui: &mut Ui, t: &crate::Tokens) {
+        // a control tall with its search, a small control without
+        let control = super::finger_tall(
+            ui.ctx(),
+            t,
+            t.density(if self.search.is_some() { "control" } else { "control-sm" }),
+        );
         let (bar, _) = ui.allocate_exact_size(vec2(ui.available_width(), 8.0 + control + 8.0 + 1.0), Sense::hover());
         ui.painter()
             .hline(bar.x_range(), bar.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
@@ -683,10 +708,15 @@ impl<'a> DataTable<'a> {
         child.spacing_mut().item_spacing.x = 16.0;
         let sortable: Vec<usize> = (0..self.columns.len()).filter(|c| self.columns[*c].sortable).collect();
         if let Some(&first) = sortable.first() {
+            // the column it sorts by, or "Sort" while the rows stand in their own order
             let (column, ascending) = self.state.sort.unwrap_or((first, true));
-            let icon = if ascending { Icon::ArrowUp } else { Icon::ArrowDown };
+            let (icon, label) = match self.state.sort {
+                Some((c, true)) => (Icon::ArrowUp, self.columns[c].title.clone()),
+                Some((c, false)) => (Icon::ArrowDown, self.columns[c].title.clone()),
+                None => (Icon::ArrowUpDown, self.words.sort.clone()),
+            };
             let trigger = child.add(
-                Button::new(self.columns[column].title.clone())
+                Button::new(label)
                     .icon(icon)
                     .variant(ButtonVariant::Ghost)
                     .size(ButtonSize::Sm),
@@ -727,6 +757,12 @@ impl<'a> DataTable<'a> {
         let facts: Vec<usize> = (0..self.columns.len())
             .filter(|c| self.columns[*c].stack == StackPlace::Secondary)
             .collect();
+        let primary: Vec<usize> = (0..self.columns.len())
+            .filter(|c| self.columns[*c].stack == StackPlace::Primary)
+            .collect();
+        let drag_id = self.id.with("card-drag");
+        let dragging: Option<usize> = ui.ctx().data(|d| d.get_temp(drag_id));
+        let mut card_rects: Vec<Rect> = Vec::new();
         let name_width = lines
             .iter()
             .map(|c| {
@@ -746,12 +782,21 @@ impl<'a> DataTable<'a> {
                 for &index in order {
                     let row = &self.rows[index];
                     let shown: Vec<usize> = lines.iter().copied().filter(|c| said(&row[*c])).collect();
+                    let primaries: Vec<usize> = primary.iter().copied().filter(|c| said(&row[*c])).collect();
                     let has_facts = facts.iter().any(|c| said(&row[*c]));
-                    let height =
-                        1.0 + 8.0 + 24.0 + 20.0 * shown.len() as f32 + if has_facts { 24.0 } else { 0.0 } + 8.0 + 1.0;
+                    // 22 a primary line, 20 a labeled one
+                    let height = 1.0
+                        + 8.0
+                        + 24.0
+                        + 22.0 * PRIMARY_LINES * primaries.len() as f32
+                        + 20.0 * shown.len() as f32
+                        + if has_facts { 24.0 } else { 0.0 }
+                        + 8.0
+                        + 1.0;
                     let width = ui.available_width() - 32.0;
                     let (outer, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
                     let card = Rect::from_min_size(pos2(outer.left() + 16.0, outer.top()), vec2(width, height));
+                    card_rects.push(card);
                     let hit = ui.interact(card, self.id.with(("card", index)), Sense::click());
                     if hit.clicked() {
                         self.state.opened = Some(index);
@@ -772,6 +817,33 @@ impl<'a> DataTable<'a> {
                     let left = card.left() + 1.0 + 12.0;
                     let right = card.right() - 1.0 - 12.0;
                     let mut y = card.top() + 1.0 + 8.0;
+                    // the grip before the title, dragged to move the card
+                    let mut title_left = left;
+                    if self.reorder {
+                        let grip = Rect::from_min_size(pos2(left, y), vec2(GRIP, 24.0));
+                        let hold = ui.interact(grip, self.id.with(("card-grip", index)), Sense::drag());
+                        hold.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Move"));
+                        if hold.hovered() || hold.dragged() {
+                            ui.ctx().set_cursor_icon(if hold.dragged() {
+                                CursorIcon::Grabbing
+                            } else {
+                                CursorIcon::Grab
+                            });
+                        }
+                        if hold.drag_started()
+                            && let Some(position) = order.iter().position(|r| *r == index)
+                        {
+                            ui.ctx().data_mut(|d| d.insert_temp(drag_id, position));
+                        }
+                        icons::paint(
+                            ui.painter(),
+                            pos2(left + 6.0, y + 12.0),
+                            Icon::GripVertical,
+                            14.0,
+                            t.color("muted-foreground"),
+                        );
+                        title_left += GRIP + 8.0;
+                    }
                     // the title, the menu at the line's end
                     let menu = if self.actions.is_some() { 28.0 + 8.0 } else { 0.0 };
                     if let Some(c) = title {
@@ -779,11 +851,11 @@ impl<'a> DataTable<'a> {
                         let galley = WidgetText::from(TextRole::Action.rich(t, words)).into_galley(
                             ui,
                             Some(TextWrapMode::Truncate),
-                            (right - left - menu).max(1.0),
+                            (right - title_left - menu).max(1.0),
                             TextRole::Action.font(t),
                         );
                         ui.painter().galley(
-                            pos2(left, y + 12.0 - galley.size().y / 2.0),
+                            pos2(title_left, y + 12.0 - galley.size().y / 2.0),
                             galley,
                             t.color("card-foreground"),
                         );
@@ -808,6 +880,29 @@ impl<'a> DataTable<'a> {
                         }
                     }
                     y += 24.0;
+                    // the primary values in the body's type, each over at most two 22 lines, wrapped
+                    for &c in &primaries {
+                        let mut job = egui::text::LayoutJob::single_section(
+                            row[c].draft(),
+                            egui::TextFormat {
+                                font_id: TextRole::Body.font(t),
+                                color: t.color("card-foreground"),
+                                line_height: Some(22.0),
+                                ..Default::default()
+                            },
+                        );
+                        job.wrap = egui::text::TextWrapping {
+                            max_width: (right - left).max(1.0),
+                            max_rows: PRIMARY_LINES as usize,
+                            break_anywhere: false,
+                            overflow_character: Some('…'),
+                        };
+                        let galley = ui.fonts_mut(|f| f.layout_job(job));
+                        // the lines it takes; the card keeps room for all of them (its height)
+                        let lines = galley.rows.len().max(1) as f32;
+                        ui.painter().galley(pos2(left, y), galley, t.color("card-foreground"));
+                        y += 22.0 * lines;
+                    }
                     // a line per column with a value: its name, then the value
                     for &c in &shown {
                         let name = WidgetText::from(TextRole::Help.rich(t, &self.columns[c].title)).into_galley(
@@ -855,6 +950,31 @@ impl<'a> DataTable<'a> {
                         }
                     }
                     ui.add_space(16.0);
+                }
+                // a dragged card: the line where it lands, and its move on release
+                if let Some(from) = dragging {
+                    let released = ui.input(|i| i.pointer.any_released());
+                    if let Some(pointer) = ui.ctx().pointer_latest_pos()
+                        && let (Some(first), Some(last)) = (card_rects.first(), card_rects.last())
+                    {
+                        let to = card_rects.iter().filter(|r| pointer.y > r.center().y).count();
+                        let y = if to < card_rects.len() {
+                            card_rects[to].top() - 8.0
+                        } else {
+                            last.bottom() + 8.0
+                        };
+                        ui.painter()
+                            .hline(first.x_range(), y, Stroke::new(2.0, t.color("primary")));
+                        if released {
+                            let to = if to > from { to - 1 } else { to };
+                            if to != from {
+                                out.reordered = Some((from, to));
+                            }
+                        }
+                    }
+                    if released {
+                        ui.ctx().data_mut(|d| d.remove::<usize>(drag_id));
+                    }
                 }
             });
     }
@@ -1005,8 +1125,8 @@ impl<'a> DataTable<'a> {
                     ui.set_min_height(room - 2.0 - if self.footer { 26.0 } else { 0.0 });
                 }
                 ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
-                if self.search.is_some() {
-                    self.bar(ui, &t);
+                if self.bar {
+                    self.draw_bar(ui, &t);
                 }
                 // a table with no rows given its own words says them alone, without its heads
                 if self.rows.is_empty()
@@ -1598,6 +1718,13 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
             paint_tags(ui, tags, pos2(rect.left(), rect.center().y), rect.width());
         }
         Cell::Relative { .. } => text(ui, TextRole::Body.rich(t, cell.draft()), t.color("muted-foreground")),
+        Cell::Trend(values, ink) => {
+            let place = Rect::from_min_size(
+                pos2(rect.left(), rect.center().y - 14.0),
+                vec2(112.0_f32.min(room), 28.0),
+            );
+            super::sparkline(ui.painter(), place, values, *ink);
+        }
         Cell::Empty => {}
     }
     None
@@ -1695,7 +1822,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
                 room - 20.0,
             )
         }
-        Cell::Check(_) | Cell::Empty => 0.0,
+        Cell::Check(_) | Cell::Trend(..) | Cell::Empty => 0.0,
     }
 }
 
