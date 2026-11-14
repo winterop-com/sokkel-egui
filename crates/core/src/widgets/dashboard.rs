@@ -121,7 +121,9 @@ impl DashboardGrid {
             for (i, (span, draw)) in row.into_iter().enumerate() {
                 let columns = span.columns(width) as f32;
                 let w = column * columns + gap * (columns - 1.0);
-                let rect = Rect::from_min_size(pos2(x, top), vec2(w, held.max(1.0)));
+                // the cell's room runs down unbounded, so a panel measures its own height; the row's
+                // height reaches it as `CellHeight`, to stretch to
+                let rect = Rect::from_min_size(pos2(x, top), vec2(w, f32::INFINITY));
                 let mut child = ui.new_child(
                     UiBuilder::new()
                         .id_salt(("cell", r, i))

@@ -1028,6 +1028,16 @@ impl<'a> DataTable<'a> {
             .collect();
         let gaps = GAP * self.columns.len().saturating_sub(1) as f32;
         let tail = if self.actions.is_some() { ACTIONS + GAP } else { 0.0 };
+        // a table that fits its room (the web's `minWidth="auto"`: one that stacks rather than
+        // scrolls) shrinks its columns in proportion where they run past it, none under 56
+        let room = right - left - gaps - tail;
+        let sum: f32 = widths.iter().sum();
+        let fits_room = self.stack_below.is_some() || self.stack_layout == StackLayout::Labeled;
+        let widths: Vec<f32> = if fits_room && sum > room && sum > 0.0 {
+            widths.iter().map(|w| (w * room / sum).max(56.0)).collect()
+        } else {
+            widths
+        };
         let fixed: f32 = widths.iter().sum::<f32>() + gaps + tail;
         let fill = self
             .columns

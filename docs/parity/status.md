@@ -123,9 +123,10 @@ there so the screen matches the web's, but nothing answers it yet, until the arr
   its Deploys panel (each deploy's version, state, what it changed, who and when; Roll back on the
   version running) and its Maintenance panel (Schedule at its head; Start now for two minutes,
   Cancel, End now or Remove by where the window stands), their tables stacking below 420
-  (`DataTable::stack_below`, the web's `stackBelow`). Open: the web's tables shrink their columns
-  to fit a half-width panel (`minWidth="auto"`), and egui's do not yet, so the Deploys table runs
-  past its panel's edge until they do.
+  (`DataTable::stack_below`, the web's `stackBelow`). A table that fits its room (stacking
+  rather than scrolling) shrinks its columns in proportion where they run past it, as the web's
+  `minWidth="auto"`; a dashboard's cells measure their panels with unbounded room, so a taller
+  table is never cut.
 - Resolve, Reopen and Assign to the person on call in an incident's menu and on its page;
   Subscribe on the public page brings the form into view.
 

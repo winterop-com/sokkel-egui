@@ -1644,13 +1644,9 @@ impl StatusApp {
                                     .map(|back| MenuItem::action(format!("Roll back to {back}")).icon(Icon::Undo2))
                                     .collect()
                             })
-                            .empty(|ui| {
-                                let t = sokkel_ui_egui::tokens(ui.ctx());
-                                ui.label(
-                                    TextRole::Body
-                                        .rich(&t, "No deploys yet.")
-                                        .color(t.color("muted-foreground")),
-                                );
+                            .words(sokkel_ui_egui::TableWords {
+                                empty: "No deploys yet.".into(),
+                                ..Default::default()
                             })
                             .footer(false)
                             .show(ui);
@@ -1686,13 +1682,9 @@ impl StatusApp {
                             .stack_layout(StackLayout::Labeled)
                             .stack_below(420.0)
                             .actions(|row| window_states_r[row].actions())
-                            .empty(|ui| {
-                                let t = sokkel_ui_egui::tokens(ui.ctx());
-                                ui.label(
-                                    TextRole::Body
-                                        .rich(&t, "Nothing scheduled.")
-                                        .color(t.color("muted-foreground")),
-                                );
+                            .words(sokkel_ui_egui::TableWords {
+                                empty: "Nothing scheduled.".into(),
+                                ..Default::default()
                             })
                             .footer(false)
                             .show(ui);
