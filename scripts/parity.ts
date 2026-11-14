@@ -8,6 +8,9 @@
  *   bun scripts/parity.ts web <example>     build the example in .parity/sokkel-ui at SOKKEL_UI_REF
  *                                           and shoot its screens into parity/<example>/web/,
  *                                           keeping a picture that differs only by antialiasing
+ *                                           (PARITY_SCALE=2 shoots at a Retina screen's scale into
+ *                                           parity/<example>/web@2x/, for comparing how text is
+ *                                           drawn; PARITY_ONLY=a,b shoots only those screens)
  *   bun scripts/parity.ts board <example>   a page of each screen, web beside egui, in .parity/
  *
  * The manifest, parity/<example>.json, records the sokkel-ui commit each file of the example was
@@ -141,11 +144,17 @@ async function web() {
     await new Promise((done) => setTimeout(done, 600))
     const { chromium } = createRequire(join(clone, 'package.json'))('@playwright/test') as typeof import('@playwright/test')
     const browser = await chromium.launch()
-    const out = join(root, 'parity', name, 'web')
+    const scale = Number(process.env.PARITY_SCALE ?? '1')
+    const only = process.env.PARITY_ONLY?.split(',')
+    const out = join(root, 'parity', name, scale === 1 ? 'web' : `web@${String(scale)}x`)
     mkdirSync(out, { recursive: true })
     try {
-        for (const screen of manifest.screens) {
-            const context = await browser.newContext({ viewport: screen.viewport ?? { width: 1280, height: 800 }, deviceScaleFactor: 1, colorScheme: screen.scheme ?? 'light' })
+        for (const screen of manifest.screens.filter((one) => only === undefined || only.includes(one.name))) {
+            const context = await browser.newContext({
+                viewport: screen.viewport ?? { width: 1280, height: 800 },
+                deviceScaleFactor: scale,
+                colorScheme: screen.scheme ?? 'light',
+            })
             const page = await context.newPage()
             await page.clock.install({ time: new Date(`${manifest.today}T09:00:00`) })
             // a live example draws from Math.random: seeded, it draws the same on every shot
@@ -182,8 +191,11 @@ async function web() {
             await context.close()
             console.log(`${kept ? 'same' : 'shot'} ${screen.name}`)
         }
-        manifest.shot = git('rev-parse', 'HEAD').trim()
-        writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 4)}\n`)
+        // the screens the board compares are the 1x ones, so only they move the shot's commit
+        if (scale === 1 && only === undefined) {
+            manifest.shot = git('rev-parse', 'HEAD').trim()
+            writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 4)}\n`)
+        }
     } finally {
         await browser.close()
         server.kill()

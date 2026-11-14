@@ -50,6 +50,15 @@ counterpart.
 | settings_demo | The section has no Reset to defaults (`SettingsSection::reset(false)`). |
 | settings_reset | `ConfirmDialog` over the settings, 384 wide (`sm`; a `Dialog` is 512 by default, as the dialog spec says) with its 65 footer, its detail wrapping one word earlier than the web's. |
 
+## Text
+
+The same face on both sides (IBM Plex Sans, its weight on the `wght` axis), and at a Retina
+screen's scale the same shapes, spacing and places, letter for letter. What differs is how each
+turns a glyph's coverage into ink. Measured as the ink the task titles put down
+(`PARITY_SCALE=2` shoots the web at 2x into `parity/tasks/web@2x/`): light matches (egui 0.97 of
+the web at 2x, 1.00 at 1x). In dark, egui's own boost (`2c - c^2`) inked it 11% heavier at 2x and
+26% at 1x; `install` now uses coverage to the power 0.85 in dark, 1.01 and 1.06.
+
 ## Last checked
 
 Against sokkel-ui `4f2cf282` (0.28.0): no file of the example changed; the library's overlays did,

@@ -201,6 +201,12 @@ fn widget(fill: Color32, stroke: Color32, ink: Color32, tokens: &Tokens) -> Widg
 /// selections and its stock widgets.
 fn visuals(t: &Tokens) -> Visuals {
     let mut v = if t.dark { Visuals::dark() } else { Visuals::light() };
+    // Light text on a dark ground: egui's own boost (2c - c^2) inks it a tenth heavier than the
+    // web draws it; coverage to the power 0.85 matches Chrome's within 1% at a Retina screen's
+    // scale and 6% at 1x (measured on the tasks inbox, `PARITY_SCALE=2`).
+    if t.dark {
+        v.text_options.color_transfer_function = egui::epaint::FontColorTransferFunction::Gamma(0.85);
+    }
     let foreground = t.color("foreground");
     v.override_text_color = None;
     v.panel_fill = t.color("background");
