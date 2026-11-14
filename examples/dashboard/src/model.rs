@@ -159,6 +159,8 @@ pub struct Dashboard {
     pub widgets: Vec<Widget>,
     /// What Reset puts back: the widgets it started with.
     pub base: Vec<Widget>,
+    /// When it was made, in milliseconds of the board's clock.
+    pub created: f64,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -431,13 +433,16 @@ pub fn presets() -> Vec<Dashboard> {
             ],
         ),
     ];
+    let count = boards.len();
     boards
         .into_iter()
-        .map(|(id, name, widgets)| Dashboard {
+        .enumerate()
+        .map(|(index, (id, name, widgets))| Dashboard {
             id: id.into(),
             name: name.into(),
             base: widgets.clone(),
             widgets,
+            created: crate::live::start() - (count - index) as f64 * 86_400_000.0,
         })
         .collect()
 }
