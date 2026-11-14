@@ -127,6 +127,13 @@
             ]
         },
         {
+            "name": "account",
+            "route": "inbox",
+            "steps": [
+                "button:Account"
+            ]
+        },
+        {
             "name": "settings",
             "route": "settings"
         },

@@ -89,4 +89,12 @@ fn every_screen() {
     harness.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::K);
     harness.run_steps(3);
     results.add(harness.try_snapshot("palette"));
+
+    // the account menu, opened from the rail's foot
+    let mut harness = render(Scheme::System, |_| {});
+    harness.get_by_label("Account").click();
+    harness.run_steps(3);
+    harness.remove_cursor();
+    harness.run_steps(2);
+    results.add(harness.try_snapshot("account"));
 }

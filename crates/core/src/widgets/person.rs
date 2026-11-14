@@ -136,6 +136,8 @@ pub struct AccountWords {
     pub light: String,
     pub dark: String,
     pub system: String,
+    /// The trigger's name for assistive technology.
+    pub account: String,
 }
 
 impl Default for AccountWords {
@@ -146,6 +148,7 @@ impl Default for AccountWords {
             light: "Light".into(),
             dark: "Dark".into(),
             system: "System".into(),
+            account: "Account".into(),
         }
     }
 }
@@ -207,7 +210,7 @@ impl AccountMenu {
         let trigger = ui.interact(row, ui.auto_id_with(("account", &self.name)), Sense::click());
         // a collapsed rail's cell holds the avatar alone
         let narrow = cell.width() < 120.0;
-        trigger.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.name));
+        trigger.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.account));
         let popup_id = trigger.id.with("menu");
         if trigger.hovered() || Popup::is_id_open(ui.ctx(), popup_id) {
             ui.painter().rect_filled(row, t.radius("md"), t.color("hover"));
@@ -263,7 +266,7 @@ impl AccountMenu {
                 ui.set_width(248.0);
                 ui.spacing_mut().item_spacing.y = 0.0;
                 // the account: its avatar, name and where it is signed in
-                let (head, _) = ui.allocate_exact_size(vec2(248.0, 52.0), Sense::hover());
+                let (head, _) = ui.allocate_exact_size(vec2(248.0, 58.0), Sense::hover());
                 let big = Rect::from_center_size(pos2(head.left() + 8.0 + 16.0, head.center().y), vec2(32.0, 32.0));
                 paint_avatar(ui, &t, big, &self.name, AvatarSize::Md, true);
                 let text_x = big.right() + 10.0;
@@ -284,7 +287,7 @@ impl AccountMenu {
                 if let Some(place) = &self.place {
                     let mono = egui::FontId::monospace(TextRole::Help.font(&t).size * 0.9);
                     ui.painter().text(
-                        pos2(text_x, top + name_h),
+                        pos2(text_x, top + name_h + 2.0),
                         egui::Align2::LEFT_TOP,
                         place,
                         mono,
@@ -298,22 +301,25 @@ impl AccountMenu {
                 }
                 if let Some(current) = self.scheme {
                     separator(ui, &t);
-                    ui.add_space(4.0);
-                    ui.horizontal(|ui| {
-                        ui.add_space(8.0);
-                        ui.label(
-                            TextRole::Badge
-                                .rich(&t, &self.words.scheme)
-                                .color(t.color("muted-foreground")),
-                        );
-                    });
-                    ui.add_space(4.0);
-                    for (scheme, label) in [
-                        (Scheme::Light, &self.words.light),
-                        (Scheme::Dark, &self.words.dark),
-                        (Scheme::System, &self.words.system),
+                    // the group's title: 28 tall, 8 in, as a menu label's `px-2 py-1.5`
+                    let (title, _) = ui.allocate_exact_size(vec2(248.0, 28.0), Sense::hover());
+                    let words = egui::WidgetText::from(TextRole::Badge.rich(&t, &self.words.scheme)).into_galley(
+                        ui,
+                        Some(egui::TextWrapMode::Truncate),
+                        232.0,
+                        TextRole::Badge.font(&t),
+                    );
+                    ui.painter().galley(
+                        pos2(title.left() + 8.0, title.center().y - words.size().y / 2.0),
+                        words,
+                        t.color("muted-foreground"),
+                    );
+                    for (scheme, label, icon) in [
+                        (Scheme::Light, &self.words.light, Icon::Sun),
+                        (Scheme::Dark, &self.words.dark, Icon::Moon),
+                        (Scheme::System, &self.words.system, Icon::Monitor),
                     ] {
-                        if menu_row(ui, &t, None, label, scheme == current).clicked() {
+                        if menu_row(ui, &t, Some(icon), label, scheme == current).clicked() {
                             action = Some(AccountAction::Scheme(scheme));
                             ui.close();
                         }
