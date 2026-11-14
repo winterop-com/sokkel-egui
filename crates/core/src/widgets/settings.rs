@@ -188,7 +188,16 @@ impl<'a> SettingsDialog<'a> {
                     vec2(nav.width() - 24.0, 32.0),
                 );
                 let mut child = ui.new_child(UiBuilder::new().max_rect(field));
-                super::search_field(&mut child, &mut query, &self.words.search);
+                let search = super::search_field(&mut child, &mut query, &self.words.search);
+                // from 640 the search takes the focus as the dialog opens; on a phone nothing does,
+                // so no keyboard rises
+                let pass = ctx.cumulative_pass_nr();
+                let seen_id = self.id.with("seen");
+                let last: Option<u64> = ctx.data(|d| d.get_temp(seen_id));
+                if last.is_none_or(|last| last + 1 < pass) && window.width() >= 640.0 {
+                    search.request_focus();
+                }
+                ctx.data_mut(|d| d.insert_temp(seen_id, pass));
                 let mut y = field.bottom();
                 let mut group: Option<&String> = None;
                 for (index, section) in self.sections.iter().enumerate() {
