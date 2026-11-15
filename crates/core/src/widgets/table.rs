@@ -813,6 +813,8 @@ impl<'a> DataTable<'a> {
         // a list's rows stand as a plain divided list, as the web's narrow list, not as cards
         let listed = self.variant == TableVariant::List;
         let (inset, apart) = if listed { (0.0, 0.0) } else { (16.0, 16.0) };
+        // a listed row is padded 10 and keeps 4 between its parts, as the web's `py-2.5 gap-1`
+        let (pad, gap) = if listed { (10.0, 4.0) } else { (8.0, 0.0) };
         let drag_id = self.id.with("card-drag");
         let dragging: Option<usize> = ui.ctx().data(|d| d.get_temp(drag_id));
         let mut card_rects: Vec<Rect> = Vec::new();
@@ -838,13 +840,15 @@ impl<'a> DataTable<'a> {
                     let primaries: Vec<usize> = primary.iter().copied().filter(|c| said(&row[*c])).collect();
                     let has_facts = facts.iter().any(|c| said(&row[*c]));
                     // 22 a primary line, 20 a labeled one
+                    let parts = primaries.len() + shown.len() + usize::from(has_facts);
                     let height = 1.0
-                        + 8.0
+                        + pad
                         + 24.0
                         + 22.0 * PRIMARY_LINES * primaries.len() as f32
                         + 20.0 * shown.len() as f32
                         + if has_facts { 24.0 } else { 0.0 }
-                        + 8.0
+                        + gap * parts as f32
+                        + pad
                         + 1.0;
                     let width = ui.available_width() - inset * 2.0;
                     let (outer, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
@@ -877,7 +881,7 @@ impl<'a> DataTable<'a> {
                     }
                     let left = card.left() + 1.0 + 12.0;
                     let right = card.right() - 1.0 - 12.0;
-                    let mut y = card.top() + 1.0 + 8.0;
+                    let mut y = card.top() + 1.0 + pad;
                     // the grip before the title, dragged to move the card
                     let mut title_left = left;
                     if self.reorder {
@@ -947,7 +951,7 @@ impl<'a> DataTable<'a> {
                             out.action = Some((index, chosen));
                         }
                     }
-                    y += 24.0;
+                    y += 24.0 + gap;
                     // the primary values in the body's type, each over at most two 22 lines, wrapped
                     for &c in &primaries {
                         let mut job = egui::text::LayoutJob::single_section(
@@ -969,7 +973,7 @@ impl<'a> DataTable<'a> {
                         // the lines it takes; the card keeps room for all of them (its height)
                         let lines = galley.rows.len().max(1) as f32;
                         ui.painter().galley(pos2(left, y), galley, t.color("card-foreground"));
-                        y += 22.0 * lines;
+                        y += 22.0 * lines + gap;
                     }
                     // a line per column with a value: its name, then the value
                     for &c in &shown {
@@ -987,7 +991,7 @@ impl<'a> DataTable<'a> {
                         let x = left + name_width + 8.0;
                         let place = Rect::from_min_max(pos2(x, y), pos2(right, y + 20.0));
                         line_value(ui, t, &row[c], place);
-                        y += 20.0;
+                        y += 20.0 + gap;
                     }
                     // the facts, one quiet line, a faint dot between them
                     if has_facts {

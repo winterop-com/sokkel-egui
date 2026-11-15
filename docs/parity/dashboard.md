@@ -57,7 +57,8 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
 - A list given `stack_below` stacks below it or once its columns no longer fit, whichever is
   wider, as the web's `minWidth="auto"` (a table keeps its own `stack_below`; status's Deploys
   list now stacks too, where it squeezed its columns); a stacked list draws plain divided rows, not cards; the
-  title is the title alone (never a primary value too) and keeps a code's face. Recent failures in
+  title is the title alone (never a primary value too) and keeps a code's face. A listed row is
+  padded 10 with 4 between its parts, as the web's `py-2.5 gap-1`, so its lines stand 24 apart. Recent failures in
   a third-wide panel stacks as the web's.
 - `AccountMenu::local`, as the web's `local`: no one signed in, the avatar a person's outline on
   the muted ground.
@@ -78,4 +79,3 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
   - The worker log on the web is as tall as its lines (816 at the start, growing to 200 lines),
     its `h-72` lost to `flex-1`; egui keeps it 288 tall and follows the newest line, as the
     classes read. Asked in `docs/proposals/dashboard-log-height.md`.
-  - A stacked list's labeled lines stand about 24 apart on the web, 20 in egui.
