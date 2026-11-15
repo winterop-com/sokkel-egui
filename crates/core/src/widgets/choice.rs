@@ -17,6 +17,7 @@ pub struct Checkbox<'a> {
     show_label: bool,
     indeterminate: bool,
     enabled: bool,
+    field: bool,
 }
 
 impl<'a> Checkbox<'a> {
@@ -28,7 +29,15 @@ impl<'a> Checkbox<'a> {
             show_label: true,
             indeterminate: false,
             enabled: true,
+            field: false,
         }
+    }
+
+    /// As sokkel-ui's `CheckboxField`: the whole row is the label, as wide as its room, 8 in and
+    /// 6 down, the box 10 before the label, the `hover` ground under the pointer.
+    pub fn field(mut self) -> Self {
+        self.field = true;
+        self
     }
 
     /// The label only names the box for assistive technology, as in a table's row.
@@ -51,24 +60,33 @@ impl<'a> Checkbox<'a> {
 impl Widget for Checkbox<'_> {
     fn ui(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
+        let (inset, gap) = if self.field {
+            (vec2(8.0, 6.0), 10.0)
+        } else {
+            (vec2(0.0, 0.0), 8.0)
+        };
         // the label wraps in the room it is given, so a long one never pushes past its column
-        let room = (ui.available_width() - 16.0 - 8.0).max(48.0);
+        let room = (ui.available_width() - inset.x * 2.0 - 16.0 - gap).max(48.0);
         let galley = self.show_label.then(|| {
-            WidgetText::from(TextRole::Body.rich(&t, &self.label)).into_galley(
-                ui,
-                Some(TextWrapMode::Wrap),
-                room,
-                TextRole::Body.font(&t),
-            )
+            let text = TextRole::Body.rich(&t, &self.label);
+            // a field's label lines are 20 tall, as the web's `leading-5`
+            let text = if self.field { text.line_height(Some(20.0)) } else { text };
+            WidgetText::from(text).into_galley(ui, Some(TextWrapMode::Wrap), room, TextRole::Body.font(&t))
         });
         let first_row = galley
             .as_ref()
             .and_then(|g| g.rows.first().map(|r| r.height()))
             .unwrap_or(16.0);
-        let text_width = galley.as_ref().map_or(0.0, |g| g.size().x + 8.0);
+        let text_width = galley.as_ref().map_or(0.0, |g| g.size().x + gap);
         let height = galley.as_ref().map_or(16.0, |g| g.size().y.max(16.0));
         let sense = if self.enabled { Sense::click() } else { Sense::hover() };
-        let (rect, mut response) = ui.allocate_exact_size(vec2(16.0 + text_width, height), sense);
+        let width = if self.field {
+            ui.available_width()
+        } else {
+            16.0 + text_width
+        };
+        let (outer, mut response) = ui.allocate_exact_size(vec2(width, height + inset.y * 2.0), sense);
+        let rect = Rect::from_min_size(outer.min + inset, vec2(16.0 + text_width, height));
         if response.clicked() {
             *self.checked = !*self.checked;
             response.mark_changed();
@@ -79,6 +97,9 @@ impl Widget for Checkbox<'_> {
             return response;
         }
         let painter = ui.painter();
+        if self.field && response.hovered() && self.enabled {
+            painter.rect_filled(outer, t.radius("control"), t.color("hover"));
+        }
         // the box beside the label's first line
         let middle = if height > first_row + 1.0 {
             rect.top() + first_row / 2.0
@@ -115,7 +136,7 @@ impl Widget for Checkbox<'_> {
         if let Some(galley) = galley {
             let ink = dim(t.color("foreground"), self.enabled);
             painter.galley(
-                pos2(mark.right() + 8.0, rect.center().y - galley.size().y / 2.0),
+                pos2(mark.right() + gap, rect.center().y - galley.size().y / 2.0),
                 galley,
                 ink,
             );

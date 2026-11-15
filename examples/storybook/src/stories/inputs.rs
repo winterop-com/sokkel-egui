@@ -14,6 +14,15 @@ pub fn checkbox(state: &mut State, ui: &mut Ui) {
     let (mut on, mut off) = (true, false);
     ui.add(Checkbox::new(&mut on, "Keep logs for 30 days").enabled(false));
     ui.add(Checkbox::new(&mut off, "Delete runs after a day").enabled(false));
+    section(ui, "As a field");
+    // a to-do list's column: each row as wide as its room, the label wrapping inside it
+    ui.scope(|ui| {
+        ui.set_max_width(320.0);
+        ui.spacing_mut().item_spacing.y = 8.0;
+        let (mut first, mut second) = (false, true);
+        ui.add(Checkbox::new(&mut first, "Review the larkspur sync schedule with grace").field());
+        ui.add(Checkbox::new(&mut second, "Rotate the api keys for harbor").field());
+    });
 }
 
 pub fn input(state: &mut State, ui: &mut Ui) {

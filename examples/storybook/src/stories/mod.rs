@@ -188,7 +188,7 @@ pub const STORIES: &[Story] = &[
     },
     Story {
         path: "Primitives/Inputs/Checkbox",
-        doc: "A 16px box with its label beside it: checked, not, partly chosen, and disabled.",
+        doc: "A 16px box with its label beside it: checked, not, partly chosen, disabled, and as a field (the whole row its label, as CheckboxField).",
         show: inputs::checkbox,
     },
     Story {

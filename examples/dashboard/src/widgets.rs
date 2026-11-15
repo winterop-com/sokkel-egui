@@ -543,7 +543,7 @@ fn todo(ui: &mut Ui, widget: &Widget, title: &str, todos: &mut Vec<Todo>, state:
             } else {
                 Stack::new(Gap::Sm).show(ui, |ui| {
                     for todo in mine {
-                        ui.add(Checkbox::new(&mut todo.done, todo.text.clone()));
+                        ui.add(Checkbox::new(&mut todo.done, todo.text.clone()).field());
                     }
                 });
             }

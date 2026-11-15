@@ -47,6 +47,9 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
   the list's Holds column.
 - `DashboardEditActions::show_with`, the page's other actions before Edit as the web's
   `children`, and `IconButton::outline` and `IconButton::sm` (`icon-sm`), for the head's More.
+- `Checkbox::field`, as sokkel-ui's `CheckboxField`: the row the label, 8 in and 6 down, the
+  box 10 before a label of 20 tall lines, the hover ground; the to-do list's rows stand as the
+  web's. Story: Primitives/Inputs/Checkbox.
 - `DataTable::framed`, `Gap::Xs`, and a `Checkbox` whose label wraps.
 - `Toast` and `Toaster`, after sokkel-ui's toast: kinds by icon, the newest in front and two
   peeking, apart while pointed at, a close button and a timeout that stops while pointed at.
@@ -62,7 +65,6 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
 - Toasts do not slide in and out yet, and are not swiped away.
 - What the board shows apart from the figures:
   - The top bar: the web's has the Search field (its palette's trigger, ⌘K) at the right.
-  - The to-do list: the web's rows stand 40 apart and wrap at their width; egui's are closer.
   - The worker log fills its panel downward on the web, from its first line; egui shows the
     latest lines at the foot.
   - Recent failures in a third-wide panel stacks as labeled cards on the web.
