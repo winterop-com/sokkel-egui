@@ -160,6 +160,7 @@ pub struct AccountMenu {
     place: Option<String>,
     scheme: Option<Scheme>,
     words: AccountWords,
+    local: bool,
 }
 
 impl AccountMenu {
@@ -169,7 +170,15 @@ impl AccountMenu {
             place: None,
             scheme: None,
             words: AccountWords::default(),
+            local: false,
         }
+    }
+
+    /// A local account, no one signed in, as the web's `local`: the avatar a person's outline on
+    /// the muted ground, not the name's initial on the primary.
+    pub fn local(mut self, local: bool) -> Self {
+        self.local = local;
+        self
     }
 
     /// Where the account is signed in, in mono under its name in the menu.
@@ -187,6 +196,24 @@ impl AccountMenu {
     pub fn words(mut self, words: AccountWords) -> Self {
         self.words = words;
         self
+    }
+
+    /// The account's avatar: its initial on the primary, or a local one's outline on the muted ground,
+    /// the icon 62% of the disc.
+    fn paint_avatar(&self, ui: &Ui, t: &Tokens, rect: Rect, size: AvatarSize) {
+        if self.local {
+            ui.painter()
+                .circle_filled(rect.center(), rect.width() / 2.0, t.color("muted"));
+            icons::paint(
+                ui.painter(),
+                rect.center(),
+                Icon::User,
+                (rect.width() * 0.62).round(),
+                t.color("muted-foreground"),
+            );
+        } else {
+            paint_avatar(ui, t, rect, &self.name, size, true);
+        }
     }
 
     /// Fill the rail's foot cell with the account; returns what its menu was asked.
@@ -223,7 +250,7 @@ impl AccountMenu {
             pos2(row.left() + 10.0 + 12.0, row.center().y)
         };
         let avatar = Rect::from_center_size(avatar_at, vec2(24.0, 24.0));
-        paint_avatar(ui, &t, avatar, &self.name, AvatarSize::Sm, true);
+        self.paint_avatar(ui, &t, avatar, AvatarSize::Sm);
         if !narrow {
             let name = egui::WidgetText::from(TextRole::Action.rich(&t, &self.name)).into_galley(
                 ui,
@@ -262,7 +289,7 @@ impl AccountMenu {
                 // the account: its avatar, name and where it is signed in
                 let (head, _) = ui.allocate_exact_size(vec2(244.0, 58.0), Sense::hover());
                 let big = Rect::from_center_size(pos2(head.left() + 8.0 + 16.0, head.center().y), vec2(32.0, 32.0));
-                paint_avatar(ui, &t, big, &self.name, AvatarSize::Md, true);
+                self.paint_avatar(ui, &t, big, AvatarSize::Md);
                 let text_x = big.right() + 10.0;
                 let name = egui::WidgetText::from(TextRole::Action.rich(&t, &self.name)).into_galley(
                     ui,

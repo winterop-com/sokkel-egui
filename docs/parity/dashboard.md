@@ -48,7 +48,9 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
 - `Column::fill_share` (filling columns share the room as `fr` tracks) and `Cell::Muted`, for
   the list's Holds column.
 - `DashboardEditActions::show_with`, the page's other actions before Edit as the web's
-  `children`, and `IconButton::outline` and `IconButton::sm` (`icon-sm`), for the head's More.
+  `children`, and `IconButton::outline`, for the head's More.
+- `IconButton` is `icon-sm` unless asked otherwise, as the web's (`IconButton::md` for `icon`);
+  the top bar's New and Live, the toast's close and the planner's week buttons stand as the web's.
 - `Checkbox::field`, as sokkel-ui's `CheckboxField`: the row the label, 8 in and 6 down, the
   box 10 before a label of 20 tall lines, the hover ground; the to-do list's rows stand as the
   web's. Story: Primitives/Inputs/Checkbox.
@@ -57,6 +59,8 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
   list now stacks too, where it squeezed its columns); a stacked list draws plain divided rows, not cards; the
   title is the title alone (never a primary value too) and keeps a code's face. Recent failures in
   a third-wide panel stacks as the web's.
+- `AccountMenu::local`, as the web's `local`: no one signed in, the avatar a person's outline on
+  the muted ground.
 - `DataTable::framed`, `Gap::Xs`, and a `Checkbox` whose label wraps.
 - `Toast` and `Toaster`, after sokkel-ui's toast: kinds by icon, the newest in front and two
   peeking, apart while pointed at, a close button and a timeout that stops while pointed at.
@@ -74,4 +78,3 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
   - The worker log fills its panel downward on the web, from its first line; egui shows the
     latest lines at the foot.
   - A stacked list's labeled lines stand about 24 apart on the web, 20 in egui.
-  - The account's avatar is a person icon on a muted disc on the web, initials in egui.

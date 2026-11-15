@@ -304,6 +304,7 @@ impl DashboardApp {
             }
             ShellPart::RailFoot => {
                 account = AccountMenu::new("ada")
+                    .local(true)
                     .place("tidevann.example.org")
                     .scheme(self.appearance.scheme)
                     .show(ui);
@@ -486,7 +487,7 @@ impl DashboardApp {
                             MenuItem::Separator,
                             MenuItem::action("Delete").icon(Icon::Trash2).destructive(),
                         ];
-                        let trigger = ui.add(IconButton::new(Icon::Ellipsis, "More").outline().sm());
+                        let trigger = ui.add(IconButton::new(Icon::Ellipsis, "More").outline());
                         more = DropdownMenu::new(&items).end(true).width(176.0).show(&trigger);
                     });
                 cancel_asked = outcome.cancel_asked;

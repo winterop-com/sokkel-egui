@@ -243,14 +243,15 @@ impl Widget for Button {
     }
 }
 
-/// A button that is an icon alone, after sokkel-ui's `IconButton`: a ghost square a control tall,
+/// A button that is an icon alone, after sokkel-ui's `IconButton`: a ghost square `control-sm` tall
+/// (`icon-sm`, the web's default),
 /// the icon in `muted-foreground`, under the pointer the `hover` ground and the foreground ink; its
 /// label is what a screen reader hears and what the pointer is told.
 pub struct IconButton {
     icon: crate::Icon,
     label: String,
     xs: bool,
-    sm: bool,
+    md: bool,
     outline: bool,
     destructive: bool,
 }
@@ -261,7 +262,7 @@ impl IconButton {
             icon,
             label: label.into(),
             xs: false,
-            sm: false,
+            md: false,
             outline: false,
             destructive: false,
         }
@@ -273,9 +274,11 @@ impl IconButton {
         self
     }
 
-    /// The small size, `icon-sm`: `control-sm` square (a finger on a phone), its corners at most 12.
-    pub fn sm(mut self) -> Self {
-        self.sm = true;
+    /// The control's size, `icon`: `control` square (a finger on a phone), for a button beside
+    /// controls of the default size. Without it the button is `icon-sm`: `control-sm` square (a
+    /// finger on a phone), its corners at most 12.
+    pub fn md(mut self) -> Self {
+        self.md = true;
         self
     }
 
@@ -297,19 +300,19 @@ impl egui::Widget for IconButton {
         let t = crate::tokens(ui.ctx());
         let side = if self.xs {
             t.density("control-xs")
-        } else if self.sm {
-            super::finger_tall(ui.ctx(), &t, t.density("control-sm"))
-        } else {
+        } else if self.md {
             super::finger_tall(ui.ctx(), &t, t.density("control"))
+        } else {
+            super::finger_tall(ui.ctx(), &t, t.density("control-sm"))
         };
         let radius = if self.xs {
             let r = t.radius("control");
             egui::CornerRadius::same(r.nw.min(10))
-        } else if self.sm {
+        } else if self.md {
+            t.radius("control")
+        } else {
             let r = t.radius("control");
             egui::CornerRadius::same(r.nw.min(12))
-        } else {
-            t.radius("control")
         };
         let (rect, response) = ui.allocate_exact_size(egui::vec2(side, side), egui::Sense::click());
         response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.label));
