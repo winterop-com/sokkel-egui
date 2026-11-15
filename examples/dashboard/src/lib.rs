@@ -508,7 +508,7 @@ impl DashboardApp {
             });
         let columns = [
             Column::new("Name", 160.0).fill().stack(StackPlace::Primary),
-            Column::new("Holds", 192.0).fill(),
+            Column::new("Holds", 192.0).fill_share(2.0),
             Column::new("Widgets", 96.0).numeric().stack(StackPlace::Secondary),
             Column::new("Made", 128.0).numeric(),
         ];
@@ -529,7 +529,7 @@ impl DashboardApp {
                 };
                 vec![
                     Cell::Text(b.name.clone()),
-                    Cell::Text(holds),
+                    Cell::Muted(holds),
                     Cell::Text(b.widgets.len().to_string()),
                     Cell::Text(day_of(b.created).medium()),
                 ]

@@ -24,6 +24,9 @@ pub struct Column {
     pub sortable: bool,
     /// Takes the room the other columns leave, at least `width`.
     pub fill: bool,
+    /// Its share of that room beside the other filling columns', as a track's `fr`; 1 when not
+    /// given.
+    pub share: f32,
     /// How its cells are edited in place; `None` for a column that is not edited.
     pub edit: Option<Editor>,
     pub validate: Option<Validate>,
@@ -69,6 +72,7 @@ impl Column {
             numeric: false,
             sortable: true,
             fill: false,
+            share: 1.0,
             edit: None,
             validate: None,
             stack: StackPlace::Line,
@@ -98,6 +102,14 @@ impl Column {
         self
     }
 
+    /// A filling column taking `share` parts of the room left, as a `minmax(width, <share>fr)`
+    /// track: `fill_share(2.0)` beside a `fill()` takes twice its room.
+    pub fn fill_share(mut self, share: f32) -> Self {
+        self.fill = true;
+        self.share = share.max(0.0);
+        self
+    }
+
     /// Edit the column's cells in place with `editor`: a double click, or a press on the active
     /// cell, opens it; Enter saves, Escape drops, Tab saves and opens the next editable cell, and a
     /// press elsewhere saves. A saved value comes back as the table's `edited`.
@@ -119,6 +131,8 @@ pub enum Cell {
     Text(String),
     /// Text struck through and muted: a thing done.
     Struck(String),
+    /// Text in the muted ink: a quieter fact beside the row's own, as a `text-muted-foreground` cell.
+    Muted(String),
     /// An id or a code, in the mono face.
     Mono(String),
     /// A state as a chip.
@@ -150,9 +164,12 @@ impl Cell {
     /// The text an editor starts from: the text, the person's name, or the day as `YYYY-MM-DD`.
     fn draft(&self) -> String {
         match self {
-            Cell::Text(text) | Cell::Struck(text) | Cell::Mono(text) | Cell::Chip(text, _) | Cell::Person(text) => {
-                text.clone()
-            }
+            Cell::Text(text)
+            | Cell::Struck(text)
+            | Cell::Muted(text)
+            | Cell::Mono(text)
+            | Cell::Chip(text, _)
+            | Cell::Person(text) => text.clone(),
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
             Cell::Tags(tags) => tags.join(" "),
             Cell::Relative { at, now } => super::relative_time(at - now),
@@ -162,9 +179,12 @@ impl Cell {
 
     fn sort_key(&self) -> String {
         match self {
-            Cell::Text(text) | Cell::Struck(text) | Cell::Mono(text) | Cell::Chip(text, _) | Cell::Person(text) => {
-                text.clone()
-            }
+            Cell::Text(text)
+            | Cell::Struck(text)
+            | Cell::Muted(text)
+            | Cell::Mono(text)
+            | Cell::Chip(text, _)
+            | Cell::Person(text) => text.clone(),
             Cell::Check(on) => u8::from(*on).to_string(),
             Cell::Due { date, .. } => date.map_or("9999".into(), |d| d.to_string()),
             Cell::Tags(tags) => tags.join(" "),
@@ -1047,22 +1067,45 @@ impl<'a> DataTable<'a> {
         } else {
             widths
         };
-        let fixed: f32 = widths.iter().sum::<f32>() + gaps + tail;
-        let fill = self
-            .columns
-            .iter()
-            .position(|c| c.fill)
-            .or(self.columns.len().checked_sub(1));
+        // the filling columns share the room as `minmax(width, <share>fr)` tracks: one whose share
+        // falls under its width keeps its width, and the rest share again what is left
+        let mut fills: Vec<usize> = (0..self.columns.len()).filter(|i| self.columns[*i].fill).collect();
+        if fills.is_empty() {
+            fills.extend(self.columns.len().checked_sub(1));
+        }
+        let share = |i: usize| self.columns.get(i).map_or(1.0, |c| c.share);
+        let mut widths = widths;
+        let mut open = fills.clone();
+        loop {
+            let fixed: f32 = (0..widths.len())
+                .filter(|i| !open.contains(i))
+                .map(|i| widths[i])
+                .sum::<f32>()
+                + gaps
+                + tail;
+            let shares: f32 = open.iter().map(|i| share(*i)).sum();
+            let unit = if shares > 0.0 {
+                (right - left - fixed).max(0.0) / shares
+            } else {
+                0.0
+            };
+            let under: Vec<usize> = open.iter().copied().filter(|i| share(*i) * unit < widths[*i]).collect();
+            if under.is_empty() {
+                for i in &open {
+                    widths[*i] = share(*i) * unit;
+                }
+                break;
+            }
+            open.retain(|i| !under.contains(i));
+            if open.is_empty() {
+                break;
+            }
+        }
         let mut x = left;
         widths
             .iter()
-            .enumerate()
-            .map(|(i, w)| {
-                let w = if Some(i) == fill {
-                    (w + (right - left - fixed)).max(*w)
-                } else {
-                    *w
-                };
+            .map(|w| {
+                let w = *w;
                 let place = (x, w);
                 x += w + GAP;
                 place
@@ -1734,6 +1777,7 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
             TextRole::Body.rich(t, label).strikethrough(),
             t.color("muted-foreground"),
         ),
+        Cell::Muted(label) => text(ui, TextRole::Body.rich(t, label), t.color("muted-foreground")),
         Cell::Mono(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
             text(ui, rich, t.color("foreground"));
@@ -1854,6 +1898,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Tags(tags) => paint_tags(ui, tags, at, room),
         Cell::Relative { .. } => text(ui, TextRole::Help.rich(t, cell.draft()), quiet, at.x, room),
         Cell::Struck(label) => text(ui, TextRole::Help.rich(t, label).strikethrough(), quiet, at.x, room),
+        Cell::Muted(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
         Cell::Mono(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
             text(ui, rich, quiet, at.x, room)

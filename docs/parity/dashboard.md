@@ -40,6 +40,8 @@ their structure, never by their figures.
 - `ActivityList`, `BarList`, `LogView` and `Markdown` (headings, paragraphs, lists, bold, italic,
   code). Stories: Patterns/Activity list, Bar list, Log view, Markdown.
 - `ArrangeItem`, so `DashboardArrange` and `DashboardEdit` take any app's widgets.
+- `Column::fill_share` (filling columns share the room as `fr` tracks) and `Cell::Muted`, for
+  the list's Holds column.
 - `DataTable::framed`, `Gap::Xs`, and a `Checkbox` whose label wraps.
 - `Toast` and `Toaster`, after sokkel-ui's toast: kinds by icon, the newest in front and two
   peeking, apart while pointed at, a close button and a timeout that stops while pointed at.
@@ -50,5 +52,4 @@ their structure, never by their figures.
 ## Next
 
 - Toasts do not slide in and out yet, and are not swiped away.
-- The list's Holds column is narrower than the web's.
 - A parity board against the web's screens, as tasks and status have.
