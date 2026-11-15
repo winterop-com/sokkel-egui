@@ -28,6 +28,8 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
   dashboard's name, checked against the others, and what a new one starts as.
 - The list of dashboards: reordered by their grips, each row's menu to open, rename, duplicate or
   delete (asked first). The rail follows the list's order.
+- The command palette, from the top bar's Search or ⌘K, as the web's: New dashboard, Rename
+  and Duplicate this dashboard, Pause or Follow live data, the rail's places, and the look.
 - Settings: live updates and their pace, editing, appearance, and resetting the demo.
 - A toast says what was done, as the web's `actions.ts`: a dashboard made, its copy made, or
   deleted.
@@ -64,7 +66,6 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
 
 - Toasts do not slide in and out yet, and are not swiped away.
 - What the board shows apart from the figures:
-  - The top bar: the web's has the Search field (its palette's trigger, ⌘K) at the right.
   - The worker log fills its panel downward on the web, from its first line; egui shows the
     latest lines at the foot.
   - Recent failures in a third-wide panel stacks as labeled cards on the web.

@@ -8,11 +8,13 @@ pub mod widgets;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
-    AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, Cell, Column, ConfirmAnswer,
-    ConfirmDialog, DashboardArrange, DashboardEdit, DashboardEditActions, DashboardWidget, DataTable, DesktopWindow,
-    DropdownMenu, Empty, Gap, Icon, IconButton, MenuItem, Page, PageHeader, Rail, RailEntry, RailGroup, Segmented,
-    SettingsDialog, SettingsSection, Shell, ShellPart, Stack, StackPlace, StatusLine, StatusTone, Switch, TableState,
-    TableVariant, ThemeWords, Toast, Toaster, TopBar, install, move_item, setting_row, theme_settings,
+    AccountAction, AccountMenu, Appearance, AppearanceCommandWords, Button, ButtonSize, ButtonVariant, Cell, Column,
+    CommandGroup, CommandPalette, ConfirmAnswer, ConfirmDialog, DashboardArrange, DashboardEdit, DashboardEditActions,
+    DashboardWidget, DataTable, DesktopWindow, DropdownMenu, Empty, Gap, Icon, IconButton, MenuItem, Page, PageHeader,
+    Rail, RailEntry, RailGroup, Segmented, SettingsDialog, SettingsSection, Shell, ShellPart, Stack, StackPlace,
+    StatusLine, StatusTone, Switch, TableState, TableVariant, ThemeWords, Toast, Toaster, TopBar, appearance_commands,
+    install, move_item, palette_shortcut, place_commands, place_of, run_appearance_command, setting_row,
+    theme_settings,
 };
 
 use dialogs::{ConfigureForm, NameForm};
@@ -61,6 +63,8 @@ pub struct DashboardApp {
     last_tick: Option<f64>,
     /// What the app has said since the last frame, shown as toasts on the next.
     pub said: Vec<Toast>,
+    /// The command palette's query and highlighted row, while it is open.
+    pub palette: Option<(String, usize)>,
 }
 
 impl DashboardApp {
@@ -92,6 +96,7 @@ impl DashboardApp {
             list: TableState::default(),
             last_tick: None,
             said: Vec::new(),
+            palette: None,
         }
     }
 
@@ -289,7 +294,10 @@ impl DashboardApp {
         };
         let live = self.prefs.live;
         let mut account = None;
-        let (mut toggle_live, mut new_board) = (false, false);
+        let (mut toggle_live, mut new_board, mut searched) = (false, false, false);
+        if palette_shortcut(ui.ctx()) {
+            self.palette = Some((String::new(), 0));
+        }
         shell.show_window(ui, |part, ui| match part {
             ShellPart::Rail => {
                 ui.add(Rail::new("Tidevann", &groups, &mut place).mark(TIDEVANN_MARK));
@@ -301,15 +309,18 @@ impl DashboardApp {
                     .show(ui);
             }
             ShellPart::Top => {
-                TopBar::new(&trail).show(ui, |ui| {
-                    let (icon, label) = if live {
-                        (Icon::Pause, "Pause live data")
-                    } else {
-                        (Icon::Play, "Follow live data")
-                    };
-                    toggle_live = ui.add(IconButton::new(icon, label)).clicked();
-                    new_board = ui.add(IconButton::new(Icon::Plus, "New dashboard")).clicked();
-                });
+                searched = TopBar::new(&trail)
+                    .search("Search", "⌘K")
+                    .show(ui, |ui| {
+                        let (icon, label) = if live {
+                            (Icon::Pause, "Pause live data")
+                        } else {
+                            (Icon::Play, "Follow live data")
+                        };
+                        toggle_live = ui.add(IconButton::new(icon, label)).clicked();
+                        new_board = ui.add(IconButton::new(Icon::Plus, "New dashboard")).clicked();
+                    })
+                    .search;
             }
             ShellPart::Page => Page::show(ui, |ui| {
                 if self.place == ALL {
@@ -351,11 +362,81 @@ impl DashboardApp {
             Some(AccountAction::Settings) => self.settings = Some("live".into()),
             _ => {}
         }
+        if searched {
+            self.palette = Some((String::new(), 0));
+        }
         self.overlays(ui.ctx());
+        self.palette(ui.ctx(), &groups);
         for toast in self.said.drain(..) {
             toast.show(ui.ctx());
         }
         Toaster::new().show(ui.ctx());
+    }
+
+    /// The command palette, as the web's: the dashboards' own commands, the rail's places, and the
+    /// look.
+    fn palette(&mut self, ctx: &egui::Context, rail: &[RailGroup]) {
+        let Some((mut query, mut highlight)) = self.palette.take() else {
+            return;
+        };
+        let on_board = self.place != ALL && self.boards.iter().any(|b| b.id == self.place);
+        let mut own = vec![MenuItem::action("New dashboard").icon(Icon::Plus).id("new")];
+        if on_board {
+            own.push(
+                MenuItem::action("Rename this dashboard")
+                    .icon(Icon::PencilLine)
+                    .id("rename"),
+            );
+            own.push(
+                MenuItem::action("Duplicate this dashboard")
+                    .icon(Icon::Copy)
+                    .id("duplicate"),
+            );
+        }
+        let (icon, label) = if self.prefs.live {
+            (Icon::Pause, "Pause live data")
+        } else {
+            (Icon::Play, "Follow live data")
+        };
+        own.push(MenuItem::action(label).icon(icon).id("live"));
+        let mut groups = vec![CommandGroup::new("Dashboards", own)];
+        groups.extend(place_commands(rail, "Go to"));
+        let themes: Vec<_> = sokkel_ui_egui::themes().collect();
+        groups.extend(appearance_commands(
+            &self.appearance,
+            &themes,
+            &AppearanceCommandWords::default(),
+        ));
+        let outcome = CommandPalette::new("palette", &groups, &mut query, &mut highlight).show(ctx);
+        let command = outcome
+            .run
+            .and_then(|(g, i)| groups[g].items[i].command_id().map(str::to_owned));
+        let here = self.place.clone();
+        match command.as_deref() {
+            Some("new") => self.ask_name(None),
+            Some("rename") => self.ask_name(Some(&here)),
+            Some("duplicate") => self.duplicate(&here),
+            Some("live") => {
+                self.prefs.live = !self.prefs.live;
+                self.last_tick = None;
+            }
+            Some(command) => {
+                if let Some(place) = place_of(command) {
+                    if place == "settings" {
+                        self.settings = Some("live".into());
+                    } else {
+                        let place = place.to_owned();
+                        self.open(&place);
+                    }
+                } else {
+                    run_appearance_command(&mut self.appearance, command);
+                }
+            }
+            None => {}
+        }
+        if !outcome.close {
+            self.palette = Some((query, highlight));
+        }
     }
 
     fn board_page(&mut self, ui: &mut Ui) {

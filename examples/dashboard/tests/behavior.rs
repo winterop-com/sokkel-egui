@@ -123,3 +123,23 @@ fn settings_change_the_clock() {
     harness.run_steps(3);
     assert!(harness.state().prefs.twelve_hour);
 }
+
+#[test]
+fn the_palette_opened_from_search_follows_live_data_and_goes_to_a_dashboard() {
+    let mut harness = render(|_| {});
+    harness.get_by_label("Search").click();
+    harness.run_steps(3);
+    harness.event(egui::Event::Text("follow live".into()));
+    harness.run_steps(2);
+    harness.key_press(egui::Key::Enter);
+    harness.run_steps(2);
+    assert!(harness.state().prefs.live);
+    assert!(harness.state().palette.is_none());
+    harness.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::K);
+    harness.run_steps(2);
+    harness.event(egui::Event::Text("team".into()));
+    harness.run_steps(2);
+    harness.key_press(egui::Key::Enter);
+    harness.run_steps(2);
+    assert_eq!(harness.state().place, "team");
+}
