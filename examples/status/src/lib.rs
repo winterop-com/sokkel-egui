@@ -90,6 +90,10 @@ pub struct StatusApp {
     pub today: Day,
     pub shifts: Vec<data::Shift>,
     pub handovers: Vec<data::Handover>,
+    /// The hand over dialog, while it is open.
+    pub hand_over: Option<dialogs::HandOverForm>,
+    /// What the person on call now was told at the handover.
+    pub on_call_note: String,
     pub maintenance: Vec<data::Maintenance>,
     /// Every service's deploys, the newest last.
     pub deploys: Vec<data::Deploy>,
@@ -164,6 +168,8 @@ impl StatusApp {
             today,
             shifts: data::seed_shifts(today),
             handovers: data::seed_handovers(9.0 * 3600.0 * 1000.0),
+            hand_over: None,
+            on_call_note: data::ON_CALL_NOTE.into(),
             maintenance: data::seed_maintenance(),
             subscribe: Subscribe::default(),
             new_incident: None,
@@ -468,6 +474,24 @@ impl StatusApp {
                 None => {}
             }
         }
+        if let Some(form) = self.hand_over.as_mut() {
+            let held: Vec<String> = self
+                .incidents
+                .iter()
+                .filter(|i| i.state != data::State::Resolved && i.assignee == form.from)
+                .map(|i| i.code.clone())
+                .collect();
+            match form.show(ui.ctx(), &held) {
+                Some(dialogs::Answer::Done(())) => {
+                    let (from, to, give) = (form.from, form.taker(), form.give);
+                    let note = form.note.trim().to_owned();
+                    self.hand_over = None;
+                    self.hand_over_to(from, to, &note, give, now);
+                }
+                Some(dialogs::Answer::Cancel) => self.hand_over = None,
+                None => {}
+            }
+        }
         match account {
             Some(AccountAction::Settings) => self.settings = true,
             Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
@@ -490,6 +514,9 @@ impl StatusApp {
             "Status",
             [
                 MenuItem::action("Report an incident").icon(Icon::Siren).id("report"),
+                MenuItem::action("Hand over on call")
+                    .icon(Icon::ArrowRightLeft)
+                    .id("hand-over"),
                 MenuItem::action(label).icon(icon).id("live"),
                 MenuItem::action("Open the status page")
                     .icon(Icon::SquareArrowOutUpRight)
@@ -543,6 +570,7 @@ impl StatusApp {
             .and_then(|(g, i)| groups[g].items[i].command_id().map(str::to_owned));
         match command.as_deref() {
             Some("report") => self.report_incident(None),
+            Some("hand-over") => self.hand_over = Some(dialogs::HandOverForm::new(&self.on_call)),
             Some("live") => self.live = !self.live,
             Some("public") => self.go("public"),
             Some(command) => {
@@ -1018,6 +1046,31 @@ impl StatusApp {
                 by: ME,
             },
         );
+    }
+
+    /// The pager goes from `from` to `to` at `now`, kept in the handovers, and `from`'s open
+    /// incidents with it when `give`.
+    pub fn hand_over_to(&mut self, from: &'static str, to: &'static str, note: &str, give: bool, now: f64) {
+        self.on_call = to.to_owned();
+        self.on_call_note = note.to_owned();
+        let id = format!("handover-new-{}", self.handovers.len());
+        self.handovers.insert(
+            0,
+            data::Handover {
+                id,
+                at: now,
+                from,
+                to,
+                note: note.to_owned(),
+            },
+        );
+        if give {
+            for incident in &mut self.incidents {
+                if incident.state != data::State::Resolved && incident.assignee == from {
+                    incident.assignee = to;
+                }
+            }
+        }
     }
 
     /// Give an incident to the person on call.
@@ -2043,7 +2096,9 @@ impl StatusApp {
         PageHeader::new("On call")
             .description("Who answers when something goes wrong, and the weeks ahead.")
             .show(ui, |ui| {
-                ui.add(Button::new("Hand over").icon(Icon::ArrowRightLeft));
+                if ui.add(Button::new("Hand over").icon(Icon::ArrowRightLeft)).clicked() {
+                    self.hand_over = Some(dialogs::HandOverForm::new(&self.on_call));
+                }
             });
         let today = self.today;
         let current = self.shifts.iter().position(|s| s.starts <= today && today < s.ends);
@@ -2079,7 +2134,11 @@ impl StatusApp {
             |ui| {
                 Stack::new(Gap::Section).show(ui, |ui| {
                     Section::new("Now")
-                        .description(format!("From the handover: {}", data::ON_CALL_NOTE))
+                        .description(if self.on_call_note.is_empty() {
+                            "Nothing was said at the handover.".to_owned()
+                        } else {
+                            format!("From the handover: {}", self.on_call_note)
+                        })
                         .show(ui, |ui| {
                             Stack::new(Gap::Md).show(ui, |ui| {
                                 PersonRow::new(&now)

@@ -254,11 +254,14 @@ pub(crate) fn search_field(ui: &mut Ui, text: &mut String, placeholder: &str) ->
     SearchField::new(id, text).placeholder(placeholder).show(ui)
 }
 
-/// A switch with its label before it, a control tall: a setting turned on and off in place.
+/// A switch with its label before it, a control tall: a setting turned on and off in place. In a
+/// column it takes the row across, the switch at the right edge; in a row, its own width.
 #[must_use = "add it with `ui.add(...)`"]
 pub struct SwitchField<'a> {
     on: &'a mut bool,
     label: String,
+    explain: Option<String>,
+    enabled: bool,
 }
 
 impl<'a> SwitchField<'a> {
@@ -266,7 +269,22 @@ impl<'a> SwitchField<'a> {
         Self {
             on,
             label: label.into(),
+            explain: None,
+            enabled: true,
         }
+    }
+
+    /// What turning it on does, where the label alone does not say: a help mark beside the label,
+    /// the words shown while it is pointed at.
+    pub fn explain(mut self, explain: impl Into<String>) -> Self {
+        self.explain = Some(explain.into());
+        self
+    }
+
+    /// Whether it can be turned; off, the switch is dimmed and a press does nothing.
+    pub fn enabled(mut self, enabled: bool) -> Self {
+        self.enabled = enabled;
+        self
     }
 }
 
@@ -279,18 +297,43 @@ impl Widget for SwitchField<'_> {
             f32::INFINITY,
             TextRole::Body.font(&t),
         );
-        // its size known before it is placed, so a toolbar's end can lay it out from the right
-        let size = vec2(label.size().x + 16.0 + 32.0, t.density("control"));
-        let (rect, hit) = ui.allocate_exact_size(size, Sense::click());
+        // the help mark, 16 square 6 after the label
+        let mark = if self.explain.is_some() { 6.0 + 16.0 } else { 0.0 };
+        // its size known before it is placed, so a toolbar's end can lay it out from the right; in
+        // a column it is the row across, the switch at its right edge, as the web's `justify-between`
+        let least = label.size().x + mark + 16.0 + 32.0;
+        let across = if ui.layout().main_dir().is_vertical() {
+            ui.available_width().max(least)
+        } else {
+            least
+        };
+        let size = vec2(across, t.density("control"));
+        let sense = if self.enabled { Sense::click() } else { Sense::hover() };
+        let (rect, hit) = ui.allocate_exact_size(size, sense);
+        let label_width = label.size().x;
         ui.painter().galley(
             pos2(rect.left(), rect.center().y - label.size().y / 2.0),
             label,
-            t.color("foreground"),
+            crate::widgets::dim(t.color("foreground"), self.enabled),
         );
+        if let Some(explain) = &self.explain {
+            let spot = Rect::from_center_size(
+                pos2(rect.left() + label_width + 6.0 + 8.0, rect.center().y),
+                vec2(16.0, 16.0),
+            );
+            let help = ui.interact(spot, ui.id().with(("switch-help", &self.label)), Sense::hover());
+            let ink = if help.hovered() {
+                t.color("muted-foreground")
+            } else {
+                t.color("faint")
+            };
+            icons::paint(ui.painter(), spot.center(), Icon::CircleQuestionMark, 14.0, ink);
+            help.on_hover_text(explain.as_str());
+        }
         let place = Rect::from_min_size(pos2(rect.right() - 32.0, rect.center().y - 9.2), vec2(32.0, 18.4));
         let mut child = ui.new_child(egui::UiBuilder::new().max_rect(place));
-        let mut response = child.add(Switch::new(self.on, self.label.clone()));
-        if hit.clicked() && !response.clicked() {
+        let mut response = child.add(Switch::new(self.on, self.label.clone()).enabled(self.enabled));
+        if self.enabled && hit.clicked() && !response.clicked() {
             *self.on = !*self.on;
             response.mark_changed();
         }

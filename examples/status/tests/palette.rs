@@ -65,3 +65,34 @@ fn an_incident_is_found_by_its_code() {
     assert_eq!(harness.state().place, "incidents");
     assert_eq!(harness.state().incident.as_deref(), Some(id.as_str()));
 }
+
+#[test]
+fn hand_over_gives_the_pager_and_the_open_incident() {
+    let mut harness = render();
+    let from = harness.state().on_call.clone();
+    let held: Vec<String> = harness
+        .state()
+        .incidents
+        .iter()
+        .filter(|i| i.state != status::data::State::Resolved && i.assignee == from)
+        .map(|i| i.id.clone())
+        .collect();
+    harness.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::K);
+    harness.run_steps(2);
+    run(&mut harness, "hand over");
+    assert!(harness.state().hand_over.is_some());
+    harness.state_mut().hand_over.as_mut().unwrap().note = "Watch the worker.".into();
+    harness.run_steps(2);
+    harness.snapshot("hand_over");
+    harness.get_by_label("Hand over").click();
+    harness.run_steps(3);
+    let app = harness.state();
+    assert!(app.hand_over.is_none());
+    assert_ne!(app.on_call, from);
+    assert_eq!(app.on_call_note, "Watch the worker.");
+    assert_eq!(app.handovers[0].from, from);
+    for id in held {
+        let incident = app.incidents.iter().find(|i| i.id == id).unwrap();
+        assert_eq!(incident.assignee, app.on_call);
+    }
+}

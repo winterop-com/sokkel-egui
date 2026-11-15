@@ -1,8 +1,12 @@
-//! A service's own dialogs, as the web's `MaintenanceDialog` and `DeployDialog`: a window it is
-//! taken down for work, and a new version put out.
+//! The board's own dialogs, as the web's `MaintenanceDialog`, `DeployDialog` and
+//! `HandOverDialog`: a window a service is taken down for work, a new version put out, and the
+//! pager handed to someone else.
 
 use eframe::egui::{self, Ui};
-use sokkel_ui_egui::{Button, ButtonVariant, Columns, DateTimeField, Day, Dialog, Gap, Moment, Stack, TextField};
+use sokkel_ui_egui::{
+    Button, ButtonVariant, Columns, DateTimeField, Day, Dialog, Gap, Moment, Select, Stack, SwitchField, TextField,
+    field,
+};
 
 use crate::data::{self, Deploy, DeployState, Maintenance};
 
@@ -189,6 +193,93 @@ impl DeployForm {
                     ui.add(
                         TextField::new("What it changes", &mut self.note).placeholder("A fix for a slow validate step"),
                     );
+                });
+            },
+        )?;
+        Some(if answer { Answer::Done(()) } else { Answer::Cancel })
+    }
+}
+
+/// The person after `person` in the team's order, for the next shift, as the web's `nextPerson`.
+pub fn next_person(person: &str) -> &'static str {
+    let at = data::PEOPLE.iter().position(|p| *p == person).unwrap_or(0);
+    data::PEOPLE[(at + 1) % data::PEOPLE.len()]
+}
+
+/// Handing the pager to someone else: who takes it, what they need to know, and whether the open
+/// incidents go with it.
+pub struct HandOverForm {
+    /// Who has the pager now.
+    pub from: &'static str,
+    /// Among everyone but `from`.
+    pub to: usize,
+    pub note: String,
+    /// Whether `from`'s open incidents go with the pager.
+    pub give: bool,
+}
+
+impl HandOverForm {
+    pub fn new(from: &str) -> Self {
+        let from = data::PEOPLE.iter().copied().find(|p| *p == from).unwrap_or("grace");
+        let next = next_person(from);
+        Self {
+            from,
+            to: Self::others(from).iter().position(|p| *p == next).unwrap_or(0),
+            note: String::new(),
+            give: true,
+        }
+    }
+
+    fn others(from: &str) -> Vec<&'static str> {
+        data::PEOPLE.iter().copied().filter(|p| *p != from).collect()
+    }
+
+    /// Who takes the pager.
+    pub fn taker(&self) -> &'static str {
+        Self::others(self.from)[self.to]
+    }
+
+    /// Draws the dialog over the board; `held` are the codes of `from`'s open incidents.
+    pub fn show(&mut self, ctx: &egui::Context, held: &[String]) -> Option<Answer<()>> {
+        let from = self.from;
+        let to = self.taker();
+        let answer = dialog(
+            ctx,
+            "hand-over",
+            "Hand over on call".into(),
+            format!("{from} is on call now."),
+            "Hand over",
+            None,
+            |ui| {
+                Stack::new(Gap::Lg).show(ui, |ui| {
+                    let width = ui.available_width();
+                    field(ui, "To", None, |ui| {
+                        ui.add(Select::new(&mut self.to, Self::others(from), "To").width(width));
+                    });
+                    ui.add(
+                        TextField::new("Note", &mut self.note)
+                            .help("What they need to know: what is open, what to watch.")
+                            .multiline(true),
+                    );
+                    let label = if held.len() == 1 {
+                        format!("Give {to} the open incident")
+                    } else {
+                        format!("Give {to} the {} open incidents", held.len())
+                    };
+                    let explain = if held.is_empty() {
+                        format!("{from} has no open incident.")
+                    } else {
+                        held.join(", ")
+                    };
+                    let mut give = self.give && !held.is_empty();
+                    ui.add(
+                        SwitchField::new(&mut give, label)
+                            .explain(explain)
+                            .enabled(!held.is_empty()),
+                    );
+                    if !held.is_empty() {
+                        self.give = give;
+                    }
                 });
             },
         )?;
