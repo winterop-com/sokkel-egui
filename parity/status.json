@@ -43,7 +43,7 @@
         "@winterop-com/sokkel-ui-graph/GraphCanvas": null,
         "@winterop-com/sokkel-ui-graph/use-node-graph": null,
         "@winterop-com/sokkel-ui-maps/MapLegend": "sokkel-ui-egui-maps MapLegend",
-        "@winterop-com/sokkel-ui-maps/MapPopup": null,
+        "@winterop-com/sokkel-ui-maps/MapPopup": "sokkel-ui-egui-maps MapPopup, MapPopupRow",
         "@winterop-com/sokkel-ui-maps/MapView": "sokkel-ui-egui-maps MapView (markers, routes, framing; no layers or popup yet)",
         "@winterop-com/sokkel-ui-maps/PointLayer": null,
         "@winterop-com/sokkel-ui-maps/geometry": null,
@@ -106,7 +106,7 @@
         "@winterop-com/sokkel-ui/primitives/input": "Input",
         "@winterop-com/sokkel-ui/primitives/select": "Select",
         "@winterop-com/sokkel-ui/primitives/switch": "Switch",
-        "@winterop-com/sokkel-ui/primitives/toast": null,
+        "@winterop-com/sokkel-ui/primitives/toast": "Toast, Toaster",
         "@winterop-com/sokkel-ui/primitives/tooltip": "tooltip",
         "@winterop-com/sokkel-ui/table-editing": "Column::editable, Editor, TableOutput::edited (table_edit), Calendar"
     },

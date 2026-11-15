@@ -3,13 +3,16 @@
 sokkel-ui's dashboard example (Tidevann's dashboards: widgets a person arranges, configures and
 names), ported one to one as `examples/dashboard` (`make dashboard`). Its screens are drawn by
 `examples/dashboard/tests/screens.rs` (overview, operations, team) and
-`tests/behavior.rs` (the list of dashboards).
+`tests/behavior.rs` (the list of dashboards), and laid beside the web's by
+`bun scripts/parity.ts board dashboard` (the manifest is `parity/dashboard.json`; the web's
+screens are shot at 1440 by 1500, as egui's, by `bun scripts/parity.ts web dashboard`).
 
 ## Comparing a live board
 
 The readings are drawn from a seeded generator (`live.rs`, mulberry32 seeded as the web's), with
-the clock starting at Wed 2026-11-18 09:00. Egui's draws are its own, so judge the screens by
-their structure, never by their figures.
+the clock starting at Wed 2026-11-18 09:00 UTC. Egui's draws are its own, so judge the screens by
+their structure, never by their figures. The web prints times in the browser's zone and egui in
+UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an hour apart.
 
 ## Where it stands
 
@@ -46,10 +49,20 @@ their structure, never by their figures.
 - `Toast` and `Toaster`, after sokkel-ui's toast: kinds by icon, the newest in front and two
   peeking, apart while pointed at, a close button and a timeout that stops while pointed at.
   Story: Primitives/Overlays/Toast.
+- In the charts add-on, `Series::color`: a series drawn in its own token, as a web series'
+  `color` (Runs in `chart-1`, Failures in `status-failed`), its legend swatch with it
+  (`legend_of`); without one a series takes its place in `SERIES_ORDER`.
 - In the maps add-on, `MapPopup` and `MapPopupRow`, after sokkel-ui-maps' `MapPopup`, and a
   `MapView` whose markers are chosen by pressing them (`Marker::id`, `MapView::selected`).
 
 ## Next
 
 - Toasts do not slide in and out yet, and are not swiped away.
-- A parity board against the web's screens, as tasks and status have.
+- What the board shows apart from the figures:
+  - The top bar: the web's has the Search field (its palette's trigger, ⌘K) at the right.
+  - The page head: the web puts the outlined more button before Edit; egui puts a ghost one after.
+  - The to-do list: the web's rows stand 40 apart and wrap at their width; egui's are closer.
+  - The worker log fills its panel downward on the web, from its first line; egui shows the
+    latest lines at the foot.
+  - Recent failures in a third-wide panel stacks as labeled cards on the web.
+  - The account's avatar is a person icon on a muted disc on the web, initials in egui.

@@ -3,7 +3,7 @@
 use egui::{Color32, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
 use sokkel_ui_egui::{TextRole, Threshold, cell_height, format_value, report_natural_height, threshold_color, tokens};
 
-use crate::{BarChart, Fill, Gauge, LineChart, Series, legend};
+use crate::{BarChart, Fill, Gauge, LineChart, Series, color_of, legend_of};
 
 /// A dashboard panel of values over time: lines over fading areas, dashed threshold lines, and a
 /// legend under it, in a chart's frame (a card with the plain border, its title and subtitle in a
@@ -13,7 +13,7 @@ pub struct TimeSeriesPanel {
     title: String,
     subtitle: Option<String>,
     chart: LineChart,
-    names: Vec<String>,
+    series: Vec<Series>,
     legend: bool,
     height: f32,
 }
@@ -25,7 +25,7 @@ impl TimeSeriesPanel {
             title: title.into(),
             subtitle: None,
             chart: LineChart::new(x).fill(Fill::Gradient),
-            names: Vec::new(),
+            series: Vec::new(),
             legend: true,
             height: 192.0,
         }
@@ -37,7 +37,10 @@ impl TimeSeriesPanel {
     }
 
     pub fn series(mut self, series: Series) -> Self {
-        self.names.push(series.name.clone());
+        self.series.push(Series {
+            values: Vec::new(),
+            ..series.clone()
+        });
         self.chart = self.chart.series(series);
         self
     }
@@ -88,13 +91,18 @@ impl TimeSeriesPanel {
     }
 
     pub fn show(self, ui: &mut Ui) {
-        let (chart, height, legend_on, names) = (self.chart, self.height, self.legend, self.names);
+        let (chart, height, legend_on, names) = (self.chart, self.height, self.legend, self.series);
         chart_frame(ui, &self.title, self.subtitle.as_deref(), |ui| {
             ui.add(chart.height(height));
             if legend_on && !names.is_empty() {
                 ui.add_space(4.0);
-                let names: Vec<&str> = names.iter().map(String::as_str).collect();
-                legend(ui, &names);
+                let t = tokens(ui.ctx());
+                let items: Vec<(&str, Color32)> = names
+                    .iter()
+                    .enumerate()
+                    .map(|(i, s)| (s.name.as_str(), color_of(&t, s, i)))
+                    .collect();
+                legend_of(ui, &items);
             }
         });
     }
@@ -245,7 +253,7 @@ pub struct BarPanel {
     title: String,
     subtitle: Option<String>,
     chart: BarChart,
-    names: Vec<String>,
+    series: Vec<Series>,
     legend: bool,
 }
 
@@ -255,7 +263,7 @@ impl BarPanel {
             title: title.into(),
             subtitle: None,
             chart: BarChart::new(x).height(192.0),
-            names: Vec::new(),
+            series: Vec::new(),
             legend: true,
         }
     }
@@ -266,7 +274,10 @@ impl BarPanel {
     }
 
     pub fn series(mut self, series: Series) -> Self {
-        self.names.push(series.name.clone());
+        self.series.push(Series {
+            values: Vec::new(),
+            ..series.clone()
+        });
         self.chart = self.chart.series(series);
         self
     }
@@ -288,13 +299,18 @@ impl BarPanel {
     }
 
     pub fn show(self, ui: &mut Ui) {
-        let (chart, names, legend_on) = (self.chart, self.names, self.legend);
+        let (chart, names, legend_on) = (self.chart, self.series, self.legend);
         chart_frame(ui, &self.title, self.subtitle.as_deref(), |ui| {
             ui.add(chart);
             if legend_on && names.len() > 1 {
                 ui.add_space(4.0);
-                let names: Vec<&str> = names.iter().map(String::as_str).collect();
-                legend(ui, &names);
+                let t = tokens(ui.ctx());
+                let items: Vec<(&str, Color32)> = names
+                    .iter()
+                    .enumerate()
+                    .map(|(i, s)| (s.name.as_str(), color_of(&t, s, i)))
+                    .collect();
+                legend_of(ui, &items);
             }
         });
     }

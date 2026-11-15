@@ -22,6 +22,8 @@ use sokkel_ui_egui::{TextRole, Tokens, tokens};
 pub struct Series {
     pub name: String,
     pub values: Vec<Option<f64>>,
+    /// A color token's name; the series takes its place in `SERIES_ORDER` when `None`.
+    pub color: Option<&'static str>,
 }
 
 impl Series {
@@ -29,8 +31,22 @@ impl Series {
         Self {
             name: name.into(),
             values: values.into_iter().map(Some).collect(),
+            color: None,
         }
     }
+
+    /// Drawn in this color token, as a web series' `color`, instead of its place's.
+    pub fn color(mut self, token: &'static str) -> Self {
+        self.color = Some(token);
+        self
+    }
+}
+
+/// The color of `series`, the n-th: its own token, or its place in `SERIES_ORDER`.
+pub fn color_of(t: &Tokens, series: &Series, index: usize) -> Color32 {
+    series
+        .color
+        .map_or_else(|| series_color(t, index), |token| t.color(token))
 }
 
 /// The order series take their colors in, as sokkel-ui's charts take them (`SERIES_ORDER`):
@@ -247,15 +263,26 @@ impl Frame {
     }
 }
 
-/// A legend: a swatch and a name per series, in a row.
+/// A legend: a swatch and a name per series, in a row, the series in `SERIES_ORDER`'s colors.
 pub fn legend(ui: &mut Ui, names: &[&str]) {
+    let t = tokens(ui.ctx());
+    let items: Vec<(&str, Color32)> = names
+        .iter()
+        .enumerate()
+        .map(|(i, n)| (*n, series_color(&t, i)))
+        .collect();
+    legend_of(ui, &items);
+}
+
+/// A legend of named swatches, each in its own color.
+pub fn legend_of(ui: &mut Ui, items: &[(&str, Color32)]) {
     let t = tokens(ui.ctx());
     ui.horizontal_wrapped(|ui| {
         // a line of the legend is 24 tall, as the web's legend items are
         ui.spacing_mut().interact_size.y = 24.0;
         ui.spacing_mut().item_spacing.x = 16.0;
         // each item one piece, the swatch 6 before its name, so a long legend wraps between items
-        for (i, name) in names.iter().enumerate() {
+        for (name, color) in items {
             let galley = egui::WidgetText::from(TextRole::Help.rich(&t, *name)).into_galley(
                 ui,
                 Some(egui::TextWrapMode::Extend),
@@ -264,8 +291,7 @@ pub fn legend(ui: &mut Ui, names: &[&str]) {
             );
             let (rect, _) = ui.allocate_exact_size(vec2(10.0 + 6.0 + galley.size().x, 24.0), Sense::hover());
             let swatch = egui::Rect::from_center_size(pos2(rect.left() + 5.0, rect.center().y), vec2(10.0, 10.0));
-            ui.painter()
-                .rect_filled(swatch, CornerRadius::same(2), series_color(&t, i));
+            ui.painter().rect_filled(swatch, CornerRadius::same(2), *color);
             ui.painter().galley(
                 pos2(rect.left() + 16.0, rect.center().y - galley.size().y / 2.0),
                 galley,
@@ -457,7 +483,7 @@ impl Widget for LineChart {
             let crest = frame.y(max);
             let floor = frame.plot.bottom();
             for (index, values) in tops.iter().enumerate() {
-                let color = series_color(&t, index);
+                let color = color_of(&t, &self.series[index], index);
                 let shade = |y: f32| match fill {
                     Fill::Gradient => {
                         let at = ((y - crest) / (floor - crest).max(1.0)).clamp(0.0, 1.0);
@@ -502,7 +528,11 @@ impl Widget for LineChart {
             }
         }
         if let Some((low, high)) = &self.band {
-            let color = series_color(&t, 0).gamma_multiply(0.18);
+            let color = self
+                .series
+                .first()
+                .map_or_else(|| series_color(&t, 0), |one| color_of(&t, one, 0))
+                .gamma_multiply(0.18);
             // a band is concave in general; fill it a slice at a time
             for i in 0..high.len().saturating_sub(1) {
                 let quad = vec![
@@ -515,7 +545,7 @@ impl Widget for LineChart {
             }
         }
         for (index, series) in self.series.iter().enumerate() {
-            let color = series_color(&t, index);
+            let color = color_of(&t, series, index);
             if self.area && index == 0 && fill == Fill::None {
                 for i in 0..series.values.len().saturating_sub(1) {
                     if let (Some(a), Some(b)) = (series.values[i], series.values[i + 1]) {
@@ -549,7 +579,7 @@ impl Widget for LineChart {
                         pos2(x(i), frame.y(*v)),
                         4.0,
                         t.color("background"),
-                        Stroke::new(2.0, series_color(&t, index)),
+                        Stroke::new(2.0, color_of(&t, &self.series[index], index)),
                     );
                 }
             }
@@ -559,7 +589,7 @@ impl Widget for LineChart {
                 .enumerate()
                 .map(|(index, s)| {
                     (
-                        series_color(&t, index),
+                        color_of(&t, s, index),
                         s.name.clone(),
                         s.values.get(i).copied().flatten(),
                     )
@@ -669,7 +699,7 @@ impl Widget for BarChart {
                     (center - width * groups as f32 / 2.0 + width * index as f32, 0.0, value)
                 };
                 let bar = Rect::from_min_max(pos2(left + 1.0, frame.y(to)), pos2(left + width - 1.0, frame.y(from)));
-                painter.rect_filled(bar, top, series_color(&t, index));
+                painter.rect_filled(bar, top, color_of(&t, series, index));
             }
         }
         if let Some(i) = hovered {
@@ -679,7 +709,7 @@ impl Widget for BarChart {
                 .enumerate()
                 .map(|(index, s)| {
                     (
-                        series_color(&t, index),
+                        color_of(&t, s, index),
                         s.name.clone(),
                         s.values.get(i).copied().flatten(),
                     )
@@ -832,7 +862,7 @@ impl BarChart {
                     (middle - thick * groups as f32 / 2.0 + thick * index as f32, 0.0, value)
                 };
                 let bar = Rect::from_min_max(pos2(x(from), y + 1.0), pos2(x(to), y + thick - 1.0));
-                painter.rect_filled(bar, end, series_color(t, index));
+                painter.rect_filled(bar, end, color_of(t, series, index));
             }
         }
     }

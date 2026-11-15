@@ -154,9 +154,11 @@ async function web() {
                 viewport: screen.viewport ?? { width: 1280, height: 800 },
                 deviceScaleFactor: scale,
                 colorScheme: screen.scheme ?? 'light',
+                // egui's clock is UTC: a page printing times in the viewer's zone prints them so too
+                timezoneId: 'UTC',
             })
             const page = await context.newPage()
-            await page.clock.install({ time: new Date(`${manifest.today}T09:00:00`) })
+            await page.clock.install({ time: new Date(`${manifest.today}T09:00:00Z`) })
             // a live example draws from Math.random: seeded, it draws the same on every shot
             await page.addInitScript(() => {
                 let seed = 20261116
@@ -167,7 +169,7 @@ async function web() {
                     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
                 }
             })
-            if (manifest.live === true) await page.clock.pauseAt(new Date(`${manifest.today}T09:00:00`))
+            if (manifest.live === true) await page.clock.pauseAt(new Date(`${manifest.today}T09:00:00Z`))
             await page.goto(`http://127.0.0.1:${port}/#/${screen.route}`)
             await page.waitForTimeout(800)
             // a live page runs the same 5 s of its own time on every shot, then settles

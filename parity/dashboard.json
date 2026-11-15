@@ -1,0 +1,120 @@
+{
+    "example": "examples/dashboard/web/src",
+    "ported": {
+        "commit": "a86307f6",
+        "files": {
+            "App.tsx": "0bfa0d48d31d1dc3b5abd4d0af408371661ff615",
+            "Configure.tsx": "0fdfbf4cd38fd77259d4347e1d24e5b279becbd7",
+            "DashboardDialog.tsx": "ee97ff4fa06de0df4e548e655268b787c2a59028",
+            "DashboardPage.tsx": "b9ca6126c6348008054f4e12334b314b491ce4a6",
+            "DashboardsPage.tsx": "2c32adbad621266bf6e761c8e358f7aa0eefa9ef",
+            "Home.tsx": "0758aab60464b0f4818eb4361782fa584df9b72d",
+            "Settings.tsx": "15374ef9a890cd2618d0ed81beec6f56ea5ef5c2",
+            "actions.ts": "e219c1218e9d855ef91c7432d4bc12bb4ce6ba50",
+            "app.css": "7863eb23f4dded094c0bdf076ae94a3adc86fedc",
+            "collections.ts": "7c9d650bf64486b3c4010134dd97340b64738cb2",
+            "live.ts": "b89d71d276e419601a0c9c409e27baa499fd31fb",
+            "main.tsx": "d3c21489b14fe65c56e83e5550ba682b9eef6bff",
+            "model.ts": "bc3dbff3cfcc924e1960ade65387ba8eb2d5c6b9",
+            "themes.ts": "5f98ff7e6680d7dd2807416aff0c7de32b2852b1",
+            "widgets.tsx": "7a94e15c12348349690094586d379acffe5a2d54"
+        }
+    },
+    "parts": {
+        "@winterop-com/sokkel-ui-charts/dashboard/BarPanel": "sokkel-ui-egui-charts BarPanel",
+        "@winterop-com/sokkel-ui-charts/dashboard/GaugePanel": "sokkel-ui-egui-charts GaugePanel",
+        "@winterop-com/sokkel-ui-charts/dashboard/TimeSeriesPanel": "sokkel-ui-egui-charts TimeSeriesPanel",
+        "@winterop-com/sokkel-ui-charts/dashboard/series": "sokkel-ui-egui-charts Series, series_color",
+        "@winterop-com/sokkel-ui-maps/MapLegend": "sokkel-ui-egui-maps MapLegend",
+        "@winterop-com/sokkel-ui-maps/MapPopup": "sokkel-ui-egui-maps MapPopup, MapPopupRow",
+        "@winterop-com/sokkel-ui-maps/MapView": "sokkel-ui-egui-maps MapView (markers chosen by pressing them)",
+        "@winterop-com/sokkel-ui-maps/PointLayer": "sokkel-ui-egui-maps Marker (points alone)",
+        "@winterop-com/sokkel-ui-maps/scale": null,
+        "@winterop-com/sokkel-ui/AccountMenu": "AccountMenu",
+        "@winterop-com/sokkel-ui/ActivityList": "ActivityList",
+        "@winterop-com/sokkel-ui/BarList": "BarList",
+        "@winterop-com/sokkel-ui/CheckboxField": "Checkbox",
+        "@winterop-com/sokkel-ui/CommandPalette": "CommandPalette",
+        "@winterop-com/sokkel-ui/DataTable": "DataTable",
+        "@winterop-com/sokkel-ui/DialogShell": "ConfirmDialog, Dialog",
+        "@winterop-com/sokkel-ui/Field": "field (a label and a hint over a control)",
+        "@winterop-com/sokkel-ui/IconButton": "IconButton",
+        "@winterop-com/sokkel-ui/Layout": "egui layout",
+        "@winterop-com/sokkel-ui/ListRow": "ListRow and ListRows",
+        "@winterop-com/sokkel-ui/LogView": "LogView",
+        "@winterop-com/sokkel-ui/Markdown": "Markdown",
+        "@winterop-com/sokkel-ui/PageHeader": "PageHeader",
+        "@winterop-com/sokkel-ui/PageState": "PageState",
+        "@winterop-com/sokkel-ui/PersonAvatar": "PersonAvatar, Cell::Person",
+        "@winterop-com/sokkel-ui/QuickAdd": "QuickAdd",
+        "@winterop-com/sokkel-ui/Rail": "Rail",
+        "@winterop-com/sokkel-ui/RailDrops": null,
+        "@winterop-com/sokkel-ui/Segmented": "Segmented",
+        "@winterop-com/sokkel-ui/SelectField": "Select",
+        "@winterop-com/sokkel-ui/SettingsDialog": "SettingsDialog",
+        "@winterop-com/sokkel-ui/Shell": "Shell",
+        "@winterop-com/sokkel-ui/StatusChip": "Chip with ChipTone::Status",
+        "@winterop-com/sokkel-ui/StatusLine": "StatusLine",
+        "@winterop-com/sokkel-ui/StatusProvider": null,
+        "@winterop-com/sokkel-ui/SwitchField": "SwitchField",
+        "@winterop-com/sokkel-ui/TextField": "TextField",
+        "@winterop-com/sokkel-ui/ThemePicker": "theme_settings, ThemeWords",
+        "@winterop-com/sokkel-ui/TopBar": "TopBar",
+        "@winterop-com/sokkel-ui/UptimeBar": "UptimeBar",
+        "@winterop-com/sokkel-ui/dashboard/DashboardArrange": "DashboardArrange (drag by the grip, arrow keys, size menu, remove, palette)",
+        "@winterop-com/sokkel-ui/dashboard/DashboardEdit": "DashboardEdit and DashboardEditActions",
+        "@winterop-com/sokkel-ui/dashboard/DashboardGrid": "DashboardGrid, DashboardPanel, KpiRow",
+        "@winterop-com/sokkel-ui/dashboard/StatPanel": "StatPanel",
+        "@winterop-com/sokkel-ui/dashboard/thresholds": "Threshold, threshold_color",
+        "@winterop-com/sokkel-ui/hooks/use-overlay-route": "app state (egui has no URL)",
+        "@winterop-com/sokkel-ui/hooks/use-store": null,
+        "@winterop-com/sokkel-ui/lib/appearance": "Appearance, Motion, swatch",
+        "@winterop-com/sokkel-ui/lib/commands": "CommandGroup, place_commands, appearance_commands",
+        "@winterop-com/sokkel-ui/lib/reorder": "DataTable::reorder (TableOutput::reordered)",
+        "@winterop-com/sokkel-ui/lib/status": "ChipTone::Status and the status-* tokens (no StatusMap yet)",
+        "@winterop-com/sokkel-ui/primitives/button": "Button",
+        "@winterop-com/sokkel-ui/primitives/dropdown-menu": "DropdownMenu, MenuItem",
+        "@winterop-com/sokkel-ui/primitives/empty": "Empty (DataTable::empty draws it without the heads)",
+        "@winterop-com/sokkel-ui/primitives/switch": "Switch",
+        "@winterop-com/sokkel-ui/primitives/toast": "Toast, Toaster",
+        "@winterop-com/sokkel-ui/primitives/tooltip": "tooltip"
+    },
+    "screens": [
+        {
+            "name": "dashboard_overview",
+            "route": "d/overview",
+            "viewport": {
+                "width": 1440,
+                "height": 1500
+            }
+        },
+        {
+            "name": "dashboard_operations",
+            "route": "d/operations",
+            "scheme": "dark",
+            "viewport": {
+                "width": 1440,
+                "height": 1500
+            }
+        },
+        {
+            "name": "dashboard_team",
+            "route": "d/team",
+            "viewport": {
+                "width": 1440,
+                "height": 1500
+            }
+        },
+        {
+            "name": "dashboard_list",
+            "route": "dashboards",
+            "viewport": {
+                "width": 1440,
+                "height": 1500
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "live": true,
+    "shot": "f22bb302fe7f4c211a06a209ab245b44bb39f06b"
+}

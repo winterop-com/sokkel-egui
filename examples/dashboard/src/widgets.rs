@@ -246,7 +246,7 @@ pub fn draw(
                 .label_every(15)
                 .legend(compare.is_some());
             for one in std::iter::once(metric).chain(compare) {
-                panel = panel.series(Series::new(one.info().label, live.metric(one).1));
+                panel = panel.series(Series::new(one.info().label, live.metric(one).1).color(one.info().color));
             }
             panel.show(ui);
         }
@@ -259,7 +259,7 @@ pub fn draw(
             };
             BarPanel::new(title, names)
                 .subtitle("since midnight")
-                .series(Series::new("Runs", counts.iter().map(|c| f64::from(*c))))
+                .series(Series::new("Runs", counts.iter().map(|c| f64::from(*c))).color("chart-1"))
                 .horizontal(group != Group::Project)
                 .legend(false)
                 .show(ui);
