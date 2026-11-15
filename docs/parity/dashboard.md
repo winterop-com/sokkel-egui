@@ -75,6 +75,7 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
 
 - Toasts do not slide in and out yet, and are not swiped away.
 - What the board shows apart from the figures:
-  - The worker log fills its panel downward on the web, from its first line; egui shows the
-    latest lines at the foot.
+  - The worker log on the web is as tall as its lines (816 at the start, growing to 200 lines),
+    its `h-72` lost to `flex-1`; egui keeps it 288 tall and follows the newest line, as the
+    classes read. Asked in `docs/proposals/dashboard-log-height.md`.
   - A stacked list's labeled lines stand about 24 apart on the web, 20 in egui.
