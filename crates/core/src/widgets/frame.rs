@@ -262,11 +262,16 @@ impl Widget for Rail<'_> {
         };
         // collapsed under the window's buttons, the mark's own line (`py-1`) stands over the groups
         let mut y = head.bottom() + untitled_top + if under { 40.0 } else { 0.0 };
-        for group in self.groups {
+        for (index, group) in self.groups.into_iter().enumerate() {
+            // the groups stand one under the other with no gap: the 4 after a group's last entry
+            // is its own gap, not one between groups
+            if index > 0 {
+                y -= 4.0;
+            }
             if let Some(title) = &group.title {
-                // the entries before end 4 above `y`; a title stands 16 under them (`pt-4`), its
-                // line 20 tall, then 6 (`pb-1.5`) and the group's 4 to its entries
-                y += 12.0;
+                // a title stands 16 under the entries before (`pt-4`), its line 20 tall, then 6
+                // (`pb-1.5`) and the group's 4 to its entries
+                y += 16.0;
                 if narrow {
                     // the title's room kept, its rule centered in the title's 20 line
                     painter.hline(

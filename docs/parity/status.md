@@ -152,8 +152,9 @@ in `crates/core/tests/paints.rs`.
 
 Against sokkel-ui `4f2cf282` (0.28.0): every web screen shot again, 45 of the example's 70 parts
 with an egui counterpart. The rail's untitled first group now stands 4 lower on the web, as egui
-already draws it; the Customers group's described entries stand 54 apart on the web and 58 in
-egui, a difference older than this check, still to settle.
+already draws it. Settings, an untitled group of its own under Customers, stood 4 lower in egui:
+the rail's groups now follow one another with no gap between them, as the web's, so it stands 54
+under Status page on both sides.
 
 ## Groundwork
 
