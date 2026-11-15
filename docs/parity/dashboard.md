@@ -45,6 +45,8 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
 - `ArrangeItem`, so `DashboardArrange` and `DashboardEdit` take any app's widgets.
 - `Column::fill_share` (filling columns share the room as `fr` tracks) and `Cell::Muted`, for
   the list's Holds column.
+- `DashboardEditActions::show_with`, the page's other actions before Edit as the web's
+  `children`, and `IconButton::outline` and `IconButton::sm` (`icon-sm`), for the head's More.
 - `DataTable::framed`, `Gap::Xs`, and a `Checkbox` whose label wraps.
 - `Toast` and `Toaster`, after sokkel-ui's toast: kinds by icon, the newest in front and two
   peeking, apart while pointed at, a close button and a timeout that stops while pointed at.
@@ -60,7 +62,6 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
 - Toasts do not slide in and out yet, and are not swiped away.
 - What the board shows apart from the figures:
   - The top bar: the web's has the Search field (its palette's trigger, ⌘K) at the right.
-  - The page head: the web puts the outlined more button before Edit; egui puts a ghost one after.
   - The to-do list: the web's rows stand 40 apart and wrap at their width; egui's are closer.
   - The worker log fills its panel downward on the web, from its first line; egui shows the
     latest lines at the foot.

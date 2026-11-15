@@ -395,21 +395,19 @@ impl DashboardApp {
             let guard = self.prefs.confirm_cancel;
             let (edit, kept) = (&mut self.edit, &mut board.widgets);
             PageHeader::new(name).description(description).show(ui, |ui| {
-                // right to left: More last in reading order, after Edit
-                if !edit.editing() {
-                    let items = [
-                        MenuItem::action("Rename").icon(Icon::PencilLine),
-                        MenuItem::action("Duplicate").icon(Icon::Copy),
-                        MenuItem::Separator,
-                        MenuItem::action("Delete").icon(Icon::Trash2).destructive(),
-                    ];
-                    let trigger = ui.add(IconButton::new(Icon::Ellipsis, "More"));
-                    more = DropdownMenu::new(&items).end(true).width(176.0).show(&trigger);
-                }
                 let outcome = DashboardEditActions::new(edit, kept)
                     .default_layout(&base)
                     .guard_cancel(guard)
-                    .show(ui);
+                    .show_with(ui, |ui| {
+                        let items = [
+                            MenuItem::action("Rename").icon(Icon::PencilLine),
+                            MenuItem::action("Duplicate").icon(Icon::Copy),
+                            MenuItem::Separator,
+                            MenuItem::action("Delete").icon(Icon::Trash2).destructive(),
+                        ];
+                        let trigger = ui.add(IconButton::new(Icon::Ellipsis, "More").outline().sm());
+                        more = DropdownMenu::new(&items).end(true).width(176.0).show(&trigger);
+                    });
                 cancel_asked = outcome.cancel_asked;
                 saved = outcome.saved;
             });

@@ -796,8 +796,15 @@ impl<'a, T: ArrangeItem> DashboardEditActions<'a, T> {
     }
 
     pub fn show(self, ui: &mut Ui) -> DashboardEditOutcome {
+        self.show_with(ui, |_| {})
+    }
+
+    /// As `show`, with the page's other actions drawn before Edit while not editing, as the web's
+    /// `children` (such as a dashboard's More menu); they are left out while editing.
+    pub fn show_with(self, ui: &mut Ui, before: impl FnOnce(&mut Ui)) -> DashboardEditOutcome {
         let mut outcome = DashboardEditOutcome::default();
         if !self.edit.editing() {
+            // drawn right to left: Edit first, so what comes before it in reading order stands left
             if ui
                 .add(
                     Button::new(&self.words.edit)
@@ -809,6 +816,7 @@ impl<'a, T: ArrangeItem> DashboardEditActions<'a, T> {
             {
                 self.edit.edit(self.kept);
             }
+            before(ui);
             return outcome;
         }
         if ui

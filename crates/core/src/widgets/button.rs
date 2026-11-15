@@ -250,6 +250,8 @@ pub struct IconButton {
     icon: crate::Icon,
     label: String,
     xs: bool,
+    sm: bool,
+    outline: bool,
     destructive: bool,
 }
 
@@ -259,6 +261,8 @@ impl IconButton {
             icon,
             label: label.into(),
             xs: false,
+            sm: false,
+            outline: false,
             destructive: false,
         }
     }
@@ -266,6 +270,18 @@ impl IconButton {
     /// The smallest size, `icon-xs`: `control-xs` square, the icon 12, its corners at most 10.
     pub fn xs(mut self) -> Self {
         self.xs = true;
+        self
+    }
+
+    /// The small size, `icon-sm`: `control-sm` square (a finger on a phone), its corners at most 12.
+    pub fn sm(mut self) -> Self {
+        self.sm = true;
+        self
+    }
+
+    /// The outline variant: the outlined button's ground and border, the icon in the foreground ink.
+    pub fn outline(mut self) -> Self {
+        self.outline = true;
         self
     }
 
@@ -281,18 +297,37 @@ impl egui::Widget for IconButton {
         let t = crate::tokens(ui.ctx());
         let side = if self.xs {
             t.density("control-xs")
+        } else if self.sm {
+            super::finger_tall(ui.ctx(), &t, t.density("control-sm"))
         } else {
             super::finger_tall(ui.ctx(), &t, t.density("control"))
         };
         let radius = if self.xs {
             let r = t.radius("control");
             egui::CornerRadius::same(r.nw.min(10))
+        } else if self.sm {
+            let r = t.radius("control");
+            egui::CornerRadius::same(r.nw.min(12))
         } else {
             t.radius("control")
         };
         let (rect, response) = ui.allocate_exact_size(egui::vec2(side, side), egui::Sense::click());
         response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.label));
         let hot = response.hovered();
+        if self.outline {
+            let (fill, border) = if t.dark {
+                (t.color_at("input", 0.3), t.color("input"))
+            } else {
+                (t.color("background"), t.color("border"))
+            };
+            ui.painter().rect(
+                rect,
+                radius,
+                fill,
+                egui::Stroke::new(1.0, border),
+                egui::StrokeKind::Inside,
+            );
+        }
         if hot && self.destructive {
             ui.painter().rect_filled(rect, radius, t.color_at("critical", 0.10));
         } else if hot {
@@ -301,6 +336,7 @@ impl egui::Widget for IconButton {
         let ink = match (hot, self.destructive) {
             (true, true) => t.color("critical-ink"),
             (true, false) => t.color("foreground"),
+            _ if self.outline => t.color("foreground"),
             _ => t.color("muted-foreground"),
         };
         let glyph = if self.xs { 12.0 } else { 16.0 };
