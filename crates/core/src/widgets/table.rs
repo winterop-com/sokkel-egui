@@ -467,8 +467,9 @@ impl<'a> DataTable<'a> {
         self
     }
 
-    /// Whether the rows stack at `width`: a list stacks below 576 or once its columns no longer
-    /// fit, whichever is wider, so it never scrolls sideways.
+    /// Whether the rows stack at `width`: a table below its `stack_below`; a list, or a table naming
+    /// none, below `stack_below` (480 when not given) or once the columns no longer fit, whichever is
+    /// wider, so it never scrolls sideways.
     fn stacks(&self, width: f32, pad: f32, select_width: f32) -> bool {
         // a compact list stacks; labeled cards stack in either look, as a `minWidth="auto"` table
         let stacks = match self.stack_layout {
@@ -479,7 +480,11 @@ impl<'a> DataTable<'a> {
         if !stacks {
             return false;
         }
-        if let Some(below) = self.stack_below {
+        // a table names the width it stacks below; a list (`minWidth="auto"` on the web) stacks there
+        // or once its columns no longer fit, whichever is wider
+        if let Some(below) = self.stack_below
+            && self.variant != TableVariant::List
+        {
             return width < below;
         }
         let columns: f32 = self.columns.iter().map(|c| c.width).sum::<f32>()
@@ -488,9 +493,9 @@ impl<'a> DataTable<'a> {
             + select_width
             + if self.reorder { GRIP } else { 0.0 }
             + if self.actions.is_some() { ACTIONS } else { 0.0 };
-        // a table whose columns shrink to fit (`minWidth="auto"`) stacks below 480, as the web's
-        // `stackDefault`, or once its columns no longer fit, whichever is wider
-        width < columns.max(480.0)
+        // a table whose columns shrink to fit (`minWidth="auto"`) stacks below `stack_below` (480,
+        // as the web's `stackDefault`) or once its columns no longer fit, whichever is wider
+        width < columns.max(self.stack_below.unwrap_or(480.0))
     }
 
     pub fn today(mut self, today: Day) -> Self {
@@ -798,12 +803,16 @@ impl<'a> DataTable<'a> {
         let lines: Vec<usize> = (0..self.columns.len())
             .filter(|c| Some(*c) != title && self.columns[*c].stack == StackPlace::Line)
             .collect();
+        // the title is the title alone, whatever place its column names
         let facts: Vec<usize> = (0..self.columns.len())
-            .filter(|c| self.columns[*c].stack == StackPlace::Secondary)
+            .filter(|c| Some(*c) != title && self.columns[*c].stack == StackPlace::Secondary)
             .collect();
         let primary: Vec<usize> = (0..self.columns.len())
-            .filter(|c| self.columns[*c].stack == StackPlace::Primary)
+            .filter(|c| Some(*c) != title && self.columns[*c].stack == StackPlace::Primary)
             .collect();
+        // a list's rows stand as a plain divided list, as the web's narrow list, not as cards
+        let listed = self.variant == TableVariant::List;
+        let (inset, apart) = if listed { (0.0, 0.0) } else { (16.0, 16.0) };
         let drag_id = self.id.with("card-drag");
         let dragging: Option<usize> = ui.ctx().data(|d| d.get_temp(drag_id));
         let mut card_rects: Vec<Rect> = Vec::new();
@@ -822,7 +831,7 @@ impl<'a> DataTable<'a> {
             .id_salt(self.id.with("cards"))
             .auto_shrink([false, true])
             .show(ui, |ui| {
-                ui.add_space(16.0);
+                ui.add_space(apart);
                 for &index in order {
                     let row = &self.rows[index];
                     let shown: Vec<usize> = lines.iter().copied().filter(|c| said(&row[*c])).collect();
@@ -837,27 +846,35 @@ impl<'a> DataTable<'a> {
                         + if has_facts { 24.0 } else { 0.0 }
                         + 8.0
                         + 1.0;
-                    let width = ui.available_width() - 32.0;
+                    let width = ui.available_width() - inset * 2.0;
                     let (outer, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
-                    let card = Rect::from_min_size(pos2(outer.left() + 16.0, outer.top()), vec2(width, height));
+                    let card = Rect::from_min_size(pos2(outer.left() + inset, outer.top()), vec2(width, height));
                     card_rects.push(card);
                     let hit = ui.interact(card, self.id.with(("card", index)), Sense::click());
                     if hit.clicked() {
                         self.state.opened = Some(index);
                     }
-                    let ground = if hit.hovered() {
-                        t.color("hover")
+                    if listed {
+                        if hit.hovered() {
+                            ui.painter().rect_filled(card, 0.0, t.color("hover"));
+                        }
+                        ui.painter()
+                            .hline(card.x_range(), card.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
                     } else {
-                        t.color("card")
-                    };
-                    let radius = t.radius("surface");
-                    ui.painter().rect_filled(card, radius, ground);
-                    ui.painter().rect_stroke(
-                        card,
-                        radius,
-                        Stroke::new(1.0, t.color("border")),
-                        egui::StrokeKind::Inside,
-                    );
+                        let ground = if hit.hovered() {
+                            t.color("hover")
+                        } else {
+                            t.color("card")
+                        };
+                        let radius = t.radius("surface");
+                        ui.painter().rect_filled(card, radius, ground);
+                        ui.painter().rect_stroke(
+                            card,
+                            radius,
+                            Stroke::new(1.0, t.color("border")),
+                            egui::StrokeKind::Inside,
+                        );
+                    }
                     let left = card.left() + 1.0 + 12.0;
                     let right = card.right() - 1.0 - 12.0;
                     let mut y = card.top() + 1.0 + 8.0;
@@ -892,7 +909,14 @@ impl<'a> DataTable<'a> {
                     let menu = if self.actions.is_some() { 28.0 + 8.0 } else { 0.0 };
                     if let Some(c) = title {
                         let words = row[c].draft();
-                        let galley = WidgetText::from(TextRole::Action.rich(t, words)).into_galley(
+                        // a code stays in the code face, at the title's size
+                        let rich = match &row[c] {
+                            Cell::Mono(_) => {
+                                egui::RichText::new(words).font(egui::FontId::monospace(TextRole::Action.font(t).size))
+                            }
+                            _ => TextRole::Action.rich(t, words),
+                        };
+                        let galley = WidgetText::from(rich).into_galley(
                             ui,
                             Some(TextWrapMode::Truncate),
                             (right - title_left - menu).max(1.0),
@@ -993,7 +1017,7 @@ impl<'a> DataTable<'a> {
                             x += paint_fact(ui, t, &row[c], pos2(x, middle), (right - x).max(1.0));
                         }
                     }
-                    ui.add_space(16.0);
+                    ui.add_space(apart);
                 }
                 // a dragged card: the line where it lands, and its move on release
                 if let Some(from) = dragging {

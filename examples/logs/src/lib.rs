@@ -260,7 +260,7 @@ impl LogsApp {
                         Column::new("Time", 88.0),
                         Column::new("Level", 80.0).stack(StackPlace::Secondary),
                         Column::new("Service", 96.0).stack(StackPlace::Secondary),
-                        Column::new("Message", 320.0).fill().stack(StackPlace::Primary),
+                        Column::new("Message", 288.0).fill().stack(StackPlace::Primary),
                     ];
                     let rows: Vec<Vec<Cell>> = lines
                         .iter()
