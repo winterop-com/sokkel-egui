@@ -223,7 +223,7 @@ pub const STORIES: &[Story] = &[
     },
     Story {
         path: "Primitives/Inputs/Switch",
-        doc: "On, off and disabled, each beside the words it switches.",
+        doc: "On, off and disabled, each beside the words it switches; and as SwitchField, a form's row with the switch at its right edge, a help mark that says what it does, and shut.",
         show: primitives::switch,
     },
     Story {

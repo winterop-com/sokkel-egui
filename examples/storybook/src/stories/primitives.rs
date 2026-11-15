@@ -1,5 +1,7 @@
 use eframe::egui::Ui;
-use sokkel_ui_egui::{Button, ButtonSize, ButtonVariant, Chip, ChipTone, Icon, Switch, TextField, TextRole, tokens};
+use sokkel_ui_egui::{
+    Button, ButtonSize, ButtonVariant, Chip, ChipTone, Icon, Switch, SwitchField, TextField, TextRole, tokens,
+};
 
 use super::{State, section};
 
@@ -85,6 +87,19 @@ pub fn switch(state: &mut State, ui: &mut Ui) {
             ui.label(TextRole::Body.rich(&t, words).color(t.color("foreground")));
         });
     }
+    section(ui, "As a field");
+    // a form's column: each row across it, the switch at the right edge
+    ui.scope(|ui| {
+        ui.set_max_width(448.0);
+        let (mut shown, mut give, mut none) = (true, true, false);
+        ui.add(SwitchField::new(&mut shown, "Show on the status page"));
+        ui.add(SwitchField::new(&mut give, "Give linus the open incident").explain("INC-41"));
+        ui.add(
+            SwitchField::new(&mut none, "Give linus the open incidents")
+                .explain("grace has no open incident.")
+                .enabled(false),
+        );
+    });
 }
 
 pub fn chip(_: &mut State, ui: &mut Ui) {
