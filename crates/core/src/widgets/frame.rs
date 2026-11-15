@@ -262,7 +262,7 @@ impl Widget for Rail<'_> {
         };
         // collapsed under the window's buttons, the mark's own line (`py-1`) stands over the groups
         let mut y = head.bottom() + untitled_top + if under { 40.0 } else { 0.0 };
-        for (index, group) in self.groups.into_iter().enumerate() {
+        for (index, group) in self.groups.iter().enumerate() {
             // the groups stand one under the other with no gap: the 4 after a group's last entry
             // is its own gap, not one between groups
             if index > 0 {
