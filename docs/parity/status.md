@@ -17,6 +17,11 @@ and never chase a difference made of numbers.
 - The frame lines up with the web's: the rail with each place's description under its label
   (`RailEntry::description`), the Customers group, the top bar's Live button, and the status line
   live with operational, open and on call.
+- The command palette, from the top bar's Search or ⌘K, as the web's: Report an incident,
+  Pause or Resume live readings, Open the status page, the rail's places, every service (its
+  health beside it, found by host and group too), the open incidents then the resolved ones (each
+  state beside it, found by code, service, city or assignee), and the look. The web's Hand over
+  on call is left out until the On call page's Hand over works (its button does nothing yet).
 - Each page has its head (title, count or description, actions), the actions level with the
   title block's foot as the page-header spec says.
 - The overview's figures stand in a `KpiRow` of `Stat`s, at the web's places; until the live
@@ -109,7 +114,7 @@ and never chase a difference made of numbers.
 ## What does not work yet
 
 sokkel-ui's examples keep one rule: every button does what it says, and every button here
-does, Edit on the overview now among them. What works:
+does, Edit on the overview now among them, save the On call page's Hand over. What works:
 
 - Report incident (the overview, a service's page) and New (the incidents page) open the new
   incident dialog, the web's `NewIncidentDialog`, opened on its own page.

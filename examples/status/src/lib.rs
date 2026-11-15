@@ -11,14 +11,15 @@ pub mod new_incident;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
-    AccountAction, AccountMenu, AppBar, Appearance, AsideWidth, Banner, BannerTone, Button, ButtonSize, ButtonVariant,
-    Cell, ChipBar, ChipTone, Choice, ChoiceList, Column, Columns, DashboardArrange, DashboardEdit,
-    DashboardEditActions, DashboardGrid, DashboardLayoutItem, DashboardPanel, DashboardWidget, DataTable, Day,
-    DescriptionList, DesktopWindow, Editor, Gap, Icon, IconButton, KpiRow, ListRow, ListRows, MenuItem, Page,
-    PageHeader, PanelSpan, PersonRow, Rail, RailEntry, RailGroup, RowAside, RowMark, Section, Segmented, Select, Shell,
-    ShellPart, Split, SplitPane, Stack, StackLayout, StackPlace, Stat, StatusLine, StatusTone, TableState,
-    TableVariant, TextRole, Timeline, TimelineEvent, TopBar, UptimeBar, UptimeDay, checkbox_list, form_bar,
-    format_uptime, install, overall_uptime, relative_time,
+    AccountAction, AccountMenu, AppBar, Appearance, AppearanceCommandWords, AsideWidth, Banner, BannerTone, Button,
+    ButtonSize, ButtonVariant, Cell, ChipBar, ChipTone, Choice, ChoiceList, Column, Columns, CommandGroup,
+    CommandPalette, DashboardArrange, DashboardEdit, DashboardEditActions, DashboardGrid, DashboardLayoutItem,
+    DashboardPanel, DashboardWidget, DataTable, Day, DescriptionList, DesktopWindow, Editor, Gap, Icon, IconButton,
+    KpiRow, ListRow, ListRows, MenuItem, Page, PageHeader, PanelSpan, PersonRow, Rail, RailEntry, RailGroup, RowAside,
+    RowMark, Section, Segmented, Select, Shell, ShellPart, Split, SplitPane, Stack, StackLayout, StackPlace, Stat,
+    StatusLine, StatusTone, TableState, TableVariant, TextRole, Timeline, TimelineEvent, TopBar, UptimeBar, UptimeDay,
+    appearance_commands, checkbox_list, form_bar, format_uptime, install, overall_uptime, palette_shortcut,
+    place_commands, place_of, relative_time, run_appearance_command,
 };
 
 use data::SERVICES;
@@ -57,6 +58,8 @@ pub struct StatusApp {
     /// Settings open over the page.
     pub settings: bool,
     pub appearance: Appearance,
+    /// The command palette's query and highlighted row, while it is open.
+    pub palette: Option<(String, usize)>,
     /// Readings live, or paused.
     pub live: bool,
     /// The board's clock: seconds since midnight of the first reading, and the readings since.
@@ -146,6 +149,7 @@ impl StatusApp {
             service_day: None,
             settings: false,
             appearance,
+            palette: None,
             live: true,
             start: 9 * 3600,
             readings: 0,
@@ -339,6 +343,10 @@ impl StatusApp {
         };
         let mut account = None;
         let mut toggled = false;
+        let mut searched = false;
+        if palette_shortcut(ui.ctx()) {
+            self.palette = Some((String::new(), 0));
+        }
         let clock = self.clock();
         let live = self.live;
         let operational = SERVICES.len();
@@ -360,18 +368,21 @@ impl StatusApp {
                     .show(ui);
             }
             ShellPart::Top => {
-                TopBar::new(&trail).search("Search", "⌘K").show(ui, |ui| {
-                    let (icon, word) = if live {
-                        (Icon::Pause, "Live")
-                    } else {
-                        (Icon::Play, "Paused")
-                    };
-                    let button = Button::new(word)
-                        .icon(icon)
-                        .variant(ButtonVariant::Ghost)
-                        .size(ButtonSize::Sm);
-                    toggled = ui.add(button).clicked();
-                });
+                searched = TopBar::new(&trail)
+                    .search("Search", "⌘K")
+                    .show(ui, |ui| {
+                        let (icon, word) = if live {
+                            (Icon::Pause, "Live")
+                        } else {
+                            (Icon::Play, "Paused")
+                        };
+                        let button = Button::new(word)
+                            .icon(icon)
+                            .variant(ButtonVariant::Ghost)
+                            .size(ButtonSize::Sm);
+                        toggled = ui.add(button).clicked();
+                    })
+                    .search;
             }
             ShellPart::Page => {
                 // the listings fill the page, their tables scrolling inside it; the other pages
@@ -405,6 +416,10 @@ impl StatusApp {
         if toggled {
             self.live = !self.live;
         }
+        if searched {
+            self.palette = Some((String::new(), 0));
+        }
+        self.palette(ui.ctx(), &groups);
         if place == "settings" {
             self.settings = true;
         } else if place != shown {
@@ -457,6 +472,95 @@ impl StatusApp {
             Some(AccountAction::Settings) => self.settings = true,
             Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
             None => {}
+        }
+    }
+
+    /// The command palette, as the web's: the board's own commands, the rail's places, every
+    /// service, the open incidents and then the resolved ones, and the look.
+    fn palette(&mut self, ctx: &egui::Context, rail: &[RailGroup]) {
+        let Some((mut query, mut highlight)) = self.palette.take() else {
+            return;
+        };
+        let (icon, label) = if self.live {
+            (Icon::Pause, "Pause live readings")
+        } else {
+            (Icon::Play, "Resume live readings")
+        };
+        let mut groups = vec![CommandGroup::new(
+            "Status",
+            [
+                MenuItem::action("Report an incident").icon(Icon::Siren).id("report"),
+                MenuItem::action(label).icon(icon).id("live"),
+                MenuItem::action("Open the status page")
+                    .icon(Icon::SquareArrowOutUpRight)
+                    .id("public"),
+            ],
+        )];
+        groups.extend(place_commands(rail, "Go to"));
+        groups.push(CommandGroup::new(
+            "Services",
+            SERVICES.iter().enumerate().map(|(index, one)| {
+                MenuItem::action(one.id)
+                    .icon(if one.store { Icon::Database } else { Icon::Server })
+                    .hint(self.live_world.health[index].words().to_lowercase())
+                    .keywords([one.host, one.group, one.description])
+                    .id(format!("service:{}", one.id))
+            }),
+        ));
+        let incidents = self
+            .incidents
+            .iter()
+            .filter(|i| i.state != data::State::Resolved)
+            .chain(self.incidents.iter().filter(|i| i.state == data::State::Resolved));
+        groups.push(CommandGroup::new(
+            "Incidents",
+            incidents.map(|one| {
+                let mut words: Vec<String> = vec![one.code.clone(), one.assignee.to_owned()];
+                words.extend(one.services.iter().map(|s| (*s).to_owned()));
+                words.extend(one.sites.iter().map(|id| {
+                    data::SITES
+                        .iter()
+                        .find(|site| site.id == *id)
+                        .map_or(*id, |site| site.city)
+                        .to_owned()
+                }));
+                MenuItem::action(&one.title)
+                    .icon(Icon::CircleAlert)
+                    .hint(state_words(one.state))
+                    .keywords(words)
+                    .id(format!("incident:{}", one.id))
+            }),
+        ));
+        let themes: Vec<_> = sokkel_ui_egui::themes().collect();
+        groups.extend(appearance_commands(
+            &self.appearance,
+            &themes,
+            &AppearanceCommandWords::default(),
+        ));
+        let outcome = CommandPalette::new("palette", &groups, &mut query, &mut highlight).show(ctx);
+        let command = outcome
+            .run
+            .and_then(|(g, i)| groups[g].items[i].command_id().map(str::to_owned));
+        match command.as_deref() {
+            Some("report") => self.report_incident(None),
+            Some("live") => self.live = !self.live,
+            Some("public") => self.go("public"),
+            Some(command) => {
+                if let Some(id) = command.strip_prefix("service:") {
+                    self.go(&format!("services/{id}"));
+                } else if let Some(id) = command.strip_prefix("incident:") {
+                    self.go(&format!("incidents/{id}"));
+                } else if let Some(place) = place_of(command) {
+                    let place = place.to_owned();
+                    self.go(&place);
+                } else {
+                    run_appearance_command(&mut self.appearance, command);
+                }
+            }
+            None => {}
+        }
+        if !outcome.close {
+            self.palette = Some((query, highlight));
         }
     }
 
