@@ -90,7 +90,8 @@
         "@winterop-com/sokkel-ui/primitives/sonner": "Toaster",
         "@winterop-com/sokkel-ui/primitives/switch": "Switch",
         "@winterop-com/sokkel-ui/primitives/toggle-group": null,
-        "@winterop-com/sokkel-ui/primitives/tooltip": "tooltip"
+        "@winterop-com/sokkel-ui/primitives/tooltip": "tooltip",
+        "@winterop-com/sokkel-ui-charts/ChartLegend": "legend_of (list), TimeSeriesPanel::legend_table (table: DataTable listed, Cell::Swatch)"
     },
     "screens": [
         {

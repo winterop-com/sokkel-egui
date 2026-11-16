@@ -8,7 +8,9 @@ use sokkel_egui::{
     Icon, LogLevel, LogLine, LogView, Page, PageHeader, Rail, RailEntry, RailGroup, RefreshControl, Shell, ShellPart,
     StatColorMode, StatPanel, StatusLine, StatusTone, TableState, TimeRangePicker, TopBar, format_value, install,
 };
-use sokkel_egui_charts::{BarGauge, BarPanel, Fill as ChartFill, GaugePanel, HeatmapPanel, Series, TimeSeriesPanel};
+use sokkel_egui_charts::{
+    BarGauge, BarPanel, Fill as ChartFill, GaugePanel, HeatmapPanel, LegendStat, Series, TimeSeriesPanel,
+};
 
 use crate::model::{Dashboard, Fill, Panel, seed_dashboards};
 use crate::panel_data::{Shape, panel_data};
@@ -371,6 +373,10 @@ fn draw_panel(ui: &mut Ui, panel: &Panel, variables: &Variables, range: &Range, 
                 if let Some(value) = step.value {
                     chart = chart.threshold(value, t.color(step.color));
                 }
+            }
+            // more than three series read better as a table of their figures, as the web's
+            if series.len() > 3 {
+                chart = chart.legend_table(&[LegendStat::Avg, LegendStat::Max, LegendStat::Current]);
             }
             for (one, color) in series {
                 let mut s = Series::new(one.name, one.values);

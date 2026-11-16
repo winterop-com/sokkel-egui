@@ -1,9 +1,136 @@
 //! A dashboard's chart panels, after sokkel-ui's `TimeSeriesPanel` in its `ChartFrame`.
 
 use egui::{Color32, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
-use sokkel_egui::{TextRole, Threshold, cell_height, format_value, report_natural_height, threshold_color, tokens};
+use sokkel_egui::{
+    Cell, Column, DataTable, TableState, TableVariant, TextRole, Threshold, cell_height, format_value,
+    report_natural_height, threshold_color, tokens,
+};
 
 use crate::{BarChart, Fill, Gauge, LineChart, Series, color_of, legend_of};
+
+/// A figure a legend's table works out from each series' values, as sokkel-ui's `LegendStat`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LegendStat {
+    Min,
+    Max,
+    Avg,
+    Current,
+}
+
+impl LegendStat {
+    /// The figure from `values`, the missing ones passed over; `None` when there are none.
+    pub fn of(self, values: &[Option<f64>]) -> Option<f64> {
+        let numbers: Vec<f64> = values.iter().flatten().copied().filter(|v| v.is_finite()).collect();
+        let last = *numbers.last()?;
+        Some(match self {
+            LegendStat::Min => numbers.iter().copied().fold(f64::INFINITY, f64::min),
+            LegendStat::Max => numbers.iter().copied().fold(f64::NEG_INFINITY, f64::max),
+            LegendStat::Avg => numbers.iter().sum::<f64>() / numbers.len() as f64,
+            LegendStat::Current => last,
+        })
+    }
+}
+
+/// The words a legend's table says, English by default.
+#[derive(Clone, Debug)]
+pub struct LegendWords {
+    pub series: String,
+    pub min: String,
+    pub max: String,
+    pub avg: String,
+    pub current: String,
+}
+
+impl Default for LegendWords {
+    fn default() -> Self {
+        Self {
+            series: "Series".into(),
+            min: "Min".into(),
+            max: "Max".into(),
+            avg: "Avg".into(),
+            current: "Current".into(),
+        }
+    }
+}
+
+impl LegendWords {
+    fn of(&self, stat: LegendStat) -> &str {
+        match stat {
+            LegendStat::Min => &self.min,
+            LegendStat::Max => &self.max,
+            LegendStat::Avg => &self.avg,
+            LegendStat::Current => &self.current,
+        }
+    }
+}
+
+/// More entries than this and a legend's table scrolls, 160 at most, as the web's `SHORT_LEGEND`.
+const SHORT_LEGEND: usize = 6;
+
+/// A legend as a table, as sokkel-ui's `ChartLegend` in `mode="table"`: each series a row of a
+/// listed `Table`, its swatch and name, then `stats` worked out from its values and written with
+/// `write`, in the mono face at the end of their columns.
+fn legend_table(
+    ui: &mut Ui,
+    entries: &[(String, Color32, Vec<Option<f64>>)],
+    stats: &[LegendStat],
+    words: &LegendWords,
+    write: impl Fn(f64) -> String,
+) {
+    let t = tokens(ui.ctx());
+    let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+    let rows: Vec<Vec<Cell>> = entries
+        .iter()
+        .map(|(name, color, values)| {
+            let mut row = vec![Cell::Swatch {
+                text: name.clone(),
+                color: *color,
+            }];
+            row.extend(
+                stats
+                    .iter()
+                    .map(|stat| Cell::Mono(stat.of(values).map_or_else(|| "-".to_owned(), &write))),
+            );
+            row
+        })
+        .collect();
+    // a figure's column as wide as its widest figure or head, 64 at least with the room between
+    // columns, as `minmax(4rem,auto)`
+    let width_of = |text: &str, font: egui::FontId| {
+        ui.painter()
+            .layout_no_wrap(text.to_owned(), font, Color32::WHITE)
+            .size()
+            .x
+    };
+    let mut columns = vec![Column::new(&words.series, 116.0).fill().sortable(false)];
+    for (index, stat) in stats.iter().enumerate() {
+        let head = width_of(words.of(*stat), TextRole::Head.font(&t));
+        let widest = rows
+            .iter()
+            .map(|row| match &row[index + 1] {
+                Cell::Mono(text) => width_of(text, mono.clone()),
+                _ => 0.0,
+            })
+            .fold(head, f32::max);
+        columns.push(
+            Column::new(words.of(*stat), (widest + 12.0).max(52.0))
+                .numeric()
+                .sortable(false),
+        );
+    }
+    let id = ui.id().with("legend-table");
+    let mut state: TableState = ui.data_mut(|d| d.get_temp_mut_or_default::<TableState>(id).clone());
+    let mut table = DataTable::new(id, &columns, &rows, &mut state)
+        .variant(TableVariant::List)
+        .framed(false)
+        .bar(false)
+        .footer(false);
+    if entries.len() > SHORT_LEGEND {
+        table = table.height(160.0);
+    }
+    table.show(ui);
+    ui.data_mut(|d| d.insert_temp(id, state));
+}
 
 /// A dashboard panel of values over time: lines over fading areas, dashed threshold lines, and a
 /// legend under it, in a chart's frame (a card with the plain border, its title and subtitle in a
@@ -15,6 +142,7 @@ pub struct TimeSeriesPanel {
     chart: LineChart,
     series: Vec<Series>,
     legend: bool,
+    table: Option<(Vec<LegendStat>, LegendWords)>,
     height: f32,
 }
 
@@ -27,8 +155,24 @@ impl TimeSeriesPanel {
             chart: LineChart::new(x).fill(Fill::Gradient),
             series: Vec::new(),
             legend: true,
+            table: None,
             height: 192.0,
         }
+    }
+
+    /// The legend as a table of `stats` worked out from each series' values, as the web's
+    /// `legend="table"` with its `legendStats`.
+    pub fn legend_table(mut self, stats: &[LegendStat]) -> Self {
+        self.table = Some((stats.to_vec(), LegendWords::default()));
+        self
+    }
+
+    /// The words of the legend's table.
+    pub fn legend_words(mut self, words: LegendWords) -> Self {
+        if let Some((_, held)) = &mut self.table {
+            *held = words;
+        }
+        self
     }
 
     pub fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
@@ -37,10 +181,7 @@ impl TimeSeriesPanel {
     }
 
     pub fn series(mut self, series: Series) -> Self {
-        self.series.push(Series {
-            values: Vec::new(),
-            ..series.clone()
-        });
+        self.series.push(series.clone());
         self.chart = self.chart.series(series);
         self
     }
@@ -91,10 +232,20 @@ impl TimeSeriesPanel {
     }
 
     pub fn show(self, ui: &mut Ui) {
-        let (chart, height, legend_on, names) = (self.chart, self.height, self.legend, self.series);
+        let (chart, height, legend_on, names, table) = (self.chart, self.height, self.legend, self.series, self.table);
         chart_frame(ui, &self.title, self.subtitle.as_deref(), |ui| {
+            let writing = chart.writing.clone();
             ui.add(chart.height(height));
-            if legend_on && !names.is_empty() {
+            if let (true, Some((stats, words))) = (legend_on && !names.is_empty(), &table) {
+                ui.add_space(4.0);
+                let t = tokens(ui.ctx());
+                let entries: Vec<(String, Color32, Vec<Option<f64>>)> = names
+                    .iter()
+                    .enumerate()
+                    .map(|(i, s)| (s.name.clone(), color_of(&t, s, i), s.values.clone()))
+                    .collect();
+                legend_table(ui, &entries, stats, words, |v| writing.value(v));
+            } else if legend_on && !names.is_empty() {
                 ui.add_space(4.0);
                 let t = tokens(ui.ctx());
                 let items: Vec<(&str, Color32)> = names
@@ -620,5 +771,20 @@ impl BarPanel {
                 legend_of(ui, &items);
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::LegendStat;
+
+    #[test]
+    fn a_legend_works_out_its_figures_past_the_gaps() {
+        let values = [Some(4.0), None, Some(1.0), Some(7.0), None];
+        assert_eq!(LegendStat::Min.of(&values), Some(1.0));
+        assert_eq!(LegendStat::Max.of(&values), Some(7.0));
+        assert_eq!(LegendStat::Avg.of(&values), Some(4.0));
+        assert_eq!(LegendStat::Current.of(&values), Some(7.0));
+        assert_eq!(LegendStat::Avg.of(&[None]), None);
     }
 }
