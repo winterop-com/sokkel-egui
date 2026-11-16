@@ -330,7 +330,13 @@ impl<'a> BarGauge<'a> {
                 });
                 let value_galley = painter.layout_no_wrap(written, value_font.clone(), tone);
                 let value_width = value_galley.size().x.max(40.0);
-                let name_galley = painter.layout_no_wrap(name.clone(), mono.clone(), t.color("muted-foreground"));
+                // the name cut short with an ellipsis past its column of 96, as the web's `truncate`
+                let mut job = egui::text::LayoutJob::single_section(
+                    name.clone(),
+                    egui::TextFormat::simple(mono.clone(), t.color("muted-foreground")),
+                );
+                job.wrap = egui::text::TextWrapping::truncate_at_width(96.0);
+                let name_galley = painter.layout_job(job);
                 // the name in a column of 96, the bar 8 after it, the value 8 after the bar
                 painter.galley(
                     pos2(rect.left(), middle - name_galley.size().y / 2.0),

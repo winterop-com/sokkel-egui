@@ -254,16 +254,35 @@ fn draw_panel(ui: &mut Ui, panel: &Panel, variables: &Variables, range: &Range, 
                 .map(|r| {
                     vec![
                         Cell::Mono(r.name.clone()),
-                        Cell::Text(write(r.last)),
-                        Cell::Text(write(r.mean)),
-                        Cell::Text(write(r.max)),
-                        Cell::Text(write(r.min)),
+                        Cell::Number {
+                            value: r.last,
+                            text: write(r.last),
+                        },
+                        Cell::Number {
+                            value: r.mean,
+                            text: write(r.mean),
+                        },
+                        Cell::Number {
+                            value: r.max,
+                            text: write(r.max),
+                        },
+                        Cell::Number {
+                            value: r.min,
+                            text: write(r.min),
+                        },
                     ]
                 })
                 .collect();
             DashboardPanel::new(&panel.title).flush(true).show(ui, |ui| {
                 ui.set_height(224.0);
+                // by Last, the highest first, until the reader sorts it otherwise
+                if table.sort.is_none() {
+                    table.sort = Some((1, false));
+                }
                 DataTable::new(("panel-table", &panel.id), &columns, &cells, table)
+                    .framed(false)
+                    .bar(true)
+                    .stack_below(400.0)
                     .footer(false)
                     .show(ui);
             });

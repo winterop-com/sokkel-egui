@@ -157,6 +157,12 @@ pub enum Cell {
     },
     /// Values as a sparkline 112 by 28, in `ink`.
     Trend(Vec<f64>, egui::Color32),
+    /// A figure written as `text` and sorted by `value`, as a column's `sortValue` sorts by the
+    /// number rather than the words: `144 ms`.
+    Number {
+        value: f64,
+        text: String,
+    },
     Empty,
 }
 
@@ -170,6 +176,7 @@ impl Cell {
             | Cell::Mono(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
+            Cell::Number { text, .. } => text.clone(),
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
             Cell::Tags(tags) => tags.join(" "),
             Cell::Relative { at, now } => super::relative_time(at - now),
@@ -190,6 +197,9 @@ impl Cell {
             Cell::Tags(tags) => tags.join(" "),
             Cell::Relative { at, .. } => format!("{:024.3}", at + 1e18),
             Cell::Trend(values, _) => format!("{:024.3}", values.last().copied().unwrap_or(0.0) + 1e18),
+            // lifted by 1e12 so a negative figure still sorts as a word, small enough that an f64
+            // read back keeps every digit
+            Cell::Number { value, .. } => format!("{:024.6}", value + 1e12),
             Cell::Empty => String::new(),
         }
     }
@@ -1816,7 +1826,9 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
         Cell::Chip(label, tone) => {
             super::chip::paint_at(ui, rect.left(), rect.center().y, label, *tone);
         }
-        Cell::Text(label) => text(ui, TextRole::Body.rich(t, label), t.color("foreground")),
+        Cell::Text(label) | Cell::Number { text: label, .. } => {
+            text(ui, TextRole::Body.rich(t, label), t.color("foreground"))
+        }
         Cell::Struck(label) => text(
             ui,
             TextRole::Body.rich(t, label).strikethrough(),
@@ -1938,7 +1950,9 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         width
     };
     match cell {
-        Cell::Text(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
+        Cell::Text(label) | Cell::Number { text: label, .. } => {
+            text(ui, TextRole::Help.rich(t, label), quiet, at.x, room)
+        }
         Cell::Chip(label, tone) => super::chip::paint_at(ui, at.x, at.y, label, *tone),
         Cell::Tags(tags) => paint_tags(ui, tags, at, room),
         Cell::Relative { .. } => text(ui, TextRole::Help.rich(t, cell.draft()), quiet, at.x, room),
