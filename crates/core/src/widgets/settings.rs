@@ -19,6 +19,8 @@ pub struct SettingsSection {
     pub group: Option<String>,
     /// Whether the footer offers Reset to defaults while the section shows.
     pub reset: bool,
+    /// The title over its rows, when it says more than its label (`Subscribers (2)`).
+    pub heading: Option<String>,
 }
 
 impl SettingsSection {
@@ -29,7 +31,14 @@ impl SettingsSection {
             icon,
             group: None,
             reset: true,
+            heading: None,
         }
+    }
+
+    /// The title over the section's rows in place of its label, as the web's section `heading`.
+    pub fn heading(mut self, heading: impl Into<String>) -> Self {
+        self.heading = Some(heading.into());
+        self
     }
 
     /// Put the section under a group title in the column, as "Preferences" or "This demo".
@@ -366,7 +375,9 @@ impl<'a> SettingsDialog<'a> {
                                     for section in sections {
                                         let state = RowsState {
                                             query: query.trim().to_lowercase(),
-                                            heading: Some(section.label.clone()),
+                                            heading: Some(
+                                                section.heading.clone().unwrap_or_else(|| section.label.clone()),
+                                            ),
                                             shown: 0,
                                         };
                                         ui.ctx().data_mut(|d| d.insert_temp(rows_state_id(), state));
@@ -463,6 +474,29 @@ pub fn setting_row_found_by(
     keywords: &[&str],
     control: impl FnOnce(&mut Ui),
 ) {
+    setting_row_laid(ui, title, description, keywords, false, control);
+}
+
+/// A setting whose control stands under its words, 12 down at its own width, as sokkel-ui's
+/// `SettingRow` with `layout="below"`: for a wide control, such as a choice of several or a field.
+pub fn setting_row_below(
+    ui: &mut Ui,
+    title: &str,
+    description: &str,
+    keywords: &[&str],
+    control: impl FnOnce(&mut Ui),
+) {
+    setting_row_laid(ui, title, description, keywords, true, control);
+}
+
+fn setting_row_laid(
+    ui: &mut Ui,
+    title: &str,
+    description: &str,
+    keywords: &[&str],
+    below: bool,
+    control: impl FnOnce(&mut Ui),
+) {
     let t = tokens(ui.ctx());
     let rule = |ui: &mut Ui| {
         let (rule, _) = ui.allocate_exact_size(vec2(ui.available_width(), 1.0), Sense::hover());
@@ -495,6 +529,15 @@ pub fn setting_row_found_by(
     }
     Frame::new().inner_margin(Margin::symmetric(0, 16)).show(ui, |ui| {
         ui.set_width(ui.available_width());
+        if below {
+            ui.spacing_mut().item_spacing.y = 2.0;
+            ui.label(TextRole::Action.rich(&t, title).color(t.color("popover-foreground")));
+            ui.add(egui::Label::new(TextRole::Body.rich(&t, description).color(t.color("muted-foreground"))).wrap());
+            ui.add_space(10.0);
+            // one line, as tall as the control
+            ui.horizontal(control);
+            return;
+        }
         // narrower than 512, the control under the words, 12 down, a select across the row
         if ui.available_width() < 512.0 {
             ui.spacing_mut().item_spacing.y = 2.0;

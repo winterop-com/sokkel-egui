@@ -78,8 +78,8 @@ pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, P
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
 pub use section::{DescriptionList, PersonRow, Section, Timeline, TimelineEvent};
 pub use settings::{
-    SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, ThemeWords, setting_row, setting_row_found_by,
-    theme_settings,
+    SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, ThemeWords, setting_row, setting_row_below,
+    setting_row_found_by, theme_settings,
 };
 pub use stat::{KpiRow, Stat, sparkline};
 pub use stat_panel::{StatPanel, StatWords, Threshold, format_value, threshold_color};

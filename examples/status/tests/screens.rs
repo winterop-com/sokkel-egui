@@ -38,6 +38,7 @@ fn every_screen() {
         ("regions", "regions", 800.0),
         ("on_call", "on-call", 800.0),
         ("public", "public", 800.0),
+        ("settings", "settings", 800.0),
     ] {
         let mut harness = render(route, height);
         results.add(harness.try_snapshot(name));

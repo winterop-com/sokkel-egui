@@ -8,6 +8,7 @@ pub mod dialogs;
 pub mod history;
 pub mod live;
 pub mod new_incident;
+pub mod settings;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
@@ -35,7 +36,61 @@ pub const TIDEVANN_MARK: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewB
 const ME: &str = "ada";
 
 /// How often a reading comes, in seconds.
+/// The interval the board starts reading at, in seconds.
 const INTERVAL: u32 = 2;
+
+/// Which changes of state a notice tells, as the web's `notify`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Notify {
+    All,
+    Outages,
+    Off,
+}
+
+/// How often the simulation makes something go wrong, as the web's `Weather`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Weather {
+    Calm,
+    Normal,
+    Stormy,
+}
+
+/// What the board's settings set, as the web's `Settings` (`live` is `StatusApp::live`).
+#[derive(Clone, Debug, PartialEq)]
+pub struct Options {
+    /// How often the board takes a reading, in seconds: 1, 2 or 5.
+    pub interval: u32,
+    /// Times of day on a 12-hour clock.
+    pub twelve_hour: bool,
+    pub notify: Notify,
+    pub weather: Weather,
+    /// Whether a service going wrong opens an incident by itself.
+    pub auto_incidents: bool,
+    /// Whether the on-call person's updates move an incident the board opened along.
+    pub responder: bool,
+    /// The status page's title.
+    pub page_title: String,
+    /// Whether the status page shows each service's last ninety days.
+    pub show_uptime: bool,
+    /// How many days of past incidents the status page lists: 7 or 14.
+    pub history_days: u32,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            interval: INTERVAL,
+            twelve_hour: false,
+            notify: Notify::All,
+            weather: Weather::Normal,
+            auto_incidents: true,
+            responder: true,
+            page_title: "Tidevann status".into(),
+            show_uptime: true,
+            history_days: 7,
+        }
+    }
+}
 
 /// The board's places, as the web's `PLACES`.
 const PLACES: [(&str, &str); 5] = [
@@ -58,6 +113,8 @@ pub struct StatusApp {
     pub service_day: Option<Day>,
     /// Settings open over the page.
     pub settings: bool,
+    /// The settings dialog's section, the Demo's choices and its confirm.
+    pub settings_state: settings::SettingsState,
     pub appearance: Appearance,
     /// The command palette's query and highlighted row, while it is open.
     pub palette: Option<(String, usize)>,
@@ -66,6 +123,10 @@ pub struct StatusApp {
     /// The board's clock: seconds since midnight of the first reading, and the readings since.
     pub start: u32,
     pub readings: u32,
+    /// Seconds of the board's clock since the first reading.
+    pub elapsed: u32,
+    /// What the settings set: how the board reads and tells, the simulation and the status page.
+    pub options: Options,
     /// Who answers now.
     pub on_call: String,
     /// Every incident, open ones first.
@@ -147,6 +208,7 @@ impl StatusApp {
     pub fn on(appearance: Appearance) -> Self {
         // the demo's day, as the web's shots are taken on it
         let today = Day::parse("2026-11-16").expect("a day");
+        let start_ms = 9.0 * 3600.0 * 1000.0;
         Self {
             desktop: false,
             place: "overview".into(),
@@ -158,6 +220,8 @@ impl StatusApp {
             live: true,
             start: 9 * 3600,
             readings: 0,
+            elapsed: 0,
+            options: Options::default(),
             on_call: "grace".into(),
             incidents: data::seed_incidents(9.0 * 3600.0 * 1000.0),
             shown: 0,
@@ -172,7 +236,23 @@ impl StatusApp {
             hand_over: None,
             on_call_note: data::ON_CALL_NOTE.into(),
             maintenance: data::seed_maintenance(),
-            subscribe: Subscribe::default(),
+            subscribe: Subscribe {
+                // the web's seed: two addresses, a month and eleven days before
+                subscribers: vec![
+                    Subscriber {
+                        email: "ops@example.org".into(),
+                        services: Vec::new(),
+                        at: start_ms - 30.0 * 86_400_000.0,
+                    },
+                    Subscriber {
+                        email: "harbor-team@example.org".into(),
+                        services: vec!["api", "web"],
+                        at: start_ms - 11.0 * 86_400_000.0,
+                    },
+                ],
+                ..Subscribe::default()
+            },
+            settings_state: settings::SettingsState::default(),
             new_incident: None,
             deploys: data::seed_deploys(9.0 * 3600.0 * 1000.0),
             maintenance_form: None,
@@ -235,10 +315,11 @@ impl StatusApp {
         }
     }
 
-    /// Take the next reading, `INTERVAL` on.
+    /// Take the next reading, the interval the settings give on.
     pub fn tick(&mut self) {
         self.readings += 1;
-        let at = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        self.elapsed += self.options.interval;
+        let at = (self.start + self.elapsed) as f64 * 1000.0;
         let known = live::Known {
             deploying: SERVICES
                 .iter()
@@ -282,13 +363,12 @@ impl StatusApp {
 
     /// The last reading's time, `HH:MM:SS`.
     pub fn clock(&self) -> String {
-        let at = self.start + self.readings * INTERVAL;
-        format!("{:02}:{:02}:{:02}", at / 3600, at / 60 % 60, at % 60)
+        time_of_day(self.start + self.elapsed, self.options.twelve_hour, true)
     }
 
     /// Every service's last ninety days, in `SERVICES`' order.
     pub fn uptime(&self) -> Vec<Vec<UptimeDay>> {
-        let now = ((self.start + self.readings * INTERVAL) as f64) * 1000.0;
+        let now = ((self.start + self.elapsed) as f64) * 1000.0;
         SERVICES
             .iter()
             .map(|s| history::uptime_days(s.id, &self.incidents, self.today, now, 90))
@@ -339,11 +419,8 @@ impl StatusApp {
             return;
         }
         let groups = self.groups();
-        let mut place = if self.settings {
-            "settings".to_owned()
-        } else {
-            self.place.clone()
-        };
+        // the settings open over the page, which the rail keeps marked
+        let mut place = self.place.clone();
         // what the rail started the frame on, so only a place chosen there moves the app after it
         let shown = place.clone();
         let label = PLACES
@@ -451,7 +528,7 @@ impl StatusApp {
             self.go(&place);
         }
         // a service's dialogs over its page
-        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let now = (self.start + self.elapsed) as f64 * 1000.0;
         if let Some(form) = self.maintenance_form.as_mut() {
             let wall = sokkel_ui_egui::Moment {
                 day: self.today,
@@ -481,7 +558,7 @@ impl StatusApp {
         }
         // the new incident dialog over whatever the board shows; opened, it goes to the incidents
         if let Some(form) = self.new_incident.as_mut() {
-            let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+            let now = (self.start + self.elapsed) as f64 * 1000.0;
             match form.show(ui.ctx(), &self.incidents, now, ME) {
                 Some(new_incident::Answer::Open(made)) => {
                     let id = made.id.clone();
@@ -511,6 +588,8 @@ impl StatusApp {
                 None => {}
             }
         }
+        self.settings_dialog(ui.ctx());
+        sokkel_ui_egui::Toaster::new().show(ui.ctx());
         match account {
             Some(AccountAction::Settings) => self.settings = true,
             Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
@@ -642,7 +721,10 @@ impl StatusApp {
                     "Drag a panel by its grip to move it, set its width or remove it, and drag a widget in to add it."
                         .to_owned()
                 } else if live {
-                    format!("Live, a reading every {INTERVAL} s, the last at {clock}.")
+                    format!(
+                        "Live, a reading every {} s, the last at {clock}.",
+                        self.options.interval
+                    )
                 } else {
                     format!("Paused at {clock}.")
                 };
@@ -739,7 +821,7 @@ impl StatusApp {
     /// The incidents the filter shows, newest first, as the web's `IncidentTable`: stacked as
     /// labeled cards where its columns do not fit.
     fn incident_table(&mut self, ui: &mut Ui) {
-        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let now = (self.start + self.elapsed) as f64 * 1000.0;
         // every word searched for in what an incident says: its code, title, services, sites and
         // assignee, as the web's page matches them
         let words: Vec<String> = self.incident_search.split_whitespace().map(str::to_lowercase).collect();
@@ -821,7 +903,7 @@ impl StatusApp {
 
     /// A moment of the board's clock as the web's `formatMoment`: `Mon, Nov 16, 08:51`.
     pub fn moment(&self, at: f64) -> String {
-        moment_of(self.today, at)
+        moment_of(self.today, at, self.options.twelve_hour)
     }
 
     /// One incident, as the web's `Incident` page: its head with its state, severity and how long
@@ -829,7 +911,7 @@ impl StatusApp {
     /// and beside them its details, each changed in place.
     fn incident_page(&mut self, ui: &mut Ui) {
         let t = sokkel_ui_egui::tokens(ui.ctx());
-        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let now = (self.start + self.elapsed) as f64 * 1000.0;
         let Some(index) = self
             .incident
             .as_deref()
@@ -1052,7 +1134,7 @@ impl StatusApp {
     /// Resolve an open incident, or reopen a resolved one, with an update saying so, as the web's
     /// `postUpdate`.
     pub fn resolve_or_reopen(&mut self, id: &str) {
-        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let now = (self.start + self.elapsed) as f64 * 1000.0;
         let Some(incident) = self.incidents.iter_mut().find(|i| i.id == id) else {
             return;
         };
@@ -1195,7 +1277,7 @@ impl StatusApp {
     /// each of the last seven days.
     fn public_page(&mut self, ui: &mut Ui) {
         let t = sokkel_ui_egui::tokens(ui.ctx());
-        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let now = (self.start + self.elapsed) as f64 * 1000.0;
         let window = ui.ctx().content_rect();
         let mut page = ui.new_child(
             egui::UiBuilder::new()
@@ -1206,7 +1288,8 @@ impl StatusApp {
         let ui = &mut page;
         ui.painter().rect_filled(window, 0.0, t.color("background"));
         ui.spacing_mut().item_spacing.y = 0.0;
-        let trail = ["Tidevann status"];
+        let title = self.options.page_title.clone();
+        let trail = [title.as_str()];
         let mut bar = AppBar::new(&trail).mark(TIDEVANN_MARK);
         if self.desktop {
             bar = bar.desktop(DesktopWindow::native());
@@ -1250,7 +1333,8 @@ impl StatusApp {
         };
         Banner::new(tone, format!("{words}, as of {}", self.clock())).show(ui);
         let today = self.today;
-        let moment = move |at: f64| moment_of(today, at);
+        let twelve = self.options.twelve_hour;
+        let moment = move |at: f64| moment_of(today, at, twelve);
         let affects = |incident: &data::Incident| {
             let mut parts: Vec<String> = incident.services.iter().map(|s| s.to_string()).collect();
             parts.extend(incident.sites.iter().map(|id| {
@@ -1333,10 +1417,37 @@ impl StatusApp {
                                     .collect();
                                 Section::new("Scheduled maintenance").show(ui, |ui| Timeline::new(events).show(ui));
                             }
-                            Section::new("Services").meta("the last 90 days").show(ui, |ui| {
-                                uptime_list(ui, &services, &health, &uptime);
+                            let show_uptime = self.options.show_uptime;
+                            let mut services_section = Section::new("Services");
+                            if show_uptime {
+                                services_section = services_section.meta("the last 90 days");
+                            }
+                            services_section.show(ui, |ui| {
+                                if show_uptime {
+                                    uptime_list(ui, &services, &health, &uptime);
+                                } else {
+                                    // each service and its state, a line each, as the web's without the bars
+                                    Stack::new(Gap::Sm).show(ui, |ui| {
+                                        for (index, service) in SERVICES.iter().enumerate() {
+                                            ui.horizontal(|ui| {
+                                                ui.label(TextRole::Body.rich(&t, service.id));
+                                                ui.with_layout(
+                                                    egui::Layout::right_to_left(egui::Align::Center),
+                                                    |ui| {
+                                                        let state = health[index];
+                                                        ui.add(
+                                                            sokkel_ui_egui::Chip::new(state.words().to_lowercase())
+                                                                .tone(health_tone(state)),
+                                                        );
+                                                    },
+                                                );
+                                            });
+                                        }
+                                    });
+                                }
                             });
-                            let events: Vec<TimelineEvent> = (0..7)
+                            let history_days = self.options.history_days as i32;
+                            let events: Vec<TimelineEvent> = (0..history_days)
                                 .map(|back| {
                                     let start = -f64::from(back) * 86_400_000.0;
                                     let happened: Vec<&data::Incident> = self
@@ -1401,8 +1512,9 @@ impl StatusApp {
                                 })
                                 .collect();
                             Section::new("Past incidents")
-                                .meta("the last 7 days")
+                                .meta(format!("the last {history_days} days"))
                                 .show(ui, |ui| Timeline::new(events).show(ui));
+                            self.subscribe.now = (self.start + self.elapsed) as f64 * 1000.0;
                             subscribe_form(ui, &mut self.subscribe);
                             MetaLine::new([
                                 "Times are in your own time zone".to_owned(),
@@ -1423,7 +1535,7 @@ impl StatusApp {
     /// service's last ninety days. Returns the route a panel asked to go to.
     fn board(&mut self, ui: &mut Ui) -> Option<String> {
         let t = sokkel_ui_egui::tokens(ui.ctx());
-        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let now = (self.start + self.elapsed) as f64 * 1000.0;
         let mut to_all = None;
         let mut to_day = None;
         let markers = self.site_markers(&t);
@@ -1486,7 +1598,11 @@ impl StatusApp {
             .take(5)
             .map(|w| {
                 ListRow::new(w.title.clone())
-                    .detail(format!("{}, {}", w.service, moment_of(today, w.starts)))
+                    .detail(format!(
+                        "{}, {}",
+                        w.service,
+                        moment_of(today, w.starts, self.options.twelve_hour)
+                    ))
                     .mark(RowMark::Icon(Icon::CalendarClock, None))
                     .pressable(true)
             })
@@ -1854,7 +1970,7 @@ impl StatusApp {
         }
         if let Some(site) = chosen {
             if troubled {
-                let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+                let now = (self.start + self.elapsed) as f64 * 1000.0;
                 self.live_world.trigger(live::ScenarioKind::Region, Some(site), now);
             }
             self.selected_site = Some(site);
@@ -1933,7 +2049,7 @@ impl StatusApp {
                 let back = f64::from(self.today.0 - day.0);
                 let from = -back * 24.0 * 3600.0 * 1000.0;
                 let to = from + 24.0 * 3600.0 * 1000.0;
-                let now = ((self.start + self.readings * INTERVAL) as f64) * 1000.0;
+                let now = ((self.start + self.elapsed) as f64) * 1000.0;
                 self.incidents
                     .iter()
                     .filter(|i| i.services.contains(&id) && i.opened < to && i.resolved.unwrap_or(now) > from)
@@ -1953,7 +2069,7 @@ impl StatusApp {
             .unwrap_or_default();
         let mut pressed = None;
         // the service's deploys, newest first, and its windows, latest first, as the web's
-        let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+        let now = (self.start + self.elapsed) as f64 * 1000.0;
         let running = self.running(id);
         let mut mine: Vec<&data::Deploy> = self.deploys.iter().filter(|d| d.service == id).collect();
         mine.sort_by(|a, b| b.at.total_cmp(&a.at));
@@ -2458,17 +2574,18 @@ fn group(n: u64) -> String {
 
 impl eframe::App for StatusApp {
     fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
-        // a reading every INTERVAL seconds of the window's clock while live, as the web's board
+        // a reading every interval of the window's clock while live, as the web's board
         let now = ui.ctx().input(|i| i.time);
         let last = *self.last_tick.get_or_insert(now);
-        if self.live && now - last >= INTERVAL as f64 {
+        let interval = f64::from(self.options.interval);
+        if self.live && now - last >= interval {
             self.tick();
             self.last_tick = Some(now);
         } else if !self.live {
             self.last_tick = Some(now);
         }
         if self.live {
-            let wait = (INTERVAL as f64 - (now - last)).max(0.05);
+            let wait = (interval - (now - last)).max(0.05);
             ui.ctx().request_repaint_after(std::time::Duration::from_secs_f64(wait));
         }
         egui::CentralPanel::default()
@@ -2575,6 +2692,8 @@ fn uptime_list(
 pub struct Subscriber {
     pub email: String,
     pub services: Vec<&'static str>,
+    /// When they subscribed, in milliseconds of the board's clock.
+    pub at: f64,
 }
 
 /// The public page's form: the address being written, every service or some, the ones ticked, what
@@ -2589,6 +2708,8 @@ pub struct Subscribe {
     pub done: Option<Subscriber>,
     /// The page scrolls to the form on its next frame.
     pub reveal: bool,
+    /// The board's clock, which a subscription made now is dated by.
+    pub now: f64,
 }
 
 impl Default for Subscribe {
@@ -2601,6 +2722,7 @@ impl Default for Subscribe {
             subscribers: Vec::new(),
             done: None,
             reveal: false,
+            now: 0.0,
         }
     }
 }
@@ -2643,6 +2765,7 @@ impl Subscribe {
         let made = Subscriber {
             email: address,
             services,
+            at: self.now,
         };
         self.subscribers.push(made.clone());
         self.done = Some(made);
@@ -2766,10 +2889,28 @@ fn state_index(state: data::State) -> usize {
 }
 
 /// A moment of the board's clock, its midnight on `today` the clock's zero, as `Mon, Nov 16, 08:51`.
-fn moment_of(today: Day, at: f64) -> String {
+fn moment_of(today: Day, at: f64, twelve: bool) -> String {
     let day = today.plus((at / 86_400_000.0).floor() as i32);
-    let minutes = (at.rem_euclid(86_400_000.0) / 60_000.0) as u64;
-    format!("{}, {:02}:{:02}", day.with_weekday(), minutes / 60, minutes % 60)
+    let seconds = (at.rem_euclid(86_400_000.0) / 1000.0) as u32;
+    format!("{}, {}", day.with_weekday(), time_of_day(seconds, twelve, false))
+}
+
+/// A time of day as the web's `formatClock`: `14:02:11` on a 24-hour clock, `2:02:11 PM` on a
+/// 12-hour one; without seconds `14:02` or `2:02 PM`.
+fn time_of_day(seconds: u32, twelve: bool, with_seconds: bool) -> String {
+    let (hours, minutes, secs) = (seconds / 3600 % 24, seconds / 60 % 60, seconds % 60);
+    let tail = if with_seconds {
+        format!(":{secs:02}")
+    } else {
+        String::new()
+    };
+    if twelve {
+        let hour = if hours % 12 == 0 { 12 } else { hours % 12 };
+        let half = if hours < 12 { "AM" } else { "PM" };
+        format!("{hour}:{minutes:02}{tail} {half}")
+    } else {
+        format!("{hours:02}:{minutes:02}{tail}")
+    }
 }
 
 /// The version a deploy put out, by its id.

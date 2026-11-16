@@ -139,9 +139,16 @@ and never chase a difference made of numbers.
   region (a site's round trips), each rising, holding and falling back (`envelope`), felt in part
   by what calls on the service it hits, and a deploy running slowing its service; each service's
   health comes from its latest readings and its maintenance windows (`health_of`), as the web's
-  `healthOf`. Still to come: Settings (the web's `SettingsDialog` over the page: readings,
-  notices, the status page and the demo, which starts and calms scenarios, sets how often things
-  go wrong by themselves, and turns on incidents opened for them and the on-call responder).
+  `healthOf`. Settings are the web's `SettingsDialog` over the page (the rail keeps the page
+  marked): Readings (live, a reading every 1, 2 or 5 s, the 12-hour clock), Notices (which
+  changes tell, a test notice), Incidents, Simulation (how often things go wrong, an error spike
+  or a slow drift on a service, trouble at a site, Calm down, Reset demo data behind a confirm),
+  Status page (its title, the 90-day bars, 7 or 14 days of past incidents, Open) with the
+  subscribers (the web's two seeded, each removable), and Appearance. A wide control stands under
+  its words (`setting_row_below`) and a section may head its rows with more than its label
+  (`SettingsSection::heading`). Still to come behind the settings: things going wrong by
+  themselves at the weather's pace, incidents opened for them, the on-call responder, and the
+  notices a change of state raises.
 - A busy confirm lets go after a wait (F23 as the owner refined it, in sokkel-design 0.28.0's
   dialog spec): after `busy-release` (5 s) Cancel says "Stop waiting" and, as Escape does, lets
   the work go (`ConfirmAnswer::StopWaiting`); the shade still holds. The palette's own way out
