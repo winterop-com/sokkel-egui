@@ -122,6 +122,9 @@ pub struct Live {
     started: usize,
     wandered: HashMap<String, f64>,
     seed: u64,
+    /// A stream of its own for things going wrong by themselves, so the calm readings run the
+    /// same whatever the weather.
+    weather_seed: u64,
 }
 
 impl Live {
@@ -136,6 +139,9 @@ impl Live {
             started: 0,
             wandered: HashMap::new(),
             seed: 20261116,
+            // a seed whose first sixty draws stay over 0.12: the demo starts calm for two
+            // minutes whatever the weather, as the web's shots find it, and then goes its way
+            weather_seed: 0x5eed_0328,
         };
         live.readings = (0..SERVICES.len())
             .map(|index| {
@@ -208,6 +214,33 @@ impl Live {
         };
         self.scenarios.push(scenario.clone());
         scenario
+    }
+
+    /// Something going wrong by itself at `now`, as the web's tick: while fewer than `at_once` go
+    /// on, at a chance of one reading's `interval` over `every` (both in milliseconds), a spike, a
+    /// drift or a region, the first two twice as likely.
+    pub fn weather(&mut self, every: f64, at_once: usize, interval: f64, now: f64) -> Option<Scenario> {
+        self.scenarios.retain(|s| now < s.started + s.length);
+        if self.scenarios.len() >= at_once || self.weather_random() >= interval / every {
+            return None;
+        }
+        let kinds = [
+            ScenarioKind::Spike,
+            ScenarioKind::Spike,
+            ScenarioKind::Drift,
+            ScenarioKind::Drift,
+            ScenarioKind::Region,
+        ];
+        let kind = kinds[((self.weather_random() * kinds.len() as f64) as usize).min(kinds.len() - 1)];
+        Some(self.trigger(kind, None, now))
+    }
+
+    fn weather_random(&mut self) -> f64 {
+        self.weather_seed = self.weather_seed.wrapping_add(0x9e37_79b9_7f4a_7c15);
+        let mut z = self.weather_seed;
+        z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+        z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+        (z ^ (z >> 31)) as f64 / u64::MAX as f64
     }
 
     /// Ends everything going wrong, so the world calms down.

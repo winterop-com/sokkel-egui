@@ -93,6 +93,7 @@ impl NewIncident {
                 by: me,
             }],
             public: self.shown,
+            cause: None,
         }
     }
 

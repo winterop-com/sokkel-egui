@@ -100,3 +100,21 @@ fn a_toast_swiped_down_goes() {
     swipe(&mut harness, egui::vec2(0.0, 60.0));
     assert!(toasts(&harness.ctx).is_empty());
 }
+
+#[test]
+fn a_toast_s_action_says_which_and_closes_it() {
+    let mut harness = harness();
+    harness.run();
+    let id = Toast::new("INC-42 opened")
+        .description("Elevated error rates on api")
+        .action("Open")
+        .timeout(None)
+        .show(&harness.ctx);
+    harness.run_steps(4);
+    harness.snapshot("toast_action");
+    harness.get_by_label("Open").click();
+    harness.run_steps(2);
+    assert_eq!(sokkel_ui_egui::toast_acted(&harness.ctx), vec![id]);
+    assert!(toasts(&harness.ctx).is_empty());
+    assert!(sokkel_ui_egui::toast_acted(&harness.ctx).is_empty(), "taken once");
+}

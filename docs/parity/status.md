@@ -147,9 +147,14 @@ and never chase a difference made of numbers.
   Status page (its title, the 90-day bars, 7 or 14 days of past incidents, Open) with the
   subscribers (the web's two seeded, each removable), and Appearance. A wide control stands under
   its words (`setting_row_below`) and a section may head its rows with more than its label
-  (`SettingsSection::heading`). Still to come behind the settings: things going wrong by
-  themselves at the weather's pace, incidents opened for them, the on-call responder, and the
-  notices a change of state raises.
+  (`SettingsSection::heading`). Behind them, as the web's (`watch.rs`): things go wrong by
+  themselves at the weather's pace (a stream of their own, seeded so the demo starts calm for two
+  minutes, as the web's shots find it); trouble that makes a service or a site degraded or down
+  opens an incident given to whoever is on call; the on-call responder moves it to identified
+  after 12 s, monitoring once all it covers is healthy, and resolved 20 s later, until a person
+  posts; and each change of state, an incident opened or resolved, raises a notice with Open
+  (`Toast::action`, `toast_acted`), as the settings ask. Reset demo data keeps the look, the
+  settings and the maps with their tiles.
 - A busy confirm lets go after a wait (F23 as the owner refined it, in sokkel-design 0.28.0's
   dialog spec): after `busy-release` (5 s) Cancel says "Stop waiting" and, as Escape does, lets
   the work go (`ConfirmAnswer::StopWaiting`); the shade still holds. The palette's own way out

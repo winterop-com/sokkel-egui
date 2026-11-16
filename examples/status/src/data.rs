@@ -476,6 +476,9 @@ pub struct Incident {
     pub updates: Vec<Update>,
     /// Whether the public status page shows it.
     pub public: bool,
+    /// What the board opened it for, while the on-call responder moves it along; a person's
+    /// update takes it over and clears it.
+    pub cause: Option<crate::live::ScenarioKind>,
 }
 
 const MINUTE: f64 = 60_000.0;
@@ -496,6 +499,7 @@ pub fn seed_incidents(now: f64) -> Vec<Incident> {
         opened: now - 48.0 * MINUTE,
         resolved: None,
         public: true,
+        cause: None,
         updates: [
             (
                 9.0,
@@ -538,6 +542,7 @@ pub fn seed_incidents(now: f64) -> Vec<Incident> {
             opened,
             resolved: Some(resolved),
             public: true,
+            cause: None,
             updates: one
                 .steps
                 .iter()

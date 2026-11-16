@@ -9,6 +9,7 @@ pub mod history;
 pub mod live;
 pub mod new_incident;
 pub mod settings;
+pub mod watch;
 
 use eframe::egui::{self, Ui};
 use sokkel_ui_egui::{
@@ -115,6 +116,11 @@ pub struct StatusApp {
     pub settings: bool,
     /// The settings dialog's section, the Demo's choices and its confirm.
     pub settings_state: settings::SettingsState,
+    /// Notices waiting to be shown, and where each shown one's Open goes.
+    pub notices: Vec<watch::Notice>,
+    pub notice_routes: Vec<(u64, String)>,
+    /// The scenarios an incident was opened for, so each opens one.
+    pub opened_for: Vec<String>,
     pub appearance: Appearance,
     /// The command palette's query and highlighted row, while it is open.
     pub palette: Option<(String, usize)>,
@@ -253,6 +259,9 @@ impl StatusApp {
                 ..Subscribe::default()
             },
             settings_state: settings::SettingsState::default(),
+            notices: Vec::new(),
+            notice_routes: Vec::new(),
+            opened_for: Vec::new(),
             new_incident: None,
             deploys: data::seed_deploys(9.0 * 3600.0 * 1000.0),
             maintenance_form: None,
@@ -334,6 +343,8 @@ impl StatusApp {
                 .map(|s| self.maintenance.iter().any(|w| w.service == s.id && w.going_on(at)))
                 .collect(),
         };
+        let (health, site_health) = (self.live_world.health.clone(), self.live_world.site_health.clone());
+        self.weather(at);
         self.live_world.tick(at, &known);
         // a deploy runs 8 s of the board's clock, then succeeds, as the web's `DEPLOY_TIME`
         for deploy in &mut self.deploys {
@@ -341,6 +352,7 @@ impl StatusApp {
                 deploy.state = data::DeployState::Succeeded;
             }
         }
+        self.watch(at, &health, &site_health);
     }
 
     /// The version a service runs: its last deploy that succeeded, or the board's own.
@@ -589,6 +601,7 @@ impl StatusApp {
             }
         }
         self.settings_dialog(ui.ctx());
+        self.show_notices(ui.ctx());
         sokkel_ui_egui::Toaster::new().show(ui.ctx());
         match account {
             Some(AccountAction::Settings) => self.settings = true,
@@ -1112,6 +1125,8 @@ impl StatusApp {
             let incident = &mut self.incidents[index];
             incident.state = state;
             incident.resolved = (state == data::State::Resolved).then_some(now);
+            // a person's update takes the incident over from the responder
+            incident.cause = None;
             incident.updates.insert(
                 0,
                 data::Update {
@@ -1145,6 +1160,7 @@ impl StatusApp {
         };
         incident.state = state;
         incident.resolved = (state == data::State::Resolved).then_some(now);
+        incident.cause = None;
         incident.updates.insert(
             0,
             data::Update {

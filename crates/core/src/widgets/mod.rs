@@ -91,7 +91,7 @@ pub use table::{
 pub use table_edit::{EditWords, Editor};
 pub use text_field::{Input, TextField};
 pub use time::relative_time;
-pub use toast::{Toast, ToastKind, Toaster, ToasterWords, close_toast, toasts};
+pub use toast::{Toast, ToastKind, Toaster, ToasterWords, close_toast, toast_acted, toasts};
 pub use tree::{
     Tree, TreeNode, TreeResponse, TreeRow, TreeWords, tree_ancestors, tree_matches, tree_node, visible_rows,
 };

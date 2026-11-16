@@ -344,12 +344,15 @@ impl StatusApp {
         }
     }
 
-    /// Everything the demo keeps back as it started, the look and the settings kept.
+    /// Everything the demo keeps back as it started, the look, the settings and the maps (with
+    /// the tiles the running app gave them) kept.
     pub fn reset_demo(&mut self) {
-        let appearance = self.appearance.clone();
         let options = self.options.clone();
         let desktop = self.desktop;
-        *self = Self::on(appearance);
+        let mut fresh = Self::on(self.appearance.clone());
+        std::mem::swap(&mut fresh.overview_map, &mut self.overview_map);
+        std::mem::swap(&mut fresh.sites_map, &mut self.sites_map);
+        *self = fresh;
         self.options = options;
         self.desktop = desktop;
     }

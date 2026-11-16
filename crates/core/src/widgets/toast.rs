@@ -26,6 +26,9 @@ pub struct Toast {
     /// Seconds before it closes by itself, counted while it is not pointed at; `None` stays until
     /// closed. Five when not given, as base-ui's.
     pub timeout: Option<f64>,
+    /// A button's words before the close, as the web's `actionProps`: pressed, the toast's id comes
+    /// back from [`toast_acted`].
+    pub action: Option<String>,
 }
 
 /// How long a toast takes to move, as the web's `transform 500ms`.
@@ -90,6 +93,8 @@ struct Shown {
     dragged: Option<(u64, Vec2)>,
     /// A toast let go short of the swipe, springing back from where it was let go.
     back: Option<(u64, Vec2, f64)>,
+    /// The toasts whose action was pressed, until [`toast_acted`] takes them.
+    acted: Vec<u64>,
 }
 
 fn store() -> Id {
@@ -103,6 +108,7 @@ impl Toast {
             title: title.into(),
             description: None,
             timeout: Some(5.0),
+            action: None,
         }
     }
 
@@ -129,6 +135,12 @@ impl Toast {
         self
     }
 
+    /// An outline button with these words before the close, as the web's `ToastAction`.
+    pub fn action(mut self, label: impl Into<String>) -> Self {
+        self.action = Some(label.into());
+        self
+    }
+
     /// Shows the toast until it times out or is closed; returns its id, for [`close_toast`].
     pub fn show(self, ctx: &Context) -> u64 {
         ctx.data_mut(|d| {
@@ -140,6 +152,12 @@ impl Toast {
             id
         })
     }
+}
+
+/// The toasts whose action was pressed since this was last asked, by the ids `Toast::show` gave;
+/// each is closed as its action is pressed.
+pub fn toast_acted(ctx: &Context) -> Vec<u64> {
+    ctx.data_mut(|d| std::mem::take(&mut d.get_temp_mut_or_default::<Shown>(store()).acted))
 }
 
 /// Closes a toast before its time; it slides out, as one closed by its button.
@@ -234,7 +252,7 @@ impl Toaster {
             } else {
                 16.0 + gap
             };
-            width - pad * 2.0 - icon - gap - close_side
+            width - pad * 2.0 - icon - gap - close_side - action_width(ctx, &t, toast).map_or(0.0, |w| w + gap)
         };
         // each toast's words' height at the width it has
         let texts: Vec<f32> = front
@@ -322,6 +340,7 @@ impl Toaster {
         }
 
         let mut closed: Vec<(u64, Vec2)> = Vec::new();
+        let mut pressed: Vec<u64> = Vec::new();
         let mut hovered = false;
         let mut swiped: Option<(u64, Vec2)> = None;
         let mut let_go: Option<(u64, Vec2)> = None;
@@ -343,7 +362,7 @@ impl Toaster {
             for leaving in &shown.leaving {
                 let k = ease(((now - leaving.since) / MOVE) as f32);
                 let rect = leaving.rect.translate(leaving.to * k);
-                paint(ui, &t, rect, &leaving.toast, leaving.words, None, pad, gap, &text_width);
+                let _ = paint(ui, &t, rect, &leaving.toast, leaving.words, None, pad, gap, &text_width);
             }
             // behind ones first, so the front is drawn over them
             for (index, ((id, toast), rect)) in front.iter().zip(&rects).enumerate().rev() {
@@ -362,7 +381,7 @@ impl Toaster {
                     }
                 }
                 let close = if words { Some(self.words.close.as_str()) } else { None };
-                if paint(
+                let (shut, acted) = paint(
                     ui,
                     &t,
                     *rect,
@@ -372,7 +391,11 @@ impl Toaster {
                     pad,
                     gap,
                     &text_width,
-                ) {
+                );
+                if acted {
+                    pressed.push(*id);
+                }
+                if shut || acted {
                     closed.push((*id, Vec2::ZERO));
                 }
             }
@@ -381,6 +404,7 @@ impl Toaster {
             ctx.data_mut(|d| d.insert_temp(expanded_id, hovered));
         }
         shown.dragged = swiped;
+        shown.acted.extend(pressed);
         if let Some((id, offset)) = let_go {
             if offset.y > SWIPE || offset.x > SWIPE {
                 // past the swipe it carries on the way it was dragged, 150% of its size
@@ -472,7 +496,7 @@ fn paint(
     pad: f32,
     gap: f32,
     text_width: &dyn Fn(&Toast) -> f32,
-) -> bool {
+) -> (bool, bool) {
     let frame = t.radius("surface");
     let painter = ui.painter().clone();
     painter.add(t.shadow("elevation-pop").as_shape(rect, frame));
@@ -484,7 +508,7 @@ fn paint(
         StrokeKind::Inside,
     );
     if !words {
-        return false;
+        return (false, false);
     }
     let content = rect.shrink(pad);
     let mut x = content.left();
@@ -527,7 +551,21 @@ fn paint(
     // the close button, `icon-sm`, at the content's right edge, as the web's `ToastClose`
     let side = t.density("control-sm");
     let place = Rect::from_center_size(pos2(content.right() - side / 2.0, content.center().y), vec2(side, side));
-    match close {
+    // the action, an outline small button, `gap` before the close
+    let mut acted = false;
+    if let (Some(label), Some(width)) = (&toast.action, action_width(ui.ctx(), t, toast)) {
+        let spot = Rect::from_center_size(
+            pos2(place.left() - gap - width / 2.0, content.center().y),
+            vec2(width, t.density("control-sm")),
+        );
+        let id = close.map_or(0, |(_, id)| id);
+        let mut action_ui = ui.new_child(UiBuilder::new().max_rect(spot).id_salt(("toast-action", id)));
+        let button = crate::Button::new(label.as_str())
+            .variant(crate::ButtonVariant::Outline)
+            .size(crate::ButtonSize::Sm);
+        acted = action_ui.put(spot, button).clicked() && close.is_some();
+    }
+    let shut = match close {
         Some((label, id)) => {
             let mut close_ui = ui.new_child(UiBuilder::new().max_rect(place).id_salt(("toast-close", id)));
             close_ui.put(place, IconButton::new(Icon::X, label)).clicked()
@@ -536,5 +574,17 @@ fn paint(
             icons::paint(&painter, place.center(), Icon::X, 16.0, t.color("muted-foreground"));
             false
         }
-    }
+    };
+    (shut, acted)
+}
+
+/// How wide a toast's action button is: its words in a small button's type, 10 in each side.
+fn action_width(ctx: &Context, t: &crate::Tokens, toast: &Toast) -> Option<f32> {
+    let label = toast.action.as_ref()?;
+    let width = ctx.fonts_mut(|f| {
+        f.layout_no_wrap(label.clone(), TextRole::Badge.font(t), egui::Color32::PLACEHOLDER)
+            .size()
+            .x
+    });
+    Some((width + 20.0).ceil())
 }
