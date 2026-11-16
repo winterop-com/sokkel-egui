@@ -30,6 +30,41 @@ const PLEX_SANS: &[u8] = include_bytes!("../assets/fonts/IBMPlexSans-Variable-La
 const PLEX_SANS_EXT: &[u8] = include_bytes!("../assets/fonts/IBMPlexSans-Variable-LatinExt.ttf");
 /// IBM Plex Mono Regular (OFL).
 const PLEX_MONO: &[u8] = include_bytes!("../assets/fonts/IBMPlexMono-Regular.ttf");
+/// IBM Plex Mono SemiBold (OFL), Latin as `@fontsource/ibm-plex-mono` ships its 600: a static face,
+/// so a mono word set semibold is drawn from a family of its own.
+const PLEX_MONO_SEMIBOLD: &[u8] = include_bytes!("../assets/fonts/IBMPlexMono-SemiBold-Latin.ttf");
+
+/// The family Plex Mono SemiBold is installed under, behind which the regular face stands for the
+/// glyphs the Latin subset lacks.
+pub const MONO_SEMIBOLD: &str = "plex-mono-semibold";
+
+/// The size mono is set at in text of `size`: as tall in x-height as `mono-x-height` of `size`, as
+/// sokkel-ui's `font-size-adjust` sets it.
+pub fn mono_size(tokens: &Tokens, size: f32) -> f32 {
+    size * tokens.number("mono-x-height").unwrap_or(PLEX_MONO_X_HEIGHT) / PLEX_MONO_X_HEIGHT
+}
+
+/// Plex Mono at `size` itself, regular or semibold (`font-mono font-semibold`), for text that sets
+/// its own size, as a graph does; [`mono_size`] gives the size mono takes beside sans. Before the
+/// fonts reach the painter (the first frame after `install`) the semibold is the regular face.
+pub fn mono_font(ctx: &Context, size: f32, semibold: bool) -> egui::FontId {
+    let semibold_ready = semibold
+        && ctx.fonts(|fonts| {
+            fonts
+                .definitions()
+                .families
+                .contains_key(&FontFamily::Name(MONO_SEMIBOLD.into()))
+        });
+    if semibold && !semibold_ready {
+        ctx.request_repaint();
+    }
+    let family = if semibold_ready {
+        FontFamily::Name(MONO_SEMIBOLD.into())
+    } else {
+        FontFamily::Monospace
+    };
+    egui::FontId::new(size, family)
+}
 
 /// Plex Mono's x-height as a share of its size. sokkel-ui sizes mono by x-height
 /// (`font-size-adjust: var(--mono-x-height)`); egui has no such rule, so mono is scaled by hand.
@@ -118,7 +153,7 @@ pub fn install(ctx: &Context, appearance: &Appearance) {
     ctx.style_mut_of(theme, |style| {
         style.visuals = visuals(&tokens);
         let body = tokens.text("body").size;
-        let mono = body * tokens.number("mono-x-height").unwrap_or(PLEX_MONO_X_HEIGHT) / PLEX_MONO_X_HEIGHT;
+        let mono = mono_size(&tokens, body);
         style.text_styles = [
             (TextStyle::Heading, TextRole::PageTitle.font(&tokens)),
             (TextStyle::Body, FontId::proportional(body)),
@@ -166,6 +201,14 @@ pub fn install_fonts(ctx: &Context) {
     fonts
         .font_data
         .insert("plex-mono".into(), Arc::new(FontData::from_static(PLEX_MONO)));
+    fonts.font_data.insert(
+        MONO_SEMIBOLD.into(),
+        Arc::new(FontData::from_static(PLEX_MONO_SEMIBOLD)),
+    );
+    fonts.families.insert(
+        FontFamily::Name(MONO_SEMIBOLD.into()),
+        vec![MONO_SEMIBOLD.into(), "plex-mono".into()],
+    );
     // Lucide in a family of its own: its glyphs sit in the private use area, where a text face's
     // own glyphs would shadow them
     fonts.font_data.insert(

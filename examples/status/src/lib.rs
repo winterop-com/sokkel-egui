@@ -25,6 +25,7 @@ use sokkel_ui_egui::{
 use data::SERVICES;
 use live::Live;
 use sokkel_ui_egui_charts::{Series, TimeSeriesPanel};
+use sokkel_ui_egui_graph::{GraphCanvas, GraphLink, GraphNode, GraphWords};
 use sokkel_ui_egui_maps::{MapLegend, MapView, Marker};
 
 /// Tidevann's mark, as sokkel-ui's examples draw it (`tidevann-shared/mark`).
@@ -1927,6 +1928,8 @@ impl StatusApp {
         let mut schedule_more = false;
         let (deploy_menus_r, deploy_keys_r, window_keys_r, window_states_r) =
             (&deploy_menus, &deploy_keys, &window_keys, &window_states);
+        let mut graph_to = None;
+        let (graph_nodes, graph_links) = service_graph(&self.live_world.health, &t);
         DashboardGrid::new("service").show(ui, |grid| {
             let x2 = x.clone();
             grid.cell(PanelSpan::Half, move |ui| {
@@ -1953,6 +1956,23 @@ impl StatusApp {
                     .threshold(5.0, critical)
                     .label_every(15)
                     .show(ui);
+            });
+            let graph_to = &mut graph_to;
+            let (graph_nodes, graph_links) = (&graph_nodes, &graph_links);
+            grid.cell(PanelSpan::Half, move |ui| {
+                DashboardPanel::new("Dependencies")
+                    .subtitle("every service, this one marked")
+                    .flush(true)
+                    .footer(dependencies_footer(&service))
+                    .show(ui, |ui| {
+                        *graph_to = GraphCanvas::new("services", graph_nodes, graph_links)
+                            .selected(Some(service.id))
+                            .words(GraphWords {
+                                label: "Services and what they call on".into(),
+                                ..Default::default()
+                            })
+                            .show(ui);
+                    });
             });
             let pressed = &mut pressed;
             let days = &days;
@@ -2050,6 +2070,11 @@ impl StatusApp {
                     });
             });
         });
+        if let Some(next) = graph_to
+            && next != id
+        {
+            self.go(&format!("services/{next}"));
+        }
         if let Some(row) = deploy_action
             && let Some(back) = &deploy_menus[row]
         {
@@ -2762,4 +2787,50 @@ fn window_state(window: &data::Maintenance, now: f64) -> WindowState {
     } else {
         WindowState::Scheduled
     }
+}
+
+/// Every service and what it calls on, each in its state now, as the web's `ServiceGraph`: a store
+/// round with a cylinder, a service a box with a server.
+fn service_graph(health: &[live::Health], t: &sokkel_ui_egui::Tokens) -> (Vec<GraphNode>, Vec<GraphLink>) {
+    let nodes = SERVICES
+        .iter()
+        .zip(health)
+        .map(|(service, health)| {
+            GraphNode::new(service.id)
+                .kind(if service.store { "store" } else { "service" })
+                .icon(if service.store { Icon::Database } else { Icon::Server })
+                .round(service.store)
+                .status(health.words().to_lowercase(), t.color(health.color()))
+        })
+        .collect();
+    let links = SERVICES
+        .iter()
+        .flat_map(|service| {
+            service
+                .depends_on
+                .iter()
+                .map(|dependency| GraphLink::new(service.id, *dependency).arrow(true))
+        })
+        .collect();
+    (nodes, links)
+}
+
+/// Under the graph: what the service calls on and what calls on it.
+fn dependencies_footer(service: &data::Service) -> String {
+    let calls_on = if service.depends_on.is_empty() {
+        "nothing".to_owned()
+    } else {
+        service.depends_on.join(", ")
+    };
+    let called_by: Vec<&str> = SERVICES
+        .iter()
+        .filter(|one| one.depends_on.contains(&service.id))
+        .map(|one| one.id)
+        .collect();
+    let called_by = if called_by.is_empty() {
+        "nothing calls on it".to_owned()
+    } else {
+        format!("called by {}", called_by.join(", "))
+    };
+    format!("Calls on {calls_on} · {called_by}")
 }

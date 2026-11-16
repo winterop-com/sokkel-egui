@@ -4382,6 +4382,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sokkel-ui-egui-graph"
+version = "0.1.0"
+dependencies = [
+ "egui",
+ "egui_kittest",
+ "sokkel-ui-egui",
+]
+
+[[package]]
 name = "sokkel-ui-egui-maps"
 version = "0.1.0"
 dependencies = [
@@ -4438,6 +4447,7 @@ dependencies = [
  "egui_kittest",
  "sokkel-ui-egui",
  "sokkel-ui-egui-charts",
+ "sokkel-ui-egui-graph",
  "sokkel-ui-egui-maps",
 ]
 

@@ -40,8 +40,8 @@
     },
     "parts": {
         "@winterop-com/sokkel-ui-charts/dashboard/TimeSeriesPanel": "sokkel-ui-egui-charts TimeSeriesPanel",
-        "@winterop-com/sokkel-ui-graph/GraphCanvas": null,
-        "@winterop-com/sokkel-ui-graph/use-node-graph": null,
+        "@winterop-com/sokkel-ui-graph/GraphCanvas": "sokkel-ui-egui-graph GraphCanvas (the fitted frame), GraphNode",
+        "@winterop-com/sokkel-ui-graph/use-node-graph": "sokkel-ui-egui-graph layout (egui's own layered layout in elk's place)",
         "@winterop-com/sokkel-ui-maps/MapLegend": "sokkel-ui-egui-maps MapLegend",
         "@winterop-com/sokkel-ui-maps/MapPopup": "sokkel-ui-egui-maps MapPopup, MapPopupRow",
         "@winterop-com/sokkel-ui-maps/MapView": "sokkel-ui-egui-maps MapView (markers, routes, framing; no layers or popup yet)",
@@ -130,6 +130,14 @@
         {
             "name": "service",
             "route": "services/api"
+        },
+        {
+            "name": "service_whole",
+            "route": "services/api",
+            "viewport": {
+                "width": 1280,
+                "height": 1500
+            }
         },
         {
             "name": "regions",

@@ -67,8 +67,17 @@ and never chase a difference made of numbers.
   column. The
   charts engine follows ECharts here for every chart: the series take the web's color order
   (`SERIES_ORDER`, from `chart-2`), a line's points sit on the axis' ends, and the value axis
-  steps as ECharts picks (1, 2, 3 or 5 times a power of ten, about five apart). The dependency
-  graph, deploys and maintenance follow.
+  steps as ECharts picks (1, 2, 3 or 5 times a power of ten, about five apart).
+- Beside the Uptime panel stands Dependencies, the web's `ServiceGraph` on the graph add-on
+  (`sokkel-ui-egui-graph`): every service and what it calls on, a store round with a cylinder, a
+  service a box with a server, each with its state's dot, the service shown marked, and a press
+  on another opening it; under it the footer says what it calls on and what calls on it. The
+  layout is egui's own in elk's place, and draws the web's ranks and order: web, then the
+  services, then storage over queue, then search level with api, its edge back to storage routed
+  round. Elk lands its edges on ports a little differently (api's edge to search runs straight
+  into search there, with a small step here), and `service_whole` (1280 by 1500) shoots the
+  whole page on both sides to compare. The graph's text roles (`graph-title`, `graph-small`) came
+  with sokkel-design #21, and the node's code is Plex Mono SemiBold, the web's 600.
 - An incident's page (`incidents/<id>`, a row of the incidents table pressed, or a new incident
   opened) is the web's: the head with its code, back to the incidents, its state and severity
   chips and how long it has been open (`PageHeader` taking several chips and a `meta`), Resolve or

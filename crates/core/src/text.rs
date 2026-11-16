@@ -22,10 +22,15 @@ pub enum TextRole {
     BrandName,
     WelcomeTitle,
     Eyebrow,
+    /// A graph node's title, as `text-graph-title`; the node box sets it semibold.
+    GraphTitle,
+    /// A graph node's code line and an edge's label, as `text-graph-small`.
+    GraphSmall,
 }
 
 impl TextRole {
-    /// Every role, from the page's title down, as sokkel-ui's typography table lists them.
+    /// Every role, from the page's title down, as sokkel-ui's typography table lists them; the
+    /// graph's own two roles are left to the graph.
     pub const ALL: [TextRole; 15] = [
         Self::PageTitle,
         Self::DetailTitle,
@@ -62,6 +67,8 @@ impl TextRole {
             Self::BrandName => "brand-name",
             Self::WelcomeTitle => "welcome-title",
             Self::Eyebrow => "eyebrow",
+            Self::GraphTitle => "graph-title",
+            Self::GraphSmall => "graph-small",
         }
     }
 
