@@ -141,6 +141,8 @@ impl MetricsApp {
         PageHeader::new(&board.title)
             .description(&board.description)
             .show(ui, |_| {});
+        // the variables right under the head, the page's own gap before the panels
+        self.variables_bar(ui);
         let (variables, range, at) = (self.variables.clone(), self.range.clone(), self.at);
         for panel in &board.panels {
             self.tables.entry(panel.id.clone()).or_default();
@@ -156,6 +158,62 @@ impl MetricsApp {
                 grid.cell(panel.span, move |ui| {
                     draw_panel(ui, panel, &variables, &range, at, state)
                 });
+            }
+        });
+    }
+}
+
+impl MetricsApp {
+    /// The dashboard's variables, as the web's `variables()`: a service, a host of that service,
+    /// and a project, each `All` or one.
+    fn variables_bar(&mut self, ui: &mut Ui) {
+        use crate::source::{ALL, HOSTS, PROJECTS, SERVICES};
+        let choices = |values: Vec<&str>| {
+            std::iter::once("All".to_owned())
+                .chain(values.into_iter().map(str::to_owned))
+                .collect::<Vec<_>>()
+        };
+        let index = |options: &[String], value: &str| {
+            if value == ALL {
+                0
+            } else {
+                options.iter().position(|o| o == value).unwrap_or(0)
+            }
+        };
+        let value = |options: &[String], at: usize| {
+            if at == 0 { ALL.to_owned() } else { options[at].clone() }
+        };
+        let services = choices(SERVICES.to_vec());
+        let hosts = choices(
+            HOSTS
+                .iter()
+                .filter(|h| self.variables.service == ALL || h.service == self.variables.service)
+                .map(|h| h.id)
+                .collect(),
+        );
+        let projects = choices(PROJECTS.to_vec());
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 6.0;
+            let mut at = index(&services, &self.variables.service);
+            if sokkel_egui::variable_select(ui, "service", &mut at, &services).changed() {
+                let service = value(&services, at);
+                // a host of another service is let go
+                let keeps = self.variables.host == ALL
+                    || HOSTS
+                        .iter()
+                        .any(|h| h.id == self.variables.host && (service == ALL || h.service == service));
+                if !keeps {
+                    self.variables.host = ALL.into();
+                }
+                self.variables.service = service;
+            }
+            let mut at = index(&hosts, &self.variables.host);
+            if sokkel_egui::variable_select(ui, "host", &mut at, &hosts).changed() {
+                self.variables.host = value(&hosts, at);
+            }
+            let mut at = index(&projects, &self.variables.project);
+            if sokkel_egui::variable_select(ui, "project", &mut at, &projects).changed() {
+                self.variables.project = value(&projects, at);
             }
         });
     }

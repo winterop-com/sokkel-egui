@@ -140,6 +140,8 @@ pub struct Select<'a> {
     width: f32,
     default_open: bool,
     swatches: Option<Vec<Option<Swatch>>>,
+    small: bool,
+    bare: bool,
 }
 
 impl<'a> Select<'a> {
@@ -156,7 +158,22 @@ impl<'a> Select<'a> {
             width: 220.0,
             default_open: false,
             swatches: None,
+            small: false,
+            bare: false,
         }
+    }
+
+    /// The small size, as the web's `size="sm"`: `control-sm` tall, its words in the help role.
+    pub fn small(mut self, small: bool) -> Self {
+        self.small = small;
+        self
+    }
+
+    /// No ground or edge of its own, for a select set into another part's frame, such as a
+    /// variable's chip.
+    pub fn bare(mut self, bare: bool) -> Self {
+        self.bare = bare;
+        self
     }
 
     pub fn width(mut self, width: f32) -> Self {
@@ -228,7 +245,12 @@ fn paint_swatch(painter: &egui::Painter, t: &crate::Tokens, left_center: egui::P
 impl Widget for Select<'_> {
     fn ui(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
-        let height = super::finger_tall(ui.ctx(), &t, t.density("control"));
+        let height = super::finger_tall(
+            ui.ctx(),
+            &t,
+            t.density(if self.small { "control-sm" } else { "control" }),
+        );
+        let role = if self.small { TextRole::Help } else { TextRole::Body };
         // across the row it is given where that row asks it to fill (a setting's control under its words)
         let width = if ui.layout().main_justify {
             ui.available_width()
@@ -256,15 +278,21 @@ impl Widget for Select<'_> {
         } else {
             t.color("field")
         };
-        painter.rect(
-            rect,
-            radius,
-            t.color("field"),
-            Stroke::new(1.0, edge),
-            StrokeKind::Inside,
-        );
-        if ground != t.color("field") {
-            painter.rect_filled(rect.shrink(1.0), radius, ground);
+        if self.bare {
+            if ground != t.color("field") {
+                painter.rect_filled(rect, CornerRadius::ZERO, ground);
+            }
+        } else {
+            painter.rect(
+                rect,
+                radius,
+                t.color("field"),
+                Stroke::new(1.0, edge),
+                StrokeKind::Inside,
+            );
+            if ground != t.color("field") {
+                painter.rect_filled(rect.shrink(1.0), radius, ground);
+            }
         }
         let current = self.options.get(*self.chosen).cloned().unwrap_or_default();
         let lead = self.lead();
@@ -276,25 +304,28 @@ impl Widget for Select<'_> {
                 swatches.get(*self.chosen).copied().flatten(),
             );
         }
-        let galley = WidgetText::from(TextRole::Body.rich(&t, current)).into_galley(
+        let (pad, chevron) = if self.small { (8.0, 14.0) } else { (10.0, 16.0) };
+        let galley = WidgetText::from(role.rich(&t, current)).into_galley(
             ui,
             Some(TextWrapMode::Truncate),
-            rect.width() - 40.0 - lead,
-            TextRole::Body.font(&t),
+            rect.width() - 30.0 - pad - lead,
+            role.font(&t),
         );
         painter.galley(
-            pos2(rect.left() + 10.0 + lead, rect.center().y - galley.size().y / 2.0),
+            pos2(rect.left() + pad + lead, rect.center().y - galley.size().y / 2.0),
             galley,
             t.color("foreground"),
         );
         icons::paint(
             painter,
-            pos2(rect.right() - 16.0, rect.center().y),
+            pos2(rect.right() - pad - chevron / 2.0 + 2.0, rect.center().y),
             Icon::ChevronDown,
-            16.0,
+            chevron,
             t.color("muted-foreground"),
         );
-        focus_ring(painter, &t, rect, radius, &response);
+        if !self.bare {
+            focus_ring(painter, &t, rect, radius, &response);
+        }
 
         let frame = super::popup_frame(&t).inner_margin(Margin::same(4));
         let mut picked = None;
@@ -335,11 +366,11 @@ impl Widget for Select<'_> {
                             swatches.get(index).copied().flatten(),
                         );
                     }
-                    let galley = WidgetText::from(TextRole::Body.rich(&t, option)).into_galley(
+                    let galley = WidgetText::from(role.rich(&t, option)).into_galley(
                         ui,
                         Some(TextWrapMode::Truncate),
                         row.width() - 40.0 - lead,
-                        TextRole::Body.font(&t),
+                        role.font(&t),
                     );
                     ui.painter().galley(
                         pos2(row.left() + 8.0 + lead, row.center().y - galley.size().y / 2.0),

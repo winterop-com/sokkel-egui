@@ -38,6 +38,7 @@ mod time;
 mod toast;
 mod tree;
 mod uptime;
+mod variables;
 mod week;
 
 pub use activity::{ActivityItem, ActivityList, ActivityResponse, ActivityTone, ActivityWords, BarList, BarListItem};
@@ -243,3 +244,4 @@ pub(crate) fn spinner(ui: &Ui, painter: &Painter, center: egui::Pos2, radius: f3
     painter.add(egui::Shape::line(points, Stroke::new(1.5, color)));
     ui.ctx().request_repaint();
 }
+pub use variables::variable_select;
