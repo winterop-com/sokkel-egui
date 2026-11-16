@@ -78,6 +78,11 @@ and never chase a difference made of numbers.
   into search there, with a small step here), and `service_whole` (1280 by 1500) shoots the
   whole page on both sides to compare. The graph's text roles (`graph-title`, `graph-small`) came
   with sokkel-design #21, and the node's code is Plex Mono SemiBold, the web's 600.
+- Deploys and Maintenance stand as the web's listed rows: a listed stacked row is as tall as its
+  words (a card keeps each primary value's every line, as the web's `stackedCardPixels`), the menu
+  only on a row with actions (Roll back on the version running), a code title in Plex Mono Medium
+  at the mono size beside sans, and a list with no rows says its empty words ("Nothing
+  scheduled.") in its frame.
 - An incident's page (`incidents/<id>`, a row of the incidents table pressed, or a new incident
   opened) is the web's: the head with its code, back to the incidents, its state and severity
   chips and how long it has been open (`PageHeader` taking several chips and a `meta`), Resolve or

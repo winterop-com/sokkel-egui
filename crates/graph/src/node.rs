@@ -249,7 +249,7 @@ fn title_galley(painter: &Painter, t: &Tokens, text: &str, named: bool, zoom: f3
     } else {
         painter.layout_no_wrap(
             text.to_owned(),
-            mono_font(painter.ctx(), size * zoom, true),
+            mono_font(painter.ctx(), size * zoom, 600.0),
             Color32::PLACEHOLDER,
         )
     }
@@ -259,7 +259,7 @@ fn title_galley(painter: &Painter, t: &Tokens, text: &str, named: bool, zoom: f3
 fn small_mono(painter: &Painter, t: &Tokens, text: &str, zoom: f32) -> std::sync::Arc<egui::Galley> {
     painter.layout_no_wrap(
         text.to_owned(),
-        mono_font(painter.ctx(), t.text("graph-small").size * zoom, false),
+        mono_font(painter.ctx(), t.text("graph-small").size * zoom, 400.0),
         Color32::PLACEHOLDER,
     )
 }

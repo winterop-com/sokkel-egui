@@ -30,12 +30,14 @@ const PLEX_SANS: &[u8] = include_bytes!("../assets/fonts/IBMPlexSans-Variable-La
 const PLEX_SANS_EXT: &[u8] = include_bytes!("../assets/fonts/IBMPlexSans-Variable-LatinExt.ttf");
 /// IBM Plex Mono Regular (OFL).
 const PLEX_MONO: &[u8] = include_bytes!("../assets/fonts/IBMPlexMono-Regular.ttf");
-/// IBM Plex Mono SemiBold (OFL), Latin as `@fontsource/ibm-plex-mono` ships its 600: a static face,
-/// so a mono word set semibold is drawn from a family of its own.
+/// IBM Plex Mono Medium and SemiBold (OFL), Latin as `@fontsource/ibm-plex-mono` ships its 500 and
+/// 600: static faces, so mono set heavier is drawn from a family of its own for each.
+const PLEX_MONO_MEDIUM: &[u8] = include_bytes!("../assets/fonts/IBMPlexMono-Medium-Latin.ttf");
 const PLEX_MONO_SEMIBOLD: &[u8] = include_bytes!("../assets/fonts/IBMPlexMono-SemiBold-Latin.ttf");
 
-/// The family Plex Mono SemiBold is installed under, behind which the regular face stands for the
-/// glyphs the Latin subset lacks.
+/// The families Plex Mono Medium and SemiBold are installed under, the regular face behind each for
+/// the glyphs the Latin subset lacks.
+pub const MONO_MEDIUM: &str = "plex-mono-medium";
 pub const MONO_SEMIBOLD: &str = "plex-mono-semibold";
 
 /// The size mono is set at in text of `size`: as tall in x-height as `mono-x-height` of `size`, as
@@ -44,25 +46,28 @@ pub fn mono_size(tokens: &Tokens, size: f32) -> f32 {
     size * tokens.number("mono-x-height").unwrap_or(PLEX_MONO_X_HEIGHT) / PLEX_MONO_X_HEIGHT
 }
 
-/// Plex Mono at `size` itself, regular or semibold (`font-mono font-semibold`), for text that sets
-/// its own size, as a graph does; [`mono_size`] gives the size mono takes beside sans. Before the
-/// fonts reach the painter (the first frame after `install`) the semibold is the regular face.
-pub fn mono_font(ctx: &Context, size: f32, semibold: bool) -> egui::FontId {
-    let semibold_ready = semibold
-        && ctx.fonts(|fonts| {
-            fonts
-                .definitions()
-                .families
-                .contains_key(&FontFamily::Name(MONO_SEMIBOLD.into()))
-        });
-    if semibold && !semibold_ready {
-        ctx.request_repaint();
-    }
-    let family = if semibold_ready {
-        FontFamily::Name(MONO_SEMIBOLD.into())
+/// Plex Mono at `size` itself and the weight nearest `weight` it ships (400, 500 or 600), for text
+/// that sets its own size, as a graph does; [`mono_size`] gives the size mono takes beside sans.
+/// Before the fonts reach the painter (the first frame after `install`) every weight is the
+/// regular face.
+pub fn mono_font(ctx: &Context, size: f32, weight: f32) -> egui::FontId {
+    let name = if weight >= 550.0 {
+        Some(MONO_SEMIBOLD)
+    } else if weight >= 450.0 {
+        Some(MONO_MEDIUM)
     } else {
-        FontFamily::Monospace
+        None
     };
+    let family = name
+        .map(|name| FontFamily::Name(name.into()))
+        .filter(|family| {
+            let ready = ctx.fonts(|fonts| fonts.definitions().families.contains_key(family));
+            if !ready {
+                ctx.request_repaint();
+            }
+            ready
+        })
+        .unwrap_or(FontFamily::Monospace);
     egui::FontId::new(size, family)
 }
 
@@ -201,14 +206,14 @@ pub fn install_fonts(ctx: &Context) {
     fonts
         .font_data
         .insert("plex-mono".into(), Arc::new(FontData::from_static(PLEX_MONO)));
-    fonts.font_data.insert(
-        MONO_SEMIBOLD.into(),
-        Arc::new(FontData::from_static(PLEX_MONO_SEMIBOLD)),
-    );
-    fonts.families.insert(
-        FontFamily::Name(MONO_SEMIBOLD.into()),
-        vec![MONO_SEMIBOLD.into(), "plex-mono".into()],
-    );
+    for (name, bytes) in [(MONO_MEDIUM, PLEX_MONO_MEDIUM), (MONO_SEMIBOLD, PLEX_MONO_SEMIBOLD)] {
+        fonts
+            .font_data
+            .insert(name.into(), Arc::new(FontData::from_static(bytes)));
+        fonts
+            .families
+            .insert(FontFamily::Name(name.into()), vec![name.into(), "plex-mono".into()]);
+    }
     // Lucide in a family of its own: its glyphs sit in the private use area, where a text face's
     // own glyphs would shadow them
     fonts.font_data.insert(

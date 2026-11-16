@@ -839,12 +839,43 @@ impl<'a> DataTable<'a> {
                     let shown: Vec<usize> = lines.iter().copied().filter(|c| said(&row[*c])).collect();
                     let primaries: Vec<usize> = primary.iter().copied().filter(|c| said(&row[*c])).collect();
                     let has_facts = facts.iter().any(|c| said(&row[*c]));
+                    let text_width = (ui.available_width() - inset * 2.0 - 2.0 * (1.0 + 12.0)).max(1.0);
+                    // the primary values in the body's type, each over at most two 22 lines, wrapped
+                    let primary_galleys: Vec<std::sync::Arc<egui::Galley>> = primaries
+                        .iter()
+                        .map(|&c| {
+                            let mut job = egui::text::LayoutJob::single_section(
+                                row[c].draft(),
+                                egui::TextFormat {
+                                    font_id: TextRole::Body.font(t),
+                                    color: t.color("card-foreground"),
+                                    line_height: Some(22.0),
+                                    ..Default::default()
+                                },
+                            );
+                            job.wrap = egui::text::TextWrapping {
+                                max_width: text_width,
+                                max_rows: PRIMARY_LINES as usize,
+                                break_anywhere: false,
+                                overflow_character: Some('…'),
+                            };
+                            ui.fonts_mut(|f| f.layout_job(job))
+                        })
+                        .collect();
+                    // a listed row is as tall as its words; a card keeps each primary value's every
+                    // line, as the web places its cards by `stackedCardPixels`
+                    let primary_lines: f32 = if listed {
+                        primary_galleys.iter().map(|g| g.rows.len().max(1) as f32).sum()
+                    } else {
+                        PRIMARY_LINES * primary_galleys.len() as f32
+                    };
+                    let items = self.actions.as_ref().map(|actions| actions(index)).unwrap_or_default();
                     // 22 a primary line, 20 a labeled one
                     let parts = primaries.len() + shown.len() + usize::from(has_facts);
                     let height = 1.0
                         + pad
                         + 24.0
-                        + 22.0 * PRIMARY_LINES * primaries.len() as f32
+                        + 22.0 * primary_lines
                         + 20.0 * shown.len() as f32
                         + if has_facts { 24.0 } else { 0.0 }
                         + gap * parts as f32
@@ -910,14 +941,17 @@ impl<'a> DataTable<'a> {
                         title_left += GRIP + 8.0;
                     }
                     // the title, the menu at the line's end
-                    let menu = if self.actions.is_some() { 28.0 + 8.0 } else { 0.0 };
+                    let menu = if items.is_empty() { 0.0 } else { 28.0 + 8.0 };
                     if let Some(c) = title {
                         let words = row[c].draft();
                         // a code stays in the code face, at the title's size
                         let rich = match &row[c] {
-                            Cell::Mono(_) => {
-                                egui::RichText::new(words).font(egui::FontId::monospace(TextRole::Action.font(t).size))
-                            }
+                            // in the title's weight, as the web's `font-mono` inside `font-medium`
+                            Cell::Mono(_) => egui::RichText::new(words).font(crate::mono_font(
+                                ui.ctx(),
+                                crate::mono_size(t, TextRole::Action.font(t).size),
+                                t.text(TextRole::Action.key()).weight,
+                            )),
                             _ => TextRole::Action.rich(t, words),
                         };
                         let galley = WidgetText::from(rich).into_galley(
@@ -932,7 +966,7 @@ impl<'a> DataTable<'a> {
                             t.color("card-foreground"),
                         );
                     }
-                    if let Some(actions) = &self.actions {
+                    if !items.is_empty() {
                         let button = Rect::from_center_size(pos2(right - 14.0, y + 12.0), vec2(28.0, 24.0));
                         let trigger = ui.interact(button, self.id.with(("actions", index)), Sense::click());
                         trigger.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Actions"));
@@ -946,31 +980,14 @@ impl<'a> DataTable<'a> {
                             16.0,
                             t.color("muted-foreground"),
                         );
-                        let items = actions(index);
                         if let Some(chosen) = DropdownMenu::new(&items).show(&trigger) {
                             out.action = Some((index, chosen));
                         }
                     }
                     y += 24.0 + gap;
-                    // the primary values in the body's type, each over at most two 22 lines, wrapped
-                    for &c in &primaries {
-                        let mut job = egui::text::LayoutJob::single_section(
-                            row[c].draft(),
-                            egui::TextFormat {
-                                font_id: TextRole::Body.font(t),
-                                color: t.color("card-foreground"),
-                                line_height: Some(22.0),
-                                ..Default::default()
-                            },
-                        );
-                        job.wrap = egui::text::TextWrapping {
-                            max_width: (right - left).max(1.0),
-                            max_rows: PRIMARY_LINES as usize,
-                            break_anywhere: false,
-                            overflow_character: Some('…'),
-                        };
-                        let galley = ui.fonts_mut(|f| f.layout_job(job));
-                        // the lines it takes; the card keeps room for all of them (its height)
+                    // the primary values, as laid out above
+                    for galley in primary_galleys {
+                        // the lines it takes, which the card's height counted
                         let lines = galley.rows.len().max(1) as f32;
                         ui.painter().galley(pos2(left, y), galley, t.color("card-foreground"));
                         y += 22.0 * lines + gap;
@@ -1247,7 +1264,7 @@ impl<'a> DataTable<'a> {
                     return;
                 }
                 // labeled cards in place of the rows
-                if stacked && self.stack_layout == StackLayout::Labeled {
+                if stacked && self.stack_layout == StackLayout::Labeled && !self.rows.is_empty() {
                     self.labeled_cards(ui, &t, &order, &mut out);
                     return;
                 }
