@@ -76,6 +76,7 @@ pub struct LogView<'a> {
     numbered: bool,
     framed: bool,
     height: f32,
+    grow: bool,
     words: LogViewWords,
 }
 
@@ -88,6 +89,7 @@ impl<'a> LogView<'a> {
             numbered: true,
             framed: true,
             height: 288.0,
+            grow: false,
             words: LogViewWords::default(),
         }
     }
@@ -113,6 +115,13 @@ impl<'a> LogView<'a> {
         self
     }
 
+    /// Grows past its height into the room a stretched dashboard panel has, as the web's `grow`
+    /// with `h-72` its basis: 288 alone, as tall as its row beside a taller panel.
+    pub fn grow(mut self, grow: bool) -> Self {
+        self.grow = grow;
+        self
+    }
+
     pub fn words(mut self, words: LogViewWords) -> Self {
         self.words = words;
         self
@@ -123,7 +132,11 @@ impl<'a> LogView<'a> {
         let t = crate::tokens(ui.ctx());
         let mono = egui::FontId::monospace(crate::TextRole::Help.font(&t).size);
         let width = ui.available_width();
-        let (outer, _) = ui.allocate_exact_size(vec2(width, self.height), Sense::hover());
+        let extra = if self.grow { crate::body_room(ui) } else { 0.0 };
+        if extra > 0.0 {
+            crate::took_room(ui, extra);
+        }
+        let (outer, _) = ui.allocate_exact_size(vec2(width, self.height + extra), Sense::hover());
         let radius = if self.framed {
             t.radius("surface")
         } else {

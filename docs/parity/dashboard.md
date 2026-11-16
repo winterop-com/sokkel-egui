@@ -60,6 +60,10 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
   title is the title alone (never a primary value too) and keeps a code's face. A listed row is
   padded 10 with 4 between its parts, as the web's `py-2.5 gap-1`, so its lines stand 24 apart. Recent failures in
   a third-wide panel stacks as the web's.
+- `LogView::grow`, as the worker log's `grow` over `h-72` (sokkel-ui #600): 288 alone, as tall as
+  its row beside a taller panel, scrolling past that. A `DashboardPanel` stretched to its row
+  offers the room to its body (`body_room`), and a part that takes it says so (`took_room`), so the
+  panel's own height, which sizes the row, leaves it out.
 - `AccountMenu::local`, as the web's `local`: no one signed in, the avatar a person's outline on
   the muted ground.
 - `DataTable::framed`, `Gap::Xs`, and a `Checkbox` whose label wraps.
@@ -78,7 +82,5 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
 
 ## Next
 
-- What the board shows apart from the figures:
-  - The worker log on the web is as tall as its lines (816 at the start, growing to 200 lines),
-    its `h-72` lost to `flex-1`; egui keeps it 288 tall and follows the newest line, as the
-    classes read. Asked in `docs/proposals/dashboard-log-height.md`.
+- Shoot the web's screens again once the sokkel-ui pin moves past #600 (`daa906c6`), which fixed
+  the web's worker log: it grew to its lines, its `h-72` lost to `flex-1`.

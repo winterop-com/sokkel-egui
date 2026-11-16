@@ -46,6 +46,29 @@ pub fn cell_height(ui: &Ui) -> Option<f32> {
     ui.data(|d| d.get_temp::<CellHeight>(ui.id())).map(|h| h.0)
 }
 
+/// What a panel's body may grow by and how much it did, for a body that fills a stretched panel.
+#[derive(Clone, Copy, Default)]
+struct BodyRoom {
+    room: f32,
+    took: f32,
+}
+
+/// The height a panel's body may take beyond its own, where its panel stands stretched in a taller
+/// grid row: for a part that grows to fill its panel, as the web's `grow` in a panel's column.
+/// The part says what it took with [`took_room`].
+pub fn body_room(ui: &Ui) -> f32 {
+    ui.data(|d| d.get_temp::<BodyRoom>(ui.id())).map_or(0.0, |r| r.room)
+}
+
+/// Tells the panel the body grew by `height` into its [`body_room`], so the panel's own height,
+/// which its row is sized by, leaves it out.
+pub fn took_room(ui: &Ui, height: f32) {
+    ui.data_mut(|d| {
+        let room = d.get_temp_mut_or_default::<BodyRoom>(ui.id());
+        room.took += height;
+    });
+}
+
 /// Tells the grid whose cell `cell` is (the id of the `Ui` the panel was given) how tall the panel in it is unstretched, so a row shrinks
 /// again when its tallest panel does.
 pub fn report_natural_height(ui: &Ui, cell: Id, height: f32) {
@@ -283,16 +306,31 @@ impl<'a> DashboardPanel<'a> {
                 });
                 let footer_height = footer.as_ref().map_or(0.0, |f| f.size().y + 12.0);
                 let margin = if self.flush { 0 } else { 16 };
-                let out = egui::Frame::new()
+                // the room the body may grow into: the row's height past the panel's own
+                // the panel's own height last frame, kept apart from what the grid clears each frame
+                let natural = ui.data(|d| d.get_temp::<f32>(cell.with("natural"))).unwrap_or(0.0);
+                let room = if natural > 0.0 {
+                    (stretch - natural).max(0.0)
+                } else {
+                    0.0
+                };
+                let (out, took) = egui::Frame::new()
                     .inner_margin(egui::Margin::same(margin))
                     .show(ui, |ui| {
                         ui.set_width(ui.available_width());
-                        body(ui)
+                        ui.data_mut(|d| d.insert_temp(ui.id(), BodyRoom { room, took: 0.0 }));
+                        let out = body(ui);
+                        let took = ui.data(|d| d.get_temp::<BodyRoom>(ui.id())).map_or(0.0, |r| r.took);
+                        (out, took)
                     })
                     .inner;
-                // the body grows so the footer sits at the foot of a stretched panel
-                let used = ui.min_rect().height() + footer_height + 2.0;
-                ui.data_mut(|d| d.insert_temp(cell, CellNatural(used)));
+                // the body grows so the footer sits at the foot of a stretched panel; what the body
+                // took of the room is not the panel's own height
+                let used = ui.min_rect().height() + footer_height + 2.0 - took;
+                ui.data_mut(|d| {
+                    d.insert_temp(cell, CellNatural(used));
+                    d.insert_temp(cell.with("natural"), used);
+                });
                 if stretch > used {
                     ui.add_space(stretch - used);
                 }

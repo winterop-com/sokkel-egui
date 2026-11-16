@@ -51,7 +51,9 @@ pub use chip::{Chip, ChipTone, TagChips};
 pub use chip_bar::ChipBar;
 pub use choice::{Checkbox, Choice, ChoiceList, Segmented, SegmentedVariant, Tabs, TabsVariant, checkbox_list};
 pub use commands::{AppearanceCommandWords, appearance_commands, place_commands, place_of, run_appearance_command};
-pub use dashboard::{DashboardGrid, DashboardPanel, GridCells, PanelSpan, cell_height, report_natural_height};
+pub use dashboard::{
+    DashboardGrid, DashboardPanel, GridCells, PanelSpan, body_room, cell_height, report_natural_height, took_room,
+};
 pub use datetime::{DateTimeField, DateTimeFieldResponse, DateTimeFieldWords, Moment};
 pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton};
 pub use empty::Empty;

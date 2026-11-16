@@ -13,3 +13,10 @@ What the classes ask for reads as a log 288 tall (`h-72`) that may grow with its
 past that, keeping the newest line in view. Egui draws that. If it is what sokkel-ui means, the
 example could cap the box (for example `h-72 flex-none`, or `max-h-72` beside `flex-1`) so the
 panel stays its own height; if the growing log is meant, egui follows it.
+
+## Answered
+
+sokkel-ui's session agreed: 288 tall, growing with its row, scrolling past that with the newest
+line in view. The example was fixed in sokkel-ui #600 (merged at `daa906c6`, unreleased): `flex-1`
+became `grow`, so `h-72` stays the flex basis (288 alone, 570 in a row stretched to 600). Egui
+keeps what it draws.

@@ -346,6 +346,7 @@ pub fn draw(
                     LogView::new(("log", &widget.id), &live.logs[index])
                         .follow(true)
                         .framed(false)
+                        .grow(true)
                         .show(ui);
                 });
         }
