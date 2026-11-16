@@ -8,7 +8,7 @@ use sokkel_egui::{
     Icon, LogLevel, LogLine, LogView, Page, PageHeader, Rail, RailEntry, RailGroup, Shell, ShellPart, StatPanel,
     StatusLine, StatusTone, TableState, TopBar, format_value, install,
 };
-use sokkel_egui_charts::{BarGauge, BarPanel, Fill as ChartFill, GaugePanel, Series, TimeSeriesPanel};
+use sokkel_egui_charts::{BarGauge, BarPanel, Fill as ChartFill, GaugePanel, HeatmapPanel, Series, TimeSeriesPanel};
 
 use crate::model::{Dashboard, Fill, Panel, seed_dashboards};
 use crate::panel_data::{Shape, panel_data};
@@ -296,8 +296,19 @@ fn draw_panel(ui: &mut Ui, panel: &Panel, variables: &Variables, range: &Range, 
                 .decimals(data.decimals)
                 .show(ui);
         }
-        // the heatmap waits on its panel in the library
-        Shape::Heatmap { .. } => {}
+        Shape::Heatmap { x, y, cells } => {
+            // several threshold colors step the scale through them; else one color shades it
+            let scale: Vec<&'static str> = if thresholds.len() > 1 {
+                thresholds.iter().map(|step| step.color).collect()
+            } else {
+                vec![panel.color]
+            };
+            HeatmapPanel::new(&panel.title, x, y, cells)
+                .scale(scale)
+                .unit(data.unit.clone())
+                .decimals(data.decimals)
+                .show(ui);
+        }
     }
 }
 

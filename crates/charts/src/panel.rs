@@ -370,6 +370,183 @@ impl<'a> BarGauge<'a> {
     }
 }
 
+/// A dashboard panel of a heatmap, as sokkel-ui's `HeatmapPanel`: a value for each pair of an x
+/// and a y category, each cell shaded on a scale from 0 to the largest value, from the card
+/// through `scale`'s tokens, with the scale and its ends beside the grid, on a 192 tall body.
+#[must_use = "draw it with `show`"]
+pub struct HeatmapPanel {
+    title: String,
+    x: Vec<String>,
+    y: Vec<String>,
+    cells: Vec<(usize, usize, f64)>,
+    scale: Vec<&'static str>,
+    unit: String,
+    decimals: Option<usize>,
+}
+
+impl HeatmapPanel {
+    pub fn new(
+        title: impl Into<String>,
+        x: impl IntoIterator<Item = impl Into<String>>,
+        y: impl IntoIterator<Item = impl Into<String>>,
+        cells: impl IntoIterator<Item = (usize, usize, f64)>,
+    ) -> Self {
+        Self {
+            title: title.into(),
+            x: x.into_iter().map(Into::into).collect(),
+            y: y.into_iter().map(Into::into).collect(),
+            cells: cells.into_iter().collect(),
+            scale: vec!["warning"],
+            unit: String::new(),
+            decimals: None,
+        }
+    }
+
+    /// The scale's tokens: one to shade toward from the card, or several to step through.
+    pub fn scale(mut self, scale: impl IntoIterator<Item = &'static str>) -> Self {
+        self.scale = scale.into_iter().collect();
+        self
+    }
+
+    pub fn unit(mut self, unit: impl Into<String>) -> Self {
+        self.unit = unit.into();
+        self
+    }
+
+    pub fn decimals(mut self, decimals: usize) -> Self {
+        self.decimals = Some(decimals);
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui) {
+        let t = tokens(ui.ctx());
+        let card = t.color("card");
+        let mix = |a: Color32, share: f32| {
+            let c = |x: u8, y: u8| (f32::from(x) * share + f32::from(y) * (1.0 - share)).round() as u8;
+            Color32::from_rgb(c(a.r(), card.r()), c(a.g(), card.g()), c(a.b(), card.b()))
+        };
+        // the scale's stops: the first token at 10% and 45% over the card, then each token, as
+        // the web's `scaleColors`; one token alone shades from the card to it in seven steps
+        let stops: Vec<Color32> = match self.scale.as_slice() {
+            [one] => (0..7).map(|i| mix(t.color(one), i as f32 / 6.0)).collect(),
+            [first, rest @ ..] => {
+                let mut stops = vec![mix(t.color(first), 0.1), mix(t.color(first), 0.45), t.color(first)];
+                stops.extend(rest.iter().map(|token| t.color(token)));
+                stops
+            }
+            [] => vec![card, t.color("chart-2")],
+        };
+        let at = |share: f32| {
+            let share = share.clamp(0.0, 1.0) * (stops.len() - 1) as f32;
+            let i = (share.floor() as usize).min(stops.len() - 2);
+            let f = share - i as f32;
+            let (a, b) = (stops[i], stops[i + 1]);
+            let c = |x: u8, y: u8| (f32::from(x) * (1.0 - f) + f32::from(y) * f).round() as u8;
+            Color32::from_rgb(c(a.r(), b.r()), c(a.g(), b.g()), c(a.b(), b.b()))
+        };
+        let high = self
+            .cells
+            .iter()
+            .map(|c| c.2)
+            .fold(0.0_f64, f64::max)
+            .max(f64::MIN_POSITIVE);
+        let font = TextRole::Help.font(&t);
+        let ink = t.color("muted-foreground");
+        // the scale's ends as the web's ticks: at most one decimal, none trailing
+        let written = |v: f64| {
+            let one = format!("{v:.1}");
+            format!("{}{}", one.trim_end_matches('0').trim_end_matches('.'), self.unit)
+        };
+        chart_frame(ui, &self.title, None, |ui| {
+            let width = ui.available_width();
+            let (rect, _) = ui.allocate_exact_size(vec2(width, 192.0), Sense::hover());
+            let painter = ui.painter();
+            let label_width = self
+                .y
+                .iter()
+                .map(|name| painter.layout_no_wrap(name.clone(), font.clone(), ink).size().x)
+                .fold(0.0, f32::max);
+            // the grid 10 from the top, the x labels under it, the scale 44 at the right
+            let grid = egui::Rect::from_min_max(
+                pos2(rect.left() + 4.0 + label_width + 8.0, rect.top() + 10.0),
+                pos2(rect.right() - 44.0, rect.bottom() - 4.0 - 20.0),
+            );
+            let (columns, rows) = (self.x.len().max(1), self.y.len().max(1));
+            let cell = vec2(grid.width() / columns as f32, grid.height() / rows as f32);
+            // the web's `look.corner`, a share of the radius, to the whole pixel
+            let corner = egui::CornerRadius::same((t.length("radius") * 0.4).floor() as u8);
+            for (column, row, value) in &self.cells {
+                // the last series at the top, as the web's reversed order on an inverted axis
+                let shown_row = rows - 1 - row;
+                let min = pos2(
+                    grid.left() + *column as f32 * cell.x,
+                    grid.top() + shown_row as f32 * cell.y,
+                );
+                // a 1 border in the card between cells, as the web's
+                let one = egui::Rect::from_min_size(min, cell).shrink(0.5);
+                painter.rect_filled(one, corner, at((*value / high) as f32));
+            }
+            for (row, name) in self.y.iter().enumerate() {
+                let shown_row = rows - 1 - row;
+                let middle = grid.top() + (shown_row as f32 + 0.5) * cell.y;
+                painter.text(
+                    pos2(grid.left() - 8.0, middle),
+                    egui::Align2::RIGHT_CENTER,
+                    name,
+                    font.clone(),
+                    ink,
+                );
+            }
+            // a time every so many columns, about one per 80
+            let every = ((80.0 / cell.x).ceil() as usize).max(1);
+            for (column, name) in self.x.iter().enumerate().step_by(every) {
+                let center = grid.left() + (column as f32 + 0.5) * cell.x;
+                painter.text(
+                    pos2(center, grid.bottom() + 4.0),
+                    egui::Align2::CENTER_TOP,
+                    name,
+                    font.clone(),
+                    ink,
+                );
+            }
+            // the scale: a bar 8 wide and 100 tall, high at its top, its ends written beside it
+            let bar = egui::Rect::from_min_size(
+                pos2(rect.right() - 44.0 + 4.0, rect.top() + 4.0 + 14.0),
+                vec2(8.0, 100.0),
+            );
+            let mut mesh = egui::Mesh::default();
+            let steps = 24;
+            for i in 0..=steps {
+                let share = i as f32 / steps as f32;
+                let y = bar.bottom() - share * bar.height();
+                let color = at(share);
+                mesh.colored_vertex(pos2(bar.left(), y), color);
+                mesh.colored_vertex(pos2(bar.right(), y), color);
+            }
+            for i in 0..steps {
+                let k = (i * 2) as u32;
+                mesh.add_triangle(k, k + 1, k + 2);
+                mesh.add_triangle(k + 1, k + 3, k + 2);
+            }
+            painter.add(egui::Shape::mesh(mesh));
+            painter.text(
+                pos2(bar.center().x, bar.top() - 2.0),
+                egui::Align2::CENTER_BOTTOM,
+                written(high),
+                font.clone(),
+                ink,
+            );
+            painter.text(
+                pos2(bar.center().x, bar.bottom() + 2.0),
+                egui::Align2::CENTER_TOP,
+                written(0.0),
+                font.clone(),
+                ink,
+            );
+        });
+    }
+}
+
 /// A dashboard panel of bars, as sokkel-ui's `BarPanel`: one or more series per category, side
 /// by side or stacked, upright or lying down, on a 192 tall body.
 #[must_use = "draw it with `show`"]
