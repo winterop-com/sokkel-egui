@@ -40,7 +40,7 @@
         "@winterop-com/sokkel-ui/CopyButton": null,
         "@winterop-com/sokkel-ui/DataTable": "DataTable",
         "@winterop-com/sokkel-ui/DialogShell": "ConfirmDialog, Dialog",
-        "@winterop-com/sokkel-ui/Dot": null,
+        "@winterop-com/sokkel-ui/Dot": "Cell::Marked (a row name after its dot)",
         "@winterop-com/sokkel-ui/Field": "field (a label and a hint over a control)",
         "@winterop-com/sokkel-ui/FormBar": "form_bar",
         "@winterop-com/sokkel-ui/IconButton": "IconButton",

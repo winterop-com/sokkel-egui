@@ -157,6 +157,12 @@ pub enum Cell {
     },
     /// Values as a sparkline 112 by 28, in `ink`.
     Trend(Vec<f64>, egui::Color32),
+    /// A code in the mono face after a dot in `dot`'s color, as a row's name with sokkel-ui's
+    /// `Dot` before it (its threshold's color); no dot when `None`.
+    Marked {
+        text: String,
+        dot: Option<egui::Color32>,
+    },
     /// A figure written as `text` and sorted by `value`, as a column's `sortValue` sorts by the
     /// number rather than the words: `144 ms`.
     Number {
@@ -176,7 +182,7 @@ impl Cell {
             | Cell::Mono(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
-            Cell::Number { text, .. } => text.clone(),
+            Cell::Number { text, .. } | Cell::Marked { text, .. } => text.clone(),
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
             Cell::Tags(tags) => tags.join(" "),
             Cell::Relative { at, now } => super::relative_time(at - now),
@@ -200,6 +206,7 @@ impl Cell {
             // lifted by 1e12 so a negative figure still sorts as a word, small enough that an f64
             // read back keeps every digit
             Cell::Number { value, .. } => format!("{:024.6}", value + 1e12),
+            Cell::Marked { text, .. } => text.clone(),
             Cell::Empty => String::new(),
         }
     }
@@ -957,7 +964,7 @@ impl<'a> DataTable<'a> {
                         // a code stays in the code face, at the title's size
                         let rich = match &row[c] {
                             // in the title's weight, as the web's `font-mono` inside `font-medium`
-                            Cell::Mono(_) => egui::RichText::new(words).font(crate::mono_font(
+                            Cell::Mono(_) | Cell::Marked { .. } => egui::RichText::new(words).font(crate::mono_font(
                                 ui.ctx(),
                                 crate::mono_size(t, TextRole::Action.font(t).size),
                                 t.text(TextRole::Action.key()).weight,
@@ -1839,6 +1846,28 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
             text(ui, rich, t.color("foreground"));
         }
+        Cell::Marked { text: label, dot } => {
+            // a 10 dot, 8 before the code, as the web's `Dot` and `gap-2`
+            let lead = if let Some(color) = dot {
+                ui.painter()
+                    .circle_filled(pos2(rect.left() + 5.0, rect.center().y), 5.0, *color);
+                18.0
+            } else {
+                0.0
+            };
+            let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
+            let galley = WidgetText::from(rich).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                (room - lead).max(1.0),
+                TextRole::Body.font(t),
+            );
+            ui.painter().galley(
+                pos2(rect.left() + lead, rect.center().y - galley.size().y / 2.0),
+                galley,
+                t.color("foreground"),
+            );
+        }
         Cell::Due { date, now, done } => {
             let (rich, ink) = DueText::new(*date, *now).done(*done).rich(t);
             text(ui, rich, ink);
@@ -1958,7 +1987,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Relative { .. } => text(ui, TextRole::Help.rich(t, cell.draft()), quiet, at.x, room),
         Cell::Struck(label) => text(ui, TextRole::Help.rich(t, label).strikethrough(), quiet, at.x, room),
         Cell::Muted(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
-        Cell::Mono(label) => {
+        Cell::Mono(label) | Cell::Marked { text: label, .. } => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
             text(ui, rich, quiet, at.x, room)
         }

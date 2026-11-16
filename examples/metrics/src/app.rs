@@ -382,19 +382,25 @@ fn draw_panel(ui: &mut Ui, panel: &Panel, variables: &Variables, range: &Range, 
             chart.show(ui);
         }
         Shape::Table { rows } => {
+            let t = sokkel_egui::tokens(ui.ctx());
             let write = |v: f64| format!("{}{}", format_value(v, Some(data.decimals)), data.unit);
             let columns = [
-                Column::new("Name", 128.0).fill(),
-                Column::new("Last", 96.0).numeric(),
-                Column::new("Mean", 96.0).numeric(),
-                Column::new("Max", 96.0).numeric(),
-                Column::new("Min", 96.0).numeric(),
+                // the web's `minmax(8rem,1fr)` and `6rem`, less the 12 the table keeps between columns
+                Column::new("Name", 116.0).fill(),
+                Column::new("Last", 84.0).numeric(),
+                Column::new("Mean", 84.0).numeric(),
+                Column::new("Max", 84.0).numeric(),
+                Column::new("Min", 84.0).numeric(),
             ];
             let cells: Vec<Vec<Cell>> = rows
                 .iter()
                 .map(|r| {
                     vec![
-                        Cell::Mono(r.name.clone()),
+                        // the name after a dot in its last value's threshold color, as the web's
+                        Cell::Marked {
+                            text: r.name.clone(),
+                            dot: sokkel_egui::threshold_color(Some(r.last), thresholds).map(|k| t.color(k)),
+                        },
                         Cell::Number {
                             value: r.last,
                             text: write(r.last),
