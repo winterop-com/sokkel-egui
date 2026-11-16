@@ -26,7 +26,7 @@ use data::SERVICES;
 use live::Live;
 use sokkel_ui_egui_charts::{Series, TimeSeriesPanel};
 use sokkel_ui_egui_graph::{GraphCanvas, GraphLink, GraphNode, GraphWords};
-use sokkel_ui_egui_maps::{MapLegend, MapView, Marker};
+use sokkel_ui_egui_maps::{MapLegend, MapPopup, MapPopupRow, MapView, Marker};
 
 /// Tidevann's mark, as sokkel-ui's examples draw it (`tidevann-shared/mark`).
 pub const TIDEVANN_MARK: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="currentColor"><path d="M12 4c-1 1.8-3 3.5-3 5a3 3 0 0 0 6 0c0-1.5-2-3.2-3-5Z"/><path d="M5 13c2-2 4 2 7 0s5-2 7 0v1a7 7 0 0 1-14 0Z"/></svg>"#;
@@ -1500,6 +1500,9 @@ impl StatusApp {
                     .pressable(true)
             })
             .collect();
+        let cards = self.site_cards(&t);
+        let mut to_card: Option<String> = None;
+        let opened = &mut to_card;
         let map = &mut self.overview_map;
         let table = &mut self.open_table;
         let mut to_page: Option<String> = None;
@@ -1529,6 +1532,9 @@ impl StatusApp {
                             let size = egui::vec2(ui.available_width(), 344.0);
                             let response = map.show(ui, size, &markers, &[]);
                             legend.clone().show(ui, response.rect);
+                            if let Some(incident) = site_card(ui, map, &cards) {
+                                *opened = Some(format!("incidents/{incident}"));
+                            }
                         });
                 }
                 "open" => {
@@ -1667,7 +1673,7 @@ impl StatusApp {
             let at = index.min(layout.len());
             layout.insert(at, DashboardLayoutItem::new(*id, *span));
         }
-        to_all.or(to_day).or(to_page)
+        to_all.or(to_day).or(to_page).or(to_card)
     }
 
     /// Each site as a point in its state's color.
@@ -1676,7 +1682,37 @@ impl StatusApp {
             .iter()
             .enumerate()
             .map(|(i, site)| {
-                Marker::new(site.at[1], site.at[0], "").color(t.color(self.live_world.site_health[i].color()))
+                Marker::new(site.at[1], site.at[0], "")
+                    .id(site.id)
+                    .color(t.color(self.live_world.site_health[i].color()))
+            })
+            .collect()
+    }
+
+    /// Each site's card, as the web's `SitesMap` opens it: where it is, its state, its round trip
+    /// now and usually, and the open incident that covers it.
+    fn site_cards(&self, t: &sokkel_ui_egui::Tokens) -> Vec<SiteCard> {
+        data::SITES
+            .iter()
+            .enumerate()
+            .map(|(i, site)| {
+                let health = self.live_world.site_health[i];
+                let covering = self
+                    .incidents
+                    .iter()
+                    .find(|incident| incident.state != data::State::Resolved && incident.sites.contains(&site.id));
+                SiteCard {
+                    id: site.id,
+                    city: site.city,
+                    place: format!("{}, {}", site.country, site.region),
+                    state: health.words(),
+                    color: t.color(health.color()),
+                    now: self.live_world.sites[i]
+                        .last()
+                        .map_or("-".to_owned(), |ms| format_ms(*ms)),
+                    usually: format_ms(site.latency),
+                    incident: covering.map(|incident| (incident.code.clone(), incident.id.clone())),
+                }
             })
             .collect()
     }
@@ -1752,6 +1788,9 @@ impl StatusApp {
             })
             .collect();
         let keys: Vec<&str> = listed.iter().map(|i| data::SITES[*i].id).collect();
+        let cards = self.site_cards(&t);
+        let mut to_incident = None;
+        let opened = &mut to_incident;
         let map = &mut self.sites_map;
         let table = &mut self.sites_table;
         let mut chosen = None;
@@ -1765,6 +1804,9 @@ impl StatusApp {
                     let size = ui.available_size().max(egui::vec2(1.0, 320.0));
                     let response = map.show(ui, size, &markers, &[]);
                     legend.clone().show(ui, response.rect);
+                    if let Some(incident) = site_card(ui, map, &cards) {
+                        *opened = Some(incident);
+                    }
                 },
                 |ui| {
                     let output = DataTable::new("sites", &columns, &rows, table)
@@ -1780,9 +1822,14 @@ impl StatusApp {
                     }
                 },
             );
+        if let Some(incident) = to_incident {
+            self.go(&format!("incidents/{incident}"));
+            return;
+        }
         if let Some(site) = chosen {
             self.selected_site = Some(site);
             let s = &data::SITES[site];
+            self.sites_map.selected = Some(s.id.to_owned());
             self.sites_map
                 .frame(Some([s.at[0] - 6.0, s.at[1] - 6.0, s.at[0] + 6.0, s.at[1] + 6.0]));
         }
@@ -2826,4 +2873,51 @@ fn dependencies_footer(service: &data::Service) -> String {
         format!("called by {}", called_by.join(", "))
     };
     MetaLine::new([format!("Calls on {calls_on}"), called_by]).text()
+}
+
+/// What a site's card on the map says, made before the map is drawn.
+struct SiteCard {
+    id: &'static str,
+    city: &'static str,
+    place: String,
+    state: &'static str,
+    color: egui::Color32,
+    now: String,
+    usually: String,
+    /// The open incident covering the site: its code and its id.
+    incident: Option<(String, String)>,
+}
+
+/// The card of the site chosen on `map`, after the map is drawn; the incident its action opens.
+fn site_card(ui: &mut Ui, map: &mut MapView, cards: &[SiteCard]) -> Option<String> {
+    let card = cards.iter().find(|c| map.selected.as_deref() == Some(c.id))?;
+    let mut popup = MapPopup::new(card.city)
+        .description(card.place.clone())
+        .row(MapPopupRow::new("State", card.state).color(card.color))
+        .row(MapPopupRow::new("Round trip", card.now.clone()))
+        .row(MapPopupRow::new("Usually", card.usually.clone()));
+    if let Some((code, _)) = &card.incident {
+        popup = popup
+            .row(MapPopupRow::new("Incident", code.clone()))
+            .action(format!("Open {code}"));
+    }
+    let answer = popup.show(ui, map);
+    if answer.acted {
+        return card.incident.as_ref().map(|(_, id)| id.clone());
+    }
+    None
+}
+
+/// Milliseconds as the web writes them: whole, grouped, with their unit.
+fn format_ms(ms: f64) -> String {
+    let whole = ms.round() as i64;
+    let digits = whole.abs().to_string();
+    let mut grouped = String::new();
+    for (k, c) in digits.chars().enumerate() {
+        if k > 0 && (digits.len() - k).is_multiple_of(3) {
+            grouped.push(',');
+        }
+        grouped.push(c);
+    }
+    format!("{}{grouped} ms", if whole < 0 { "-" } else { "" })
 }
