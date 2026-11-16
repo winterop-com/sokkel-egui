@@ -8,6 +8,8 @@ publish.workspace = true
 
 [dependencies]
 sokkel-ui-egui.workspace = true
+sokkel-ui-egui-charts.workspace = true
+eframe.workspace = true
 
 [dev-dependencies]
 egui_kittest.workspace = true

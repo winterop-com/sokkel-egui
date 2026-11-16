@@ -2584,8 +2584,10 @@ dependencies = [
 name = "metrics"
 version = "0.1.0"
 dependencies = [
+ "eframe",
  "egui_kittest",
  "sokkel-ui-egui",
+ "sokkel-ui-egui-charts",
 ]
 
 [[package]]

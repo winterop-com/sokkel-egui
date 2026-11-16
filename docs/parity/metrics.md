@@ -15,7 +15,15 @@ manifest is `parity/metrics.json`; the web's screens are shot into `parity/metri
   bar gauge (`BarGauge`) and heatmap (`HeatmapPanel`) panels, `Dot`, `WindowedPane`,
   `CopyButton`, and the toggle group.
 
+- The simulated source is the web's to the last digit (`source.rs`, `query.rs`, checked against
+  values bun reads from the web's own files): every metric, the incidents, the log lines, and a
+  query's series over a range. `cargo run -p metrics` opens on the Services overview at 09:00:05,
+  a scrape landing every second; its stat tiles, gauges, time series, bars, table and logs read
+  the web's figures (388 req/s +3.7%, 0.28% +5.2%, 154 ms +2.9%, 51 -26.1%, 43%, 65%).
+
 ## Next
 
-- The app on its simulated source (`source.ts`, `data.ts`, `query.ts`): the three dashboards with
-  the panels the web draws, then the editor, the alerts and the settings.
+- The bar gauge and the heatmap panels (CPU by host, Latency p95 by host stand empty), a stat
+  tile's background color mode (Error rate), the table held inside its panel, the variables bar
+  and the time range under the head, and the head's Share, Edit and Add panel.
+- Then Dashboards, the editor, Alerts and Settings, each in the rail once it works.
