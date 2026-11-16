@@ -2581,6 +2581,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "metrics"
+version = "0.1.0"
+dependencies = [
+ "eframe",
+ "egui_kittest",
+ "sokkel-ui-egui",
+ "sokkel-ui-egui-charts",
+]
+
+[[package]]
 name = "miette"
 version = "5.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
