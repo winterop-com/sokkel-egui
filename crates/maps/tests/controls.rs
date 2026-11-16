@@ -57,3 +57,11 @@ fn the_basemap_switcher_offers_each_basemap_and_draws_the_one_chosen() {
     assert_eq!(harness.state().basemap, Some(sokkel_ui_egui_maps::Basemap::Satellite));
     assert!(harness.query_by_label("Blank").is_none(), "the menu closes on a choice");
 }
+
+#[test]
+fn the_dark_basemap_is_dark_in_the_light_scheme() {
+    let mut harness = harness();
+    harness.state_mut().basemap = Some(sokkel_ui_egui_maps::Basemap::Dark);
+    harness.run_steps(3);
+    harness.snapshot("basemap_dark_in_light");
+}

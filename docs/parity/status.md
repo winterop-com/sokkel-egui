@@ -132,7 +132,8 @@ and never chase a difference made of numbers.
   out and Fit to the data in one group, then Full screen, which takes the map over the whole
   window (its legend and card with it) until Exit full screen or Escape. Under them the basemap switcher (`Basemap`): Light, Dark,
   Satellite (NASA's Blue Marble) and Blank, each with the web's preview, the street map by the
-  scheme until one is chosen. The web's Streets (OpenFreeMap's Liberty, in colors of its own
+  scheme until one is chosen. Light and Dark keep their scheme whatever the page's: the map draws
+  in the same theme's other scheme's colors (`scope`), its controls and legend in the page's. The web's Streets (OpenFreeMap's Liberty, in colors of its own
   rather than the tokens') is not offered yet. Simulate trouble here, in each site's menu, starts a
   region scenario on it and shows it on the map.
 - The live world takes the web's scenarios (`live.rs`): a spike (errors), a drift (slowing) or a

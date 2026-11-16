@@ -429,6 +429,19 @@ impl MapView {
             None => {}
         }
         let home = self.home;
+        // the street map light or dark whatever the page's scheme, in that scheme's colors: the
+        // page's tokens, or the same theme's other scheme's
+        let wants_dark = match shown {
+            Basemap::Light => Some(false),
+            Basemap::Dark => Some(true),
+            _ => None,
+        };
+        let map_t = match wants_dark {
+            Some(want) if want != t.dark => sokkel_ui_egui::scope(ui, &t.theme, Some(want), |ui| tokens(ui.ctx())),
+            _ => t.clone(),
+        };
+        let t_page = t;
+        let t = map_t;
         let tiles = match shown {
             Basemap::Light | Basemap::Dark => {
                 self.tiles_for(&t, shown == Basemap::Dark);
@@ -446,13 +459,18 @@ impl MapView {
                 ui.set_min_size(size);
                 // the ground in `card`, under the tiles, showing where one has not loaded
                 let room = Rect::from_min_size(ui.cursor().min, size);
-                ui.painter().rect_filled(room, CornerRadius::ZERO, t.color("card"));
+                let corners = if self.framed && !self.full {
+                    t.radius("surface")
+                } else {
+                    CornerRadius::ZERO
+                };
+                ui.painter().rect_filled(room, corners, t.color("card"));
                 Map::new(tiles, &mut self.memory, home)
                     .zoom_with_ctrl(false)
                     .show(ui, |ui, response, projector, _| {
                         let painter = ui.painter_at(response.rect);
                         if !has_tiles {
-                            ground(&painter, &t, response.rect, projector);
+                            ground(&painter, &t, response.rect, projector, corners);
                         }
                         overlays(&painter, &t, projector, markers, routes);
                         points = markers
@@ -489,6 +507,7 @@ impl MapView {
         self.points = points;
         self.room = rect;
         self.layer = response.layer_id;
+        let t = t_page;
         if self.framed && !self.full {
             ui.painter().rect_stroke(
                 rect,
@@ -913,8 +932,8 @@ fn street_style(t: &Tokens, dark: bool) -> Style {
 
 /// The ground without tiles: `card`, and a graticule in the foreground at 14% over it, its lines
 /// at least 64 apart (every 1, 2, 5, 10, 15, 30 or 45 degrees, as the zoom allows) across the view.
-fn ground(painter: &egui::Painter, t: &Tokens, rect: Rect, projector: &Projector) {
-    painter.rect_filled(rect, CornerRadius::ZERO, t.color("card"));
+fn ground(painter: &egui::Painter, t: &Tokens, rect: Rect, projector: &Projector, corners: CornerRadius) {
+    painter.rect_filled(rect, corners, t.color("card"));
     let stroke = Stroke::new(1.0, t.color_at("foreground", 0.14));
     let corner = |p: Pos2| projector.unproject(p.to_vec2());
     let (nw, se) = (corner(rect.left_top()), corner(rect.right_bottom()));
