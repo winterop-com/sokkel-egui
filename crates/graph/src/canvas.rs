@@ -85,6 +85,12 @@ struct Moved {
 /// A graph laid out in ranks and drawn as node boxes and routed edges, fitted to its width, as
 /// sokkel-ui-graph's `GraphCanvas` with `frame="fitted"`. A press on a node chooses it; the
 /// buttons zoom in, out and back to the fit, and a drag moves a zoomed drawing.
+///
+/// The order the nodes are given in is the order the layout keeps, as the web's elk is told
+/// (`considerModelOrder`, `MODEL_ORDER` cycle breaking): an edge from a later node to an earlier
+/// one is laid out turned round, its target a rank before its source and the edge routed back.
+/// Give the nodes in the order their edges run (callers before what they call), not by name, or
+/// edges with no cycle among them come out drawn backward.
 pub struct GraphCanvas<'a> {
     id: Id,
     nodes: &'a [GraphNode],
