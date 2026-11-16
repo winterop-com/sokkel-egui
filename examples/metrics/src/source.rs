@@ -5,7 +5,13 @@
 /// The services, projects and jobs.
 pub const SERVICES: [&str; 3] = ["api", "worker", "scheduler"];
 pub const PROJECTS: [&str; 3] = ["harbor", "juniper", "larkspur"];
-pub const JOBS: [&str; 5] = ["nightly-export", "sync-inventory", "rebuild-index", "import-orders", "send-digest"];
+pub const JOBS: [&str; 5] = [
+    "nightly-export",
+    "sync-inventory",
+    "rebuild-index",
+    "import-orders",
+    "send-digest",
+];
 
 /// The project a job belongs to.
 pub fn job_project(job: &str) -> &'static str {
@@ -25,13 +31,41 @@ pub struct Host {
 }
 
 pub const HOSTS: [Host; 7] = [
-    Host { id: "api-1", service: "api", region: "Northern Europe" },
-    Host { id: "api-2", service: "api", region: "Western Europe" },
-    Host { id: "api-3", service: "api", region: "North America" },
-    Host { id: "worker-1", service: "worker", region: "Northern Europe" },
-    Host { id: "worker-2", service: "worker", region: "Northern Europe" },
-    Host { id: "worker-3", service: "worker", region: "North America" },
-    Host { id: "scheduler-1", service: "scheduler", region: "Northern Europe" },
+    Host {
+        id: "api-1",
+        service: "api",
+        region: "Northern Europe",
+    },
+    Host {
+        id: "api-2",
+        service: "api",
+        region: "Western Europe",
+    },
+    Host {
+        id: "api-3",
+        service: "api",
+        region: "North America",
+    },
+    Host {
+        id: "worker-1",
+        service: "worker",
+        region: "Northern Europe",
+    },
+    Host {
+        id: "worker-2",
+        service: "worker",
+        region: "Northern Europe",
+    },
+    Host {
+        id: "worker-3",
+        service: "worker",
+        region: "North America",
+    },
+    Host {
+        id: "scheduler-1",
+        service: "scheduler",
+        region: "Northern Europe",
+    },
 ];
 
 /// A host's full name.
@@ -199,7 +233,10 @@ fn seed_of(labels: &SeriesLabels) -> f64 {
 /// A level that swells with the day and wanders, with a quick flicker on top.
 fn level(base: f64, labels: &SeriesLabels, second: f64, swell: f64, wander: f64, flicker: f64) -> f64 {
     let seed = seed_of(labels);
-    base * (1.0 + swell * daily(second) + wander * noise(seed, second / 300.0) + flicker * noise(seed + 1.0, second / 4.0))
+    base * (1.0
+        + swell * daily(second)
+        + wander * noise(seed, second / 300.0)
+        + flicker * noise(seed + 1.0, second / 4.0))
 }
 
 fn host_of(id: Option<&str>) -> Option<&'static Host> {

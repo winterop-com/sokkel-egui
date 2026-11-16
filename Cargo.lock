@@ -2587,7 +2587,6 @@ dependencies = [
  "eframe",
  "egui_kittest",
  "sokkel-ui-egui",
- "sokkel-ui-egui-charts",
 ]
 
 [[package]]
