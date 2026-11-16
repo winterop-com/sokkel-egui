@@ -50,7 +50,7 @@ pub use arrange::{
 };
 pub use board::{BOARD_COLUMN, Board, BoardCard, BoardColumn, BoardMove, CardResponse};
 pub use button::{Button, ButtonSize, ButtonVariant, IconButton};
-pub use calendar::{Calendar, CalendarWords, WeekStart, calendar_forget};
+pub use calendar::{Calendar, CalendarWords, RangeCalendar, WeekStart, calendar_forget};
 pub use chip::{Chip, ChipTone, TagChips};
 pub use chip_bar::ChipBar;
 pub use choice::{Checkbox, Choice, ChoiceList, Segmented, SegmentedVariant, Tabs, TabsVariant, checkbox_list};
@@ -245,5 +245,5 @@ pub(crate) fn spinner(ui: &Ui, painter: &Painter, center: egui::Pos2, radius: f3
     painter.add(egui::Shape::line(points, Stroke::new(1.5, color)));
     ui.ctx().request_repaint();
 }
-pub use time_range::{RefreshAsked, RefreshControl, RefreshWords, TimeRangePicker};
+pub use time_range::{RefreshAsked, RefreshControl, RefreshWords, TimeRangePicker, TimeRangeWords, range_label};
 pub use variables::variable_select;

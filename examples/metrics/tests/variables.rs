@@ -55,3 +55,36 @@ fn the_range_and_the_refresh_are_chosen() {
     harness.run_steps(2);
     assert_eq!(harness.state().range, metrics::query::Range::Preset("1h"));
 }
+
+#[test]
+fn a_custom_span_of_days_is_applied() {
+    let mut app = MetricsApp::on(Appearance::default());
+    app.live = false;
+    let mut harness = Harness::builder().with_size([1440.0, 900.0]).build_ui_state(
+        |ui, app: &mut MetricsApp| {
+            egui::CentralPanel::default()
+                .frame(egui::Frame::NONE)
+                .show(ui, |ui| app.show(ui));
+        },
+        app,
+    );
+    harness.run_steps(3);
+    harness.get_by_label("Last 15 minutes").click();
+    harness.run_steps(3);
+    harness.get_by_label("2026-11-10").click();
+    harness.run_steps(2);
+    harness.get_by_label("2026-11-17").click();
+    harness.run_steps(2);
+    harness.snapshot("metrics_custom_range");
+    harness.get_by_label("Apply").click();
+    harness.run_steps(3);
+    let day = |d: i32| f64::from(sokkel_egui::Day::from_ymd(2026, 11, d as u32).0) * 86_400.0;
+    assert_eq!(
+        harness.state().range,
+        metrics::query::Range::Between {
+            from: day(10),
+            to: day(17) + 86_399.0
+        }
+    );
+    assert!(harness.query_by_label("Nov 10 to Nov 17, 2026").is_some());
+}

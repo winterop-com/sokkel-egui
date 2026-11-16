@@ -226,11 +226,28 @@ impl MetricsApp {
                     Range::Preset(id) => (*id).to_owned(),
                     Range::Between { .. } => String::new(),
                 };
+                // a custom span is of whole days: from the first's midnight to the end of the last
+                let day_of = |second: f64| sokkel_egui::Day((second / 86_400.0).floor() as i32);
+                let mut span = match &self.range {
+                    Range::Between { from, to } => Some((day_of(*from), day_of(*to))),
+                    Range::Preset(_) => None,
+                };
                 let presets: Vec<(&str, &str)> = crate::query::PRESETS.iter().map(|p| (p.id, p.label)).collect();
-                if TimeRangePicker::new(&mut preset, &presets).show(ui).changed()
-                    && let Some(p) = crate::query::PRESETS.iter().find(|p| p.id == preset)
+                if TimeRangePicker::new(&mut preset, &presets)
+                    .custom(&mut span, day_of(self.at))
+                    .show(ui)
+                    .changed()
                 {
-                    self.range = Range::Preset(p.id);
+                    match (crate::query::PRESETS.iter().find(|p| p.id == preset), span) {
+                        (Some(p), _) => self.range = Range::Preset(p.id),
+                        (None, Some((from, to))) => {
+                            self.range = Range::Between {
+                                from: f64::from(from.0) * 86_400.0,
+                                to: f64::from(to.0) * 86_400.0 + 86_399.0,
+                            };
+                        }
+                        (None, None) => {}
+                    }
                 }
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                     ui.spacing_mut().item_spacing.x = 6.0;

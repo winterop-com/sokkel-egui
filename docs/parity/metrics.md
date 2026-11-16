@@ -23,6 +23,8 @@ manifest is `parity/metrics.json`; the web's screens are shot into `parity/metri
 
 ## Next
 
-- Every panel kind is drawn now (the bar gauge and the heatmap are `sokkel-egui-charts::BarGauge` and `HeatmapPanel`); still to come: the threshold dot before a table row's name, the time range's custom span (its presets and the refresh stand beside the variables:
-  `TimeRangePicker`, `RefreshControl`, `variable_select`; the panels read at each refresh), and the head's Share, Edit and Add panel.
+- Every panel kind is drawn now (the bar gauge and the heatmap are `sokkel-egui-charts::BarGauge` and `HeatmapPanel`); the time range (presets, or a custom span of days on two months, `RangeCalendar`), the
+  refresh and the variables stand under the head (`TimeRangePicker`, `RefreshControl`,
+  `variable_select`; the panels read at each refresh). Still to come: the threshold dot before a
+  table row's name, and the head's Share, Edit and Add panel.
 - Then Dashboards, the editor, Alerts and Settings, each in the rail once it works.

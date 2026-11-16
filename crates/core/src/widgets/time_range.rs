@@ -3,7 +3,28 @@
 
 use egui::{Popup, PopupCloseBehavior, Response, Sense, Stroke, StrokeKind, Ui, vec2};
 
-use crate::{Button, ButtonSize, ButtonVariant, Icon, TextRole, icons, tokens};
+use crate::{Button, ButtonSize, ButtonVariant, Day, Icon, RangeCalendar, TextRole, icons, tokens};
+
+/// The words a time range picker says.
+#[derive(Clone, Debug)]
+pub struct TimeRangeWords {
+    pub custom: String,
+    pub apply: String,
+}
+
+impl Default for TimeRangeWords {
+    fn default() -> Self {
+        Self {
+            custom: "Custom range".into(),
+            apply: "Apply".into(),
+        }
+    }
+}
+
+/// A span of days said for a reader, as the web's `rangeLabel`: `Nov 3 to Nov 17, 2026`.
+pub fn range_label(from: Day, to: Day) -> String {
+    format!("{} to {}", from.short(), to.medium())
+}
 
 /// The range a dashboard covers, as a trigger naming it (a calendar's glyph, the range, a chevron)
 /// opening the list of presets; a preset chosen applies at once, as the web's `TimeRangePicker`.
@@ -11,21 +32,44 @@ use crate::{Button, ButtonSize, ButtonVariant, Icon, TextRole, icons, tokens};
 pub struct TimeRangePicker<'a> {
     chosen: &'a mut String,
     presets: &'a [(&'a str, &'a str)],
+    custom: Option<(&'a mut Option<(Day, Day)>, Day)>,
+    words: TimeRangeWords,
 }
 
 impl<'a> TimeRangePicker<'a> {
     /// `presets` are each an id and its label, such as `("15m", "Last 15 minutes")`.
     pub fn new(chosen: &'a mut String, presets: &'a [(&'a str, &'a str)]) -> Self {
-        Self { chosen, presets }
+        Self {
+            chosen,
+            presets,
+            custom: None,
+            words: TimeRangeWords::default(),
+        }
+    }
+
+    /// A custom span of days beside the presets, picked on two months and applied with Apply, as
+    /// the web's: `span` holds it, `chosen` empty while it is the range; `today` is marked.
+    pub fn custom(mut self, span: &'a mut Option<(Day, Day)>, today: Day) -> Self {
+        self.custom = Some((span, today));
+        self
+    }
+
+    pub fn words(mut self, words: TimeRangeWords) -> Self {
+        self.words = words;
+        self
     }
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
-        let label = self
-            .presets
-            .iter()
-            .find(|(id, _)| *id == self.chosen.as_str())
-            .map_or(self.chosen.clone(), |(_, label)| (*label).to_owned());
+        let span = self.custom.as_ref().and_then(|(span, _)| **span);
+        let label = match (self.chosen.is_empty(), span) {
+            (true, Some((from, to))) => range_label(from, to),
+            _ => self
+                .presets
+                .iter()
+                .find(|(id, _)| *id == self.chosen.as_str())
+                .map_or(self.chosen.clone(), |(_, label)| (*label).to_owned()),
+        };
         let mut response = ui.add(
             Button::new(label)
                 .variant(ButtonVariant::Outline)
@@ -34,47 +78,90 @@ impl<'a> TimeRangePicker<'a> {
                 .trailing(Icon::ChevronDown),
         );
         let mut picked = None;
+        let mut applied = None;
+        let draft_id = response.id.with("draft");
+        let custom = self.custom.as_ref().map(|(span, today)| (**span, *today));
+        let presets = self.presets;
+        let chosen_now = self.chosen.clone();
+        let words = self.words.clone();
         Popup::menu(&response)
-            .frame(super::popup_frame(&t).inner_margin(egui::Margin::same(6)))
+            .frame(super::popup_frame(&t).inner_margin(egui::Margin::ZERO))
             .align(egui::RectAlign::BOTTOM_END)
             .gap(4.0)
-            .width(160.0)
             .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
             .show(|ui| {
-                ui.spacing_mut().item_spacing.y = 2.0;
-                for (id, label) in self.presets {
-                    let chosen = *id == self.chosen.as_str();
-                    let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), 32.0), Sense::click());
-                    hit.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::Button, true, chosen, *label));
-                    let ground = if chosen {
-                        Some(t.color("secondary"))
-                    } else if hit.hovered() {
-                        Some(t.color("hover"))
-                    } else {
-                        None
+                ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+                ui.horizontal_top(|ui| {
+                    // the presets in a column of 160, a rule after it
+                    let column = ui.vertical(|ui| {
+                        ui.set_width(160.0);
+                        egui::Frame::new().inner_margin(egui::Margin::same(6)).show(ui, |ui| {
+                            ui.spacing_mut().item_spacing.y = 2.0;
+                            if let Some(id) = preset_rows(ui, &t, presets, &chosen_now) {
+                                picked = Some(id);
+                                ui.close();
+                            }
+                        });
+                    });
+                    let Some((span, today)) = custom else {
+                        return;
                     };
-                    if let Some(ground) = ground {
-                        ui.painter().rect_filled(row, t.radius("md"), ground);
-                    }
-                    let rich = TextRole::Body.rich(&t, *label);
-                    let rich = if chosen { rich.variation("wght", 500.0) } else { rich };
-                    let galley = egui::WidgetText::from(rich).into_galley(
-                        ui,
-                        Some(egui::TextWrapMode::Truncate),
-                        row.width() - 16.0,
-                        TextRole::Body.font(&t),
-                    );
-                    ui.painter().galley(
-                        egui::pos2(row.left() + 8.0, row.center().y - galley.size().y / 2.0),
-                        galley,
-                        t.color("popover-foreground"),
-                    );
-                    if hit.clicked() {
-                        picked = Some((*id).to_owned());
-                        ui.close();
-                    }
-                }
+                    let rule = column.response.rect;
+                    ui.painter()
+                        .vline(rule.right(), rule.y_range(), Stroke::new(1.0, t.color("border")));
+                    ui.vertical(|ui| {
+                        let mut draft: (Option<Day>, Option<Day>) = ui
+                            .data(|d| d.get_temp(draft_id))
+                            .unwrap_or(span.map_or((None, None), |(from, to)| (Some(from), Some(to))));
+                        egui::Frame::new()
+                            .inner_margin(egui::Margin {
+                                left: 12,
+                                right: 12,
+                                top: 10,
+                                bottom: 0,
+                            })
+                            .show(ui, |ui| {
+                                ui.label(
+                                    TextRole::Help
+                                        .rich(&t, &words.custom)
+                                        .variation("wght", 500.0)
+                                        .color(t.color("muted-foreground")),
+                                );
+                            });
+                        ui.add(RangeCalendar::new(
+                            draft_id.with("calendar"),
+                            &mut draft.0,
+                            &mut draft.1,
+                            today,
+                        ));
+                        // the footer: a rule, then Apply at the end once both days are chosen
+                        let (line, _) = ui.allocate_exact_size(vec2(ui.available_width(), 1.0), Sense::hover());
+                        ui.painter()
+                            .hline(line.x_range(), line.center().y, Stroke::new(1.0, t.color("border")));
+                        egui::Frame::new().inner_margin(egui::Margin::same(8)).show(ui, |ui| {
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                let ready = draft.0.is_some() && draft.1.is_some();
+                                let apply = Button::new(&words.apply).size(ButtonSize::Sm).enabled(ready);
+                                if ui.add(apply).clicked()
+                                    && let (Some(from), Some(to)) = draft
+                                {
+                                    applied = Some((from, to));
+                                    ui.close();
+                                }
+                            });
+                        });
+                        ui.data_mut(|d| d.insert_temp(draft_id, draft));
+                    });
+                });
             });
+        if let Some(span) = applied
+            && let Some((held, _)) = self.custom
+        {
+            *held = Some(span);
+            self.chosen.clear();
+            ui.data_mut(|d| d.remove::<(Option<Day>, Option<Day>)>(draft_id));
+            response.mark_changed();
+        }
         if let Some(id) = picked
             && id != *self.chosen
         {
@@ -83,6 +170,43 @@ impl<'a> TimeRangePicker<'a> {
         }
         response
     }
+}
+
+/// The presets as rows 32 tall, the chosen one on the secondary ground; the one pressed.
+fn preset_rows(ui: &mut Ui, t: &crate::Tokens, presets: &[(&str, &str)], chosen: &str) -> Option<String> {
+    let mut picked = None;
+    for (id, label) in presets {
+        let is_chosen = *id == chosen;
+        let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), 32.0), Sense::click());
+        hit.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::Button, true, is_chosen, *label));
+        let ground = if is_chosen {
+            Some(t.color("secondary"))
+        } else if hit.hovered() {
+            Some(t.color("hover"))
+        } else {
+            None
+        };
+        if let Some(ground) = ground {
+            ui.painter().rect_filled(row, t.radius("md"), ground);
+        }
+        let rich = TextRole::Body.rich(t, *label);
+        let rich = if is_chosen { rich.variation("wght", 500.0) } else { rich };
+        let galley = egui::WidgetText::from(rich).into_galley(
+            ui,
+            Some(egui::TextWrapMode::Truncate),
+            row.width() - 16.0,
+            TextRole::Body.font(t),
+        );
+        ui.painter().galley(
+            egui::pos2(row.left() + 8.0, row.center().y - galley.size().y / 2.0),
+            galley,
+            t.color("popover-foreground"),
+        );
+        if hit.clicked() {
+            picked = Some((*id).to_owned());
+        }
+    }
+    picked
 }
 
 /// The words a refresh control says.

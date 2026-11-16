@@ -73,7 +73,7 @@
         "@winterop-com/sokkel-ui/dashboard/DashboardEdit": "DashboardEdit and DashboardEditActions",
         "@winterop-com/sokkel-ui/dashboard/DashboardGrid": "DashboardGrid, DashboardPanel, KpiRow",
         "@winterop-com/sokkel-ui/dashboard/StatPanel": "StatPanel",
-        "@winterop-com/sokkel-ui/dashboard/TimeRange": "TimeRangePicker (presets; the custom range waits on a range calendar), RefreshControl",
+        "@winterop-com/sokkel-ui/dashboard/TimeRange": "TimeRangePicker (presets and a custom span on RangeCalendar), RefreshControl",
         "@winterop-com/sokkel-ui/dashboard/VariablesBar": "variable_select (each variable a chip; Select::small, Select::bare)",
         "@winterop-com/sokkel-ui/dashboard/thresholds": "Threshold, threshold_color",
         "@winterop-com/sokkel-ui/hooks/use-overlay-route": "app state (egui has no URL)",
