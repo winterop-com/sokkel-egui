@@ -35,6 +35,7 @@ mod table;
 mod table_edit;
 mod text_field;
 mod time;
+mod time_range;
 mod toast;
 mod tree;
 mod uptime;
@@ -244,4 +245,5 @@ pub(crate) fn spinner(ui: &Ui, painter: &Painter, center: egui::Pos2, radius: f3
     painter.add(egui::Shape::line(points, Stroke::new(1.5, color)));
     ui.ctx().request_repaint();
 }
+pub use time_range::{RefreshAsked, RefreshControl, RefreshWords, TimeRangePicker};
 pub use variables::variable_select;

@@ -53,6 +53,7 @@ pub struct Button {
     enabled: bool,
     reason: Option<String>,
     icon: Option<Icon>,
+    trailing: Option<Icon>,
 }
 
 impl Button {
@@ -65,7 +66,14 @@ impl Button {
             enabled: true,
             reason: None,
             icon: None,
+            trailing: None,
         }
+    }
+
+    /// An icon after the words in the muted ink, as a trigger's chevron.
+    pub fn trailing(mut self, icon: Icon) -> Self {
+        self.trailing = Some(icon);
+        self
     }
 
     pub fn variant(mut self, variant: ButtonVariant) -> Self {
@@ -130,7 +138,8 @@ impl Widget for Button {
         } else {
             0.0
         };
-        let pad = if lead > 0.0 { pad - 2.0 } else { pad };
+        let tail = if self.trailing.is_some() { gap + glyph } else { 0.0 };
+        let pad = if lead > 0.0 || tail > 0.0 { pad - 2.0 } else { pad };
         let radius = CornerRadius::same(control.min(cap).floor() as u8);
         let galley = WidgetText::from(role.rich(&t, &self.label)).into_galley(
             ui,
@@ -138,7 +147,7 @@ impl Widget for Button {
             f32::INFINITY,
             role.font(&t),
         );
-        let size = vec2(galley.size().x + lead + pad * 2.0, height);
+        let size = vec2(galley.size().x + lead + tail + pad * 2.0, height);
         // a busy button, and one disabled with a reason, keep their place in the tab order so the
         // reason can be read; a plain disabled button leaves it
         let sense = if enabled && !self.busy {
@@ -226,7 +235,7 @@ impl Widget for Button {
         focus_ring(painter, &t, rect, radius, &response);
 
         let ink = dim(ink, enabled);
-        let mut x = rect.center().x - (galley.size().x + lead) / 2.0;
+        let mut x = rect.center().x - (galley.size().x + lead + tail) / 2.0;
         if self.busy {
             super::spinner(ui, painter, pos2(x + glyph / 2.0, rect.center().y), glyph * 0.4, ink);
         } else if let Some(icon) = self.icon {
@@ -238,7 +247,17 @@ impl Widget for Button {
             let y = pos.y + galley.size().y - 3.0;
             painter.hline(pos.x..=pos.x + galley.size().x, y, Stroke::new(1.0, ink));
         }
+        let words_end = pos.x + galley.size().x;
         painter.galley(pos, galley, ink);
+        if let Some(icon) = self.trailing {
+            icons::paint(
+                painter,
+                pos2(words_end + gap + glyph / 2.0, rect.center().y),
+                icon,
+                glyph,
+                dim(t.color("muted-foreground"), enabled),
+            );
+        }
         response
     }
 }

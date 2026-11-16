@@ -5,8 +5,8 @@
 use eframe::egui::{self, Ui};
 use sokkel_egui::{
     AccountAction, AccountMenu, Appearance, Cell, Column, DashboardGrid, DashboardPanel, DataTable, DesktopWindow,
-    Icon, LogLevel, LogLine, LogView, Page, PageHeader, Rail, RailEntry, RailGroup, Shell, ShellPart, StatColorMode,
-    StatPanel, StatusLine, StatusTone, TableState, TopBar, format_value, install,
+    Icon, LogLevel, LogLine, LogView, Page, PageHeader, Rail, RailEntry, RailGroup, RefreshControl, Shell, ShellPart,
+    StatColorMode, StatPanel, StatusLine, StatusTone, TableState, TimeRangePicker, TopBar, format_value, install,
 };
 use sokkel_egui_charts::{BarGauge, BarPanel, Fill as ChartFill, GaugePanel, HeatmapPanel, Series, TimeSeriesPanel};
 
@@ -34,10 +34,15 @@ pub struct MetricsApp {
     /// The newest scrape, in seconds since 1970: one lands every second while the board is live.
     pub at: f64,
     pub live: bool,
-    /// How often the dashboard redraws by itself, in seconds.
+    /// How often the dashboard reads its panels again by itself, in seconds; 0 is never.
     pub refresh: u32,
-    /// When the window last took a scrape, on its own clock.
+    /// Refreshing by itself held, the interval kept for when it resumes.
+    pub paused: bool,
+    /// The second the panels were last read at: the newest scrape at the last refresh.
+    pub view_at: f64,
+    /// When the window last took a scrape, and last refreshed, on its own clock.
     last_scrape: Option<f64>,
+    last_view: Option<f64>,
     tables: std::collections::HashMap<String, TableState>,
 }
 
@@ -60,7 +65,10 @@ impl MetricsApp {
             at: DEMO_NOW,
             live: true,
             refresh: 5,
+            paused: false,
+            view_at: DEMO_NOW,
             last_scrape: None,
+            last_view: None,
             tables: Default::default(),
         }
     }
@@ -77,6 +85,18 @@ impl MetricsApp {
                 }
                 None => self.last_scrape = Some(now),
                 _ => {}
+            }
+            // the panels read again every interval, unless it is off or paused
+            let due = match self.last_view {
+                Some(last) => self.refresh > 0 && !self.paused && now - last >= f64::from(self.refresh),
+                None => {
+                    self.last_view = Some(now);
+                    false
+                }
+            };
+            if due {
+                self.view_at = self.at;
+                self.last_view = Some(now);
             }
             ui.ctx().request_repaint_after(std::time::Duration::from_secs(1));
         }
@@ -99,11 +119,14 @@ impl MetricsApp {
             .find(|b| b.id == self.place)
             .map_or(String::new(), |b| b.title.clone());
         let trail = ["Metrics", title.as_str()];
-        let note = if self.live {
-            format!("Scraped {}, refresh every {}s", clock_of(self.at), self.refresh)
+        let mode = if self.refresh == 0 {
+            "refresh off".to_owned()
+        } else if self.paused {
+            "refresh paused".to_owned()
         } else {
-            format!("Scraped {}, refresh paused", clock_of(self.at))
+            format!("refresh every {}s", self.refresh)
         };
+        let note = format!("Scraped {}, {mode}", clock_of(self.at));
         let mut account = None;
         shell.show_window(ui, |part, ui| match part {
             ShellPart::Rail => {
@@ -143,7 +166,7 @@ impl MetricsApp {
             .show(ui, |_| {});
         // the variables right under the head, the page's own gap before the panels
         self.variables_bar(ui);
-        let (variables, range, at) = (self.variables.clone(), self.range.clone(), self.at);
+        let (variables, range, at) = (self.variables.clone(), self.range.clone(), self.view_at);
         for panel in &board.panels {
             self.tables.entry(panel.id.clone()).or_default();
         }
@@ -173,6 +196,56 @@ impl MetricsApp {
                 .chain(values.into_iter().map(str::to_owned))
                 .collect::<Vec<_>>()
         };
+        let services = choices(SERVICES.to_vec());
+        let hosts = choices(
+            HOSTS
+                .iter()
+                .filter(|h| self.variables.service == ALL || h.service == self.variables.service)
+                .map(|h| h.id)
+                .collect(),
+        );
+        let projects = choices(PROJECTS.to_vec());
+        let before = (self.variables.clone(), self.range.clone());
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 6.0;
+            // the range and the refresh at the row's end, as the web's `end`
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.spacing_mut().item_spacing.x = 6.0;
+                let updated = if self.refresh > 0 && self.paused {
+                    "paused".to_owned()
+                } else {
+                    format!("updated {}", clock_of(self.view_at))
+                };
+                let asked = RefreshControl::new(&mut self.refresh, &mut self.paused, &crate::query::INTERVALS)
+                    .updated(updated)
+                    .show(ui);
+                if asked.refresh {
+                    self.view_at = self.at;
+                }
+                let mut preset = match &self.range {
+                    Range::Preset(id) => (*id).to_owned(),
+                    Range::Between { .. } => String::new(),
+                };
+                let presets: Vec<(&str, &str)> = crate::query::PRESETS.iter().map(|p| (p.id, p.label)).collect();
+                if TimeRangePicker::new(&mut preset, &presets).show(ui).changed()
+                    && let Some(p) = crate::query::PRESETS.iter().find(|p| p.id == preset)
+                {
+                    self.range = Range::Preset(p.id);
+                }
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                    ui.spacing_mut().item_spacing.x = 6.0;
+                    self.chips(ui, &services, &hosts, &projects);
+                });
+            });
+        });
+        // a new range or new variables read the panels at once
+        if (self.variables.clone(), self.range.clone()) != before {
+            self.view_at = self.at;
+        }
+    }
+
+    fn chips(&mut self, ui: &mut Ui, services: &[String], hosts: &[String], projects: &[String]) {
+        use crate::source::{ALL, HOSTS};
         let index = |options: &[String], value: &str| {
             if value == ALL {
                 0
@@ -183,17 +256,10 @@ impl MetricsApp {
         let value = |options: &[String], at: usize| {
             if at == 0 { ALL.to_owned() } else { options[at].clone() }
         };
-        let services = choices(SERVICES.to_vec());
-        let hosts = choices(
-            HOSTS
-                .iter()
-                .filter(|h| self.variables.service == ALL || h.service == self.variables.service)
-                .map(|h| h.id)
-                .collect(),
-        );
-        let projects = choices(PROJECTS.to_vec());
-        ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 6.0;
+        {
+            let services = services.to_vec();
+            let hosts = hosts.to_vec();
+            let projects = projects.to_vec();
             let mut at = index(&services, &self.variables.service);
             if sokkel_egui::variable_select(ui, "service", &mut at, &services).changed() {
                 let service = value(&services, at);
@@ -215,7 +281,7 @@ impl MetricsApp {
             if sokkel_egui::variable_select(ui, "project", &mut at, &projects).changed() {
                 self.variables.project = value(&projects, at);
             }
-        });
+        }
     }
 }
 
