@@ -96,8 +96,8 @@ and never chase a difference made of numbers.
   Assign to the person on call, what it touches as `TagChips`, opened, resolved, on the status
   page), each changed in place. The title is edited in place (`PageHeader::edit_title`, the web's
   `InlineEdit` with `variant="title"`: pressed or F2, Enter saves, Escape drops, an empty title
-  refused with its message at the editor's end), which stands the head as low as the web's. Still
-  the web's and not egui's: the code crumb in the code face, and each update's author's avatar.
+  refused with its message at the editor's end), which stands the head as low as the web's. The code crumb is in the code face (`TopBar::code`) and each update
+  names its author with an avatar (`TimelineEvent::person`), as the web's.
 - Under the overview's tiles stands the web's board as it comes, in a `DashboardGrid`: Sites (two
   thirds, the map of the sites in their states with its legend), Open incidents (a third, the
   compact incident table and its All, `DashboardPanel::actions`), and Uptime (the whole row,

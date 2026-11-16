@@ -232,6 +232,9 @@ pub struct TimelineEvent {
     /// When, in words ("now", "last week").
     pub at: String,
     pub detail: Option<String>,
+    /// Who the event is by: their avatar before the detail, as the web's detail with a
+    /// `PersonAvatar` of `2xs`.
+    pub person: Option<String>,
     /// More under the detail, such as a day's incidents.
     pub content: Option<Tools<'static>>,
 }
@@ -268,11 +271,13 @@ impl Timeline {
                 (width - text_x - at.size().x - 8.0).max(1.0),
                 TextRole::Body.font(&t),
             );
+            // the person's avatar, 16 and 4 before the detail
+            let avatar = if event.person.is_some() { 16.0 + 4.0 } else { 0.0 };
             let detail = event.detail.as_ref().map(|d| {
                 WidgetText::from(TextRole::Help.rich(&t, d)).into_galley(
                     ui,
                     Some(TextWrapMode::Wrap),
-                    (width - text_x).max(1.0),
+                    (width - text_x - avatar).max(1.0),
                     TextRole::Help.font(&t),
                 )
             });
@@ -313,8 +318,16 @@ impl Timeline {
                 t.color("muted-foreground"),
             );
             if let Some(detail) = detail {
+                if let Some(person) = &event.person {
+                    let first = detail.rows.first().map_or(detail.size().y, |r| r.rect().height());
+                    let spot = egui::Rect::from_center_size(
+                        pos2(rect.left() + text_x + 8.0, rect.top() + line + first / 2.0),
+                        vec2(16.0, 16.0),
+                    );
+                    crate::widgets::person::paint_avatar(ui, &t, spot, person, crate::AvatarSize::Xxs, false);
+                }
                 ui.painter().galley(
-                    pos2(rect.left() + text_x, rect.top() + line),
+                    pos2(rect.left() + text_x + avatar, rect.top() + line),
                     detail,
                     t.color("muted-foreground"),
                 );

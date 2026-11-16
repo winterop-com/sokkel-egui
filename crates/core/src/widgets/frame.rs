@@ -467,6 +467,8 @@ pub struct TopBar<'a> {
     trail: &'a [&'a str],
     search: Option<(String, String)>,
     mark: Option<&'static str>,
+    /// The crumbs drawn in the code face, by index.
+    codes: Vec<usize>,
 }
 
 /// The frame's top bar alone, for a screen without the shell, after sokkel-ui's `AppBar`: the
@@ -537,7 +539,15 @@ impl<'a> TopBar<'a> {
             trail,
             search: None,
             mark: None,
+            codes: Vec::new(),
         }
+    }
+
+    /// The crumb at `index` in the code face, as an addressable code is (the web's crumb
+    /// `code: true`), such as an incident's `INC-41`.
+    pub fn code(mut self, index: usize) -> Self {
+        self.codes.push(index);
+        self
     }
 
     /// The palette's button at the bar's end, a field-like button with its word and the keys that
@@ -606,7 +616,14 @@ impl<'a> TopBar<'a> {
                     } else {
                         (TextRole::Body, t.color("muted-foreground"))
                     };
-                    ui.label(role.rich(&t, *crumb).color(ink));
+                    let rich = role.rich(&t, *crumb).color(ink);
+                    let rich = if self.codes.contains(&i) {
+                        let spec = t.text(role.key());
+                        rich.font(crate::mono_font(ui.ctx(), crate::mono_size(&t, spec.size), spec.weight))
+                    } else {
+                        rich
+                    };
+                    ui.label(rich);
                 }
                 // from the end: the actions last, 6 apart, then the palette's button 12 before them
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {

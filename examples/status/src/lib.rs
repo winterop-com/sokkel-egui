@@ -375,8 +375,12 @@ impl StatusApp {
                     .show(ui);
             }
             ShellPart::Top => {
-                searched = TopBar::new(&trail)
-                    .search("Search", "⌘K")
+                let mut bar = TopBar::new(&trail).search("Search", "⌘K");
+                // an incident's code is drawn in the code face, as the web's crumb
+                if service.is_none() && code.is_some() {
+                    bar = bar.code(2);
+                }
+                searched = bar
                     .show(ui, |ui| {
                         let (icon, word) = if live {
                             (Icon::Pause, "Live")
@@ -925,6 +929,7 @@ impl StatusApp {
                             title: u.message.clone(),
                             at: relative_time(u.at - now),
                             detail: Some(format!("{} · {} · {at}", u.by, state_name(u.state))),
+                            person: Some(u.by.to_string()),
                             tone: Some(t.color(state_color(u.state))),
                             ..Default::default()
                         })
