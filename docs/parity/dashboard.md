@@ -82,5 +82,7 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
 
 ## Next
 
-- Shoot the web's screens again once the sokkel-ui pin moves past #600 (`daa906c6`), which fixed
-  the web's worker log: it grew to its lines, its `h-72` lost to `flex-1`.
+- Nothing listed. The web's screens were shot again past #600 (`daa906c6`): its worker log now
+  stands 288 tall and fills its row, as egui's does. What still differs on the board is the live
+  data (egui's shot is paused, the web's runs 5 s) and the web's map, whose tiles a headless shot
+  does not load.
