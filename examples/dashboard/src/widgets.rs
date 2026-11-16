@@ -157,6 +157,9 @@ pub fn within(at: f64, now: f64) -> String {
 #[derive(Default)]
 pub struct WidgetState {
     pub maps: HashMap<String, MapView>,
+    /// Where a map made now draws its street map from: the running app's context, and none in
+    /// tests, which draw the map without the network.
+    pub tiles: Option<egui::Context>,
     pub tables: HashMap<String, TableState>,
     pub typing: HashMap<String, String>,
 }
@@ -369,10 +372,17 @@ pub fn draw(
                 .row(color(Health::Operational), "Operational", count(Health::Operational))
                 .row(color(Health::Degraded), "Slow", count(Health::Degraded))
                 .row(color(Health::Outage), "Down", count(Health::Outage));
-            let map = state
-                .maps
-                .entry(widget.id.clone())
-                .or_insert_with(|| MapView::new(25.0, 10.0, 1.0).framed(false));
+            let map = state.maps.entry(widget.id.clone()).or_insert_with(|| {
+                let map = MapView::new(25.0, 10.0, 1.0).framed(false);
+                match &state.tiles {
+                    Some(ctx) => map.with_tiles(
+                        ctx,
+                        "tidevann-dashboard/0.1 (an example app of a component library)",
+                        std::env::temp_dir().join("sokkel-ui-egui-tiles").into(),
+                    ),
+                    None => map,
+                }
+            });
             DashboardPanel::new(title)
                 .subtitle("round trips, live")
                 .flush(true)

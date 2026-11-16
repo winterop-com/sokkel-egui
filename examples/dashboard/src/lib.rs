@@ -68,8 +68,11 @@ pub struct DashboardApp {
 }
 
 impl DashboardApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let mut app = Self::on(Appearance::default());
+        // the street map only in the running app: tests draw the map without the network
+        sokkel_ui_egui_maps::install(cc.wgpu_render_state.as_ref());
+        app.widgets.tiles = Some(cc.egui_ctx.clone());
         app.desktop = true;
         app
     }
@@ -215,8 +218,11 @@ impl DashboardApp {
     pub fn reset_demo(&mut self) {
         let appearance = self.appearance.clone();
         let desktop = self.desktop;
+        let tiles = self.widgets.tiles.take();
         *self = Self::on(appearance);
         self.desktop = desktop;
+        // the street map comes back with the maps made again
+        self.widgets.tiles = tiles;
     }
 
     /// Opens the name dialog: for a new dashboard, or renaming the one with this id.
