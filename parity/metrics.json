@@ -29,7 +29,7 @@
         }
     },
     "parts": {
-        "@winterop-com/sokkel-ui-charts/dashboard/BarGauge": null,
+        "@winterop-com/sokkel-ui-charts/dashboard/BarGauge": "sokkel-egui-charts BarGauge",
         "@winterop-com/sokkel-ui-charts/dashboard/BarPanel": "sokkel-egui-charts BarPanel",
         "@winterop-com/sokkel-ui-charts/dashboard/GaugePanel": "sokkel-egui-charts GaugePanel",
         "@winterop-com/sokkel-ui-charts/dashboard/HeatmapPanel": null,

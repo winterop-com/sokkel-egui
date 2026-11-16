@@ -13,7 +13,7 @@ use egui::{
 use std::sync::Arc;
 
 mod panel;
-pub use panel::{BarPanel, GaugePanel, TimeSeriesPanel};
+pub use panel::{BarGauge, BarPanel, GaugePanel, TimeSeriesPanel};
 
 use sokkel_egui::{TextRole, Tokens, tokens};
 

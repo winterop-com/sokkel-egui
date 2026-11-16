@@ -246,6 +246,130 @@ impl<'a> GaugePanel<'a> {
     }
 }
 
+/// A dashboard panel of readings as bars against one scale from `min` to `max`, as sokkel-ui's
+/// `BarGauge`: a row each, its name in the code face, a bar on the muted track fading in from the
+/// track to the color its thresholds give it, and its value in that color.
+#[must_use = "draw it with `show`"]
+pub struct BarGauge<'a> {
+    title: String,
+    bars: Vec<(String, Option<f64>)>,
+    min: f64,
+    max: f64,
+    thresholds: &'a [Threshold],
+    color: &'static str,
+    unit: String,
+    decimals: Option<usize>,
+}
+
+impl<'a> BarGauge<'a> {
+    pub fn new(title: impl Into<String>, bars: impl IntoIterator<Item = (String, Option<f64>)>) -> Self {
+        Self {
+            title: title.into(),
+            bars: bars.into_iter().collect(),
+            min: 0.0,
+            max: 100.0,
+            thresholds: &[],
+            color: "chart-2",
+            unit: String::new(),
+            decimals: None,
+        }
+    }
+
+    pub fn range(mut self, min: f64, max: f64) -> Self {
+        self.min = min;
+        self.max = max;
+        self
+    }
+
+    pub fn thresholds(mut self, thresholds: &'a [Threshold]) -> Self {
+        self.thresholds = thresholds;
+        self
+    }
+
+    /// The bars' color token when there are no thresholds.
+    pub fn color(mut self, color: &'static str) -> Self {
+        self.color = color;
+        self
+    }
+
+    pub fn unit(mut self, unit: impl Into<String>) -> Self {
+        self.unit = unit.into();
+        self
+    }
+
+    pub fn decimals(mut self, decimals: usize) -> Self {
+        self.decimals = Some(decimals);
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui) {
+        let t = tokens(ui.ctx());
+        let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+        let value_font = sokkel_egui::mono_font(
+            ui.ctx(),
+            sokkel_egui::mono_size(&t, TextRole::Help.font(&t).size),
+            500.0,
+        );
+        chart_frame(ui, &self.title, None, |ui| {
+            ui.add_space(4.0);
+            let width = ui.available_width();
+            // each row as tall as the small text's line (the bar 16 in it), 6 between, as the
+            // web's `text-xs` and `gap-1.5`
+            let row = t.text("help").line_height.max(16.0);
+            let pitch = row + 6.0;
+            let height = self.bars.len() as f32 * pitch - if self.bars.is_empty() { 0.0 } else { 6.0 };
+            let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
+            let painter = ui.painter();
+            let corner = egui::CornerRadius::same((t.length("radius") * 0.4).round() as u8);
+            for (i, (name, value)) in self.bars.iter().enumerate() {
+                let top = rect.top() + i as f32 * pitch;
+                let middle = top + row / 2.0;
+                let tone = t.color(threshold_color(*value, self.thresholds).unwrap_or(self.color));
+                let written = value.map_or("-".to_owned(), |v| {
+                    format!("{}{}", format_value(v, self.decimals), self.unit)
+                });
+                let value_galley = painter.layout_no_wrap(written, value_font.clone(), tone);
+                let value_width = value_galley.size().x.max(40.0);
+                let name_galley = painter.layout_no_wrap(name.clone(), mono.clone(), t.color("muted-foreground"));
+                // the name in a column of 96, the bar 8 after it, the value 8 after the bar
+                painter.galley(
+                    pos2(rect.left(), middle - name_galley.size().y / 2.0),
+                    name_galley,
+                    t.color("muted-foreground"),
+                );
+                painter.galley(
+                    pos2(
+                        rect.right() - value_galley.size().x,
+                        middle - value_galley.size().y / 2.0,
+                    ),
+                    value_galley,
+                    tone,
+                );
+                let track = egui::Rect::from_min_max(
+                    pos2(rect.left() + 96.0 + 8.0, middle - 8.0),
+                    pos2(rect.right() - value_width - 8.0, middle + 8.0),
+                );
+                painter.rect_filled(track, corner, t.color("muted"));
+                let share = value.map_or(0.0, |v| ((v - self.min) / (self.max - self.min)).clamp(0.0, 1.0)) as f32;
+                if share > 0.0 {
+                    let bar = egui::Rect::from_min_size(track.min, vec2(track.width() * share, track.height()));
+                    // from the tone at 30% over the track to the tone itself
+                    let faint = tone.gamma_multiply(0.3);
+                    let mut mesh = egui::Mesh::default();
+                    mesh.colored_vertex(bar.left_top(), faint);
+                    mesh.colored_vertex(bar.right_top(), tone);
+                    mesh.colored_vertex(bar.right_bottom(), tone);
+                    mesh.colored_vertex(bar.left_bottom(), faint);
+                    mesh.add_triangle(0, 1, 2);
+                    mesh.add_triangle(0, 2, 3);
+                    painter.add(egui::Shape::mesh(mesh));
+                }
+            }
+            ui.add_space(4.0);
+        });
+    }
+}
+
 /// A dashboard panel of bars, as sokkel-ui's `BarPanel`: one or more series per category, side
 /// by side or stacked, upright or lying down, on a 192 tall body.
 #[must_use = "draw it with `show`"]

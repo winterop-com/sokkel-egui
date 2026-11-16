@@ -23,7 +23,7 @@ manifest is `parity/metrics.json`; the web's screens are shot into `parity/metri
 
 ## Next
 
-- The bar gauge and the heatmap panels (CPU by host, Latency p95 by host stand empty), a stat
+- The heatmap panel (Latency p95 by host stands empty; the bar gauge is `sokkel-egui-charts::BarGauge`), a stat
   tile's background color mode (Error rate), the table held inside its panel, the variables bar
   and the time range under the head, and the head's Share, Edit and Add panel.
 - Then Dashboards, the editor, Alerts and Settings, each in the rail once it works.
