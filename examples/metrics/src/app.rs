@@ -5,8 +5,8 @@
 use eframe::egui::{self, Ui};
 use sokkel_egui::{
     AccountAction, AccountMenu, Appearance, Cell, Column, DashboardGrid, DashboardPanel, DataTable, DesktopWindow,
-    Icon, LogLevel, LogLine, LogView, Page, PageHeader, Rail, RailEntry, RailGroup, Shell, ShellPart, StatPanel,
-    StatusLine, StatusTone, TableState, TopBar, format_value, install,
+    Icon, LogLevel, LogLine, LogView, Page, PageHeader, Rail, RailEntry, RailGroup, Shell, ShellPart, StatColorMode,
+    StatPanel, StatusLine, StatusTone, TableState, TopBar, format_value, install,
 };
 use sokkel_egui_charts::{BarGauge, BarPanel, Fill as ChartFill, GaugePanel, HeatmapPanel, Series, TimeSeriesPanel};
 
@@ -174,6 +174,11 @@ fn draw_panel(ui: &mut Ui, panel: &Panel, variables: &Variables, range: &Range, 
             good,
         } => {
             let mut stat = StatPanel::new(&panel.title, value)
+                .color_mode(match panel.color_mode {
+                    crate::model::ColorMode::Value => StatColorMode::Value,
+                    crate::model::ColorMode::Background => StatColorMode::Background,
+                    crate::model::ColorMode::None => StatColorMode::None,
+                })
                 .unit(unit)
                 .decimals(data.decimals)
                 .thresholds(thresholds)

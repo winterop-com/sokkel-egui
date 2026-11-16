@@ -82,7 +82,7 @@ pub use settings::{
     setting_row_found_by, theme_settings,
 };
 pub use stat::{KpiRow, Stat, sparkline};
-pub use stat_panel::{StatPanel, StatWords, Threshold, format_value, threshold_color};
+pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_value, threshold_color};
 pub use switch::Switch;
 pub use table::{
     Cell, CellEdit, Column, DataTable, RowActions, StackLayout, StackPlace, TableOutput, TableState, TableVariant,

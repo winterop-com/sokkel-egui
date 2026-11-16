@@ -92,7 +92,20 @@ impl Default for StatWords {
 /// pick the reading's color, which inks the value and its trend; `color` does when it has none. A
 /// `None` value says there is no data, in neutral ink and without its trend. In a dashboard grid it
 /// stretches to its row, and an arrangement's tools sit at the end of its head.
+/// Where a stat tile shows its threshold color, as sokkel-ui's `colorMode`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum StatColorMode {
+    /// The value and its trend in the color.
+    #[default]
+    Value,
+    /// The whole tile filled with it, its words in `on-fill`.
+    Background,
+    /// No color: the value in the card's ink.
+    None,
+}
+
 pub struct StatPanel<'a> {
+    color_mode: StatColorMode,
     title: String,
     value: Option<f64>,
     unit: Option<String>,
@@ -108,6 +121,7 @@ pub struct StatPanel<'a> {
 impl<'a> StatPanel<'a> {
     pub fn new(title: impl Into<String>, value: Option<f64>) -> Self {
         Self {
+            color_mode: StatColorMode::Value,
             title: title.into(),
             value,
             unit: None,
@@ -119,6 +133,12 @@ impl<'a> StatPanel<'a> {
             good: None,
             words: StatWords::default(),
         }
+    }
+
+    /// Where the threshold color shows: the value (the default), the whole tile, or nowhere.
+    pub fn color_mode(mut self, mode: StatColorMode) -> Self {
+        self.color_mode = mode;
+        self
     }
 
     /// Written after the value: `%`, `ms`, `/min`.
@@ -179,22 +199,38 @@ impl<'a> StatPanel<'a> {
         let tone = self
             .value
             .and_then(|v| threshold_color(Some(v), self.thresholds).or(self.color));
-        let ink = tone.map(|k| t.color(k));
-        let muted = t.color("muted-foreground");
+        let filled = self.color_mode == StatColorMode::Background && tone.is_some();
+        let ink = match self.color_mode {
+            StatColorMode::Value => tone.map(|k| t.color(k)),
+            StatColorMode::Background if filled => Some(t.color("on-fill")),
+            _ => None,
+        };
+        let muted = if filled {
+            t.color("on-fill").gamma_multiply(0.9)
+        } else {
+            t.color("muted-foreground")
+        };
         let painter = ui.painter().clone();
-        painter.rect_filled(rect, radius, t.color("card"));
+        match tone.filter(|_| filled) {
+            Some(tone) => fill_toward(&painter, &t, rect, radius, t.color(tone)),
+            None => {
+                painter.rect_filled(rect, radius, t.color("card"));
+            }
+        }
         // the trend behind the value, the lower 45%, fading toward the foot
         if self.value.is_some() && self.sparkline.len() >= 2 {
             let color = ink.unwrap_or(muted);
             let area = egui::Rect::from_min_max(pos2(rect.left(), rect.bottom() - rect.height() * 0.45), rect.max);
             spark_area(&painter.with_clip_rect(rect.shrink(1.0)), area, self.sparkline, color);
         }
-        painter.rect_stroke(
-            rect,
-            radius,
-            Stroke::new(1.0, t.color("border")),
-            egui::StrokeKind::Inside,
-        );
+        if !filled {
+            painter.rect_stroke(
+                rect,
+                radius,
+                Stroke::new(1.0, t.color("border")),
+                egui::StrokeKind::Inside,
+            );
+        }
         // the head: the title muted, the change at its end, then an arrangement's tools
         let head = egui::Rect::from_min_size(rect.min + vec2(10.0, 4.0), vec2(rect.width() - 20.0, 24.0));
         let mut tools = ui.new_child(
@@ -208,6 +244,7 @@ impl<'a> StatPanel<'a> {
         let mut end = head.right() - if tools_width > 1.0 { tools_width + 4.0 } else { 0.0 };
         if let (Some(delta), Some(_)) = (&self.delta, self.value) {
             let color = match self.good {
+                _ if filled => muted,
                 None => muted,
                 Some(true) => t.color("good"),
                 Some(false) => t.color("critical"),
@@ -283,6 +320,49 @@ impl<'a> StatPanel<'a> {
             }
         }
     }
+}
+
+/// A tile filled with its tone, as the web's background mode: a 135 degree gradient from the tone
+/// mixed 8% toward `on-fill` to the tone itself by 70% of the way; in the dark scheme from 80% to
+/// 62% of the tone over the background.
+fn fill_toward(
+    painter: &egui::Painter,
+    t: &crate::Tokens,
+    rect: egui::Rect,
+    radius: egui::CornerRadius,
+    tone: Color32,
+) {
+    let mix = |a: Color32, b: Color32, share: f32| {
+        let c = |x: u8, y: u8| (f32::from(x) * share + f32::from(y) * (1.0 - share)).round() as u8;
+        Color32::from_rgb(c(a.r(), b.r()), c(a.g(), b.g()), c(a.b(), b.b()))
+    };
+    let (from, to, stop) = if t.dark {
+        (
+            mix(tone, t.color("background"), 0.8),
+            mix(tone, t.color("background"), 0.62),
+            1.0,
+        )
+    } else {
+        (mix(tone, t.color("on-fill"), 0.92), tone, 0.7)
+    };
+    // the rounded tile tessellated, each vertex colored by where it falls along the diagonal
+    let mut mesh = Mesh::default();
+    let mut tessellator = egui::epaint::Tessellator::new(
+        painter.ctx().pixels_per_point(),
+        egui::epaint::TessellationOptions::default(),
+        [1, 1],
+        Vec::new(),
+    );
+    tessellator.tessellate_shape(egui::Shape::rect_filled(rect, radius, Color32::WHITE), &mut mesh);
+    let span = rect.width() + rect.height();
+    for vertex in &mut mesh.vertices {
+        let along = ((vertex.pos.x - rect.left()) + (vertex.pos.y - rect.top())) / span;
+        let share = (along / stop).clamp(0.0, 1.0);
+        let color = mix(to, from, share);
+        let alpha = vertex.color.a();
+        vertex.color = Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), alpha);
+    }
+    painter.add(Shape::mesh(mesh));
 }
 
 /// An area under a line of values, stretched to `area`: 32% of the color to 4%, the line at 70%.
