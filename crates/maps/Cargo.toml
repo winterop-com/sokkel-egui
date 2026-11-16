@@ -11,6 +11,8 @@ sokkel-ui-egui.workspace = true
 egui.workspace = true
 walkers.workspace = true
 serde_json.workspace = true
+# the basemaps' previews, as the web ships them
+image = { version = "0.25", default-features = false, features = ["jpeg"] }
 # the same client walkers fetches its tiles with, blocking for the one lookup of OpenFreeMap's current build
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "system-proxy", "blocking"] }
 

@@ -7,3 +7,6 @@
   `IBMPlexMono-OFL.txt`.
 - Lucide icons, through the `lucide-icons` crate and the icon font it ships (MIT and ISC,
   Copyright Lucide Contributors and Cole Bemis), the same set sokkel-ui draws with lucide-react.
+- The basemap previews in `crates/maps/assets/previews/`, as sokkel-ui-maps ships them: the light
+  and dark street maps from OpenFreeMap (© OpenMapTiles, © OpenStreetMap contributors, under the
+  Open Database License), and the satellite from NASA's Blue Marble (public domain).

@@ -130,8 +130,11 @@ and never chase a difference made of numbers.
   (`MapPopup`, on the overview's Sites too): where it is, its state, its round trip now and
   usually, and the open incident covering it with Open beside it. The map's controls are the web's: zoom in and
   out and Fit to the data in one group, then Full screen, which takes the map over the whole
-  window (its legend and card with it) until Exit full screen or Escape. Still to come: the
-  basemap switcher, and Simulate trouble here, which waits on the scenarios.
+  window (its legend and card with it) until Exit full screen or Escape. Under them the basemap switcher (`Basemap`): Light, Dark,
+  Satellite (NASA's Blue Marble) and Blank, each with the web's preview, the street map by the
+  scheme until one is chosen. The web's Streets (OpenFreeMap's Liberty, in colors of its own
+  rather than the tokens') is not offered yet. Still to come: Simulate trouble here, which waits
+  on the scenarios.
 - A busy confirm lets go after a wait (F23 as the owner refined it, in sokkel-design 0.28.0's
   dialog spec): after `busy-release` (5 s) Cancel says "Stop waiting" and, as Escape does, lets
   the work go (`ConfirmAnswer::StopWaiting`); the shade still holds. The palette's own way out

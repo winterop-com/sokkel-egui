@@ -42,3 +42,18 @@ fn full_screen_covers_the_window_until_it_is_left() {
     harness.run_steps(3);
     assert!(!harness.state().full, "Escape leaves it too");
 }
+
+#[test]
+fn the_basemap_switcher_offers_each_basemap_and_draws_the_one_chosen() {
+    let mut harness = harness();
+    harness.get_by_label("Basemap").click();
+    harness.run_steps(3);
+    for name in ["Light", "Dark", "Satellite", "Blank"] {
+        assert!(harness.query_by_label(name).is_some(), "{name} is offered");
+    }
+    harness.snapshot("basemap_switcher");
+    harness.get_by_label("Satellite").click();
+    harness.run_steps(3);
+    assert_eq!(harness.state().basemap, Some(sokkel_ui_egui_maps::Basemap::Satellite));
+    assert!(harness.query_by_label("Blank").is_none(), "the menu closes on a choice");
+}

@@ -182,6 +182,49 @@ impl Route {
     }
 }
 
+/// What the map draws under its markers, as sokkel-ui-maps' preset basemaps: the street map
+/// light or dark (both in the tokens' colors), NASA's Blue Marble, or the ground alone. A map
+/// that has not been given one draws the street map light or dark by the scheme.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Basemap {
+    Light,
+    Dark,
+    Satellite,
+    Blank,
+}
+
+impl Basemap {
+    /// Every basemap the switcher offers, in the web's order.
+    pub const ALL: [Basemap; 4] = [Basemap::Light, Basemap::Dark, Basemap::Satellite, Basemap::Blank];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            Basemap::Light => "Light",
+            Basemap::Dark => "Dark",
+            Basemap::Satellite => "Satellite",
+            Basemap::Blank => "Blank",
+        }
+    }
+
+    /// The preview the switcher shows beside its name, as the web's; none for the ground alone.
+    fn preview(self) -> Option<&'static [u8]> {
+        match self {
+            Basemap::Light => Some(include_bytes!("../assets/previews/light.jpg")),
+            Basemap::Dark => Some(include_bytes!("../assets/previews/dark.jpg")),
+            Basemap::Satellite => Some(include_bytes!("../assets/previews/satellite.jpg")),
+            Basemap::Blank => None,
+        }
+    }
+
+    fn credits(self) -> Option<&'static str> {
+        match self {
+            Basemap::Light | Basemap::Dark => Some("OpenFreeMap © OpenMapTiles © OpenStreetMap contributors"),
+            Basemap::Satellite => Some("NASA Blue Marble NASA GIBS"),
+            Basemap::Blank => None,
+        }
+    }
+}
+
 /// Where a map looks and what it draws its ground from; keep one per map between frames.
 pub struct MapView {
     memory: MapMemory,
@@ -189,7 +232,7 @@ pub struct MapView {
     source: Option<Source>,
     /// The street map, styled for the colors in `styled`.
     tiles: Option<HttpTiles>,
-    styled: Option<[Color32; 2]>,
+    styled: Option<([Color32; 2], bool)>,
     home: Position,
     /// Where the map was made to look.
     start: Position,
@@ -208,6 +251,12 @@ pub struct MapView {
     pub full: bool,
     /// The layer the map was drawn in on the last frame, which its legend and card draw in too.
     layer: egui::LayerId,
+    /// The basemap chosen; the street map by the scheme when none is.
+    pub basemap: Option<Basemap>,
+    /// NASA's Blue Marble, once it is drawn.
+    satellite: Option<HttpTiles>,
+    /// Whether the basemap switcher's menu is open.
+    switching: bool,
 }
 
 impl MapView {
@@ -231,6 +280,9 @@ impl MapView {
             bounds: None,
             full: false,
             layer: egui::LayerId::background(),
+            basemap: None,
+            satellite: None,
+            switching: false,
         }
     }
 
@@ -292,7 +344,7 @@ impl MapView {
         let Some(source) = self.source.as_ref() else {
             return;
         };
-        let key = [t.color("card"), t.color("foreground")];
+        let key = ([t.color("card"), t.color("foreground")], dark);
         if self.styled != Some(key) || self.tiles.is_none() {
             let options = HttpOptions {
                 cache: source.cache.clone(),
@@ -306,6 +358,27 @@ impl MapView {
                 source.ctx.clone(),
             ));
             self.styled = Some(key);
+        }
+    }
+
+    /// The basemap drawn: the one chosen, or the street map by the scheme.
+    pub fn shown(&self, dark: bool) -> Basemap {
+        self.basemap
+            .unwrap_or(if dark { Basemap::Dark } else { Basemap::Light })
+    }
+
+    /// NASA's Blue Marble from its tile service, made the first time it is drawn.
+    fn satellite_tiles(&mut self) {
+        let Some(source) = self.source.as_ref() else {
+            return;
+        };
+        if self.satellite.is_none() {
+            let options = HttpOptions {
+                cache: source.cache.clone(),
+                user_agent: Some(walkers::HeaderValue::from_static(source.user_agent)),
+                ..HttpOptions::default()
+            };
+            self.satellite = Some(HttpTiles::with_options(BlueMarble, options, source.ctx.clone()));
         }
     }
 
@@ -347,16 +420,26 @@ impl MapView {
 
     fn draw(&mut self, ui: &mut Ui, size: Vec2, markers: &[Marker], routes: &[Route]) -> Response {
         let t = tokens(ui.ctx());
-        let has_tiles = self.source.is_some();
         let dark = ui.visuals().dark_mode;
+        let shown = self.shown(dark);
+        let has_tiles = self.source.is_some() && shown != Basemap::Blank;
         match self.pending.take() {
             Some(Some(bounds)) => self.fit(bounds, size),
             Some(None) => self.reset(),
             None => {}
         }
         let home = self.home;
-        self.tiles_for(&t, dark);
-        let tiles = self.tiles.as_mut().map(|tiles| tiles as &mut dyn Tiles);
+        let tiles = match shown {
+            Basemap::Light | Basemap::Dark => {
+                self.tiles_for(&t, shown == Basemap::Dark);
+                self.tiles.as_mut().map(|tiles| tiles as &mut dyn Tiles)
+            }
+            Basemap::Satellite => {
+                self.satellite_tiles();
+                self.satellite.as_mut().map(|tiles| tiles as &mut dyn Tiles)
+            }
+            Basemap::Blank => None,
+        };
         let mut points = Vec::new();
         let response = ui
             .allocate_ui(size, |ui| {
@@ -376,8 +459,8 @@ impl MapView {
                             .iter()
                             .map(|m| (m.id.clone(), projector.project(lat_lon(m.lat, m.lon)).to_pos2()))
                             .collect();
-                        if has_tiles {
-                            attribution(ui, &painter, &t, response.rect);
+                        if has_tiles && let Some(credits) = shown.credits() {
+                            attribution(ui, &painter, &t, response.rect, credits);
                         }
                     })
                     .response
@@ -414,7 +497,7 @@ impl MapView {
                 StrokeKind::Inside,
             );
         }
-        self.controls(ui, &t, rect, markers);
+        self.controls(ui, &t, rect, markers, shown);
         response
     }
 
@@ -430,7 +513,7 @@ impl MapView {
 
     /// The control stack in the top right corner: zoom in, zoom out and fit as one group, then
     /// full screen, each a 28 square in the popover's ground, as the web's map controls.
-    fn controls(&mut self, ui: &mut Ui, t: &Tokens, rect: Rect, markers: &[Marker]) {
+    fn controls(&mut self, ui: &mut Ui, t: &Tokens, rect: Rect, markers: &[Marker], shown: Basemap) {
         const SIZE: f32 = 28.0;
         let right = rect.right() - 10.0;
         let mut top = rect.top() + 10.0;
@@ -440,14 +523,17 @@ impl MapView {
         } else {
             (Icon::Expand, "Full screen")
         };
-        let groups: [&[(Icon, &str)]; 2] = [
+        let basemap_words = "Basemap";
+        let groups: [&[(Icon, &str)]; 3] = [
             &[
                 (Icon::Plus, "Zoom in"),
                 (Icon::Minus, "Zoom out"),
                 (Icon::LocateFixed, fit_words),
             ],
             &[(full_icon, full_words)],
+            &[(Icon::Layers, basemap_words)],
         ];
+        let mut switcher = Rect::NOTHING;
         let mut pressed = None;
         for group in groups {
             let whole = Rect::from_min_size(pos2(right - SIZE, top), vec2(SIZE, SIZE * group.len() as f32));
@@ -473,6 +559,9 @@ impl MapView {
                         .hline(button.x_range(), button.top(), Stroke::new(1.0, t.color("border")));
                 }
                 icons::paint(ui.painter(), button.center(), *icon, 16.0, t.color("foreground"));
+                if *label == basemap_words {
+                    switcher = button;
+                }
                 if response.on_hover_text(*label).clicked() {
                     pressed = Some(*label);
                 }
@@ -497,13 +586,155 @@ impl MapView {
                 });
                 self.pending = Some(self.bounds.or(every));
             }
+            Some(label) if label == basemap_words => self.switching = !self.switching,
             Some(_) => {
                 self.full = !self.full;
                 ui.ctx().request_repaint();
             }
             None => {}
         }
+        if self.switching && pressed != Some(basemap_words) {
+            self.basemap_menu(ui, t, switcher, shown);
+        }
     }
+
+    /// The basemap switcher's menu, to the left of its button: the label, then a row per basemap
+    /// with its preview and name, a check before the one drawn, as the web's `BasemapSwitcher`.
+    fn basemap_menu(&mut self, ui: &mut Ui, t: &Tokens, button: Rect, shown: Basemap) {
+        const ROW: f32 = 44.0;
+        const LABEL: f32 = 28.0;
+        let size = vec2(208.0, 4.0 + LABEL + ROW * Basemap::ALL.len() as f32 + 4.0);
+        let menu = Rect::from_min_size(pos2(button.left() - 4.0 - size.x, button.top()), size);
+        // over the map and its legend, a full screen map too
+        let area = egui::Area::new(ui.id().with("map-basemap-menu"))
+            .order(egui::Order::Tooltip)
+            .fixed_pos(menu.min)
+            .show(ui.ctx(), |ui| Self::basemap_rows(ui, t, menu, shown));
+        let chosen = area.inner;
+        let away = ui.input(|i| i.pointer.any_click())
+            && ui
+                .input(|i| i.pointer.interact_pos())
+                .is_some_and(|p| !menu.contains(p) && !button.contains(p));
+        if let Some(basemap) = chosen {
+            self.basemap = Some(basemap);
+            self.switching = false;
+        } else if away || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+            self.switching = false;
+        }
+    }
+
+    /// The menu's ground, its label and a row per basemap; the basemap pressed.
+    fn basemap_rows(ui: &mut Ui, t: &Tokens, menu: Rect, shown: Basemap) -> Option<Basemap> {
+        const ROW: f32 = 44.0;
+        const LABEL: f32 = 28.0;
+        let size = menu.size();
+        ui.allocate_rect(menu, Sense::hover());
+        let corners = t.radius("md");
+        ui.painter().add(t.shadow("elevation-pop").as_shape(menu, corners));
+        ui.painter().rect(
+            menu,
+            corners,
+            t.color("popover"),
+            Stroke::new(1.0, t.color("border")),
+            StrokeKind::Inside,
+        );
+        let label = WidgetText::from(TextRole::Help.rich(t, "Basemap").variation("wght", 500.0)).into_galley(
+            ui,
+            Some(egui::TextWrapMode::Extend),
+            f32::INFINITY,
+            TextRole::Help.font(t),
+        );
+        ui.painter().galley(
+            pos2(
+                menu.left() + 4.0 + 6.0,
+                menu.top() + 4.0 + (LABEL - label.size().y) / 2.0,
+            ),
+            label,
+            t.color("muted-foreground"),
+        );
+        let mut chosen = None;
+        for (i, basemap) in Basemap::ALL.into_iter().enumerate() {
+            let row = Rect::from_min_size(
+                pos2(menu.left() + 4.0, menu.top() + 4.0 + LABEL + i as f32 * ROW),
+                vec2(size.x - 8.0, ROW),
+            );
+            let response = ui.interact(row, ui.id().with(("map-basemap", basemap.name())), Sense::click());
+            response.widget_info(|| {
+                egui::WidgetInfo::selected(egui::WidgetType::RadioButton, true, basemap == shown, basemap.name())
+            });
+            if response.hovered() {
+                ui.painter().rect_filled(row, t.radius("md"), t.color("accent"));
+            }
+            if basemap == shown {
+                icons::paint(
+                    ui.painter(),
+                    pos2(row.left() + 6.0 + 8.0, row.center().y),
+                    Icon::Check,
+                    16.0,
+                    t.color("popover-foreground"),
+                );
+            }
+            let preview = Rect::from_min_size(pos2(row.left() + 28.0, row.center().y - 16.0), vec2(44.0, 32.0));
+            let mini = CornerRadius::same(t.length("radius-mini").floor() as u8);
+            match basemap
+                .preview()
+                .and_then(|bytes| preview_texture(ui.ctx(), basemap.name(), bytes))
+            {
+                Some(texture) => {
+                    egui::Image::new((texture.id(), preview.size()))
+                        .corner_radius(mini)
+                        .paint_at(ui, preview);
+                }
+                None => {
+                    // the ground alone: the card with a dot every 6, as the web's blank preview
+                    ui.painter().rect_filled(preview, mini, t.color("card"));
+                    let dots = ui.painter().with_clip_rect(preview.shrink(1.0));
+                    let mut y = preview.top() + 3.0;
+                    while y < preview.bottom() {
+                        let mut x = preview.left() + 3.0;
+                        while x < preview.right() {
+                            dots.circle_filled(pos2(x, y), 0.5, t.color("border-strong"));
+                            x += 6.0;
+                        }
+                        y += 6.0;
+                    }
+                }
+            }
+            ui.painter().rect_stroke(
+                preview,
+                mini,
+                Stroke::new(1.0, t.color_at("foreground", 0.15)),
+                StrokeKind::Outside,
+            );
+            ui.painter().text(
+                pos2(preview.right() + 10.0, row.center().y),
+                egui::Align2::LEFT_CENTER,
+                basemap.name(),
+                TextRole::Body.font(t),
+                t.color("popover-foreground"),
+            );
+            if response.clicked() {
+                chosen = Some(basemap);
+            }
+        }
+        chosen
+    }
+}
+
+/// A basemap's preview as a texture, decoded once and kept by the context.
+fn preview_texture(ctx: &egui::Context, name: &str, bytes: &[u8]) -> Option<egui::TextureHandle> {
+    let id = egui::Id::new(("sokkel-map-preview", name));
+    if let Some(texture) = ctx.data(|d| d.get_temp::<egui::TextureHandle>(id)) {
+        return Some(texture);
+    }
+    let image = image::load_from_memory_with_format(bytes, image::ImageFormat::Jpeg)
+        .ok()?
+        .to_rgba8();
+    let size = [image.width() as usize, image.height() as usize];
+    let pixels = egui::ColorImage::from_rgba_unmultiplied(size, image.as_raw());
+    let texture = ctx.load_texture(format!("map-preview-{name}"), pixels, egui::TextureOptions::LINEAR);
+    ctx.data_mut(|d| d.insert_temp(id, texture.clone()));
+    Some(texture)
 }
 
 /// OpenFreeMap's current build of the world map, which it names at `https://tiles.openfreemap.org/planet`
@@ -571,6 +802,31 @@ impl TileSource for Planet {
 
     fn max_zoom(&self) -> u8 {
         OpenFreeMap.max_zoom()
+    }
+}
+
+/// NASA's cloud-free Blue Marble mosaic from GIBS, public domain, sharp to about a region's scale.
+struct BlueMarble;
+
+impl TileSource for BlueMarble {
+    fn tile_url(&self, tile_id: TileId) -> String {
+        format!(
+            "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{}/{}/{}.jpeg",
+            tile_id.zoom, tile_id.y, tile_id.x
+        )
+    }
+
+    fn attribution(&self) -> Attribution {
+        Attribution {
+            text: "NASA Blue Marble, NASA GIBS",
+            url: "https://earthobservatory.nasa.gov/features/BlueMarble",
+            logo_light: None,
+            logo_dark: None,
+        }
+    }
+
+    fn max_zoom(&self) -> u8 {
+        8
     }
 }
 
@@ -729,8 +985,7 @@ fn overlays(painter: &egui::Painter, t: &Tokens, projector: &Projector, markers:
 }
 
 /// The credits the street map's hosts ask to be shown on the map, as the web's.
-fn attribution(ui: &Ui, painter: &egui::Painter, t: &Tokens, rect: Rect) {
-    let credits = "OpenFreeMap © OpenMapTiles © OpenStreetMap contributors";
+fn attribution(ui: &Ui, painter: &egui::Painter, t: &Tokens, rect: Rect, credits: &str) {
     let text = WidgetText::from(TextRole::Help.rich(t, credits)).into_galley(
         ui,
         Some(egui::TextWrapMode::Extend),
