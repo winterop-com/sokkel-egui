@@ -238,7 +238,7 @@ pub const STORIES: &[Story] = &[
     },
     Story {
         path: "Primitives/Overlays/Toast",
-        doc: "Short notes at the window's corner: the newest in front, two peeking above it; pointed at, they stand apart and stop counting down. Notify adds one that goes after five seconds.",
+        doc: "Short notes at the window's corner: the newest in front, two peeking above it; pointed at, they stand apart and stop counting down. Notify adds one that goes after five seconds; each rises in, sinks out, and is swiped away down or right.",
         show: overlays::toasts,
     },
     Story {

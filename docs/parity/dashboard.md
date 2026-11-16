@@ -64,7 +64,11 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
   the muted ground.
 - `DataTable::framed`, `Gap::Xs`, and a `Checkbox` whose label wraps.
 - `Toast` and `Toaster`, after sokkel-ui's toast: kinds by icon, the newest in front and two
-  peeking, apart while pointed at, a close button and a timeout that stops while pointed at.
+  peeking, apart while pointed at, a close button and a timeout that stops while pointed at. They
+  move as the web's, over 500 ms on its `cubic-bezier(0.22, 1, 0.36, 1)`: a new one rises from
+  150% of its height below, one closed or timed out sinks away, the rest close up and spread;
+  dragged down or right past 40 (base-ui's swipe) one goes that way, let go sooner it springs
+  back. The close button is `icon-sm` at the content's right edge, as the web's `ToastClose`.
   Story: Primitives/Overlays/Toast.
 - In the charts add-on, `Series::color`: a series drawn in its own token, as a web series'
   `color` (Runs in `chart-1`, Failures in `status-failed`), its legend swatch with it
@@ -74,7 +78,6 @@ UTC, so the shots are taken in UTC: shot in Oslo, the schedules' times stood an 
 
 ## Next
 
-- Toasts do not slide in and out yet, and are not swiped away.
 - What the board shows apart from the figures:
   - The worker log on the web is as tall as its lines (816 at the start, growing to 200 lines),
     its `h-72` lost to `flex-1`; egui keeps it 288 tall and follows the newest line, as the
