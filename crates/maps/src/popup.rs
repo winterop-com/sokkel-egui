@@ -109,6 +109,9 @@ impl MapPopup {
         if !room.contains(point) {
             return answer;
         }
+        // the card stands in the map's layer, over a map gone full screen too
+        let mut layered = ui.new_child(UiBuilder::new().layer_id(map.layer()).max_rect(room));
+        let ui = &mut layered;
         if ui.input(|i| i.key_pressed(Key::Escape)) {
             map.selected = None;
             answer.closed = true;

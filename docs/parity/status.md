@@ -128,9 +128,10 @@ and never chase a difference made of numbers.
   trip now), its menu showing a site on the map. The sites' round trips are live (`live.rs`, the
   web's `siteHealthOf`). A site chosen on the map, or shown from the table, opens its card
   (`MapPopup`, on the overview's Sites too): where it is, its state, its round trip now and
-  usually, and the open incident covering it with Open beside it. Still to come: the map's
-  locate, full screen and basemap buttons, and Simulate trouble here, which waits on the
-  scenarios.
+  usually, and the open incident covering it with Open beside it. The map's controls are the web's: zoom in and
+  out and Fit to the data in one group, then Full screen, which takes the map over the whole
+  window (its legend and card with it) until Exit full screen or Escape. Still to come: the
+  basemap switcher, and Simulate trouble here, which waits on the scenarios.
 - A busy confirm lets go after a wait (F23 as the owner refined it, in sokkel-design 0.28.0's
   dialog spec): after `busy-release` (5 s) Cancel says "Stop waiting" and, as Escape does, lets
   the work go (`ConfirmAnswer::StopWaiting`); the shade still holds. The palette's own way out

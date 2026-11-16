@@ -94,8 +94,11 @@ impl MapLegend {
         self
     }
 
-    /// Draws the legend in the bottom-left corner of `map`, 12 in, 224 wide.
-    pub fn show(self, ui: &Ui, map: Rect) {
+    /// Draws the legend in the bottom-left corner of the map, 12 in, 224 wide: `map` is what
+    /// [`MapView::show`] returned, so the legend stands in the map's layer, full screen too.
+    pub fn show(self, ui: &Ui, map: &Response) {
+        let painter = ui.ctx().layer_painter(map.layer_id).with_clip_rect(map.rect);
+        let map = map.rect;
         let t = tokens(ui.ctx());
         let font = TextRole::Help.font(&t);
         let line = t.text("help").line_height;
@@ -106,7 +109,6 @@ impl MapLegend {
             pos2(map.left() + 12.0, map.bottom() - 12.0 - height),
             vec2(width, height),
         );
-        let painter = ui.painter_at(map);
         painter.rect(
             card,
             t.radius("surface"),
@@ -200,6 +202,12 @@ pub struct MapView {
     /// Where each marker was drawn on the last frame, by its id, and the map's room.
     points: Vec<(String, Pos2)>,
     room: Rect,
+    /// The bounds last framed, which Fit goes back to; every marker when none were.
+    bounds: Option<[f64; 4]>,
+    /// Drawn over the whole window, as the web's full screen.
+    pub full: bool,
+    /// The layer the map was drawn in on the last frame, which its legend and card draw in too.
+    layer: egui::LayerId,
 }
 
 impl MapView {
@@ -220,6 +228,9 @@ impl MapView {
             selected: None,
             points: Vec::new(),
             room: Rect::NOTHING,
+            bounds: None,
+            full: false,
+            layer: egui::LayerId::background(),
         }
     }
 
@@ -233,6 +244,7 @@ impl MapView {
     /// with `None`, the place and zoom it was made with.
     pub fn frame(&mut self, bounds: Option<[f64; 4]>) {
         self.pending = Some(bounds);
+        self.bounds = bounds;
     }
 
     /// Look at `bounds` within a map `size` large: their middle, at the deepest zoom that shows them whole.
@@ -305,8 +317,35 @@ impl MapView {
     }
 
     /// Draw the map at `size`, with `routes` and then `markers` over it. Drag to pan, scroll or
-    /// pinch to zoom, double-click the buttons' minus to step back out.
+    /// pinch to zoom; its buttons zoom in and out, fit back to what it framed (or to every
+    /// marker), and take it to full screen: over the whole window, its place in the page keeping
+    /// its ground, until Exit full screen or Escape.
     pub fn show(&mut self, ui: &mut Ui, size: Vec2, markers: &[Marker], routes: &[Route]) -> Response {
+        if !self.full {
+            return self.draw(ui, size, markers, routes);
+        }
+        let t = tokens(ui.ctx());
+        let (place, _) = ui.allocate_exact_size(size, Sense::hover());
+        ui.painter().rect_filled(place, CornerRadius::ZERO, t.color("card"));
+        // Escape leaves full screen, unless a card is open to close first
+        if self.selected.is_none() && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+            self.full = false;
+            ui.ctx().request_repaint();
+        }
+        let screen = ui.ctx().content_rect();
+        egui::Area::new(ui.id().with("map-full"))
+            .order(egui::Order::Foreground)
+            .fixed_pos(screen.min)
+            .show(ui.ctx(), |ui| self.draw(ui, screen.size(), markers, routes))
+            .inner
+    }
+
+    /// The layer the map was drawn in on the last frame: its page's, or the full screen's.
+    pub fn layer(&self) -> egui::LayerId {
+        self.layer
+    }
+
+    fn draw(&mut self, ui: &mut Ui, size: Vec2, markers: &[Marker], routes: &[Route]) -> Response {
         let t = tokens(ui.ctx());
         let has_tiles = self.source.is_some();
         let dark = ui.visuals().dark_mode;
@@ -366,7 +405,8 @@ impl MapView {
         }
         self.points = points;
         self.room = rect;
-        if self.framed {
+        self.layer = response.layer_id;
+        if self.framed && !self.full {
             ui.painter().rect_stroke(
                 rect,
                 t.radius("surface"),
@@ -374,7 +414,7 @@ impl MapView {
                 StrokeKind::Inside,
             );
         }
-        self.zoom_buttons(ui, &t, rect);
+        self.controls(ui, &t, rect, markers);
         response
     }
 
@@ -388,48 +428,80 @@ impl MapView {
         self.room
     }
 
-    fn zoom_buttons(&mut self, ui: &mut Ui, t: &Tokens, rect: Rect) {
-        let size = 28.0;
-        for (i, (icon, label, step)) in [(Icon::Plus, "Zoom in", 1.0), (Icon::Minus, "Zoom out", -1.0)]
-            .into_iter()
-            .enumerate()
-        {
-            let button = Rect::from_min_size(
-                pos2(rect.right() - size - 10.0, rect.top() + 10.0 + i as f32 * size),
-                vec2(size, size),
-            );
-            let response = ui.interact(button, ui.id().with(("map-zoom", i)), Sense::click());
-            response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, label));
-            let painter = ui.painter();
-            let corners = if i == 0 {
-                CornerRadius {
-                    sw: 0,
-                    se: 0,
-                    ..t.radius("control")
+    /// The control stack in the top right corner: zoom in, zoom out and fit as one group, then
+    /// full screen, each a 28 square in the popover's ground, as the web's map controls.
+    fn controls(&mut self, ui: &mut Ui, t: &Tokens, rect: Rect, markers: &[Marker]) {
+        const SIZE: f32 = 28.0;
+        let right = rect.right() - 10.0;
+        let mut top = rect.top() + 10.0;
+        let fit_words = "Fit to the data";
+        let (full_icon, full_words) = if self.full {
+            (Icon::Shrink, "Exit full screen")
+        } else {
+            (Icon::Expand, "Full screen")
+        };
+        let groups: [&[(Icon, &str)]; 2] = [
+            &[
+                (Icon::Plus, "Zoom in"),
+                (Icon::Minus, "Zoom out"),
+                (Icon::LocateFixed, fit_words),
+            ],
+            &[(full_icon, full_words)],
+        ];
+        let mut pressed = None;
+        for group in groups {
+            let whole = Rect::from_min_size(pos2(right - SIZE, top), vec2(SIZE, SIZE * group.len() as f32));
+            let corners = t.radius("control");
+            ui.painter().rect_filled(whole, corners, t.color("popover"));
+            for (i, (icon, label)) in group.iter().enumerate() {
+                let button = Rect::from_min_size(pos2(whole.left(), whole.top() + i as f32 * SIZE), vec2(SIZE, SIZE));
+                let response = ui.interact(button, ui.id().with(("map-control", *label)), Sense::click());
+                response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, *label));
+                if response.hovered() {
+                    let corner = |first: bool| if first { corners.nw } else { 0 };
+                    let last = i + 1 == group.len();
+                    let shape = CornerRadius {
+                        nw: corner(i == 0),
+                        ne: corner(i == 0),
+                        sw: if last { corners.sw } else { 0 },
+                        se: if last { corners.se } else { 0 },
+                    };
+                    ui.painter().rect_filled(button, shape, t.color("muted"));
                 }
-            } else {
-                CornerRadius {
-                    nw: 0,
-                    ne: 0,
-                    ..t.radius("control")
+                if i > 0 {
+                    ui.painter()
+                        .hline(button.x_range(), button.top(), Stroke::new(1.0, t.color("border")));
                 }
-            };
-            let fill = if response.hovered() {
-                t.color("muted")
-            } else {
-                t.color("popover")
-            };
-            painter.rect(
-                button,
-                corners,
-                fill,
-                Stroke::new(1.0, t.color("border")),
-                StrokeKind::Inside,
-            );
-            icons::paint(painter, button.center(), icon, 16.0, t.color("foreground"));
-            if response.on_hover_text(label).clicked() {
-                let _ = self.memory.set_zoom((self.memory.zoom() + step).clamp(2.0, 18.0));
+                icons::paint(ui.painter(), button.center(), *icon, 16.0, t.color("foreground"));
+                if response.on_hover_text(*label).clicked() {
+                    pressed = Some(*label);
+                }
             }
+            ui.painter()
+                .rect_stroke(whole, corners, Stroke::new(1.0, t.color("border")), StrokeKind::Inside);
+            top = whole.bottom() + 8.0;
+        }
+        match pressed {
+            Some("Zoom in") => {
+                let _ = self.memory.set_zoom((self.memory.zoom() + 1.0).clamp(2.0, 18.0));
+            }
+            Some("Zoom out") => {
+                let _ = self.memory.set_zoom((self.memory.zoom() - 1.0).clamp(2.0, 18.0));
+            }
+            Some(label) if label == fit_words => {
+                let every = markers.iter().fold(None::<[f64; 4]>, |b, m| {
+                    Some(match b {
+                        None => [m.lon, m.lat, m.lon, m.lat],
+                        Some([w, s, e, n]) => [w.min(m.lon), s.min(m.lat), e.max(m.lon), n.max(m.lat)],
+                    })
+                });
+                self.pending = Some(self.bounds.or(every));
+            }
+            Some(_) => {
+                self.full = !self.full;
+                ui.ctx().request_repaint();
+            }
+            None => {}
         }
     }
 }

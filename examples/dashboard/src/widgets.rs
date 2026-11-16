@@ -379,7 +379,7 @@ pub fn draw(
                 .show(ui, |ui| {
                     let size = egui::vec2(ui.available_width(), 320.0);
                     let response = map.show(ui, size, &markers, &[]);
-                    legend.show(ui, response.rect);
+                    legend.show(ui, &response);
                     let chosen = map.selected.clone();
                     if let Some(site) = live.sites.iter().find(|s| Some(s.id) == chosen.as_deref()) {
                         let words = match site.state {

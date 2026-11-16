@@ -1531,7 +1531,7 @@ impl StatusApp {
                         .show(ui, |ui| {
                             let size = egui::vec2(ui.available_width(), 344.0);
                             let response = map.show(ui, size, &markers, &[]);
-                            legend.clone().show(ui, response.rect);
+                            legend.clone().show(ui, &response);
                             if let Some(incident) = site_card(ui, map, &cards) {
                                 *opened = Some(format!("incidents/{incident}"));
                             }
@@ -1803,7 +1803,7 @@ impl StatusApp {
                 |ui| {
                     let size = ui.available_size().max(egui::vec2(1.0, 320.0));
                     let response = map.show(ui, size, &markers, &[]);
-                    legend.clone().show(ui, response.rect);
+                    legend.clone().show(ui, &response);
                     if let Some(incident) = site_card(ui, map, &cards) {
                         *opened = Some(incident);
                     }
