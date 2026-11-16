@@ -1,11 +1,11 @@
-//! A live log viewer across Tidevann's services, an app of sokkel-ui-egui's own: every line as it
+//! A live log viewer across Tidevann's services, an app of sokkel-egui's own: every line as it
 //! comes, newest first; searched, filtered by level and by service; a line's fields beside the
 //! stream. It uses the library's public parts only.
 
 pub mod stream;
 
 use eframe::egui::{self, Ui};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     AccountAction, AccountMenu, Appearance, Button, ButtonVariant, Cell, ChipTone, Column, DataTable, DescriptionList,
     DesktopWindow, Empty, Icon, Page, PageHeader, Rail, RailEntry, RailGroup, SearchField, Segmented, Shell, ShellPart,
     SplitPane, StackLayout, StackPlace, StatusLine, StatusTone, TableState, TableVariant, TagChips, TextRole, TopBar,
@@ -201,7 +201,7 @@ impl LogsApp {
     }
 
     fn page(&mut self, ui: &mut Ui) {
-        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let t = sokkel_egui::tokens(ui.ctx());
         let title = if self.place == "all" {
             "All services".to_owned()
         } else {
@@ -279,7 +279,7 @@ impl LogsApp {
                         .variant(TableVariant::List)
                         .stack_layout(StackLayout::Labeled)
                         .stack_below(520.0)
-                        .words(sokkel_ui_egui::TableWords {
+                        .words(sokkel_egui::TableWords {
                             empty: "No line says that.".into(),
                             ..Default::default()
                         })
@@ -309,7 +309,7 @@ impl LogsApp {
 
 /// A line's fields, beside the stream.
 fn line_detail(ui: &mut Ui, line: &Line) {
-    let t = sokkel_ui_egui::tokens(ui.ctx());
+    let t = sokkel_egui::tokens(ui.ctx());
     egui::Frame::new().inner_margin(egui::Margin::same(16)).show(ui, |ui| {
         ui.vertical(|ui| {
             ui.spacing_mut().item_spacing.y = 12.0;
@@ -323,7 +323,7 @@ fn line_detail(ui: &mut Ui, line: &Line) {
                 .text("Time", line.clock())
                 .item("Level", |ui| {
                     if let Cell::Chip(words, tone) = level_chip(line.level) {
-                        ui.add(sokkel_ui_egui::Chip::new(words).tone(tone));
+                        ui.add(sokkel_egui::Chip::new(words).tone(tone));
                     }
                 })
                 .item("Service", |ui| {

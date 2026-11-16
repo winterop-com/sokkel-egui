@@ -2,7 +2,7 @@
 //! "Stop waiting" and Escape closes, as the dialog spec's released state says (F23).
 
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::{ConfirmAnswer, ConfirmDialog, install};
+use sokkel_egui::{ConfirmAnswer, ConfirmDialog, install};
 
 #[test]
 fn a_busy_confirm_holds_then_lets_go() {

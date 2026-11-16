@@ -2,7 +2,7 @@
 //! drawing fitted to its width, the zoom buttons in a row at its foot.
 
 use egui::{Color32, CornerRadius, Id, Pos2, Rect, Sense, Shape, Stroke, StrokeKind, Ui, Vec2, vec2};
-use sokkel_ui_egui::{Icon, Tokens, tokens};
+use sokkel_egui::{Icon, Tokens, tokens};
 
 use crate::layout::{GraphDirection, GraphSpacing, PlacedGraph, layout};
 use crate::node::GraphNode;
@@ -241,7 +241,7 @@ impl<'a> GraphCanvas<'a> {
             } else {
                 t.color("muted-foreground")
             };
-            sokkel_ui_egui::icons::paint(&painter, spot.center(), icon, 14.0, ink);
+            sokkel_egui::icons::paint(&painter, spot.center(), icon, 14.0, ink);
             let response = response.on_hover_text(word.as_str());
             if response.clicked() {
                 let now = moved.unwrap_or(Moved {

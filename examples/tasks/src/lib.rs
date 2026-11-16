@@ -1,10 +1,10 @@
 //! sokkel-ui's tasks example in egui, ported from `examples/tasks/web/src/Tasks.tsx` and
 //! `Settings.tsx`: lists in the rail, a quick add, and tasks as rows put in the person's own order
-//! by drag, or as a board of their states. Every part is sokkel-ui-egui's; this file holds the
+//! by drag, or as a board of their states. Every part is sokkel-egui's; this file holds the
 //! example's data, where it is, and what each part's answer does, as the web example does.
 
 use eframe::egui::{self, Color32, Ui};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     AccountAction, AccountMenu, Appearance, AppearanceCommandWords, Board, BoardCard, BoardColumn, BoardMove, Cell,
     Column, CommandGroup, CommandPalette, ConfirmAnswer, ConfirmDialog, DataTable, Day, DesktopWindow, Editor, Empty,
     Icon, MenuItem, Page, PageHeader, QuickAdd, Rail, RailEntry, RailGroup, Segmented, SegmentedVariant, Select,
@@ -112,7 +112,7 @@ fn state_id(state: TaskState) -> &'static str {
     }
 }
 
-fn column_of(state: TaskState, t: &sokkel_ui_egui::Tokens) -> (&'static str, Icon, Color32) {
+fn column_of(state: TaskState, t: &sokkel_egui::Tokens) -> (&'static str, Icon, Color32) {
     match state {
         TaskState::Todo => ("To do", Icon::Circle, t.color("muted-foreground")),
         TaskState::Doing => ("Doing", Icon::CircleDot, t.color("status-running")),
@@ -363,8 +363,8 @@ impl TasksApp {
         let hidden_done = in_list - self.open_in(&self.list);
         let mut show_done = false;
         let week_start = match self.prefs.week_start {
-            WeekStart::Monday => sokkel_ui_egui::WeekStart::Monday,
-            WeekStart::Sunday => sokkel_ui_egui::WeekStart::Sunday,
+            WeekStart::Monday => sokkel_egui::WeekStart::Monday,
+            WeekStart::Sunday => sokkel_egui::WeekStart::Sunday,
         };
         let columns = [
             Column::new("Done", 48.0).sortable(false).stack(StackPlace::Lead),
@@ -429,9 +429,9 @@ impl TasksApp {
                     .description(description)
                     .show(ui, |ui| {
                         if hidden_done > 0 {
-                            let button = sokkel_ui_egui::Button::new("Show done")
-                                .variant(sokkel_ui_egui::ButtonVariant::Outline)
-                                .size(sokkel_ui_egui::ButtonSize::Sm);
+                            let button = sokkel_egui::Button::new("Show done")
+                                .variant(sokkel_egui::ButtonVariant::Outline)
+                                .size(sokkel_egui::ButtonSize::Sm);
                             show_done = ui.add(button).clicked();
                         }
                     });
@@ -629,9 +629,9 @@ impl TasksApp {
             "appearance" => theme_settings(ui, appearance, true, &ThemeWords::default()),
             _ => {
                 setting_row(ui, "Reset demo data", "Puts back the tasks and these settings, as the demo started.", |ui| {
-                    let reset = sokkel_ui_egui::Button::new("Reset")
-                        .size(sokkel_ui_egui::ButtonSize::Sm)
-                        .variant(sokkel_ui_egui::ButtonVariant::Outline);
+                    let reset = sokkel_egui::Button::new("Reset")
+                        .size(sokkel_egui::ButtonSize::Sm)
+                        .variant(sokkel_egui::ButtonVariant::Outline);
                     if ui.add(reset).clicked() {
                         reset_data = true;
                     }
@@ -695,9 +695,7 @@ impl TasksApp {
         )];
         groups.extend(place_commands(&rail[..2], "Lists"));
         groups.extend(place_commands(&rail[2..], "Go to"));
-        let themes: Vec<_> = sokkel_ui_egui::themes()
-            .filter(|theme| theme.name == "tidevann")
-            .collect();
+        let themes: Vec<_> = sokkel_egui::themes().filter(|theme| theme.name == "tidevann").collect();
         groups.extend(appearance_commands(
             &self.appearance,
             &themes,

@@ -1,5 +1,5 @@
 use eframe::egui::{Ui, vec2};
-use sokkel_ui_egui_maps::{Marker, Route};
+use sokkel_egui_maps::{Marker, Route};
 
 use super::{State, section};
 

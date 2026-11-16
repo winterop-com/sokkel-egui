@@ -9,10 +9,10 @@ license = "LicenseRef-Proprietary"
 publish = false
 
 [workspace.dependencies]
-sokkel-ui-egui = { path = "crates/core" }
-sokkel-ui-egui-charts = { path = "crates/charts" }
-sokkel-ui-egui-maps = { path = "crates/maps" }
-sokkel-ui-egui-graph = { path = "crates/graph" }
+sokkel-egui = { path = "crates/core" }
+sokkel-egui-charts = { path = "crates/charts" }
+sokkel-egui-maps = { path = "crates/maps" }
+sokkel-egui-graph = { path = "crates/graph" }
 egui = "0.36.2"
 egui_extras = { version = "0.36.2", default-features = false, features = ["svg"] }
 lucide-icons = "0.575"

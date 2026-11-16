@@ -1,6 +1,6 @@
 //! Tidevann's buckets, simulated: three projects' files as the jobs leave them, the same every run.
 
-use sokkel_ui_egui::{FileKind, Icon, TreeNode, format_size};
+use sokkel_egui::{FileKind, Icon, TreeNode, format_size};
 
 /// A file or a folder, by its path from the bucket down.
 #[derive(Clone, Debug)]

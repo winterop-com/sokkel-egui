@@ -2,7 +2,7 @@
 //! dialog stays a box sized to its words.
 
 use egui_kittest::Harness;
-use sokkel_ui_egui::{Appearance, Button, ButtonVariant, Dialog, TextField, install};
+use sokkel_egui::{Appearance, Button, ButtonVariant, Dialog, TextField, install};
 
 #[test]
 fn a_dialog_on_a_phone_is_a_sheet() {

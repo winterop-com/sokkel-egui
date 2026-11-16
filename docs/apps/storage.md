@@ -1,6 +1,6 @@
 # Storage: a browser for Tidevann's buckets
 
-An app of sokkel-ui-egui's own (`examples/storage`, `make storage`), not a port: Tidevann's
+An app of sokkel-egui's own (`examples/storage`, `make storage`), not a port: Tidevann's
 buckets as their jobs leave them, drawn with the library's public parts alone. A part it lacks
 goes into the library, never into the app.
 

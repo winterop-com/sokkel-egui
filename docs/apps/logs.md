@@ -1,6 +1,6 @@
 # Logs: a live log viewer across Tidevann's services
 
-An app of sokkel-ui-egui's own (`examples/logs`, `make logs`), not a port: what a reader of
+An app of sokkel-egui's own (`examples/logs`, `make logs`), not a port: what a reader of
 Tidevann's logs needs, drawn with the library's public parts alone. A part it lacks goes into the
 library, never into the app.
 

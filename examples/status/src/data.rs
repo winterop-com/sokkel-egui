@@ -567,15 +567,15 @@ pub const ON_CALL_NOTE: &str = "INC-41 is in monitoring; nightly-export should f
 #[derive(Clone, Debug)]
 pub struct Shift {
     pub id: String,
-    pub starts: sokkel_ui_egui::Day,
+    pub starts: sokkel_egui::Day,
     /// The Monday after it.
-    pub ends: sokkel_ui_egui::Day,
+    pub ends: sokkel_egui::Day,
     pub person: &'static str,
 }
 
 /// The rotation the demo starts with: eight weeks from two before the one `today` is in, the
 /// people in turn, as the web's `seedShifts`.
-pub fn seed_shifts(today: sokkel_ui_egui::Day) -> Vec<Shift> {
+pub fn seed_shifts(today: sokkel_egui::Day) -> Vec<Shift> {
     let monday = today.plus(-(today.weekday() as i32));
     (0..8)
         .map(|index| {

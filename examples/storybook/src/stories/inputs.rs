@@ -1,5 +1,5 @@
 use eframe::egui::Ui;
-use sokkel_ui_egui::{Checkbox, Input, Segmented, SegmentedVariant, Tabs, TabsVariant, TextRole, tokens};
+use sokkel_egui::{Checkbox, Input, Segmented, SegmentedVariant, Tabs, TabsVariant, TextRole, tokens};
 
 use super::{State, section};
 

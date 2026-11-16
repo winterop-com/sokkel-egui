@@ -2,7 +2,7 @@
 //! order, each widget its kind, its width, its own title when given one, and its options. The
 //! dashboards Tidevann starts with, and what each kind of widget starts as when added.
 
-use sokkel_ui_egui::{ArrangeItem, PanelSpan};
+use sokkel_egui::{ArrangeItem, PanelSpan};
 
 pub const JOBS: [&str; 5] = [
     "nightly-export",

@@ -2,7 +2,7 @@
 
 use egui_kittest::{Harness, SnapshotResults};
 use runs::RunsApp;
-use sokkel_ui_egui::{Appearance, Scheme};
+use sokkel_egui::{Appearance, Scheme};
 
 fn render(scheme: Scheme, place: &str) -> Harness<'static, RunsApp> {
     let mut app = RunsApp::with(Appearance {

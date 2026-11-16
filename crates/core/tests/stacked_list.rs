@@ -2,7 +2,7 @@
 //! words, and with no rows its empty words, as the web's listed `DataTable`.
 
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     Appearance, Cell, Column, DataTable, MenuItem, StackLayout, StackPlace, TableState, TableVariant, TableWords,
     install,
 };

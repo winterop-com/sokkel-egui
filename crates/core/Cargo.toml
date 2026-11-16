@@ -1,5 +1,5 @@
 [package]
-name = "sokkel-ui-egui"
+name = "sokkel-egui"
 description = "sokkel-ui's tokens, themes and primitives for egui."
 version.workspace = true
 edition.workspace = true

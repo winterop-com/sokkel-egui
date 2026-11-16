@@ -3,7 +3,7 @@
 
 use egui::{Event, PointerButton, Pos2, TouchDeviceId, TouchId, TouchPhase};
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::{Button, install};
+use sokkel_egui::{Button, install};
 
 const REASON: &str = "The run is still going.";
 

@@ -3,7 +3,7 @@
 //! pager handed to someone else.
 
 use eframe::egui::{self, Ui};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     Button, ButtonVariant, Columns, DateTimeField, Day, Dialog, Gap, Moment, Select, Stack, SwitchField, TextField,
     field,
 };

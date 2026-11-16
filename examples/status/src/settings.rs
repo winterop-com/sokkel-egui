@@ -2,7 +2,7 @@
 //! board reads and tells, the simulation, the status page and its subscribers, and the look.
 
 use eframe::egui::Context;
-use sokkel_ui_egui::{
+use sokkel_egui::{
     Button, ButtonSize, ButtonVariant, Cell, Column, ConfirmAnswer, ConfirmDialog, DataTable, Icon, Input, MenuItem,
     Segmented, Select, SettingsDialog, SettingsSection, StackLayout, StackPlace, Switch, TableVariant, TableWords,
     ThemeWords, Toast, ToastKind, setting_row, setting_row_below, setting_row_found_by, theme_settings,
@@ -20,7 +20,7 @@ pub struct SettingsState {
     pub site: usize,
     /// Reset demo data asked, waiting for its confirm.
     pub resetting: bool,
-    pub subscribers: sokkel_ui_egui::TableState,
+    pub subscribers: sokkel_egui::TableState,
 }
 
 impl Default for SettingsState {

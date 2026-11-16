@@ -1,4 +1,4 @@
-//! sokkel-ui-egui's maps: one engine, walkers, as sokkel-ui draws every map with one engine. A
+//! sokkel-egui's maps: one engine, walkers, as sokkel-ui draws every map with one engine. A
 //! [`MapView`] keeps where the map looks and its tiles; [`MapView::show`] draws it at a size, with
 //! markers and routes over it in the chart colors, its frame in the tokens' rule and corner, and
 //! zoom buttons. Its tiles are OpenFreeMap's vector street map, as sokkel-ui's default basemap,
@@ -7,7 +7,7 @@
 //! and routes still sit somewhere.
 
 use egui::{Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2, WidgetText, pos2, vec2};
-use sokkel_ui_egui::{Icon, TextRole, Tokens, icons, tokens};
+use sokkel_egui::{Icon, TextRole, Tokens, icons, tokens};
 mod popup;
 pub use popup::{MapPopup, MapPopupResponse, MapPopupRow, MapPopupWords};
 
@@ -18,7 +18,7 @@ use walkers::{
 
 /// Gets the maps ready to draw their street map's land, water and roads, which are drawn on the
 /// GPU: call it once at startup with eframe's wgpu render state,
-/// `sokkel_ui_egui_maps::install(cc.wgpu_render_state.as_ref())`. Without it a map draws only the
+/// `sokkel_egui_maps::install(cc.wgpu_render_state.as_ref())`. Without it a map draws only the
 /// street map's names.
 pub use walkers::install_renderer as install;
 
@@ -443,7 +443,7 @@ impl MapView {
             _ => None,
         };
         let map_t = match wants_dark {
-            Some(want) if want != t.dark => sokkel_ui_egui::scope(ui, &t.theme, Some(want), |ui| tokens(ui.ctx())),
+            Some(want) if want != t.dark => sokkel_egui::scope(ui, &t.theme, Some(want), |ui| tokens(ui.ctx())),
             _ => t.clone(),
         };
         let t_page = t;
@@ -887,7 +887,7 @@ fn street_style(t: &Tokens, dark: bool) -> Style {
     };
     let ground = t.color("card");
     let ink = t.color("foreground");
-    let tone = |share: f32| walkers::Color(walkers::json!(sokkel_ui_egui::hex(mix(ink, ground, share))));
+    let tone = |share: f32| walkers::Color(walkers::json!(sokkel_egui::hex(mix(ink, ground, share))));
     let source = |layer: &walkers::SourceLayer| layer.to_string();
     style.layers.retain(|layer| !matches!(layer, Layer::Background { .. }));
     for layer in &mut style.layers {
@@ -942,9 +942,9 @@ fn street_style(t: &Tokens, dark: bool) -> Style {
                 paint.text_color = Some(if place {
                     tone(0.8)
                 } else {
-                    walkers::Color(walkers::json!(sokkel_ui_egui::hex(t.color("muted-foreground"))))
+                    walkers::Color(walkers::json!(sokkel_egui::hex(t.color("muted-foreground"))))
                 });
-                paint.text_halo_color = Some(walkers::Color(walkers::json!(sokkel_ui_egui::hex(ground))));
+                paint.text_halo_color = Some(walkers::Color(walkers::json!(sokkel_egui::hex(ground))));
             }
             _ => {}
         }
@@ -1049,11 +1049,11 @@ fn attribution(ui: &Ui, painter: &egui::Painter, t: &Tokens, rect: Rect, credits
 #[cfg(test)]
 mod tests {
     /// Asks OpenFreeMap for its current build; it reaches the network, so it runs only when asked
-    /// (`cargo test -p sokkel-ui-egui-maps -- --ignored`).
+    /// (`cargo test -p sokkel-egui-maps -- --ignored`).
     #[test]
     #[ignore]
     fn the_current_planet_is_named() {
-        let template = super::current_planet("sokkel-ui-egui-test").expect("an answer");
+        let template = super::current_planet("sokkel-egui-test").expect("an answer");
         assert!(template.starts_with("https://tiles.openfreemap.org/planet/"));
         assert!(template.ends_with("/{z}/{x}/{y}.pbf"));
     }

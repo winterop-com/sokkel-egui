@@ -2,7 +2,7 @@
 //! options, and naming a new dashboard or renaming one.
 
 use eframe::egui::{self, Ui};
-use sokkel_ui_egui::{Button, ButtonVariant, Dialog, Gap, Segmented, Select, Stack, SwitchField, TextField, field};
+use sokkel_egui::{Button, ButtonVariant, Dialog, Gap, Segmented, Select, Stack, SwitchField, TextField, field};
 
 use crate::model::{Group, Metric, SERVICES, Style, Widget, WidgetKind, presets};
 use crate::widgets::{kind_info, title_of};

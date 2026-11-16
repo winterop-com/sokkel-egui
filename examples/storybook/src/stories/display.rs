@@ -1,5 +1,5 @@
 use eframe::egui::{Ui, vec2};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     Alert, Badge, BadgeVariant, Button, ButtonSize, ButtonVariant, Card, Chip, ChipTone, Icon, Separator, Skeleton,
     TextRole, tokens,
 };

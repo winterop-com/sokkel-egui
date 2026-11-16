@@ -7,7 +7,7 @@ pub mod model;
 pub mod widgets;
 
 use eframe::egui::{self, Ui};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     AccountAction, AccountMenu, Appearance, AppearanceCommandWords, Button, ButtonSize, ButtonVariant, Cell, Column,
     CommandGroup, CommandPalette, ConfirmAnswer, ConfirmDialog, DashboardArrange, DashboardEdit, DashboardEditActions,
     DashboardWidget, DataTable, DesktopWindow, DropdownMenu, Empty, Gap, Icon, IconButton, MenuItem, Page, PageHeader,
@@ -71,7 +71,7 @@ impl DashboardApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let mut app = Self::on(Appearance::default());
         // the street map only in the running app: tests draw the map without the network
-        sokkel_ui_egui_maps::install(cc.wgpu_render_state.as_ref());
+        sokkel_egui_maps::install(cc.wgpu_render_state.as_ref());
         app.widgets.tiles = Some(cc.egui_ctx.clone());
         app.desktop = true;
         app
@@ -408,7 +408,7 @@ impl DashboardApp {
         own.push(MenuItem::action(label).icon(icon).id("live"));
         let mut groups = vec![CommandGroup::new("Dashboards", own)];
         groups.extend(place_commands(rail, "Go to"));
-        let themes: Vec<_> = sokkel_ui_egui::themes().collect();
+        let themes: Vec<_> = sokkel_egui::themes().collect();
         groups.extend(appearance_commands(
             &self.appearance,
             &themes,
@@ -630,7 +630,7 @@ impl DashboardApp {
                 MenuItem::action("Delete").icon(Icon::Trash2).destructive(),
             ]
         };
-        ui.add_space(sokkel_ui_egui::tokens(ui.ctx()).density("page-gap"));
+        ui.add_space(sokkel_egui::tokens(ui.ctx()).density("page-gap"));
         let output = DataTable::new("dashboards", &columns, &rows, &mut self.list)
             .variant(TableVariant::List)
             .keys(boards.iter().map(|b| b.id.clone()))

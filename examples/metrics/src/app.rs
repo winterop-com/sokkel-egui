@@ -3,12 +3,12 @@
 //! panels in a grid, each read from the simulated source up to the newest second.
 
 use eframe::egui::{self, Ui};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     AccountAction, AccountMenu, Appearance, Cell, Column, DashboardGrid, DashboardPanel, DataTable, DesktopWindow,
     Icon, LogLevel, LogLine, LogView, Page, PageHeader, Rail, RailEntry, RailGroup, Shell, ShellPart, StatPanel,
     StatusLine, StatusTone, TableState, TopBar, format_value, install,
 };
-use sokkel_ui_egui_charts::{BarPanel, Fill as ChartFill, GaugePanel, Series, TimeSeriesPanel};
+use sokkel_egui_charts::{BarPanel, Fill as ChartFill, GaugePanel, Series, TimeSeriesPanel};
 
 use crate::model::{Dashboard, Fill, Panel, seed_dashboards};
 use crate::panel_data::{Shape, panel_data};
@@ -210,7 +210,7 @@ fn draw_panel(ui: &mut Ui, panel: &Panel, variables: &Variables, range: &Range, 
                 bars.show(ui);
                 return;
             }
-            let t = sokkel_ui_egui::tokens(ui.ctx());
+            let t = sokkel_egui::tokens(ui.ctx());
             let mut chart = TimeSeriesPanel::new(&panel.title, x)
                 .unit(data.unit.clone())
                 .decimals(data.decimals)

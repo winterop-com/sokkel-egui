@@ -2,7 +2,7 @@
 //! it shows, and how to draw it.
 
 use eframe::egui::{Stroke, Ui};
-use sokkel_ui_egui::{TextRole, tokens};
+use sokkel_egui::{TextRole, tokens};
 
 mod charts;
 mod display;
@@ -38,28 +38,28 @@ pub struct State {
     pub icon_size: f32,
     pub tab: usize,
     pub period: usize,
-    pub map: sokkel_ui_egui_maps::MapView,
+    pub map: sokkel_egui_maps::MapView,
     pub place: String,
-    pub runs: sokkel_ui_egui::TableState,
-    pub jobs: sokkel_ui_egui::TableState,
+    pub runs: sokkel_egui::TableState,
+    pub jobs: sokkel_egui::TableState,
     pub dialog_open: bool,
     pub service: usize,
     pub settings_open: bool,
     pub settings_section: String,
-    pub settings_appearance: sokkel_ui_egui::Appearance,
+    pub settings_appearance: sokkel_egui::Appearance,
     pub last_command: String,
     pub palette_open: bool,
     pub palette_query: String,
     pub palette_highlight: usize,
     pub choice: String,
-    pub starts: Option<sokkel_ui_egui::Moment>,
+    pub starts: Option<sokkel_egui::Moment>,
     pub region: String,
     pub update: String,
     pub tree_open: std::collections::HashSet<String>,
     pub tree_chosen: Option<String>,
     pub tree_query: String,
-    pub arranged: Vec<sokkel_ui_egui::DashboardLayoutItem>,
-    pub arrange_edit: sokkel_ui_egui::DashboardEdit,
+    pub arranged: Vec<sokkel_egui::DashboardLayoutItem>,
+    pub arrange_edit: sokkel_egui::DashboardEdit,
 }
 
 impl Default for State {
@@ -75,16 +75,16 @@ impl Default for State {
             icon_size: 20.0,
             tab: 0,
             period: 1,
-            map: sokkel_ui_egui_maps::MapView::new(60.4, 11.5, 5.0),
+            map: sokkel_egui_maps::MapView::new(60.4, 11.5, 5.0),
             place: "runs".into(),
-            runs: sokkel_ui_egui::TableState::sorted(5, false),
-            jobs: sokkel_ui_egui::TableState::default(),
+            runs: sokkel_egui::TableState::sorted(5, false),
+            jobs: sokkel_egui::TableState::default(),
             dialog_open: true,
             service: 1,
             settings_open: true,
             settings_section: "appearance".into(),
-            settings_appearance: sokkel_ui_egui::Appearance {
-                scheme: sokkel_ui_egui::Scheme::Light,
+            settings_appearance: sokkel_egui::Appearance {
+                scheme: sokkel_egui::Scheme::Light,
                 ..Default::default()
             },
             last_command: String::new(),
@@ -92,8 +92,8 @@ impl Default for State {
             palette_query: "run".into(),
             palette_highlight: 0,
             choice: "some".into(),
-            starts: Some(sokkel_ui_egui::Moment::new(
-                sokkel_ui_egui::Day::parse("2026-11-17").expect("a day"),
+            starts: Some(sokkel_egui::Moment::new(
+                sokkel_egui::Day::parse("2026-11-17").expect("a day"),
                 2,
                 0,
             )),
@@ -105,7 +105,7 @@ impl Default for State {
             tree_chosen: Some("harbor/nightly-export/orders.csv".into()),
             tree_query: String::new(),
             arranged: parts::arranged_default(),
-            arrange_edit: sokkel_ui_egui::DashboardEdit::default(),
+            arrange_edit: sokkel_egui::DashboardEdit::default(),
         }
     }
 }

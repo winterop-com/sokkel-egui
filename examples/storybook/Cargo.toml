@@ -1,15 +1,15 @@
 [package]
 name = "storybook"
-description = "sokkel-ui-egui's stories: the foundations and every part, in every theme, on Tidevann's data."
+description = "sokkel-egui's stories: the foundations and every part, in every theme, on Tidevann's data."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
 
 [dependencies]
-sokkel-ui-egui.workspace = true
-sokkel-ui-egui-charts.workspace = true
-sokkel-ui-egui-maps.workspace = true
+sokkel-egui.workspace = true
+sokkel-egui-charts.workspace = true
+sokkel-egui-maps.workspace = true
 eframe.workspace = true
 serde.workspace = true
 

@@ -3,7 +3,7 @@
 
 use eframe::egui;
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::Appearance;
+use sokkel_egui::Appearance;
 use status::StatusApp;
 
 fn render(height: f32) -> Harness<'static, StatusApp> {

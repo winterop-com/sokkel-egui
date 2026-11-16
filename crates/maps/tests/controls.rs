@@ -3,8 +3,8 @@
 
 use egui::Key;
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::install;
-use sokkel_ui_egui_maps::{MapLegend, MapView, Marker};
+use sokkel_egui::install;
+use sokkel_egui_maps::{MapLegend, MapView, Marker};
 
 fn harness() -> Harness<'static, MapView> {
     let mut harness = Harness::builder().with_size([800.0, 600.0]).build_ui_state(
@@ -54,14 +54,14 @@ fn the_basemap_switcher_offers_each_basemap_and_draws_the_one_chosen() {
     harness.snapshot("basemap_switcher");
     harness.get_by_label("Satellite").click();
     harness.run_steps(3);
-    assert_eq!(harness.state().basemap, Some(sokkel_ui_egui_maps::Basemap::Satellite));
+    assert_eq!(harness.state().basemap, Some(sokkel_egui_maps::Basemap::Satellite));
     assert!(harness.query_by_label("Blank").is_none(), "the menu closes on a choice");
 }
 
 #[test]
 fn the_dark_basemap_is_dark_in_the_light_scheme() {
     let mut harness = harness();
-    harness.state_mut().basemap = Some(sokkel_ui_egui_maps::Basemap::Dark);
+    harness.state_mut().basemap = Some(sokkel_egui_maps::Basemap::Dark);
     harness.run_steps(3);
     harness.snapshot("basemap_dark_in_light");
 }

@@ -40,7 +40,7 @@ struct Places {
 }
 
 fn board_id() -> Id {
-    Id::new("sokkel-ui-egui/board")
+    Id::new("sokkel-egui/board")
 }
 
 /// A board: its columns side by side, drawn by `columns`, and the drag of a card between them.
@@ -234,7 +234,7 @@ impl BoardColumn {
         } else {
             child.push_id(&self.id, |ui| {
                 ui.ctx()
-                    .data_mut(|d| d.insert_temp(Id::new("sokkel-ui-egui/board-column"), self.id.clone()));
+                    .data_mut(|d| d.insert_temp(Id::new("sokkel-egui/board-column"), self.id.clone()));
                 cards(ui);
             });
         }
@@ -378,7 +378,7 @@ impl BoardCard {
         let t = tokens(ui.ctx());
         let width = ui.available_width();
         let board = ui.ctx().data(|d| d.get_temp::<Id>(board_id()));
-        let column: Option<String> = ui.ctx().data(|d| d.get_temp(Id::new("sokkel-ui-egui/board-column")));
+        let column: Option<String> = ui.ctx().data(|d| d.get_temp(Id::new("sokkel-egui/board-column")));
         let held_id = board.map(|b| b.with("held"));
         let in_hand = held_id
             .and_then(|id| ui.ctx().data(|d| d.get_temp::<Held>(id)))

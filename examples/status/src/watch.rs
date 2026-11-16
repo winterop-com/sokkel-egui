@@ -3,7 +3,7 @@
 //! moving those incidents along, and a notice for each change of state the settings ask to hear.
 
 use eframe::egui::Context;
-use sokkel_ui_egui::{Toast, ToastKind, toast_acted};
+use sokkel_egui::{Toast, ToastKind, toast_acted};
 
 use crate::data::{self, PEOPLE, SERVICES, SITES, Severity, State};
 use crate::live::{Health, ScenarioKind};

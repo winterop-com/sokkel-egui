@@ -4,7 +4,7 @@
 use dashboard::{ALL, Asking, DashboardApp, model::Metric};
 use eframe::egui;
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::{Appearance, toasts};
+use sokkel_egui::{Appearance, toasts};
 
 fn render(setup: impl FnOnce(&mut DashboardApp)) -> Harness<'static, DashboardApp> {
     let mut app = DashboardApp::on(Appearance::default());

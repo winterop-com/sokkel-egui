@@ -2,7 +2,7 @@
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
-        viewport: sokkel_ui_egui::desktop_viewport(
+        viewport: sokkel_egui::desktop_viewport(
             eframe::egui::ViewportBuilder::default().with_inner_size([1440.0, 900.0]),
         ),
         ..Default::default()

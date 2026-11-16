@@ -1,6 +1,6 @@
 # Planner: Tidevann's jobs on a week calendar
 
-An app of sokkel-ui-egui's own (`examples/planner`, `make planner`), not a port: when Tidevann's
+An app of sokkel-egui's own (`examples/planner`, `make planner`), not a port: when Tidevann's
 jobs run, drawn with the library's public parts alone. A part it lacks goes into the library,
 never into the app.
 

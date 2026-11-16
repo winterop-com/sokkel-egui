@@ -1,6 +1,6 @@
 use eframe::egui::{self, Ui, vec2};
-use sokkel_ui_egui::{Card, TextRole, tokens};
-use sokkel_ui_egui_charts::{BarChart, LineChart, Series, Sparkline, legend};
+use sokkel_egui::{Card, TextRole, tokens};
+use sokkel_egui_charts::{BarChart, LineChart, Series, Sparkline, legend};
 
 use super::{State, section};
 

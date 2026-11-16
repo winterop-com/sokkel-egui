@@ -1,7 +1,7 @@
 //! sokkel-design's resolved paints (D10): every paint egui reads is there in every theme and
 //! scheme, so no part falls back to a choice of its own.
 
-use sokkel_ui_egui::{Appearance, ButtonVariant, PAINTS_READ, Scheme, Tokens, themes};
+use sokkel_egui::{Appearance, ButtonVariant, PAINTS_READ, Scheme, Tokens, themes};
 
 /// Every paint key egui's parts read.
 fn read_by_egui() -> Vec<String> {

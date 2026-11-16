@@ -3,7 +3,7 @@
 //! happened, and now and then a site slows down and comes back. The last ninety days of uptime
 //! come from a fixed seed, so it reads the same every time.
 
-use sokkel_ui_egui::{Day, LogLevel, LogLine, UptimeDay};
+use sokkel_egui::{Day, LogLevel, LogLine, UptimeDay};
 
 use crate::model::{JOBS, Metric, PEOPLE, PROJECTS, SERVICES, STEPS};
 

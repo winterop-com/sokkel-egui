@@ -1,4 +1,4 @@
-//! A storage browser for Tidevann's buckets, an app of sokkel-ui-egui's own: the buckets' folders
+//! A storage browser for Tidevann's buckets, an app of sokkel-egui's own: the buckets' folders
 //! as a tree, a folder's files listed beside it, a file's contents previewed. It uses the library's
 //! public parts only.
 
@@ -7,7 +7,7 @@ pub mod files;
 use std::collections::HashSet;
 
 use eframe::egui::{self, Ui};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     AccountAction, AccountMenu, Appearance, Cell, Column, DataTable, DescriptionList, DesktopWindow, Empty, FileKind,
     FilePreview, Gap, Icon, Page, PageHeader, Rail, RailEntry, RailGroup, SearchField, Section, Shell, ShellPart,
     SplitPane, Stack, StatusLine, StatusTone, TableState, TableVariant, TopBar, Tree, TreeNode, format_size, install,

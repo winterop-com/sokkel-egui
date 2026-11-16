@@ -1,5 +1,5 @@
 use eframe::egui::Ui;
-use sokkel_ui_egui::{Cell, ChipTone, Column, DataTable, TableState, TableVariant};
+use sokkel_egui::{Cell, ChipTone, Column, DataTable, TableState, TableVariant};
 
 use super::{State, section};
 

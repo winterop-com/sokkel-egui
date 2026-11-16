@@ -1,7 +1,7 @@
 //! A dashboard and its panels, as the web's `model.ts`, and the demo's three dashboards, as its
 //! `data.ts` seeds them.
 
-use sokkel_ui_egui::{PanelSpan, Threshold};
+use sokkel_egui::{PanelSpan, Threshold};
 
 use crate::query::Reduce;
 use crate::source::{Aggregation, Label, MetricId};

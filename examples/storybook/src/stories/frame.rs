@@ -1,5 +1,5 @@
 use eframe::egui::{Sense, Ui, vec2};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     Button, ButtonSize, ButtonVariant, Chip, ChipTone, Icon, Rail, RailEntry, RailGroup, Shell, ShellPart, StatusLine,
     StatusTone, TextRole, TopBar, tokens,
 };
@@ -40,7 +40,7 @@ fn frame(state: &mut State, ui: &mut Ui, size: eframe::egui::Vec2, collapsed: bo
                 ui.add(Rail::new("Tidevann", &groups, &mut state.place).collapsed(collapsed));
             }
             ShellPart::RailFoot => {
-                sokkel_ui_egui::AccountMenu::new("ada")
+                sokkel_egui::AccountMenu::new("ada")
                     .place("tidevann.example.org")
                     .show(ui);
             }

@@ -1,8 +1,8 @@
 //! The canvas: a press on a node says which, and the zoom buttons zoom and fit again.
 
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::install;
-use sokkel_ui_egui_graph::{GraphCanvas, GraphLink, GraphNode};
+use sokkel_egui::install;
+use sokkel_egui_graph::{GraphCanvas, GraphLink, GraphNode};
 
 struct State {
     pressed: Option<String>,

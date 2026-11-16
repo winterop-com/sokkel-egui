@@ -4,7 +4,7 @@
 use eframe::egui;
 use egui_kittest::kittest::Queryable;
 use egui_kittest::{Harness, SnapshotResults};
-use sokkel_ui_egui::{Appearance, Day, Scheme};
+use sokkel_egui::{Appearance, Day, Scheme};
 use tasks::{TasksApp, View};
 
 fn render(scheme: Scheme, setup: impl FnOnce(&mut TasksApp)) -> Harness<'static, TasksApp> {

@@ -1,7 +1,7 @@
 //! One node as a box, after sokkel-ui-graph's `GraphNodeBox`.
 
 use egui::{Color32, CornerRadius, Painter, Rect, Stroke, StrokeKind, Vec2, pos2, vec2};
-use sokkel_ui_egui::{Icon, TextRole, Tokens, mono_font};
+use sokkel_egui::{Icon, TextRole, Tokens, mono_font};
 
 /// The narrowest and widest a node box is drawn; past the widest its words are cut short.
 pub const NODE_MIN_WIDTH: f32 = 96.0;
@@ -193,7 +193,7 @@ impl GraphNode {
         let mut x = inner.left();
         let muted = t.color("muted-foreground");
         if let Some(icon) = self.icon {
-            sokkel_ui_egui::icons::paint(
+            sokkel_egui::icons::paint(
                 &painter,
                 pos2(x + GLYPH * zoom / 2.0, title_mid),
                 icon,

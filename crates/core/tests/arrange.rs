@@ -4,7 +4,7 @@
 
 use egui::{Event, Key, PointerButton, Pos2};
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     DashboardArrange, DashboardEdit, DashboardEditActions, DashboardLayoutItem, DashboardPanel, DashboardWidget,
     PanelSpan, arranged_index, install,
 };

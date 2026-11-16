@@ -4,7 +4,7 @@
 
 use eframe::egui;
 use egui_kittest::{Harness, SnapshotResults};
-use sokkel_ui_egui::Appearance;
+use sokkel_egui::Appearance;
 use status::StatusApp;
 
 fn render(route: &str, height: f32) -> Harness<'static, StatusApp> {

@@ -77,7 +77,7 @@ Later: a named spacing scale (the specs keep exact part spacings meanwhile) and 
 
 ## In egui
 
-What this repository changes for them, in the parts sokkel-ui-egui draws: F0 (the table's head by
+What this repository changes for them, in the parts sokkel-egui draws: F0 (the table's head by
 keys), F1 and F2 (the frame's focus and the menu button), F9 (the count), F11 (row heights), F12,
 F14 and F15 (the tooltip), F16 and F19 (popups and dialogs, from a resolved `elevation-pop`), F17
 (sheets below 768), F20, F21, F22 and F24 (the lists of choices). F3 to F8, F10, F13 and F18 need

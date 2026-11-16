@@ -69,7 +69,7 @@ and never chase a difference made of numbers.
   (`SERIES_ORDER`, from `chart-2`), a line's points sit on the axis' ends, and the value axis
   steps as ECharts picks (1, 2, 3 or 5 times a power of ten, about five apart).
 - Beside the Uptime panel stands Dependencies, the web's `ServiceGraph` on the graph add-on
-  (`sokkel-ui-egui-graph`): every service and what it calls on, a store round with a cylinder, a
+  (`sokkel-egui-graph`): every service and what it calls on, a store round with a cylinder, a
   service a box with a server, each with its state's dot, the service shown marked, and a press
   on another opening it; under it the footer says what it calls on and what calls on it. The
   layout is egui's own in elk's place, and draws the web's ranks and order: web, then the

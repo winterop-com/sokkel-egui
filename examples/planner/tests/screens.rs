@@ -4,7 +4,7 @@
 use eframe::egui;
 use egui_kittest::{Harness, kittest::Queryable};
 use planner::{PlannerApp, RunState};
-use sokkel_ui_egui::{Appearance, Scheme};
+use sokkel_egui::{Appearance, Scheme};
 
 fn render(scheme: Scheme, setup: impl FnOnce(&mut PlannerApp)) -> Harness<'static, PlannerApp> {
     let mut app = PlannerApp::on(Appearance {

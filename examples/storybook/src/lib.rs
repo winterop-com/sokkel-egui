@@ -1,15 +1,15 @@
-//! sokkel-ui-egui's storybook: every story in a sidebar grouped as sokkel-ui's Storybook groups
+//! sokkel-egui's storybook: every story in a sidebar grouped as sokkel-ui's Storybook groups
 //! them, a toolbar for the theme, the scheme and the density, and the chosen story on a canvas.
 
 use eframe::egui::{self, Align, ComboBox, Frame, Layout, Margin, Sense, Stroke, Ui, vec2};
-use sokkel_ui_egui::{Appearance, Scheme, TextRole, densities, install, themes, tokens};
+use sokkel_egui::{Appearance, Scheme, TextRole, densities, install, themes, tokens};
 
 pub mod stories;
 
 use stories::{STORIES, State, Story};
 
-const APPEARANCE_KEY: &str = "sokkel-ui-egui/appearance";
-const STORY_KEY: &str = "sokkel-ui-egui/story";
+const APPEARANCE_KEY: &str = "sokkel-egui/appearance";
+const STORY_KEY: &str = "sokkel-egui/story";
 
 pub struct Storybook {
     pub appearance: Appearance,
@@ -29,11 +29,11 @@ impl Storybook {
             .unwrap_or_default();
         let mut book = Self::with(appearance);
         // tiles only in the running app: tests draw the map without the network
-        sokkel_ui_egui_maps::install(cc.wgpu_render_state.as_ref());
-        book.state.map = sokkel_ui_egui_maps::MapView::new(60.4, 11.5, 5.0).with_tiles(
+        sokkel_egui_maps::install(cc.wgpu_render_state.as_ref());
+        book.state.map = sokkel_egui_maps::MapView::new(60.4, 11.5, 5.0).with_tiles(
             &cc.egui_ctx,
-            "sokkel-ui-egui-storybook/0.1 (a component library's example maps)",
-            std::env::temp_dir().join("sokkel-ui-egui-tiles").into(),
+            "sokkel-egui-storybook/0.1 (a component library's example maps)",
+            std::env::temp_dir().join("sokkel-egui-tiles").into(),
         );
         if let Some(path) = storage.and_then(|s| eframe::get_value::<String>(s, STORY_KEY)) {
             book.select(&path);
@@ -93,17 +93,17 @@ impl Storybook {
             )
             .show(ui, |ui| self.toolbar(ui));
         // the storybook's own palette on Mod+K: every story, by its path
-        if sokkel_ui_egui::palette_shortcut(ui.ctx()) {
+        if sokkel_egui::palette_shortcut(ui.ctx()) {
             self.palette = Some((String::new(), 0));
         }
         if let Some((mut query, mut highlight)) = self.palette.take() {
-            let groups = [sokkel_ui_egui::CommandGroup::new(
+            let groups = [sokkel_egui::CommandGroup::new(
                 "Stories",
                 STORIES
                     .iter()
-                    .map(|story| sokkel_ui_egui::MenuItem::action(story.path.replace('/', "  /  "))),
+                    .map(|story| sokkel_egui::MenuItem::action(story.path.replace('/', "  /  "))),
             )];
-            let outcome = sokkel_ui_egui::CommandPalette::new("storybook-palette", &groups, &mut query, &mut highlight)
+            let outcome = sokkel_egui::CommandPalette::new("storybook-palette", &groups, &mut query, &mut highlight)
                 .show(ui.ctx());
             if let Some((_, index)) = outcome.run {
                 self.story = index;
@@ -115,7 +115,7 @@ impl Storybook {
         // the storybook's own settings, on its real appearance
         if let Some(mut active) = self.settings.take() {
             let sections = stories::settings::sections();
-            let outcome = sokkel_ui_egui::SettingsDialog::new("storybook-settings", &sections, &mut active)
+            let outcome = sokkel_egui::SettingsDialog::new("storybook-settings", &sections, &mut active)
                 .show(ui.ctx(), |section, ui| {
                     stories::settings::rows(&mut self.state, &mut self.appearance, section, ui)
                 });
@@ -161,7 +161,7 @@ impl Storybook {
             ui.add_space(4.0);
             ui.label(
                 TextRole::SectionTitle
-                    .rich(&t, "sokkel-ui-egui")
+                    .rich(&t, "sokkel-egui")
                     .color(t.color("sidebar-foreground")),
             );
         });
@@ -207,10 +207,10 @@ impl Storybook {
             );
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 let gear = ui.add(
-                    sokkel_ui_egui::Button::new("Settings")
-                        .icon(sokkel_ui_egui::Icon::Settings)
-                        .variant(sokkel_ui_egui::ButtonVariant::Ghost)
-                        .size(sokkel_ui_egui::ButtonSize::Sm),
+                    sokkel_egui::Button::new("Settings")
+                        .icon(sokkel_egui::Icon::Settings)
+                        .variant(sokkel_egui::ButtonVariant::Ghost)
+                        .size(sokkel_egui::ButtonSize::Sm),
                 );
                 if gear.clicked() {
                     self.settings = Some("appearance".into());

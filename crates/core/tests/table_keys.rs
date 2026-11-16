@@ -3,7 +3,7 @@
 
 use egui::Key;
 use egui_kittest::Harness;
-use sokkel_ui_egui::{Appearance, Cell, Column, DataTable, Editor, TableState, install};
+use sokkel_egui::{Appearance, Cell, Column, DataTable, Editor, TableState, install};
 
 struct Table {
     columns: Vec<Column>,

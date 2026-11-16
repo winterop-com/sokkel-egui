@@ -1,7 +1,7 @@
 //! Each service's last days, after sokkel-ui's status example (`history.ts`): the uptime the
 //! incidents give each day, weighed by their severity.
 
-use sokkel_ui_egui::{Day, UptimeDay};
+use sokkel_egui::{Day, UptimeDay};
 
 use crate::data::{Incident, Severity};
 

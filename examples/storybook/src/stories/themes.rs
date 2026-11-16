@@ -1,5 +1,5 @@
 use eframe::egui::{self, Frame, Margin, Sense, Stroke, Ui, vec2};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     Button, ButtonSize, ButtonVariant, Chip, ChipTone, Switch, TextField, TextRole, scope, themes, tokens,
 };
 

@@ -6,14 +6,14 @@
 use std::collections::HashMap;
 
 use eframe::egui::{self, Ui};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     ActivityItem, ActivityList, ActivityTone, BarList, BarListItem, Button, ButtonSize, ButtonVariant, Cell, Checkbox,
     ChipTone, Column, DashboardPanel, DataTable, Empty, Gap, Icon, ListRow, ListRows, LogView, Markdown, QuickAdd,
     RowAside, RowMark, Stack, StackLayout, StackPlace, StatPanel, TableState, TableVariant, TextRole, Threshold,
     UptimeBar, tokens,
 };
-use sokkel_ui_egui_charts::{BarPanel, Fill, GaugePanel, Series, TimeSeriesPanel};
-use sokkel_ui_egui_maps::{MapLegend, MapPopup, MapPopupRow, MapView, Marker};
+use sokkel_egui_charts::{BarPanel, Fill, GaugePanel, Series, TimeSeriesPanel};
+use sokkel_egui_maps::{MapLegend, MapPopup, MapPopupRow, MapView, Marker};
 
 use crate::live::{Health, Live, RunState, Tone, clock_of, on_call, upcoming};
 use crate::model::{Group, JOBS, Metric, PEOPLE, PROJECTS, SERVICES, Style, Todo, Widget, WidgetKind};
@@ -378,7 +378,7 @@ pub fn draw(
                     Some(ctx) => map.with_tiles(
                         ctx,
                         "tidevann-dashboard/0.1 (an example app of a component library)",
-                        std::env::temp_dir().join("sokkel-ui-egui-tiles").into(),
+                        std::env::temp_dir().join("sokkel-egui-tiles").into(),
                     ),
                     None => map,
                 }

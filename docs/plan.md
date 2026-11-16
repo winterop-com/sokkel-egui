@@ -1,6 +1,6 @@
 # Plan
 
-sokkel-ui-egui draws sokkel-ui's design system with egui: the same tokens and themes, and
+sokkel-egui draws sokkel-ui's design system with egui: the same tokens and themes, and
 primitives built after sokkel-ui's components. This is the first, deliberately small step: does egui
 wear the design faithfully when both read one source?
 
@@ -77,12 +77,12 @@ with the component screenshots.
 
 | Path | What it holds |
 |---|---|
-| `crates/core` (`sokkel-ui-egui`) | `Appearance` (theme, scheme, density), `install(ctx, &appearance)`, `tokens(ctx)`, `TextRole`, and `Button` (6 variants, 4 sizes, busy, a disabling reason), `Chip` (tones, selected), `TextField` (label, help, error), `Switch`. |
-| `crates/charts` (`sokkel-ui-egui-charts`) | The first add-on, on the core by name: `LineChart` (series, an area, a shaded band), `BarChart` (side by side or stacked), `Sparkline` and `legend`, drawn with the painter in the `chart-*` tokens, with a guide and a tooltip under the pointer. |
-| `crates/maps` (`sokkel-ui-egui-maps`) | The second add-on: `MapView` on walkers 0.60 with OpenFreeMap's vector street map, as sokkel-ui's default basemap (an identifying user agent and a tile cache), styled from the tokens in use so it follows the theme and the scheme: the ground in `card`, water, roads and borders in the foreground at small shares, names in the web's ink and in their Latin form. Its land, water and roads are drawn on the GPU, so the apps render with wgpu and call `sokkel_ui_egui_maps::install` at startup. `Marker` and `Route` in the chart colors, the web's control stack (zoom, Fit to the data, Full screen, the basemap switcher: Light, Dark, Satellite, Blank), the hosts' credits; without tiles it draws the ground and a graticule, which the snapshots show. |
+| `crates/core` (`sokkel-egui`) | `Appearance` (theme, scheme, density), `install(ctx, &appearance)`, `tokens(ctx)`, `TextRole`, and `Button` (6 variants, 4 sizes, busy, a disabling reason), `Chip` (tones, selected), `TextField` (label, help, error), `Switch`. |
+| `crates/charts` (`sokkel-egui-charts`) | The first add-on, on the core by name: `LineChart` (series, an area, a shaded band), `BarChart` (side by side or stacked), `Sparkline` and `legend`, drawn with the painter in the `chart-*` tokens, with a guide and a tooltip under the pointer. |
+| `crates/maps` (`sokkel-egui-maps`) | The second add-on: `MapView` on walkers 0.60 with OpenFreeMap's vector street map, as sokkel-ui's default basemap (an identifying user agent and a tile cache), styled from the tokens in use so it follows the theme and the scheme: the ground in `card`, water, roads and borders in the foreground at small shares, names in the web's ink and in their Latin form. Its land, water and roads are drawn on the GPU, so the apps render with wgpu and call `sokkel_egui_maps::install` at startup. `Marker` and `Route` in the chart colors, the web's control stack (zoom, Fit to the data, Full screen, the basemap switcher: Light, Dark, Satellite, Blank), the hosts' credits; without tiles it draws the ground and a graticule, which the snapshots show. |
 | `examples/tasks` | sokkel-ui's tasks example, one to one: the parity target. `make parity` keeps it honest against the web example (`docs/parity/tasks.md`). |
 | `examples/runs` | A working app on the frame, the egui counterpart of sokkel-ui's runs example: Overview (stat cards with sparklines, a line chart), Runs (the table with selection, a run opened in a card beside it), Schedules and Jobs (lists), Settings over the page on Mod+comma or the rail, the palette on Mod+K, the status line. Every part is the library's; the app holds its simulated data and where it is. `make runs` runs it; `tests/pages.rs` snapshots every page. |
-| `crates/graph` (`sokkel-ui-egui-graph`) | The third add-on: `GraphCanvas` in its `fitted` frame (as tall as its drawing fitted to its width, the zoom buttons in a row at its foot, a node pressed to choose it), `GraphNode` as `GraphNodeBox` (the code in Plex Mono SemiBold, the kind, a glyph, a state's dot, `round` for a second kind), and a layered layout of its own in elk's place: ranks by the longest path with edges against the order turned to break cycles, crossings cut by barycenter sweeps, nodes placed by weighted medians as network simplex weighs long edges, and edges routed in right-angled steps with rounded corners through lanes in the gaps between ranks. |
+| `crates/graph` (`sokkel-egui-graph`) | The third add-on: `GraphCanvas` in its `fitted` frame (as tall as its drawing fitted to its width, the zoom buttons in a row at its foot, a node pressed to choose it), `GraphNode` as `GraphNodeBox` (the code in Plex Mono SemiBold, the kind, a glyph, a state's dot, `round` for a second kind), and a layered layout of its own in elk's place: ranks by the longest path with edges against the order turned to break cycles, crossings cut by barycenter sweeps, nodes placed by weighted medians as network simplex weighs long edges, and edges routed in right-angled steps with rounded corners through lanes in the gaps between ranks. |
 | `examples/storybook` | The storybook: a sidebar of stories grouped as sokkel-ui's are, a toolbar for theme, scheme and density, and the story's canvas. Foundations (Colors, Typography, Corners, Density, Icons, Code colors), Themes (All themes, Sample), Actions/Button, Display (Alert, Badge, Card, Separator, Skeleton), Inputs (Checkbox, Field, Input, Select, Switch), Overlays (Dialog, Tooltip), Menus/Dropdown menu, Navigation/Tabs, Patterns (Chip, Command palette, Data table, Page header, Page state, Segmented, Settings dialog, Shell), Charts (Line, Bars, Sparkline), Maps/Map. |
 | `examples/storybook/tests/snapshots/` | Every story in tidevann light, the foundations in tidevann dark, the sample in steel; and a test that draws every color of every theme in both schemes. |
 
@@ -143,9 +143,9 @@ matches with no scroll area: a scroll area there sized itself from an earlier fr
    Callout.
 2. The frame: Shell, Rail, TopBar and StatusLine are in, and `examples/runs` is an app on them (`Shell::show` asks one closure for each part, so an app's state is borrowed once); PageHeader and PageState (loading, refused, missing, not answering, a part refused, empty, with the words as fields) followed; next are the rail's resize and collapse by drag, and a port of the `tasks` example's screens.
 - The add-on crates after the core, one engine each as in sokkel-ui:
-  - `sokkel-ui-egui-maps`: started (markers, routes, zoom, tiles); next are areas (GeoJSON
+  - `sokkel-egui-maps`: started (markers, routes, zoom, tiles); next are areas (GeoJSON
     polygons) and a legend.
-  - `sokkel-ui-egui-charts`: started (line, bars, sparkline); next are a donut, a heatmap and
+  - `sokkel-egui-charts`: started (line, bars, sparkline); next are a donut, a heatmap and
     the dashboard's chart panels. sokkel-ui's charts take rows and fields (`x`, `y`, `series`);
     these take categories and series for now.
   A prior egui dashboard on egui 0.36 already has both (see the session memory for where).

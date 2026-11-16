@@ -3,7 +3,7 @@
 
 use egui::Key;
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::{Appearance, PageHeader, install};
+use sokkel_egui::{Appearance, PageHeader, install};
 
 struct Page {
     title: String,

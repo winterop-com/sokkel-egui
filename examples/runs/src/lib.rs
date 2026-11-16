@@ -1,15 +1,15 @@
-//! Tidevann's runs, on sokkel-ui-egui's frame: the rail of places, the top bar with the trail, a
+//! Tidevann's runs, on sokkel-egui's frame: the rail of places, the top bar with the trail, a
 //! page per place, the status line, the settings over the page on Mod+comma and the palette on
 //! Mod+K. Every part is the library's; the app holds only its data and where it is.
 
 use eframe::egui::{self, Key, KeyboardShortcut, Modifiers, Ui, vec2};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     Appearance, Button, ButtonSize, ButtonVariant, Card, Chip, Column, CommandGroup, CommandPalette, DataTable,
     DesktopWindow, Icon, MenuItem, PageHeader, Rail, RailEntry, RailGroup, SettingsDialog, SettingsSection, Shell,
     ShellPart, StatusLine, StatusTone, TableState, TableVariant, TextRole, ThemeWords, TopBar, install,
     palette_shortcut, setting_row, theme_settings, tokens,
 };
-use sokkel_ui_egui_charts::{LineChart, Series, Sparkline, legend};
+use sokkel_egui_charts::{LineChart, Series, Sparkline, legend};
 
 mod data;
 
@@ -116,7 +116,7 @@ impl RunsApp {
                 ui.add(Rail::new("Tidevann", &groups, &mut place).collapsible(&mut self.rail_collapsed));
             }
             ShellPart::RailFoot => {
-                sokkel_ui_egui::AccountMenu::new("ada")
+                sokkel_egui::AccountMenu::new("ada")
                     .place("tidevann.example.org")
                     .show(ui);
             }
@@ -324,7 +324,7 @@ impl RunsApp {
                         "Tell ada about failures",
                         "A message when a run fails, with its first problem.",
                         |ui| {
-                            ui.add(sokkel_ui_egui::Switch::new(notify, "Tell ada about failures"));
+                            ui.add(sokkel_egui::Switch::new(notify, "Tell ada about failures"));
                         },
                     );
                     setting_row(
@@ -332,7 +332,7 @@ impl RunsApp {
                         "Pause every schedule",
                         "No job starts on its own until this is off again.",
                         |ui| {
-                            ui.add(sokkel_ui_egui::Switch::new(paused, "Pause every schedule"));
+                            ui.add(sokkel_egui::Switch::new(paused, "Pause every schedule"));
                         },
                     );
                 }

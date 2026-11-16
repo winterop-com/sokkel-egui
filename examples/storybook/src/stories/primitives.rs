@@ -1,5 +1,5 @@
 use eframe::egui::Ui;
-use sokkel_ui_egui::{
+use sokkel_egui::{
     Button, ButtonSize, ButtonVariant, Chip, ChipTone, Icon, Switch, SwitchField, TextField, TextRole, tokens,
 };
 

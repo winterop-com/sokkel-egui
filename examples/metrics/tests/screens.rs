@@ -4,7 +4,7 @@
 use eframe::egui;
 use egui_kittest::{Harness, SnapshotResults};
 use metrics::MetricsApp;
-use sokkel_ui_egui::Appearance;
+use sokkel_egui::Appearance;
 
 fn render(place: &str, height: f32) -> Harness<'static, MetricsApp> {
     let mut app = MetricsApp::on(Appearance::default());

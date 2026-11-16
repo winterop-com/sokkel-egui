@@ -3,7 +3,7 @@
 //! simulated backend keeps them.
 
 use serde::{Deserialize, Serialize};
-use sokkel_ui_egui::Day;
+use sokkel_egui::Day;
 
 pub const PEOPLE: [&str; 4] = ["ada", "grace", "linus", "margaret"];
 pub const PROJECTS: [&str; 3] = ["harbor", "juniper", "larkspur"];

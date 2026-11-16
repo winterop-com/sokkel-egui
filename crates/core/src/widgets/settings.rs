@@ -64,7 +64,7 @@ struct RowsState {
 }
 
 fn rows_state_id() -> Id {
-    Id::new("sokkel-ui-egui/settings-rows")
+    Id::new("sokkel-egui/settings-rows")
 }
 
 /// The words a settings dialog says, English by default.

@@ -1,7 +1,7 @@
 //! Every story in tidevann light, the foundations in tidevann dark, and the sample in steel.
 
 use egui_kittest::{Harness, SnapshotResults};
-use sokkel_ui_egui::{Appearance, Scheme};
+use sokkel_egui::{Appearance, Scheme};
 use storybook::{Storybook, stories::STORIES};
 
 /// A story's canvas alone, so a story added to the sidebar changes no other picture.
@@ -61,7 +61,7 @@ fn every_story() {
 
 #[test]
 fn every_theme_draws_every_color() {
-    for theme in sokkel_ui_egui::themes() {
+    for theme in sokkel_egui::themes() {
         for scheme in [Scheme::Light, Scheme::Dark] {
             render(&theme.name, scheme, "Foundations/Colors");
         }

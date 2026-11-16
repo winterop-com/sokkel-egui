@@ -1,5 +1,5 @@
 use eframe::egui::{self, Color32, CornerRadius, FontFamily, FontId, RichText, Sense, Stroke, StrokeKind, Ui, vec2};
-use sokkel_ui_egui::{Appearance, TextRole, densities, density_level, hex, icons, tokens};
+use sokkel_egui::{Appearance, TextRole, densities, density_level, hex, icons, tokens};
 
 use super::icon_list::LIBRARY_ICONS;
 use super::{State, section};

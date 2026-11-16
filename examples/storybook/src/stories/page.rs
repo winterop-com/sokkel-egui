@@ -1,5 +1,5 @@
 use eframe::egui::Ui;
-use sokkel_ui_egui::{Button, ButtonVariant, Icon, PageHeader, PageState, PageStateTone};
+use sokkel_egui::{Button, ButtonVariant, Icon, PageHeader, PageState, PageStateTone};
 
 use super::{State, section};
 

@@ -4,7 +4,7 @@
 use eframe::egui;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
-use sokkel_ui_egui::Appearance;
+use sokkel_egui::Appearance;
 use status::StatusApp;
 
 fn incidents() -> Harness<'static, StatusApp> {
@@ -38,7 +38,7 @@ fn slash_reaches_the_search_and_a_word_narrows_the_rows() {
 
 #[test]
 fn an_incident_resolves_reopens_and_goes_to_the_person_on_call() {
-    let mut app = status::StatusApp::on(sokkel_ui_egui::Appearance::default());
+    let mut app = status::StatusApp::on(sokkel_egui::Appearance::default());
     app.resolve_or_reopen("incident-41");
     let inc = app.incidents.iter().find(|i| i.id == "incident-41").unwrap();
     assert_eq!(inc.state, status::data::State::Resolved);
@@ -60,7 +60,7 @@ fn an_incident_resolves_reopens_and_goes_to_the_person_on_call() {
 fn an_update_posted_moves_the_incident_on() {
     use eframe::egui;
     use egui_kittest::{Harness, kittest::Queryable};
-    let mut app = status::StatusApp::on(sokkel_ui_egui::Appearance::default());
+    let mut app = status::StatusApp::on(sokkel_egui::Appearance::default());
     app.go("incidents/incident-41");
     assert_eq!(app.post_state, 3, "the form starts on the state after monitoring");
     app.post_state = 2;

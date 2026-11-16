@@ -3,7 +3,7 @@
 
 use eframe::egui;
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::{Appearance, Day, Moment};
+use sokkel_egui::{Appearance, Day, Moment};
 use status::{
     StatusApp,
     dialogs::{DeployForm, MaintenanceForm},

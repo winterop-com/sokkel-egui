@@ -76,11 +76,11 @@ pub fn mono_font(ctx: &Context, size: f32, weight: f32) -> egui::FontId {
 const PLEX_MONO_X_HEIGHT: f32 = 0.516;
 
 fn tokens_id() -> Id {
-    Id::new("sokkel-ui-egui/tokens")
+    Id::new("sokkel-egui/tokens")
 }
 
 fn installed_id() -> Id {
-    Id::new("sokkel-ui-egui/installed")
+    Id::new("sokkel-egui/installed")
 }
 
 /// The tokens the context wears, or the default appearance's before [`install`].
@@ -110,7 +110,7 @@ pub fn scope<R>(ui: &mut egui::Ui, theme: &str, dark: Option<bool>, add: impl Fn
         .unwrap_or_else(|| Appearance::default().density);
     let key = (theme.to_owned(), dark, density.clone());
     let inner = ctx.data_mut(|d| {
-        let cache = d.get_temp_mut_or_default::<ScopeCache>(Id::new("sokkel-ui-egui/scopes"));
+        let cache = d.get_temp_mut_or_default::<ScopeCache>(Id::new("sokkel-egui/scopes"));
         cache
             .0
             .entry(key)

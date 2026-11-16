@@ -4,7 +4,7 @@
 use eframe::egui;
 use egui_kittest::{Harness, kittest::Queryable};
 use logs::{LogsApp, stream::Level};
-use sokkel_ui_egui::{Appearance, Scheme};
+use sokkel_egui::{Appearance, Scheme};
 
 fn render(scheme: Scheme, setup: impl FnOnce(&mut LogsApp)) -> Harness<'static, LogsApp> {
     let mut app = LogsApp::on(Appearance {

@@ -1,6 +1,6 @@
 //! Tidevann's workspace, simulated: jobs, their schedules and forty runs, the same every time.
 
-use sokkel_ui_egui::{Cell, ChipTone};
+use sokkel_egui::{Cell, ChipTone};
 
 pub const JOBS: [(&str, &str, &str, &str); 5] = [
     ("nightly-export", "harbor", "ada", "every day at 02:00"),

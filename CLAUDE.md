@@ -1,4 +1,4 @@
-# sokkel-ui-egui
+# sokkel-egui
 
 sokkel-ui's design system drawn with egui: the same tokens and themes, and primitives after
 sokkel-ui's components. Research stage; `docs/plan.md` says what was learned and what comes next.
@@ -6,9 +6,9 @@ sokkel-ui's components. Research stage; `docs/plan.md` says what was learned and
 ## Layout
 
 - A cargo workspace shaped like sokkel-ui's `packages/`. `crates/core` is the package
-  `sokkel-ui-egui`, the counterpart of `@winterop-com/sokkel-ui`: tokens, themes, text roles and
-  primitives. Add-ons come later as crates of their own (`sokkel-ui-egui-charts`, `-maps`, ...).
-  `crates/charts` (`sokkel-ui-egui-charts`) is the first add-on: every chart drawn with the
+  `sokkel-egui`, the counterpart of `@winterop-com/sokkel-ui`: tokens, themes, text roles and
+  primitives. Add-ons come later as crates of their own (`sokkel-egui-charts`, `-maps`, ...).
+  `crates/charts` (`sokkel-egui-charts`) is the first add-on: every chart drawn with the
   painter, one engine as in sokkel-ui.
   The same dependency lines hold as in sokkel-ui: an add-on depends on the core by name, the core
   never on an add-on, and no add-on on another. No empty placeholder crates.

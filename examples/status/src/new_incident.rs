@@ -2,7 +2,7 @@
 //! touches, who takes it and what the status page says first.
 
 use eframe::egui::{self, Ui};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     Button, ButtonVariant, Checkbox, Columns, Dialog, Gap, Segmented, Select, Stack, SwitchField, TextField, field,
     tokens,
 };
@@ -123,7 +123,7 @@ impl NewIncident {
                             );
                         });
                         let services = &mut self.services;
-                        sokkel_ui_egui::checkbox_list(ui, "Services it touches", |ui| {
+                        sokkel_egui::checkbox_list(ui, "Services it touches", |ui| {
                             Columns::new(4)
                                 .min(120.0)
                                 .gap(0.0)

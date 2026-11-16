@@ -1,9 +1,9 @@
-//! A schedule planner for Tidevann's jobs, an app of sokkel-ui-egui's own: each job's runs on a
+//! A schedule planner for Tidevann's jobs, an app of sokkel-egui's own: each job's runs on a
 //! week calendar, the runs before now with how they went and the ones ahead to skip, the jobs shown
 //! or hidden beside the week. It uses the library's public parts only.
 
 use eframe::egui::{self, Ui};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, CalendarEvent, Checkbox, Chip, ChipTone,
     Day, DescriptionList, DesktopWindow, Empty, Gap, Icon, IconButton, Moment, Page, PageHeader, Rail, RailEntry,
     RailGroup, Section, Shell, ShellPart, SplitPane, Stack, StatusLine, StatusTone, TagChips, TopBar, WeekGrid,
@@ -272,7 +272,7 @@ impl PlannerApp {
     }
 
     fn page(&mut self, ui: &mut Ui) {
-        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let t = sokkel_egui::tokens(ui.ctx());
         let sunday = self.monday.plus(6);
         let title = format!("{} to {}", self.monday.short(), sunday.medium());
         let (mut back, mut on, mut today) = (false, false, false);

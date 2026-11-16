@@ -1,13 +1,13 @@
 [package]
-name = "sokkel-ui-egui-graph"
-description = "sokkel-ui-egui's graphs: node boxes and edges laid out in ranks, on a canvas under the tokens."
+name = "sokkel-egui-graph"
+description = "sokkel-egui's graphs: node boxes and edges laid out in ranks, on a canvas under the tokens."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
 
 [dependencies]
-sokkel-ui-egui.workspace = true
+sokkel-egui.workspace = true
 egui.workspace = true
 
 [dev-dependencies]

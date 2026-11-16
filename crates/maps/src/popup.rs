@@ -1,7 +1,7 @@
 //! A card over the map pointing at the chosen marker, after sokkel-ui-maps' `MapPopup`.
 
 use egui::{Align2, Color32, Key, Rect, Sense, Shape, Stroke, StrokeKind, Ui, UiBuilder, pos2, vec2};
-use sokkel_ui_egui::{Button, ButtonSize, ButtonVariant, Icon, IconButton, TextRole, tokens};
+use sokkel_egui::{Button, ButtonSize, ButtonVariant, Icon, IconButton, TextRole, tokens};
 
 use crate::MapView;
 

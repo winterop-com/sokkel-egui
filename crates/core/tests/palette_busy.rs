@@ -2,7 +2,7 @@
 //! (0.28.1's `searching`): held, then let go after `busy-release`; Searching after `wait-shown`.
 
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::{CommandGroup, CommandPalette, MenuItem, PaletteOutcome, install};
+use sokkel_egui::{CommandGroup, CommandPalette, MenuItem, PaletteOutcome, install};
 
 struct Held {
     groups: Vec<CommandGroup>,

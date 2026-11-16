@@ -3,7 +3,7 @@
 
 use eframe::egui;
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::{Appearance, FileKind, Scheme, tree_matches, visible_rows};
+use sokkel_egui::{Appearance, FileKind, Scheme, tree_matches, visible_rows};
 use storage::StorageApp;
 
 fn render(scheme: Scheme, setup: impl FnOnce(&mut StorageApp)) -> Harness<'static, StorageApp> {

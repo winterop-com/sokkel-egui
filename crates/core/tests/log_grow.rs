@@ -4,7 +4,7 @@
 
 use egui::{Rect, vec2};
 use egui_kittest::Harness;
-use sokkel_ui_egui::{DashboardGrid, DashboardPanel, LogLine, LogView, PanelSpan, install};
+use sokkel_egui::{DashboardGrid, DashboardPanel, LogLine, LogView, PanelSpan, install};
 
 struct Seen {
     log: Rect,

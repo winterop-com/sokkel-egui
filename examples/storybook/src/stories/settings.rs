@@ -1,5 +1,5 @@
 use eframe::egui::Ui;
-use sokkel_ui_egui::{
+use sokkel_egui::{
     Appearance, Button, ButtonVariant, Icon, SettingsDialog, SettingsSection, Switch, ThemeWords, setting_row,
     theme_settings,
 };

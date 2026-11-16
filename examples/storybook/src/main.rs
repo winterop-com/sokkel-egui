@@ -6,7 +6,7 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
     eframe::run_native(
-        "sokkel-ui-egui",
+        "sokkel-egui",
         options,
         Box::new(|cc| Ok(Box::new(storybook::Storybook::new(cc)))),
     )

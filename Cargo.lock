@@ -918,9 +918,9 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui_kittest",
- "sokkel-ui-egui",
- "sokkel-ui-egui-charts",
- "sokkel-ui-egui-maps",
+ "sokkel-egui",
+ "sokkel-egui-charts",
+ "sokkel-egui-maps",
 ]
 
 [[package]]
@@ -2491,7 +2491,7 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui_kittest",
- "sokkel-ui-egui",
+ "sokkel-egui",
 ]
 
 [[package]]
@@ -2586,8 +2586,8 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui_kittest",
- "sokkel-ui-egui",
- "sokkel-ui-egui-charts",
+ "sokkel-egui",
+ "sokkel-egui-charts",
 ]
 
 [[package]]
@@ -3362,7 +3362,7 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui_kittest",
- "sokkel-ui-egui",
+ "sokkel-egui",
 ]
 
 [[package]]
@@ -3887,8 +3887,8 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui_kittest",
- "sokkel-ui-egui",
- "sokkel-ui-egui-charts",
+ "sokkel-egui",
+ "sokkel-egui-charts",
 ]
 
 [[package]]
@@ -4371,7 +4371,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sokkel-ui-egui"
+name = "sokkel-egui"
 version = "0.1.0"
 dependencies = [
  "eframe",
@@ -4384,24 +4384,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "sokkel-ui-egui-charts"
+name = "sokkel-egui-charts"
 version = "0.1.0"
 dependencies = [
  "egui",
- "sokkel-ui-egui",
+ "sokkel-egui",
 ]
 
 [[package]]
-name = "sokkel-ui-egui-graph"
+name = "sokkel-egui-graph"
 version = "0.1.0"
 dependencies = [
  "egui",
  "egui_kittest",
- "sokkel-ui-egui",
+ "sokkel-egui",
 ]
 
 [[package]]
-name = "sokkel-ui-egui-maps"
+name = "sokkel-egui-maps"
 version = "0.1.0"
 dependencies = [
  "egui",
@@ -4409,7 +4409,7 @@ dependencies = [
  "image",
  "reqwest",
  "serde_json",
- "sokkel-ui-egui",
+ "sokkel-egui",
  "walkers",
 ]
 
@@ -4457,10 +4457,10 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui_kittest",
- "sokkel-ui-egui",
- "sokkel-ui-egui-charts",
- "sokkel-ui-egui-graph",
- "sokkel-ui-egui-maps",
+ "sokkel-egui",
+ "sokkel-egui-charts",
+ "sokkel-egui-graph",
+ "sokkel-egui-maps",
 ]
 
 [[package]]
@@ -4469,7 +4469,7 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui_kittest",
- "sokkel-ui-egui",
+ "sokkel-egui",
 ]
 
 [[package]]
@@ -4479,9 +4479,9 @@ dependencies = [
  "eframe",
  "egui_kittest",
  "serde",
- "sokkel-ui-egui",
- "sokkel-ui-egui-charts",
- "sokkel-ui-egui-maps",
+ "sokkel-egui",
+ "sokkel-egui-charts",
+ "sokkel-egui-maps",
 ]
 
 [[package]]
@@ -4579,7 +4579,7 @@ dependencies = [
  "eframe",
  "egui_kittest",
  "serde",
- "sokkel-ui-egui",
+ "sokkel-egui",
 ]
 
 [[package]]

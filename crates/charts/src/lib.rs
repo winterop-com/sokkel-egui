@@ -1,4 +1,4 @@
-//! sokkel-ui-egui's charts: one engine, egui's painter, as sokkel-ui draws every chart with one
+//! sokkel-egui's charts: one engine, egui's painter, as sokkel-ui draws every chart with one
 //! engine. Each chart reads the `chart-1` to `chart-5` series colors, the chart text sizes and the
 //! frame's muted ink and rules from the tokens, so it follows the theme and the scheme.
 //!
@@ -15,7 +15,7 @@ use std::sync::Arc;
 mod panel;
 pub use panel::{BarPanel, GaugePanel, TimeSeriesPanel};
 
-use sokkel_ui_egui::{TextRole, Tokens, tokens};
+use sokkel_egui::{TextRole, Tokens, tokens};
 
 /// One named run of values, one per category; `None` leaves a gap.
 #[derive(Clone, Debug)]

@@ -3,7 +3,7 @@
 
 use egui_kittest::{Harness, kittest::Queryable};
 use runs::RunsApp;
-use sokkel_ui_egui::Appearance;
+use sokkel_egui::Appearance;
 
 fn render(setup: impl FnOnce(&mut RunsApp)) -> Harness<'static, RunsApp> {
     let mut app = RunsApp::with(Appearance::default());

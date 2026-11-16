@@ -3,7 +3,7 @@
 
 use eframe::egui;
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::{Appearance, DashboardLayoutItem, PanelSpan};
+use sokkel_egui::{Appearance, DashboardLayoutItem, PanelSpan};
 use status::{StatusApp, default_layout};
 
 fn render(setup: impl FnOnce(&mut StatusApp)) -> Harness<'static, StatusApp> {

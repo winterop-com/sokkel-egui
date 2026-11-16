@@ -1,7 +1,7 @@
 //! The parts the status example brought into the library: each in its story, with Tidevann's data.
 
 use eframe::egui::{self, Ui, vec2};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     ActivityItem, ActivityList, ActivityTone, AppBar, Banner, BannerTone, BarList, BarListItem, Button, ButtonSize,
     ButtonVariant, CalendarEvent, Chip, ChipBar, ChipTone, Choice, ChoiceList, DashboardArrange, DashboardEditActions,
     DashboardGrid, DashboardLayoutItem, DashboardPanel, DashboardWidget, DateTimeField, Day, DescriptionList, FileKind,
@@ -9,7 +9,7 @@ use sokkel_ui_egui::{
     SearchField, Section, SplitPane, Stack, Stat, StatPanel, Switch, TagChips, TextField, TextRole, Threshold,
     Timeline, TimelineEvent, Tree, TreeNode, UptimeBar, UptimeDay, WeekGrid, form_bar, tokens,
 };
-use sokkel_ui_egui_charts::{BarPanel, GaugePanel, Series, TimeSeriesPanel};
+use sokkel_egui_charts::{BarPanel, GaugePanel, Series, TimeSeriesPanel};
 
 use super::{State, section};
 
@@ -59,12 +59,12 @@ pub fn date_time_field(state: &mut State, ui: &mut Ui) {
     ui.set_max_width(448.0);
     section(ui, "A window's start");
     DateTimeField::new("story-starts", "Starts", &mut state.starts, today())
-        .min(sokkel_ui_egui::Moment::new(today(), 9, 0))
+        .min(sokkel_egui::Moment::new(today(), 9, 0))
         .show(ui);
     section(ui, "Before the earliest");
-    let mut early = Some(sokkel_ui_egui::Moment::new(today(), 8, 0));
+    let mut early = Some(sokkel_egui::Moment::new(today(), 8, 0));
     DateTimeField::new("story-early", "Starts", &mut early, today())
-        .min(sokkel_ui_egui::Moment::new(today(), 9, 0))
+        .min(sokkel_egui::Moment::new(today(), 9, 0))
         .show(ui);
 }
 

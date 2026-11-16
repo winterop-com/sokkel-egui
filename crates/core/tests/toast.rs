@@ -2,7 +2,7 @@
 //! without a timeout stays.
 
 use egui_kittest::{Harness, kittest::Queryable};
-use sokkel_ui_egui::{Toast, Toaster, install, toasts};
+use sokkel_egui::{Toast, Toaster, install, toasts};
 
 fn harness() -> Harness<'static> {
     Harness::builder().with_size([800.0, 500.0]).build_ui(|ui| {
@@ -114,7 +114,7 @@ fn a_toast_s_action_says_which_and_closes_it() {
     harness.snapshot("toast_action");
     harness.get_by_label("Open").click();
     harness.run_steps(2);
-    assert_eq!(sokkel_ui_egui::toast_acted(&harness.ctx), vec![id]);
+    assert_eq!(sokkel_egui::toast_acted(&harness.ctx), vec![id]);
     assert!(toasts(&harness.ctx).is_empty());
-    assert!(sokkel_ui_egui::toast_acted(&harness.ctx).is_empty(), "taken once");
+    assert!(sokkel_egui::toast_acted(&harness.ctx).is_empty(), "taken once");
 }

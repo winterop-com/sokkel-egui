@@ -1,6 +1,6 @@
 # sokkel-design: the egui side
 
-Research notes for the shared design system, `sokkel-design`, from building sokkel-ui-egui. They
+Research notes for the shared design system, `sokkel-design`, from building sokkel-egui. They
 answer the questions put by the sokkel-ui side. Nothing here changes either repository. The owner
 decides.
 

@@ -1,5 +1,5 @@
 use eframe::egui::Ui;
-use sokkel_ui_egui::{
+use sokkel_egui::{
     Button, ButtonVariant, Dialog, Icon, Select, Switch, TextField, TextRole, Toast, ToastKind, Toaster, tokens,
     tooltip, tooltip_shown,
 };

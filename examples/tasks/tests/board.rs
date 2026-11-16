@@ -4,7 +4,7 @@
 use eframe::egui::{self, vec2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
-use sokkel_ui_egui::{Appearance, Day};
+use sokkel_egui::{Appearance, Day};
 use tasks::{TaskState, TasksApp, View};
 
 fn board() -> Harness<'static, TasksApp> {

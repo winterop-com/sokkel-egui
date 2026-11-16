@@ -7,7 +7,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-sokkel-ui-egui.workspace = true
+sokkel-egui.workspace = true
 eframe.workspace = true
 
 [dev-dependencies]

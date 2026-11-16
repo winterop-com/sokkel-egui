@@ -3,7 +3,7 @@
 use dashboard::DashboardApp;
 use eframe::egui;
 use egui_kittest::Harness;
-use sokkel_ui_egui::{Appearance, Scheme};
+use sokkel_egui::{Appearance, Scheme};
 
 fn render(scheme: Scheme, setup: impl FnOnce(&mut DashboardApp)) -> Harness<'static, DashboardApp> {
     let mut app = DashboardApp::on(Appearance {

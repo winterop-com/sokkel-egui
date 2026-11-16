@@ -2,7 +2,7 @@
 //! responder moving it along until it is resolved, notices for what changes unless the settings
 //! say never, and the maps kept across a reset of the demo.
 
-use sokkel_ui_egui::Appearance;
+use sokkel_egui::Appearance;
 use status::data::State;
 use status::live::ScenarioKind;
 use status::{Notify, StatusApp};
@@ -64,11 +64,11 @@ fn never_keeps_the_notices_quiet() {
 #[test]
 fn a_reset_keeps_the_maps_and_the_settings() {
     let mut app = StatusApp::on(Appearance::default());
-    app.sites_map.basemap = Some(sokkel_ui_egui_maps::Basemap::Satellite);
+    app.sites_map.basemap = Some(sokkel_egui_maps::Basemap::Satellite);
     app.options.history_days = 14;
     app.incidents.clear();
     app.reset_demo();
-    assert_eq!(app.sites_map.basemap, Some(sokkel_ui_egui_maps::Basemap::Satellite));
+    assert_eq!(app.sites_map.basemap, Some(sokkel_egui_maps::Basemap::Satellite));
     assert_eq!(app.options.history_days, 14);
     assert!(!app.incidents.is_empty(), "the incidents back as the demo started");
 }

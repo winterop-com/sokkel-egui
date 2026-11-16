@@ -1,7 +1,7 @@
 //! A dashboard's chart panels, after sokkel-ui's `TimeSeriesPanel` in its `ChartFrame`.
 
 use egui::{Color32, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
-use sokkel_ui_egui::{TextRole, Threshold, cell_height, format_value, report_natural_height, threshold_color, tokens};
+use sokkel_egui::{TextRole, Threshold, cell_height, format_value, report_natural_height, threshold_color, tokens};
 
 use crate::{BarChart, Fill, Gauge, LineChart, Series, color_of, legend_of};
 
@@ -156,7 +156,7 @@ fn chart_frame(ui: &mut Ui, title: &str, subtitle: Option<&str>, body: impl FnOn
                     .max_rect(head.shrink2(vec2(6.0, 0.0)))
                     .layout(egui::Layout::right_to_left(egui::Align::Center)),
             );
-            sokkel_ui_egui::panel_tools(&mut tools, cell);
+            sokkel_egui::panel_tools(&mut tools, cell);
             egui::Frame::new()
                 .inner_margin(egui::Margin {
                     left: 8,

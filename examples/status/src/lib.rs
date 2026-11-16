@@ -12,7 +12,7 @@ pub mod settings;
 pub mod watch;
 
 use eframe::egui::{self, Ui};
-use sokkel_ui_egui::{
+use sokkel_egui::{
     AccountAction, AccountMenu, AppBar, Appearance, AppearanceCommandWords, AsideWidth, Banner, BannerTone, Button,
     ButtonSize, ButtonVariant, Cell, ChipBar, ChipTone, Choice, ChoiceList, Column, Columns, CommandGroup,
     CommandPalette, DashboardArrange, DashboardEdit, DashboardEditActions, DashboardGrid, DashboardLayoutItem,
@@ -26,9 +26,9 @@ use sokkel_ui_egui::{
 
 use data::SERVICES;
 use live::Live;
-use sokkel_ui_egui_charts::{Series, TimeSeriesPanel};
-use sokkel_ui_egui_graph::{GraphCanvas, GraphLink, GraphNode, GraphWords};
-use sokkel_ui_egui_maps::{MapLegend, MapPopup, MapPopupRow, MapView, Marker};
+use sokkel_egui_charts::{Series, TimeSeriesPanel};
+use sokkel_egui_graph::{GraphCanvas, GraphLink, GraphNode, GraphWords};
+use sokkel_egui_maps::{MapLegend, MapPopup, MapPopupRow, MapView, Marker};
 
 /// Tidevann's mark, as sokkel-ui's examples draw it (`tidevann-shared/mark`).
 pub const TIDEVANN_MARK: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="currentColor"><path d="M12 4c-1 1.8-3 3.5-3 5a3 3 0 0 0 6 0c0-1.5-2-3.2-3-5Z"/><path d="M5 13c2-2 4 2 7 0s5-2 7 0v1a7 7 0 0 1-14 0Z"/></svg>"#;
@@ -195,16 +195,16 @@ impl StatusApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let mut app = Self::on(Appearance::default());
         // the street map only in the running app: tests draw the map without the network
-        sokkel_ui_egui_maps::install(cc.wgpu_render_state.as_ref());
+        sokkel_egui_maps::install(cc.wgpu_render_state.as_ref());
         app.overview_map = std::mem::replace(&mut app.overview_map, MapView::new(0.0, 0.0, 1.0)).with_tiles(
             &cc.egui_ctx,
             "tidevann-status/0.1 (an example app of a component library)",
-            std::env::temp_dir().join("sokkel-ui-egui-tiles").into(),
+            std::env::temp_dir().join("sokkel-egui-tiles").into(),
         );
         app.sites_map = std::mem::replace(&mut app.sites_map, MapView::new(0.0, 0.0, 1.0)).with_tiles(
             &cc.egui_ctx,
             "tidevann-status/0.1 (an example app of a component library)",
-            std::env::temp_dir().join("sokkel-ui-egui-tiles").into(),
+            std::env::temp_dir().join("sokkel-egui-tiles").into(),
         );
         app.desktop = true;
         app
@@ -542,7 +542,7 @@ impl StatusApp {
         // a service's dialogs over its page
         let now = (self.start + self.elapsed) as f64 * 1000.0;
         if let Some(form) = self.maintenance_form.as_mut() {
-            let wall = sokkel_ui_egui::Moment {
+            let wall = sokkel_egui::Moment {
                 day: self.today,
                 minutes: (now / 60_000.0) as u32,
             };
@@ -602,7 +602,7 @@ impl StatusApp {
         }
         self.settings_dialog(ui.ctx());
         self.show_notices(ui.ctx());
-        sokkel_ui_egui::Toaster::new().show(ui.ctx());
+        sokkel_egui::Toaster::new().show(ui.ctx());
         match account {
             Some(AccountAction::Settings) => self.settings = true,
             Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
@@ -669,7 +669,7 @@ impl StatusApp {
                     .id(format!("incident:{}", one.id))
             }),
         ));
-        let themes: Vec<_> = sokkel_ui_egui::themes().collect();
+        let themes: Vec<_> = sokkel_egui::themes().collect();
         groups.extend(appearance_commands(
             &self.appearance,
             &themes,
@@ -821,7 +821,7 @@ impl StatusApp {
                     self.report_incident(None);
                 }
             });
-        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let t = sokkel_egui::tokens(ui.ctx());
         let all = self.incidents.len();
         ui.add(
             Segmented::new(&mut self.shown, ["Open", "Resolved", "All"])
@@ -923,7 +923,7 @@ impl StatusApp {
     /// it has been open, Resolve or Reopen; a form to post the next update and the updates so far;
     /// and beside them its details, each changed in place.
     fn incident_page(&mut self, ui: &mut Ui) {
-        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let t = sokkel_egui::tokens(ui.ctx());
         let now = (self.start + self.elapsed) as f64 * 1000.0;
         let Some(index) = self
             .incident
@@ -1017,7 +1017,7 @@ impl StatusApp {
                                     "What you know now, and what happens next."
                                 };
                                 ui.add(
-                                    sokkel_ui_egui::TextField::new("Update", post_message)
+                                    sokkel_egui::TextField::new("Update", post_message)
                                         .placeholder(placeholder)
                                         .multiline(true),
                                 );
@@ -1091,12 +1091,12 @@ impl StatusApp {
                             }
                         })
                         .item("Touches", |ui| {
-                            ui.add(sokkel_ui_egui::TagChips::new(&touches));
+                            ui.add(sokkel_egui::TagChips::new(&touches));
                         })
                         .text("Opened", opened_at.clone())
                         .text("Resolved", resolved_at.clone().unwrap_or_else(|| "Not yet".into()))
                         .item("On the status page", |ui| {
-                            ui.add(sokkel_ui_egui::Switch::new(&mut shown, "On the status page"));
+                            ui.add(sokkel_egui::Switch::new(&mut shown, "On the status page"));
                         })
                         .show(ui);
                     incident.severity =
@@ -1209,7 +1209,7 @@ impl StatusApp {
 
     /// The services: their head with Reset order, and the table of them in the person's order.
     fn services_page(&mut self, ui: &mut Ui) {
-        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let t = sokkel_egui::tokens(ui.ctx());
         let down = self
             .live_world
             .health
@@ -1292,7 +1292,7 @@ impl StatusApp {
     /// updates, the maintenance ahead, each service with its last ninety days, and what happened
     /// each of the last seven days.
     fn public_page(&mut self, ui: &mut Ui) {
-        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let t = sokkel_egui::tokens(ui.ctx());
         let now = (self.start + self.elapsed) as f64 * 1000.0;
         let window = ui.ctx().content_rect();
         let mut page = ui.new_child(
@@ -1404,7 +1404,7 @@ impl StatusApp {
                                     .description(affects(incident))
                                     .actions(move |ui| {
                                         ui.add(
-                                            sokkel_ui_egui::Chip::new(state_words(state).to_lowercase())
+                                            sokkel_egui::Chip::new(state_words(state).to_lowercase())
                                                 .tone(state_tone(state)),
                                         );
                                     })
@@ -1452,7 +1452,7 @@ impl StatusApp {
                                                     |ui| {
                                                         let state = health[index];
                                                         ui.add(
-                                                            sokkel_ui_egui::Chip::new(state.words().to_lowercase())
+                                                            sokkel_egui::Chip::new(state.words().to_lowercase())
                                                                 .tone(health_tone(state)),
                                                         );
                                                     },
@@ -1500,7 +1500,7 @@ impl StatusApp {
                                         title,
                                         tone: Some(t.color(worst)),
                                         content: Some(Box::new(move |ui: &mut Ui| {
-                                            let t = sokkel_ui_egui::tokens(ui.ctx());
+                                            let t = sokkel_egui::tokens(ui.ctx());
                                             Stack::new(Gap::Md).show(ui, |ui| {
                                                 for (title, state, meta) in lines {
                                                     ui.vertical(|ui| {
@@ -1512,7 +1512,7 @@ impl StatusApp {
                                                                 TextRole::Body.rich(&t, title).variation("wght", 500.0),
                                                             );
                                                             ui.add(
-                                                                sokkel_ui_egui::Chip::new(
+                                                                sokkel_egui::Chip::new(
                                                                     state_words(state).to_lowercase(),
                                                                 )
                                                                 .tone(state_tone(state)),
@@ -1550,7 +1550,7 @@ impl StatusApp {
     /// The board under the tiles, as it comes: the sites on a map beside what is open, then every
     /// service's last ninety days. Returns the route a panel asked to go to.
     fn board(&mut self, ui: &mut Ui) -> Option<String> {
-        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let t = sokkel_egui::tokens(ui.ctx());
         let now = (self.start + self.elapsed) as f64 * 1000.0;
         let mut to_all = None;
         let mut to_day = None;
@@ -1706,7 +1706,7 @@ impl StatusApp {
                         })
                         .show(ui, |ui| {
                             if rows.is_empty() {
-                                sokkel_ui_egui::Empty::new("Nothing open")
+                                sokkel_egui::Empty::new("Nothing open")
                                     .icon(Icon::CircleCheck)
                                     .description("Every incident is resolved.")
                                     .show(ui, |_| {});
@@ -1797,7 +1797,7 @@ impl StatusApp {
                         .flush(true)
                         .show(ui, |ui| {
                             if windows.is_empty() {
-                                sokkel_ui_egui::Empty::new("No maintenance is planned.").show(ui, |_| {});
+                                sokkel_egui::Empty::new("No maintenance is planned.").show(ui, |_| {});
                             } else if let Some(i) = ListRows::new(windows.clone()).flush(true).show(ui) {
                                 to_page = Some(format!("services/{}", window_services[i]));
                             }
@@ -1809,7 +1809,7 @@ impl StatusApp {
                         .flush(true)
                         .show(ui, |ui| {
                             if deploys.is_empty() {
-                                sokkel_ui_egui::Empty::new("No deploys yet.").show(ui, |_| {});
+                                sokkel_egui::Empty::new("No deploys yet.").show(ui, |_| {});
                             } else if let Some(i) = ListRows::new(deploys.clone()).flush(true).show(ui) {
                                 to_page = Some(format!("services/{}", deploy_services[i]));
                             }
@@ -1828,7 +1828,7 @@ impl StatusApp {
     }
 
     /// Each site as a point in its state's color.
-    fn site_markers(&self, t: &sokkel_ui_egui::Tokens) -> Vec<Marker> {
+    fn site_markers(&self, t: &sokkel_egui::Tokens) -> Vec<Marker> {
         data::SITES
             .iter()
             .enumerate()
@@ -1842,7 +1842,7 @@ impl StatusApp {
 
     /// Each site's card, as the web's `SitesMap` opens it: where it is, its state, its round trip
     /// now and usually, and the open incident that covers it.
-    fn site_cards(&self, t: &sokkel_ui_egui::Tokens) -> Vec<SiteCard> {
+    fn site_cards(&self, t: &sokkel_egui::Tokens) -> Vec<SiteCard> {
         data::SITES
             .iter()
             .enumerate()
@@ -1869,7 +1869,7 @@ impl StatusApp {
     }
 
     /// The sites map's legend: every site counted by its state.
-    fn sites_legend(&self, t: &sokkel_ui_egui::Tokens) -> MapLegend {
+    fn sites_legend(&self, t: &sokkel_egui::Tokens) -> MapLegend {
         let count = |h: live::Health| self.live_world.site_health.iter().filter(|x| **x == h).count();
         MapLegend::new("Sites")
             .description(format!("{} cities", data::SITES.len()))
@@ -1881,7 +1881,7 @@ impl StatusApp {
     /// Every site on a map and in a table, both live: a region frames its sites, and a site chosen
     /// in the table is chosen on the map.
     fn regions_page(&mut self, ui: &mut Ui) {
-        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let t = sokkel_egui::tokens(ui.ctx());
         let working = self
             .live_world
             .site_health
@@ -2002,7 +2002,7 @@ impl StatusApp {
     fn service_page(&mut self, ui: &mut Ui, id: &str) {
         let index = SERVICES.iter().position(|s| s.id == id).unwrap_or(0);
         let service = SERVICES[index];
-        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let t = sokkel_egui::tokens(ui.ctx());
         let days = self.uptime().swap_remove(index);
         let overall = overall_uptime(&days);
         let health = self.live_world.health[index];
@@ -2223,7 +2223,7 @@ impl StatusApp {
                                     .map(|back| MenuItem::action(format!("Roll back to {back}")).icon(Icon::Undo2))
                                     .collect()
                             })
-                            .words(sokkel_ui_egui::TableWords {
+                            .words(sokkel_egui::TableWords {
                                 empty: "No deploys yet.".into(),
                                 ..Default::default()
                             })
@@ -2261,7 +2261,7 @@ impl StatusApp {
                             .stack_layout(StackLayout::Labeled)
                             .stack_below(420.0)
                             .actions(|row| window_states_r[row].actions())
-                            .words(sokkel_ui_egui::TableWords {
+                            .words(sokkel_egui::TableWords {
                                 empty: "Nothing scheduled.".into(),
                                 ..Default::default()
                             })
@@ -2448,7 +2448,7 @@ impl StatusApp {
     /// Each service as a tile: its state, its latency now with its last readings as a line, and its
     /// uptime (none yet: the incident history it is read from is still to port).
     fn tiles(&self, ui: &mut Ui) -> Option<&'static str> {
-        let t = sokkel_ui_egui::tokens(ui.ctx());
+        let t = sokkel_egui::tokens(ui.ctx());
         let mut opened = None;
         let uptime = self.uptime();
         Columns::new(4)
@@ -2572,7 +2572,7 @@ fn rate(value: f64) -> String {
 
 /// A chip at the end of a row, as `StatusChip` draws a state.
 fn chip(ui: &mut Ui, label: &str, tone: ChipTone) {
-    ui.add(sokkel_ui_egui::Chip::new(label).tone(tone));
+    ui.add(sokkel_egui::Chip::new(label).tone(tone));
 }
 
 /// A count with its thousands set apart, as the web's `formatCount`: 7,230.
@@ -2668,7 +2668,7 @@ fn uptime_list(
     health: &[live::Health],
     uptime: &[Vec<UptimeDay>],
 ) -> Option<(&'static str, Day)> {
-    let t = sokkel_ui_egui::tokens(ui.ctx());
+    let t = sokkel_egui::tokens(ui.ctx());
     let mut pressed = None;
     Stack::new(Gap::Xl).show(ui, |ui| {
         for &index in order {
@@ -2680,7 +2680,7 @@ fn uptime_list(
                     ui.label(TextRole::Body.rich(&t, service.id).variation("wght", 500.0));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         let h = health[index];
-                        ui.add(sokkel_ui_egui::Chip::new(h.words().to_lowercase()).tone(health_tone(h)));
+                        ui.add(sokkel_egui::Chip::new(h.words().to_lowercase()).tone(health_tone(h)));
                         // what it is, beside its name, giving way first where the line is short
                         ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                             ui.add(
@@ -2807,7 +2807,7 @@ fn subscribe_form(ui: &mut Ui, form: &mut Subscribe) {
                 Stack::new(Gap::Lg).show(ui, |ui| {
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 8.0;
-                        ui.add(sokkel_ui_egui::Chip::new("subscribed").tone(ChipTone::Good));
+                        ui.add(sokkel_egui::Chip::new("subscribed").tone(ChipTone::Good));
                         let which = if done.services.is_empty() {
                             "every service".to_owned()
                         } else {
@@ -2840,7 +2840,7 @@ fn subscribe_form(ui: &mut Ui, form: &mut Subscribe) {
             Stack::new(Gap::Lg).show(ui, |ui| {
                 let before = form.email.clone();
                 ui.add(
-                    sokkel_ui_egui::TextField::new("Email", &mut form.email)
+                    sokkel_egui::TextField::new("Email", &mut form.email)
                         .placeholder("you@example.org")
                         .error(form.error.clone()),
                 );
@@ -2871,7 +2871,7 @@ fn subscribe_form(ui: &mut Ui, form: &mut Subscribe) {
                             .gap(0.0)
                             .show(ui, SERVICES.len(), |ui, i, _| {
                                 if ui
-                                    .add(sokkel_ui_egui::Checkbox::new(&mut picked[i], SERVICES[i].id))
+                                    .add(sokkel_egui::Checkbox::new(&mut picked[i], SERVICES[i].id))
                                     .changed()
                                 {
                                     *error = None;
@@ -3018,7 +3018,7 @@ fn window_state(window: &data::Maintenance, now: f64) -> WindowState {
 
 /// Every service and what it calls on, each in its state now, as the web's `ServiceGraph`: a store
 /// round with a cylinder, a service a box with a server.
-fn service_graph(health: &[live::Health], t: &sokkel_ui_egui::Tokens) -> (Vec<GraphNode>, Vec<GraphLink>) {
+fn service_graph(health: &[live::Health], t: &sokkel_egui::Tokens) -> (Vec<GraphNode>, Vec<GraphLink>) {
     let nodes = SERVICES
         .iter()
         .zip(health)

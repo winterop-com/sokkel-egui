@@ -45,7 +45,7 @@ for n in "${names[@]}"; do
 <dict>
   <key>CFBundleName</key><string>$title</string>
   <key>CFBundleDisplayName</key><string>$title</string>
-  <key>CFBundleIdentifier</key><string>dev.sokkel-ui-egui.$n</string>
+  <key>CFBundleIdentifier</key><string>dev.sokkel-egui.$n</string>
   <key>CFBundleExecutable</key><string>$n</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleVersion</key><string>$version</string>
