@@ -544,6 +544,153 @@ pub fn combine(values: &[f64], aggregation: Aggregation) -> Option<f64> {
     })
 }
 
+/// One line a host wrote: when, how loud, where from and what.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LogEntry {
+    pub second: f64,
+    pub level: &'static str,
+    pub service: &'static str,
+    pub host: &'static str,
+    pub project: &'static str,
+    pub text: String,
+}
+
+const ROUTES: [&str; 5] = [
+    "/api/jobs",
+    "/api/runs",
+    "/api/projects",
+    "/api/schedules",
+    "/api/health",
+];
+const STEPS: [&str; 5] = ["fetch", "transform", "validate", "upload", "notify"];
+
+/// What a host wrote in a second, if anything, as the web's `linesAt`.
+fn lines_at(host: &Host, second: f64) -> Option<LogEntry> {
+    let last = host.id.chars().last().map_or(0, |c| c as u32);
+    let roll = hash(&[second, (host.id.len() as f64) * 977.0 + f64::from(last)]);
+    let trouble = if host.service == "api" {
+        incident(second, 1.0)
+    } else {
+        incident(second, 2.0)
+    };
+    let chance = match host.service {
+        "api" => 0.45,
+        "worker" => 0.3,
+        _ => 0.12,
+    };
+    if roll > chance + trouble * 0.3 {
+        return None;
+    }
+    let pick = |list: &[&'static str], salt: f64| {
+        list[((hash(&[second, salt, roll * 1000.0]) * list.len() as f64).floor() as usize).min(list.len() - 1)]
+    };
+    let project = pick(&PROJECTS, 3.0);
+    let entry = |level: &'static str, project: &'static str, text: String| LogEntry {
+        second,
+        level,
+        service: host.service,
+        host: host.id,
+        project,
+        text,
+    };
+    if host.service == "api" {
+        let route = pick(&ROUTES, 5.0);
+        let failing = hash(&[second, 17.0, roll * 99.0]) < 0.01 + trouble * 0.25;
+        let labels = SeriesLabels {
+            service: Some("api"),
+            host: Some(host.id),
+            ..Default::default()
+        };
+        let took = latency(if failing { 9.0 } else { 1.2 }, &labels, second).round();
+        if failing {
+            return Some(entry(
+                "error",
+                project,
+                format!("GET {route}?project={project} 503 in {took}ms: upstream timed out"),
+            ));
+        }
+        if trouble > 0.5 && hash(&[second, 23.0]) < 0.3 {
+            return Some(entry(
+                "warning",
+                project,
+                format!("GET {route}?project={project} 200 in {took}ms, slower than 250ms"),
+            ));
+        }
+        return Some(entry(
+            "info",
+            project,
+            format!("GET {route}?project={project} 200 in {took}ms"),
+        ));
+    }
+    if host.service == "worker" {
+        let job = pick(&JOBS, 7.0);
+        let step = pick(&STEPS, 9.0);
+        let run = format!("{:04x}", (hash(&[second, 31.0]) * 65_535.0).floor() as u32);
+        let owner = job_project(job);
+        if hash(&[second, 37.0, roll * 31.0]) < 0.02 + trouble * 0.2 {
+            return Some(entry(
+                "error",
+                owner,
+                format!("run {run} of {job}: {step} failed, retrying in 30s"),
+            ));
+        }
+        if hash(&[second, 41.0]) < 0.15 {
+            let took = hash(&[second, 43.0]) * 9.0 + 0.4;
+            return Some(entry(
+                "debug",
+                owner,
+                format!("run {run} of {job}: {step} took {took:.1}s"),
+            ));
+        }
+        return Some(entry("info", owner, format!("run {run} of {job}: {step} finished")));
+    }
+    let job = pick(&JOBS, 47.0);
+    let owner = job_project(job);
+    Some(entry("info", owner, format!("queued {job} for {owner}")))
+}
+
+/// The newest lines up to `end`, newest last, as many as `limit`, from the hosts the filter keeps,
+/// as the web's `logsUntil`.
+pub fn logs_until(end: f64, start: f64, filter: &[(Label, String)], limit: usize) -> Vec<LogEntry> {
+    let hosts: Vec<&Host> = HOSTS
+        .iter()
+        .filter(|h| {
+            matches(
+                &SeriesLabels {
+                    service: Some(h.service),
+                    host: Some(h.id),
+                    ..Default::default()
+                },
+                filter,
+            )
+        })
+        .collect();
+    let mut found = Vec::new();
+    let mut second = end;
+    while second >= start && found.len() < limit {
+        for host in &hosts {
+            if let Some(line) = lines_at(host, second) {
+                let labels = SeriesLabels {
+                    service: Some(line.service),
+                    host: Some(line.host),
+                    project: Some(line.project),
+                    job: None,
+                };
+                if matches(&labels, filter) {
+                    found.push(line);
+                }
+            }
+        }
+        if end - second > 6.0 * 3600.0 {
+            break;
+        }
+        second -= 1.0;
+    }
+    found.truncate(limit);
+    found.reverse();
+    found
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -595,5 +742,21 @@ mod tests {
         };
         assert!((value(MetricId::Errors, &api1, during) - 5.9201802152025715).abs() < 1e-9);
         assert!((value(MetricId::LatencyP95, &api2, during) - 371.7312912464971).abs() < 1e-9);
+    }
+
+    #[test]
+    fn the_logs_are_the_web_s() {
+        let now = 1_794_992_405.0;
+        let lines = logs_until(now, now - 900.0, &[], 200);
+        assert_eq!(lines.len(), 200);
+        let last: Vec<(&str, &str)> = lines[197..].iter().map(|l| (l.host, l.text.as_str())).collect();
+        assert_eq!(
+            last,
+            [
+                ("api-3", "GET /api/projects?project=harbor 200 in 59ms"),
+                ("api-2", "GET /api/health?project=juniper 200 in 57ms"),
+                ("api-1", "GET /api/health?project=juniper 200 in 54ms"),
+            ]
+        );
     }
 }

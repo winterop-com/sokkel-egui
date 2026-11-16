@@ -2,5 +2,6 @@
 //! arranged by drag, a panel editor with a live preview, and alerts.
 
 pub mod model;
+pub mod panel_data;
 pub mod query;
 pub mod source;
