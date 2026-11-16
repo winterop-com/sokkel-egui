@@ -209,19 +209,77 @@ impl Frame {
             edge: axes.edge,
             count: categories.len(),
         };
-        // every nth label as asked, or as many as fit, evenly
+        // every nth label as asked, or as ECharts' `interval: 'auto'` picks it: the widest label
+        // and 30% more, 7 at least, over the room between two categories, rounded down, labels
+        // that many categories apart and one more
         let label_width = categories
             .iter()
             .map(|c| painter.layout_no_wrap(c.clone(), font.clone(), ink).size().x)
             .fold(0.0, f32::max);
-        let fits = (plot.width() / (label_width + 16.0)).max(1.0) as usize;
-        let every = axes.every.unwrap_or_else(|| categories.len().div_ceil(fits)).max(1);
-        for (i, category) in categories.iter().enumerate().filter(|(i, _)| i % every == 0) {
-            let x = frame.x(i);
+        let unit = if frame.edge {
+            frame.plot.width() / categories.len().saturating_sub(1).max(1) as f32
+        } else {
+            frame.band(categories.len())
+        };
+        let auto = ((label_width * 1.3).max(7.0) / unit.max(f32::EPSILON)).floor() as usize + 1;
+        let every = axes.every.unwrap_or(auto).max(1);
+        let picked: Vec<usize> = (0..categories.len()).filter(|i| i % every == 0).collect();
+        if axes.every.is_none() && frame.edge && categories.len() > 1 {
+            // a line's axis, its labels picked for it: the first and last always show, aligned
+            // inward so neither runs past the chart, and a label too close to them gives way, as
+            // the web's `edgeAxis`
+            let last = categories.len() - 1;
+            let place = |i: usize| {
+                let width = painter
+                    .layout_no_wrap(categories[i].clone(), font.clone(), ink)
+                    .size()
+                    .x;
+                let x = frame.x(i);
+                match i {
+                    0 => (x, x + width),
+                    i if i == last => (x - width, x),
+                    _ => (x - width / 2.0, x + width / 2.0),
+                }
+            };
+            let clear = |(a, b): (f32, f32), (c, d): (f32, f32)| b <= c || d <= a;
+            let mut labels = vec![0];
+            labels.extend(picked.iter().copied().filter(|i| *i != 0 && *i != last));
+            labels.push(last);
+            // as ECharts does it: the first and last labels' neighbors give way to them, then,
+            // from the left, a label over the one kept before it is hidden, the last one too
+            if labels.len() > 2 && !clear(place(labels[1]), place(0)) {
+                labels.remove(1);
+            }
+            if labels.len() > 2 && !clear(place(labels[labels.len() - 2]), place(last)) {
+                labels.remove(labels.len() - 2);
+            }
+            let mut shown: Vec<usize> = Vec::new();
+            for i in labels {
+                if shown.last().is_none_or(|kept| clear(place(*kept), place(i))) {
+                    shown.push(i);
+                }
+            }
+            for i in shown {
+                let align = match i {
+                    0 => Align2::LEFT_TOP,
+                    i if i == last => Align2::RIGHT_TOP,
+                    _ => Align2::CENTER_TOP,
+                };
+                painter.text(
+                    pos2(frame.x(i), plot.bottom() + 8.0),
+                    align,
+                    &categories[i],
+                    font.clone(),
+                    ink,
+                );
+            }
+            return frame;
+        }
+        for i in picked {
             painter.text(
-                pos2(x, plot.bottom() + 8.0),
+                pos2(frame.x(i), plot.bottom() + 8.0),
                 Align2::CENTER_TOP,
-                category,
+                &categories[i],
                 font.clone(),
                 ink,
             );

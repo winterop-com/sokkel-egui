@@ -345,7 +345,6 @@ fn draw_panel(ui: &mut Ui, panel: &Panel, variables: &Variables, range: &Range, 
                 .show(ui);
         }
         Shape::Series { x, series } => {
-            let every = (x.len() / 6).max(1);
             if panel.kind == crate::model::PanelKind::Bar {
                 let mut bars = BarPanel::new(&panel.title, x).stacked(panel.stacked);
                 for (one, color) in series {
@@ -367,8 +366,7 @@ fn draw_panel(ui: &mut Ui, panel: &Panel, variables: &Variables, range: &Range, 
                     Fill::Gradient => ChartFill::Gradient,
                     Fill::Solid => ChartFill::Solid,
                 })
-                .stacked(panel.stacked)
-                .label_every(every);
+                .stacked(panel.stacked);
             for step in thresholds.iter().skip(1) {
                 if let Some(value) = step.value {
                     chart = chart.threshold(value, t.color(step.color));
