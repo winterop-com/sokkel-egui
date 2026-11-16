@@ -428,6 +428,12 @@ impl MapView {
             Some(None) => self.reset(),
             None => {}
         }
+        // never so far out that the world is narrower than the map: it is drawn once, not
+        // repeated sideways, so the room either side of it would stand empty
+        let least = least_zoom(size);
+        if self.memory.zoom() < least {
+            let _ = self.memory.set_zoom(least);
+        }
         let home = self.home;
         // the street map light or dark whatever the page's scheme, in that scheme's colors: the
         // page's tokens, or the same theme's other scheme's
@@ -525,6 +531,11 @@ impl MapView {
         self.points.iter().find(|(one, _)| one == id).map(|(_, at)| *at)
     }
 
+    /// The zoom the map looks at now: 0 the world in 256 points, one more each halving.
+    pub fn zoom(&self) -> f64 {
+        self.memory.zoom()
+    }
+
     /// The map's room on the last frame.
     pub fn room(&self) -> Rect {
         self.room
@@ -594,7 +605,8 @@ impl MapView {
                 let _ = self.memory.set_zoom((self.memory.zoom() + 1.0).clamp(2.0, 18.0));
             }
             Some("Zoom out") => {
-                let _ = self.memory.set_zoom((self.memory.zoom() - 1.0).clamp(2.0, 18.0));
+                let least = least_zoom(rect.size()).max(2.0);
+                let _ = self.memory.set_zoom((self.memory.zoom() - 1.0).clamp(least, 18.0));
             }
             Some(label) if label == fit_words => {
                 let every = markers.iter().fold(None::<[f64; 4]>, |b, m| {
@@ -908,11 +920,21 @@ fn street_style(t: &Tokens, dark: bool) -> Style {
             }
             Layer::Symbol {
                 source_layer,
+                filter,
                 layout,
                 paint,
-                ..
             } => {
                 let place = source(source_layer).contains("place");
+                // a country's name small, as the web's street maps write it, not walkers' 18
+                if place && format!("{filter:?}").contains("\"country\"") {
+                    layout.text_size = Some(walkers::Float(walkers::json!(11.0)));
+                    layout.text_field = Some(walkers::json!([
+                        "coalesce",
+                        ["get", "name:latin"],
+                        ["get", "name:en"],
+                        ["get", "name"]
+                    ]));
+                }
                 if layout.text_field == Some(walkers::json!(["get", "name"])) {
                     layout.text_field = Some(walkers::json!(["coalesce", ["get", "name:latin"], ["get", "name"]]));
                 }
@@ -928,6 +950,11 @@ fn street_style(t: &Tokens, dark: bool) -> Style {
         }
     }
     style
+}
+
+/// The least zoom at which the world, 256 points wide at zoom 0, is as wide as `size`.
+fn least_zoom(size: Vec2) -> f64 {
+    (f64::from(size.x.max(1.0)) / 256.0).log2().max(0.0)
 }
 
 /// The ground without tiles: `card`, and a graticule in the foreground at 14% over it, its lines

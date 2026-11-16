@@ -65,3 +65,20 @@ fn the_dark_basemap_is_dark_in_the_light_scheme() {
     harness.run_steps(3);
     harness.snapshot("basemap_dark_in_light");
 }
+
+#[test]
+fn a_wide_map_never_shows_the_world_narrower_than_itself() {
+    let mut harness = Harness::builder().with_size([1100.0, 400.0]).build_ui_state(
+        |ui, map: &mut MapView| {
+            install(ui.ctx(), &Default::default());
+            map.show(ui, egui::vec2(1024.0, 320.0), &[], &[]);
+        },
+        MapView::new(25.0, 10.0, 1.0),
+    );
+    harness.run_steps(3);
+    // the world 256 at zoom 0, 1024 at zoom 2
+    assert!(harness.state().zoom() >= 2.0 - 1e-6, "{}", harness.state().zoom());
+    harness.get_by_label("Zoom out").click();
+    harness.run_steps(2);
+    assert!(harness.state().zoom() >= 2.0 - 1e-6, "zooming out stops there");
+}
