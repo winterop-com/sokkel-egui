@@ -830,6 +830,9 @@ impl StatusApp {
             let i = &self.incidents[index];
             PageHeader::new(&i.title)
                 .back("Incidents")
+                .edit_title("Title", |title| {
+                    title.trim().is_empty().then(|| "An incident needs a title.".to_owned())
+                })
                 .code(&i.code)
                 .chip(state_words(i.state), state_tone(i.state))
                 .chip(severity_words(i.severity).to_lowercase(), severity_tone(i.severity))
@@ -866,6 +869,9 @@ impl StatusApp {
         }
         if toggle {
             self.resolve_or_reopen(&id);
+        }
+        if let Some(title) = &head.renamed {
+            self.incidents[index].title = title.trim().to_owned();
         }
         let on_call = self.on_call.clone();
         let mut post = false;

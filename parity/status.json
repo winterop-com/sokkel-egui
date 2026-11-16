@@ -62,7 +62,7 @@
         "@winterop-com/sokkel-ui/Field": "field (a label and a hint over a control)",
         "@winterop-com/sokkel-ui/FormBar": "form_bar",
         "@winterop-com/sokkel-ui/IconButton": "IconButton",
-        "@winterop-com/sokkel-ui/InlineEdit": null,
+        "@winterop-com/sokkel-ui/InlineEdit": "InlineEdit (a line of text; PageHeader::edit_title)",
         "@winterop-com/sokkel-ui/IssueMark": null,
         "@winterop-com/sokkel-ui/Layout": "egui layout",
         "@winterop-com/sokkel-ui/ListRow": "ListRow and ListRows",

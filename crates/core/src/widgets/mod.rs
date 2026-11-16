@@ -16,6 +16,7 @@ mod empty;
 mod fields;
 mod file_preview;
 mod frame;
+mod inline_edit;
 mod layout;
 mod list_row;
 mod log_view;
@@ -65,6 +66,7 @@ pub use frame::{
     AppBar, DesktopWindow, Rail, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine, StatusTone,
     TopBar, desktop_viewport, is_phone,
 };
+pub use inline_edit::{InlineEdit, InlineEditLook, InlineEditWords};
 pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
 pub use list_row::{ListRow, ListRows, RowAside, RowMark};
 pub use log_view::{LogLevel, LogLine, LogView, LogViewWords};

@@ -57,13 +57,16 @@ pub struct PageHeader {
     back: Option<String>,
     chips: Vec<(String, crate::ChipTone)>,
     meta: Option<String>,
+    edit: Option<crate::InlineEdit>,
 }
 
 /// What a page header was asked this frame.
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct PageHeaderResponse {
     /// Its back button was pressed.
     pub back: bool,
+    /// The title saved in place, with [`PageHeader::edit_title`].
+    pub renamed: Option<String>,
 }
 
 impl PageHeader {
@@ -76,7 +79,20 @@ impl PageHeader {
             back: None,
             chips: Vec::new(),
             meta: None,
+            edit: None,
         }
+    }
+
+    /// The title edited where it stands, as sokkel-ui's `InlineEdit` with `variant="title"` in the
+    /// header's `title`: `label` names its editor, and `validate` refuses a title with a message.
+    /// The title saved comes back as [`PageHeaderResponse::renamed`].
+    pub fn edit_title(mut self, label: impl Into<String>, validate: impl Fn(&str) -> Option<String> + 'static) -> Self {
+        self.edit = Some(
+            crate::InlineEdit::new(("page-title", &self.title), label, self.title.clone())
+                .title()
+                .validate(validate),
+        );
+        self
     }
 
     /// A back button before the title, named `label` ("Back"): the way to the page this one is in.
@@ -116,7 +132,7 @@ impl PageHeader {
     }
 
     /// Draw the head, with `actions` laid out from the row's end.
-    pub fn show(self, ui: &mut Ui, actions: impl FnOnce(&mut Ui)) -> PageHeaderResponse {
+    pub fn show(mut self, ui: &mut Ui, actions: impl FnOnce(&mut Ui)) -> PageHeaderResponse {
         let t = tokens(ui.ctx());
         let ink = t.color_or("page-title-ink", t.color("foreground"));
         let mut answer = PageHeaderResponse::default();
@@ -124,7 +140,8 @@ impl PageHeader {
             // the back button on the title's line, the title 8 after it
             if let Some(label) = &self.back {
                 ui.spacing_mut().item_spacing.x = 8.0;
-                let line = TextRole::PageTitle.font(&t).size * 1.25;
+                // beside an editable title, centered on its words below the 2 it is padded down
+                let line = TextRole::PageTitle.font(&t).size * 1.25 + if self.edit.is_some() { 4.0 } else { 0.0 };
                 let (slot, _) = ui.allocate_exact_size(egui::vec2(28.0, line), egui::Sense::hover());
                 let button = egui::Rect::from_center_size(slot.center(), egui::vec2(28.0, 28.0));
                 let hit = ui.interact(button, ui.id().with("page-back"), egui::Sense::click());
@@ -145,37 +162,43 @@ impl PageHeader {
             let block = ui.vertical(|ui| {
                 // the code right under the title, the description 4 under what is over it
                 ui.spacing_mut().item_spacing.y = 0.0;
-                // the title, and the count 8 after it standing on the title's baseline
-                let title = egui::WidgetText::from(TextRole::PageTitle.rich(&t, &self.title)).into_galley(
-                    ui,
-                    Some(egui::TextWrapMode::Wrap),
-                    ui.available_width(),
-                    TextRole::PageTitle.font(&t),
-                );
-                let count = self.count.as_ref().map(|count| {
-                    egui::WidgetText::from(TextRole::Help.rich(&t, count)).into_galley(
+                // an editable title stands as its own inline edit
+                let edit = self.edit.take();
+                if let Some(edit) = edit {
+                    answer.renamed = edit.show(ui);
+                } else {
+                    // the title, and the count 8 after it standing on the title's baseline
+                    let title = egui::WidgetText::from(TextRole::PageTitle.rich(&t, &self.title)).into_galley(
                         ui,
-                        Some(egui::TextWrapMode::Extend),
-                        f32::INFINITY,
-                        TextRole::Help.font(&t),
-                    )
-                });
-                let width = title.size().x + count.as_ref().map_or(0.0, |c| 8.0 + c.size().x);
-                let (row, _) = ui.allocate_exact_size(egui::vec2(width, title.size().y), egui::Sense::hover());
-                let baseline = |galley: &egui::Galley| {
-                    galley
-                        .rows
-                        .first()
-                        .and_then(|r| r.glyphs.first().map(|g| r.pos.y + g.pos.y))
-                        .unwrap_or(galley.size().y)
-                };
-                let line = baseline(&title);
-                let title_width = title.size().x;
-                if let Some(count) = count {
-                    let at = egui::pos2(row.left() + title_width + 8.0, row.top() + line - baseline(&count));
-                    ui.painter().galley(at, count, t.color("muted-foreground"));
+                        Some(egui::TextWrapMode::Wrap),
+                        ui.available_width(),
+                        TextRole::PageTitle.font(&t),
+                    );
+                    let count = self.count.as_ref().map(|count| {
+                        egui::WidgetText::from(TextRole::Help.rich(&t, count)).into_galley(
+                            ui,
+                            Some(egui::TextWrapMode::Extend),
+                            f32::INFINITY,
+                            TextRole::Help.font(&t),
+                        )
+                    });
+                    let width = title.size().x + count.as_ref().map_or(0.0, |c| 8.0 + c.size().x);
+                    let (row, _) = ui.allocate_exact_size(egui::vec2(width, title.size().y), egui::Sense::hover());
+                    let baseline = |galley: &egui::Galley| {
+                        galley
+                            .rows
+                            .first()
+                            .and_then(|r| r.glyphs.first().map(|g| r.pos.y + g.pos.y))
+                            .unwrap_or(galley.size().y)
+                    };
+                    let line = baseline(&title);
+                    let title_width = title.size().x;
+                    if let Some(count) = count {
+                        let at = egui::pos2(row.left() + title_width + 8.0, row.top() + line - baseline(&count));
+                        ui.painter().galley(at, count, t.color("muted-foreground"));
+                    }
+                    ui.painter().galley(row.min, title, ink);
                 }
-                ui.painter().galley(row.min, title, ink);
                 if let Some(code) = &self.code {
                     let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
                     ui.label(egui::RichText::new(code).font(mono).color(t.color("muted-foreground")));
