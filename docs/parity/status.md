@@ -133,8 +133,15 @@ and never chase a difference made of numbers.
   window (its legend and card with it) until Exit full screen or Escape. Under them the basemap switcher (`Basemap`): Light, Dark,
   Satellite (NASA's Blue Marble) and Blank, each with the web's preview, the street map by the
   scheme until one is chosen. The web's Streets (OpenFreeMap's Liberty, in colors of its own
-  rather than the tokens') is not offered yet. Still to come: Simulate trouble here, which waits
-  on the scenarios.
+  rather than the tokens') is not offered yet. Simulate trouble here, in each site's menu, starts a
+  region scenario on it and shows it on the map.
+- The live world takes the web's scenarios (`live.rs`): a spike (errors), a drift (slowing) or a
+  region (a site's round trips), each rising, holding and falling back (`envelope`), felt in part
+  by what calls on the service it hits, and a deploy running slowing its service; each service's
+  health comes from its latest readings and its maintenance windows (`health_of`), as the web's
+  `healthOf`. Still to come: Settings (the web's `SettingsDialog` over the page: readings,
+  notices, the status page and the demo, which starts and calms scenarios, sets how often things
+  go wrong by themselves, and turns on incidents opened for them and the on-call responder).
 - A busy confirm lets go after a wait (F23 as the owner refined it, in sokkel-design 0.28.0's
   dialog spec): after `busy-release` (5 s) Cancel says "Stop waiting" and, as Escape does, lets
   the work go (`ConfirmAnswer::StopWaiting`); the shade still holds. The palette's own way out

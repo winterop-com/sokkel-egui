@@ -239,7 +239,21 @@ impl StatusApp {
     pub fn tick(&mut self) {
         self.readings += 1;
         let at = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
-        self.live_world.tick(at);
+        let known = live::Known {
+            deploying: SERVICES
+                .iter()
+                .map(|s| {
+                    self.deploys
+                        .iter()
+                        .any(|d| d.service == s.id && d.state == data::DeployState::Running)
+                })
+                .collect(),
+            maintenance: SERVICES
+                .iter()
+                .map(|s| self.maintenance.iter().any(|w| w.service == s.id && w.going_on(at)))
+                .collect(),
+        };
+        self.live_world.tick(at, &known);
         // a deploy runs 8 s of the board's clock, then succeeds, as the web's `DEPLOY_TIME`
         for deploy in &mut self.deploys {
             if deploy.state == data::DeployState::Running && at - deploy.at >= 8_000.0 {
@@ -1799,6 +1813,7 @@ impl StatusApp {
         let map = &mut self.sites_map;
         let table = &mut self.sites_table;
         let mut chosen = None;
+        let mut troubled = false;
         SplitPane::new("status-regions")
             .default_share(0.6)
             .min_share(0.35)
@@ -1818,12 +1833,18 @@ impl StatusApp {
                         .keys(keys)
                         .bar(true)
                         .stack_layout(StackLayout::Labeled)
-                        .actions(|_| vec![MenuItem::action("Show on the map")])
+                        .actions(|_| {
+                            vec![
+                                MenuItem::action("Show on the map"),
+                                MenuItem::action("Simulate trouble here").icon(Icon::Activity),
+                            ]
+                        })
                         .footer(false)
                         .stretch(true)
                         .show(ui);
-                    if let Some((row, _)) = output.action {
+                    if let Some((row, which)) = output.action {
                         chosen = Some(listed[row]);
+                        troubled = which == 1;
                     }
                 },
             );
@@ -1832,6 +1853,10 @@ impl StatusApp {
             return;
         }
         if let Some(site) = chosen {
+            if troubled {
+                let now = (self.start + self.readings * INTERVAL) as f64 * 1000.0;
+                self.live_world.trigger(live::ScenarioKind::Region, Some(site), now);
+            }
             self.selected_site = Some(site);
             let s = &data::SITES[site];
             self.sites_map.selected = Some(s.id.to_owned());
