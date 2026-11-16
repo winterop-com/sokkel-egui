@@ -83,6 +83,10 @@ and never chase a difference made of numbers.
   only on a row with actions (Roll back on the version running), a code title in Plex Mono Medium
   at the mono size beside sans, and a list with no rows says its empty words ("Nothing
   scheduled.") in its frame.
+- The small lines of facts are `MetaLine`, as the web's: what an incident touches beside its
+  latest word on the public page, the time zone and the count of services under it, the
+  services a subscription covers, a day's word under a service's uptime, and the Dependencies
+  footer (`MetaLine::text`).
 - An incident's page (`incidents/<id>`, a row of the incidents table pressed, or a new incident
   opened) is the web's: the head with its code, back to the incidents, its state and severity
   chips and how long it has been open (`PageHeader` taking several chips and a `meta`), Resolve or

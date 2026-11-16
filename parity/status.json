@@ -66,7 +66,7 @@
         "@winterop-com/sokkel-ui/IssueMark": null,
         "@winterop-com/sokkel-ui/Layout": "egui layout",
         "@winterop-com/sokkel-ui/ListRow": "ListRow and ListRows",
-        "@winterop-com/sokkel-ui/MetaLine": null,
+        "@winterop-com/sokkel-ui/MetaLine": "MetaLine",
         "@winterop-com/sokkel-ui/PageHeader": "PageHeader",
         "@winterop-com/sokkel-ui/PageState": "PageState",
         "@winterop-com/sokkel-ui/PersonAvatar": "PersonAvatar, Cell::Person",

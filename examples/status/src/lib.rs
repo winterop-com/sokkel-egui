@@ -15,10 +15,10 @@ use sokkel_ui_egui::{
     ButtonSize, ButtonVariant, Cell, ChipBar, ChipTone, Choice, ChoiceList, Column, Columns, CommandGroup,
     CommandPalette, DashboardArrange, DashboardEdit, DashboardEditActions, DashboardGrid, DashboardLayoutItem,
     DashboardPanel, DashboardWidget, DataTable, Day, DescriptionList, DesktopWindow, Editor, Gap, Icon, IconButton,
-    KpiRow, ListRow, ListRows, MenuItem, Page, PageHeader, PanelSpan, PersonRow, Rail, RailEntry, RailGroup, RowAside,
-    RowMark, Section, Segmented, Select, Shell, ShellPart, Split, SplitPane, Stack, StackLayout, StackPlace, Stat,
-    StatusLine, StatusTone, TableState, TableVariant, TextRole, Timeline, TimelineEvent, TopBar, UptimeBar, UptimeDay,
-    appearance_commands, checkbox_list, form_bar, format_uptime, install, overall_uptime, palette_shortcut,
+    KpiRow, ListRow, ListRows, MenuItem, MetaLine, Page, PageHeader, PanelSpan, PersonRow, Rail, RailEntry, RailGroup,
+    RowAside, RowMark, Section, Segmented, Select, Shell, ShellPart, Split, SplitPane, Stack, StackLayout, StackPlace,
+    Stat, StatusLine, StatusTone, TableState, TableVariant, TextRole, Timeline, TimelineEvent, TopBar, UptimeBar,
+    UptimeDay, appearance_commands, checkbox_list, form_bar, format_uptime, install, overall_uptime, palette_shortcut,
     place_commands, place_of, relative_time, run_appearance_command,
 };
 
@@ -1332,7 +1332,7 @@ impl StatusApp {
                                     } else {
                                         "warning"
                                     };
-                                    let lines: Vec<(String, data::State, String)> = happened
+                                    let lines: Vec<(String, data::State, [String; 2])> = happened
                                         .iter()
                                         .map(|i| {
                                             let latest = i
@@ -1340,11 +1340,7 @@ impl StatusApp {
                                                 .iter()
                                                 .max_by(|a, b| a.at.total_cmp(&b.at))
                                                 .map_or(String::new(), |u| u.message.clone());
-                                            let meta = [latest, affects(i)]
-                                                .into_iter()
-                                                .filter(|s| !s.is_empty())
-                                                .collect::<Vec<_>>()
-                                                .join(" · ");
+                                            let meta = [latest, affects(i)];
                                             (i.title.clone(), i.state, meta)
                                         })
                                         .collect();
@@ -1370,11 +1366,7 @@ impl StatusApp {
                                                                 .tone(state_tone(state)),
                                                             );
                                                         });
-                                                        ui.label(
-                                                            TextRole::Help
-                                                                .rich(&t, meta)
-                                                                .color(t.color("muted-foreground")),
-                                                        );
+                                                        MetaLine::new(meta).show(ui);
                                                     });
                                                 }
                                             });
@@ -1387,14 +1379,11 @@ impl StatusApp {
                                 .meta("the last 7 days")
                                 .show(ui, |ui| Timeline::new(events).show(ui));
                             subscribe_form(ui, &mut self.subscribe);
-                            ui.label(
-                                TextRole::Help
-                                    .rich(
-                                        &t,
-                                        format!("Times are in your own time zone · {} services", SERVICES.len()),
-                                    )
-                                    .color(t.color("muted-foreground")),
-                            );
+                            MetaLine::new([
+                                "Times are in your own time zone".to_owned(),
+                                format!("{} services", SERVICES.len()),
+                            ])
+                            .show(ui);
                         });
                     });
                 });
@@ -1983,13 +1972,12 @@ impl StatusApp {
                 DashboardPanel::new("Uptime").subtitle(subtitle).show(ui, |ui| {
                     Stack::new(Gap::Lg).show(ui, |ui| {
                         *pressed = UptimeBar::new(("service", id), days).show(ui).map(|d| d.date);
-                        let muted = |text: String| TextRole::Help.rich(&t, text).color(t.color("muted-foreground"));
                         match picked {
                             None => {
-                                ui.label(muted("Press a day to see what happened on it.".into()));
+                                MetaLine::new(["Press a day to see what happened on it."]).show(ui);
                             }
                             Some(day) if on_day.is_empty() => {
-                                ui.label(muted(format!("Nothing happened to {id} on {}.", day.medium())));
+                                MetaLine::new([format!("Nothing happened to {id} on {}.", day.medium())]).show(ui);
                             }
                             Some(_) => Timeline::new(on_day).show(ui),
                         }
@@ -2583,7 +2571,6 @@ impl Subscribe {
 /// The public page's "Get notified": an address, every service or some, and Subscribe; once
 /// subscribed, the address said back with Unsubscribe and Subscribe another.
 fn subscribe_form(ui: &mut Ui, form: &mut Subscribe) {
-    let t = sokkel_ui_egui::tokens(ui.ctx());
     if form.reveal {
         ui.scroll_to_cursor(Some(egui::Align::TOP));
         form.reveal = false;
@@ -2604,7 +2591,7 @@ fn subscribe_form(ui: &mut Ui, form: &mut Subscribe) {
                         } else {
                             done.services.join(", ")
                         };
-                        ui.label(TextRole::Help.rich(&t, which).color(t.color("muted-foreground")));
+                        MetaLine::new([which]).show(ui);
                     });
                     form_bar(ui, None, |ui| {
                         if ui
@@ -2832,5 +2819,5 @@ fn dependencies_footer(service: &data::Service) -> String {
     } else {
         format!("called by {}", called_by.join(", "))
     };
-    format!("Calls on {calls_on} · {called_by}")
+    MetaLine::new([format!("Calls on {calls_on}"), called_by]).text()
 }
