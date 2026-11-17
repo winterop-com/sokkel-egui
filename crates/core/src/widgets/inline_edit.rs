@@ -57,6 +57,7 @@ pub struct InlineEdit {
     look: InlineEditLook,
     validate: Option<Validate>,
     disabled: bool,
+    options: Vec<String>,
     words: InlineEditWords,
 }
 
@@ -69,8 +70,16 @@ impl InlineEdit {
             look: InlineEditLook::Field,
             validate: None,
             disabled: false,
+            options: Vec::new(),
             words: InlineEditWords::default(),
         }
+    }
+
+    /// Edited by choosing one of `options` from a list rather than typing, as the web's
+    /// `editor="select"`: the list opens in the value's place, and a choice saves at once.
+    pub fn select(mut self, options: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        self.options = options.into_iter().map(Into::into).collect();
+        self
     }
 
     /// In a page title's type, as the web's `variant="title"`.
@@ -207,6 +216,29 @@ impl InlineEdit {
             return None;
         };
 
+        // a choice from a list: the select open in the value's place, a choice saved at once
+        if !self.options.is_empty() {
+            let mut at = self.options.iter().position(|o| *o == self.value).unwrap_or(0);
+            let before = at;
+            let list_id = self.id.with("select");
+            let fresh = std::mem::take(&mut open.fresh);
+            let response = ui.add(
+                super::Select::new(&mut at, self.options.iter().cloned(), &self.label)
+                    .default_open(fresh)
+                    .width(ui.available_width()),
+            );
+            let _ = list_id;
+            let closed = !fresh && !egui::Popup::is_id_open(ui.ctx(), response.id.with("list"));
+            let saved = (at != before).then(|| self.options[at].clone());
+            ui.data_mut(|d| {
+                if saved.is_some() || closed {
+                    d.remove::<Editing>(self.id);
+                } else {
+                    d.insert_temp(self.id, open);
+                }
+            });
+            return saved;
+        }
         // open: the editor in the value's place, a rule under it, a refusal's mark at its end
         let fresh = std::mem::take(&mut open.fresh);
         let font = role.font(&t);

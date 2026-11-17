@@ -103,6 +103,8 @@ pub struct AnalyticsApp {
     pub tables: HashMap<String, TableState>,
     /// The key figures of a segment and span, counted once per world.
     kpis: HashMap<KpiKey, Kpis>,
+    /// A customer's page: its dialog and questions.
+    pub customer: crate::customer::CustomerPage,
     /// The customers page's filters and search.
     pub customers: crate::customers::CustomersPage,
     /// Revenue's invoices: their views and the listing's setup.
@@ -173,6 +175,7 @@ impl AnalyticsApp {
             kpis: HashMap::new(),
             invoices: Default::default(),
             customers: Default::default(),
+            customer: Default::default(),
             map: sokkel_egui_maps::MapView::new(30.0, 10.0, 1.0).framed(false),
             map_framed: false,
             opens: HashMap::new(),
@@ -441,6 +444,10 @@ impl AnalyticsApp {
             ShellPart::Page if page == "revenue" => Page::scroll(ui, |ui| self.revenue(ui)),
             ShellPart::Page if page == "customers" && self.view.path.len() == 1 => {
                 Page::show(ui, |ui| self.customers_page(ui))
+            }
+            ShellPart::Page if page == "customers" => {
+                let id = self.view.path[1].clone();
+                Page::scroll(ui, |ui| self.customer_page(ui, &id))
             }
             ShellPart::Page => {}
             ShellPart::Foot => {

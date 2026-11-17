@@ -271,6 +271,9 @@ pub struct TableState {
     head: Option<usize>,
     /// The columns the reader hid from the bar's Columns menu, by their index.
     pub hidden: BTreeSet<usize>,
+    /// The page shown of a paged table, from 0, and its rows to a page; 0 until it is first drawn.
+    pub page: usize,
+    pub page_size: usize,
 }
 
 impl TableState {
@@ -393,6 +396,7 @@ pub struct DataTable<'a> {
     bar: bool,
     toolbar: Option<Toolbar<'a>>,
     foot: Option<String>,
+    paging: Option<Vec<usize>>,
 }
 
 /// What a table's toolbar line draws.
@@ -430,6 +434,7 @@ impl<'a> DataTable<'a> {
             stack_below: None,
             toolbar: None,
             foot: None,
+            paging: None,
             search: None,
             bar: false,
         }
@@ -566,6 +571,13 @@ impl<'a> DataTable<'a> {
     pub fn toolbar(mut self, toolbar: impl FnOnce(&mut Ui) + 'a) -> Self {
         self.toolbar = Some(Box::new(toolbar));
         self.bar = true;
+        self
+    }
+
+    /// The rows a page at a time, as the web's `paging="client"`: `sizes` the rows to a page the
+    /// reader picks from, the first to start with, and a pager under the rows.
+    pub fn paging(mut self, sizes: &[usize]) -> Self {
+        self.paging = Some(sizes.to_vec());
         self
     }
 
@@ -1359,6 +1371,20 @@ impl<'a> DataTable<'a> {
             open_cell(self.state, self.rows, &keys, at);
         }
         let order = self.order();
+        // a paged table draws its page of the rows in their order
+        let total = order.len();
+        let order = match &self.paging {
+            Some(sizes) => {
+                if self.state.page_size == 0 {
+                    self.state.page_size = sizes.first().copied().unwrap_or(10).max(1);
+                }
+                let size = self.state.page_size;
+                let pages = total.div_ceil(size).max(1);
+                self.state.page = self.state.page.min(pages - 1);
+                order.into_iter().skip(self.state.page * size).take(size).collect()
+            }
+            None => order,
+        };
         let radius = t.radius("surface");
         let width = ui.available_width();
         let room = ui.available_height();
@@ -1869,6 +1895,73 @@ impl<'a> DataTable<'a> {
                     }
                     if released {
                         ui.ctx().data_mut(|d| d.remove::<usize>(drag_id));
+                    }
+                }
+                // the pager: which rows of how many, the rows to a page, and the page's buttons
+                if let Some(sizes) = self.paging.clone() {
+                    let size = self.state.page_size.max(1);
+                    let pages = total.div_ceil(size).max(1);
+                    let page = self.state.page;
+                    let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                    let (line, _) = ui.allocate_exact_size(vec2(ui.available_width(), 44.0), Sense::hover());
+                    ui.painter()
+                        .hline(line.x_range(), line.top() + 0.5, Stroke::new(1.0, t.color("border")));
+                    let first = if total == 0 { 0 } else { page * size + 1 };
+                    let last = ((page + 1) * size).min(total);
+                    let mut left = ui.new_child(
+                        egui::UiBuilder::new()
+                            .max_rect(line.shrink2(vec2(12.0, 6.0)))
+                            .layout(egui::Layout::left_to_right(egui::Align::Center)),
+                    );
+                    left.spacing_mut().item_spacing.x = 16.0;
+                    left.label(
+                        egui::RichText::new(format!("{first}–{last} of {total}"))
+                            .font(mono)
+                            .color(t.color("muted-foreground")),
+                    );
+                    left.spacing_mut().item_spacing.x = 8.0;
+                    left.label(
+                        TextRole::Help
+                            .rich(&t, "Rows per page")
+                            .color(t.color("muted-foreground")),
+                    );
+                    let mut at = sizes.iter().position(|s| *s == size).unwrap_or(0);
+                    let names: Vec<String> = sizes.iter().map(ToString::to_string).collect();
+                    if left
+                        .add(
+                            super::Select::new(&mut at, names, "Rows per page")
+                                .small(true)
+                                .width(64.0),
+                        )
+                        .changed()
+                    {
+                        self.state.page_size = sizes[at];
+                        self.state.page = 0;
+                    }
+                    let mut right = ui.new_child(
+                        egui::UiBuilder::new()
+                            .max_rect(line.shrink2(vec2(12.0, 6.0)))
+                            .layout(egui::Layout::right_to_left(egui::Align::Center)),
+                    );
+                    right.spacing_mut().item_spacing.x = 4.0;
+                    let mut go = None;
+                    for (icon, label, to, open) in [
+                        (Icon::ChevronsRight, "Last page", pages - 1, page + 1 < pages),
+                        (Icon::ChevronRight, "Next page", page + 1, page + 1 < pages),
+                        (Icon::ChevronLeft, "Previous page", page.saturating_sub(1), page > 0),
+                        (Icon::ChevronsLeft, "First page", 0, page > 0),
+                    ] {
+                        let pressed = right
+                            .add_enabled_ui(open, |ui| ui.add(super::IconButton::new(icon, label)).clicked())
+                            .inner;
+                        if pressed {
+                            go = Some(to);
+                        }
+                    }
+                    right.add_space(8.0);
+                    right.label(TextRole::Help.rich(&t, format!("Page {} of {pages}", page + 1)));
+                    if let Some(to) = go {
+                        self.state.page = to;
                     }
                 }
                 // the foot: a rule over it, its words in the code face, 12 in and 8 down

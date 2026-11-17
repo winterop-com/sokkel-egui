@@ -150,7 +150,7 @@ impl AnalyticsApp {
 
     /// Sets an invoice's state by hand and builds the world again, as the backend's
     /// `setInvoiceStatus`.
-    fn set_invoice_status(&mut self, invoice: &Invoice, status: InvoiceStatus) {
+    pub(crate) fn set_status(&mut self, invoice: &Invoice, status: InvoiceStatus) {
         let now = self.now();
         let change = InvoiceChange {
             id: invoice.key.clone(),
@@ -390,28 +390,9 @@ impl AnalyticsApp {
                 ctx.copy_text(invoice.id.clone());
                 Toast::new("Copied").description(invoice.id.clone()).show(ctx);
             }
-            3 => {
-                // most cards go through, and about one in five is declined again
-                let status = if first(hash(&[self.now(), 5])) < 0.8 {
-                    InvoiceStatus::Paid
-                } else {
-                    InvoiceStatus::Failed
-                };
-                self.set_invoice_status(invoice, status);
-                let toast = if status == InvoiceStatus::Paid {
-                    Toast::success(format!("{} paid", invoice.id)).description(format!(
-                        "The card went through for {}.",
-                        money.full(invoice.amount as f64)
-                    ))
-                } else {
-                    Toast::new(format!("{} declined again", invoice.id))
-                        .kind(ToastKind::Error)
-                        .description("The card was declined. Try again later.")
-                };
-                toast.show(ctx);
-            }
+            3 => self.charge_again(ctx, invoice),
             4 => {
-                self.set_invoice_status(invoice, InvoiceStatus::Paid);
+                self.set_status(invoice, InvoiceStatus::Paid);
                 Toast::new(format!("{} paid", invoice.id))
                     .description(format!("{name}, {}", money.full(invoice.amount as f64)))
                     .show(ctx);
@@ -419,6 +400,29 @@ impl AnalyticsApp {
             5 => self.invoices.refunding = Some(invoice.id.clone()),
             _ => {}
         }
+    }
+
+    /// Charges a failed or open invoice again: most cards go through, and about one in five is
+    /// declined again, as the backend's `retryCharge`.
+    pub(crate) fn charge_again(&mut self, ctx: &egui::Context, invoice: &Invoice) {
+        let money = self.money();
+        let status = if first(hash(&[self.now(), 5])) < 0.8 {
+            InvoiceStatus::Paid
+        } else {
+            InvoiceStatus::Failed
+        };
+        self.set_status(invoice, status);
+        let toast = if status == InvoiceStatus::Paid {
+            Toast::success(format!("{} paid", invoice.id)).description(format!(
+                "The card went through for {}.",
+                money.full(invoice.amount as f64)
+            ))
+        } else {
+            Toast::new(format!("{} declined again", invoice.id))
+                .kind(ToastKind::Error)
+                .description("The card was declined. Try again later.")
+        };
+        toast.show(ctx);
     }
 
     /// The question before a refund.
@@ -442,7 +446,7 @@ impl AnalyticsApp {
         match answer {
             Some(ConfirmAnswer::Confirm) => {
                 self.invoices.refunding = None;
-                self.set_invoice_status(&invoice, InvoiceStatus::Refunded);
+                self.set_status(&invoice, InvoiceStatus::Refunded);
                 Toast::new(format!("{id} refunded"))
                     .description(format!("{name}, {}", money.full(invoice.amount as f64)))
                     .show(ctx);

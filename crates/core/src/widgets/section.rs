@@ -364,6 +364,8 @@ impl Timeline {
 /// before it.
 pub struct DescriptionList<'a> {
     items: Vec<(String, Tools<'a>)>,
+    /// Each term beside its value in a column this wide, as the web's `termWidth`.
+    side: Option<f32>,
 }
 
 impl<'a> Default for DescriptionList<'a> {
@@ -374,7 +376,27 @@ impl<'a> Default for DescriptionList<'a> {
 
 impl<'a> DescriptionList<'a> {
     pub fn new() -> Self {
-        Self { items: Vec::new() }
+        Self {
+            items: Vec::new(),
+            side: None,
+        }
+    }
+
+    /// Each term beside its value rather than over it, its column `width` wide, as the web's
+    /// default layout with a `termWidth`: the term muted in the small words, level with the value.
+    pub fn side(mut self, width: f32) -> Self {
+        self.side = Some(width);
+        self
+    }
+
+    /// A pair whose value is a code, in the mono face.
+    pub fn code(self, term: impl Into<String>, value: impl Into<String>) -> Self {
+        let value = value.into();
+        self.item(term, move |ui| {
+            let t = tokens(ui.ctx());
+            let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+            ui.label(egui::RichText::new(value).font(mono).color(t.color("foreground")));
+        })
     }
 
     /// A pair whose value is plain words.
@@ -394,6 +416,29 @@ impl<'a> DescriptionList<'a> {
 
     pub fn show(self, ui: &mut Ui) {
         let t = tokens(ui.ctx());
+        if let Some(width) = self.side {
+            // each row as tall as its value, the term level with the value's middle, 8 between rows
+            ui.vertical(|ui| {
+                ui.spacing_mut().item_spacing = egui::vec2(0.0, 8.0);
+                // a row as tall as its value, not held to a control's height
+                ui.spacing_mut().interact_size.y = 0.0;
+                for (term, value) in self.items {
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 0.0;
+                        let (cell, _) = ui.allocate_exact_size(egui::vec2(width, 0.0), egui::Sense::hover());
+                        let drawn = ui.scope(|ui| value(ui)).response.rect;
+                        ui.painter().text(
+                            egui::pos2(cell.left(), drawn.center().y),
+                            egui::Align2::LEFT_CENTER,
+                            term,
+                            TextRole::Help.font(&t),
+                            t.color("muted-foreground"),
+                        );
+                    });
+                }
+            });
+            return;
+        }
         ui.vertical(|ui| {
             ui.spacing_mut().item_spacing.y = 8.0;
             for (term, value) in self.items {

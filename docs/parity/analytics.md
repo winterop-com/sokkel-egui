@@ -59,6 +59,15 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
   bar of plan, state, region, country, owner, seats, MRR and sign-up day; a row opens its page. A
   table that fills its page leaves the page's 40 under it, its rows taking what the bar, head and
   foot leave.
+- A customer's page: its name with its plan and state, Cancel plan and Change plan (or Restart);
+  MRR, seats, paid in all and how long it has paid; its members at work against its seats with
+  the range in the chart's head (`TimeSeriesPanel::show_with`); what is known of it with who looks
+  after it chosen in place (`DescriptionList::side`, `code`, `InlineEdit::select`); its invoices a
+  page at a time (`DataTable::paging`) with charging again, marking paid and refunding; and its plan
+  history. The plan dialog moves it to a plan and seats, saying what it will pay; cancelling asks
+  first. Its figures are the web's: $2,790, 93 seats, $13.7K, 4 months, six invoices.
+- Open: a value chosen in place stands 10 further in than the values around it, where the web
+  lines it up with them.
 - Open: the web map keeps clear of its legend as it frames the points; the egui map frames them
   without it, so it centers a little higher.
 - Open: the web's arranged dashboard drew its stat tiles at their content's 94 rather than the
@@ -67,5 +76,5 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
 
 ## Next
 
-- A customer's page, Funnels,
+- Funnels,
   Reports, Goals, Settings and the palette.

@@ -261,6 +261,12 @@ impl TimeSeriesPanel {
     }
 
     pub fn show(self, ui: &mut Ui) {
+        self.show_with(ui, None::<fn(&mut Ui)>);
+    }
+
+    /// Draws the panel with `actions` at its head's end, as the web's `actions`: a time range.
+    pub fn show_with(self, ui: &mut Ui, actions: Option<impl FnOnce(&mut Ui)>) {
+        let actions: Option<HeadActions<'_>> = actions.map(|a| Box::new(a) as HeadActions<'_>);
         let (chart, height, legend_on, names, table) = (self.chart, self.height, self.legend, self.series, self.table);
         let head = Head {
             subtitle: self.subtitle.as_deref(),
@@ -268,7 +274,7 @@ impl TimeSeriesPanel {
             empty: self.empty.then_some(self.words.empty.as_str()),
             ..Head::new(&self.title)
         };
-        chart_frame(ui, head, |ui| {
+        chart_frame_with(ui, head, actions, |ui| {
             let writing = chart.writing.clone();
             let height = fill_height(ui, height);
             ui.add(chart.height(height));
@@ -357,6 +363,13 @@ impl Default for PanelWords {
 }
 
 fn chart_frame(ui: &mut Ui, head_of: Head<'_>, body: impl FnOnce(&mut Ui)) {
+    chart_frame_with(ui, head_of, None, body);
+}
+
+/// What a chart's head draws at its end, before an arrangement's tools.
+type HeadActions<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
+
+fn chart_frame_with(ui: &mut Ui, head_of: Head<'_>, actions: Option<HeadActions<'_>>, body: impl FnOnce(&mut Ui)) {
     let (title, subtitle) = (head_of.title, head_of.subtitle);
     // in its window the chart alone fills what the window has
     if sokkel_egui::windowed(ui) {
@@ -390,6 +403,10 @@ fn chart_frame(ui: &mut Ui, head_of: Head<'_>, body: impl FnOnce(&mut Ui)) {
                     .layout(egui::Layout::right_to_left(egui::Align::Center)),
             );
             sokkel_egui::panel_tools(&mut tools, cell);
+            if let Some(actions) = actions {
+                tools.spacing_mut().item_spacing.x = 4.0;
+                actions(&mut tools);
+            }
             let taken = tools.min_rect().width();
             let inner = width - 2.0 - 18.0 - if taken > 1.0 { taken + 4.0 } else { 0.0 };
             let title = WidgetText::from(TextRole::Help.rich(&t, title).variation("wght", 500.0)).into_galley(
