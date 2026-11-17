@@ -6,8 +6,8 @@ use std::sync::OnceLock;
 
 use serde_json::Value;
 
-pub const COUNTRY: &str = "sierra-leone";
-pub const COUNTRY_NAME: &str = "Sierra Leone";
+pub const COUNTRY: &str = "liberia";
+pub const COUNTRY_NAME: &str = "Liberia";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Level {
@@ -121,10 +121,10 @@ fn geo() -> &'static Geo {
             .collect();
         // one site whose position came back unreadable, as data from the field sometimes does
         site_places.push(Place {
-            id: "bo/gerihun".into(),
-            name: "Gerihun".into(),
+            id: "bong/tern-landing".into(),
+            name: "Tern Landing".into(),
             level: Level::Site,
-            parent: Some("bo".into()),
+            parent: Some("bong".into()),
             position: None,
         });
         site_places.sort_by(|a, b| a.name.cmp(&b.name));
@@ -207,8 +207,8 @@ mod tests {
     #[test]
     fn the_hierarchy_reads_as_the_web_reads_it() {
         assert_eq!(super::places()[0].id, super::COUNTRY);
-        assert_eq!(super::boundaries().len(), 13);
-        assert!(super::place_of("bo/gerihun").is_some_and(|p| p.position.is_none()));
-        assert_eq!(super::path_of("bo/bumpe").len(), 3);
+        assert_eq!(super::boundaries().len(), 15);
+        assert!(super::place_of("bong/tern-landing").is_some_and(|p| p.position.is_none()));
+        assert_eq!(super::path_of("bong/amber-creek").len(), 3);
     }
 }

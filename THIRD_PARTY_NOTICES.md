@@ -10,3 +10,6 @@
 - The basemap previews in `crates/maps/assets/previews/`, as sokkel-ui-maps ships them: the light
   and dark street maps from OpenFreeMap (© OpenMapTiles, © OpenStreetMap contributors, under the
   Open Database License), and the satellite from NASA's Blue Marble (public domain).
+- The regions in `examples/records/data/regions.json`: Liberia's counties from Natural Earth's
+  1:10m Admin 1 (v5.1.2), public domain, as sokkel-ui's examples carry them. The sites in
+  `places.json` are generated.

@@ -157,8 +157,8 @@ type SeedHousehold = (
 fn seed_households(now: i64) -> Vec<Household> {
     let rows: [SeedHousehold; 7] = [
         (
-            "bo",
-            "bo/baomahun",
+            "bong",
+            "bong/alder-crossing",
             1985,
             4,
             "well",
@@ -167,8 +167,8 @@ fn seed_households(now: i64) -> Vec<Household> {
             HouseholdStatus::Active,
         ),
         (
-            "bo",
-            "bo/bumpe",
+            "bong",
+            "bong/amber-creek",
             1991,
             6,
             "river",
@@ -177,8 +177,8 @@ fn seed_households(now: i64) -> Vec<Household> {
             HouseholdStatus::Active,
         ),
         (
-            "kenema",
-            "kenema/baama",
+            "nimba",
+            "nimba/amber-bridge",
             1978,
             3,
             "standpipe",
@@ -187,8 +187,8 @@ fn seed_households(now: i64) -> Vec<Household> {
             HouseholdStatus::Completed,
         ),
         (
-            "kono",
-            "kono/baiama",
+            "lofa",
+            "lofa/alder-falls",
             1969,
             8,
             "well",
@@ -197,8 +197,8 @@ fn seed_households(now: i64) -> Vec<Household> {
             HouseholdStatus::Active,
         ),
         (
-            "bombali",
-            "bombali/kamabai",
+            "margibi",
+            "margibi/alder-ford",
             1994,
             2,
             "rain",
@@ -207,8 +207,8 @@ fn seed_households(now: i64) -> Vec<Household> {
             HouseholdStatus::Active,
         ),
         (
-            "port-loko",
-            "port-loko/lunsar",
+            "grand-bassa",
+            "grand-bassa/alder-brook",
             1988,
             5,
             "tap",
@@ -218,8 +218,8 @@ fn seed_households(now: i64) -> Vec<Household> {
         ),
         // the first household registered a second time by mistake, which the metadata check finds
         (
-            "bo",
-            "bo/bumpe",
+            "bong",
+            "bong/amber-creek",
             1985,
             4,
             "well",
@@ -303,7 +303,7 @@ fn seed_receipts(now: i64, households: &[Household]) -> Vec<Receipt> {
             ..row("FRM-HOME", -1, Received, "margaret", 9106)
         },
         Seed {
-            place: Some("bo/baomahun"),
+            place: Some("bong/alder-crossing"),
             ..row("FRM-MONTH", -2, Forwarded, "ada", 9101)
         },
         row("FRM-SAMPLE", -2, Forwarded, "grace", 9107),
@@ -316,7 +316,7 @@ fn seed_receipts(now: i64, households: &[Household]) -> Vec<Receipt> {
             ..row("FRM-HOME", -4, Forwarded, "margaret", 9109)
         },
         Seed {
-            place: Some("kenema"),
+            place: Some("nimba"),
             ..row("FRM-STOCK", -5, Forwarded, "ada", 9110)
         },
         row("FRM-SITE", -6, Withdrawn, "grace", 9111),
@@ -330,7 +330,7 @@ fn seed_receipts(now: i64, households: &[Household]) -> Vec<Receipt> {
         },
         row("FRM-SAMPLE", -11, Forwarded, "ada", 9114),
         Seed {
-            place: Some("kono/baiama"),
+            place: Some("lofa/alder-falls"),
             ..row("FRM-MONTH", -33, Forwarded, "grace", 9115)
         },
     ];
