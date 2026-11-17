@@ -2,6 +2,7 @@
 //! simulated history of teams, their plans and the invoices those bill.
 
 pub mod app;
+pub mod customers;
 pub mod days;
 pub mod invoices;
 pub mod metrics;

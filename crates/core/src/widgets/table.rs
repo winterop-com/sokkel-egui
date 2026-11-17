@@ -1362,6 +1362,9 @@ impl<'a> DataTable<'a> {
         let radius = t.radius("surface");
         let width = ui.available_width();
         let room = ui.available_height();
+        // where a stretched table's frame must end: the room's bottom, less the row count under it
+        let limit = ui.cursor().top() + room - if self.footer { 26.0 } else { 0.0 };
+        let foot_room = if self.foot.is_some() { 32.0 } else { 0.0 };
         let mut out = TableOutput {
             response: ui.response(),
             toggled: None,
@@ -1590,7 +1593,8 @@ impl<'a> DataTable<'a> {
                 let area = egui::ScrollArea::vertical()
                     .id_salt(self.id.with("rows"))
                     .max_height(if self.stretch {
-                        (room - head_height - 2.0).max(row_height)
+                        // what is left under the bar and the head, less the foot and the frame's edge
+                        (limit - ui.cursor().top() - foot_room - 1.0).max(row_height)
                     } else {
                         // never taller than its rows: a height without bound shows them all
                         self.height.min(order.len() as f32 * row_height + 1.0)

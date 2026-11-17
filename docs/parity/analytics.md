@@ -54,6 +54,11 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
   web's `lib/filters` and `lib/list-views`). Each row opens its team, and its menu copies the
   number, charges again, marks it paid or refunds it after a question; the foot says what the rows
   paid (`DataTable::toolbar`, `foot`, the count with its thousands; `Button::muted`, `note`).
+- Customers: every team (13,667 with the stream's two, 1,656 paying), where it stands, what it pays
+  and paid in the range, its country and who looks after it, most paying first, under the filter
+  bar of plan, state, region, country, owner, seats, MRR and sign-up day; a row opens its page. A
+  table that fills its page leaves the page's 40 under it, its rows taking what the bar, head and
+  foot leave.
 - Open: the web map keeps clear of its legend as it frames the points; the egui map frames them
   without it, so it centers a little higher.
 - Open: the web's arranged dashboard drew its stat tiles at their content's 94 rather than the
@@ -62,5 +67,5 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
 
 ## Next
 
-- Customers and a customer, Funnels,
+- A customer's page, Funnels,
   Reports, Goals, Settings and the palette.

@@ -31,6 +31,7 @@ fn every_screen() {
         ("analytics_overview", "", 1100.0),
         ("analytics_revenue", "revenue", 1100.0),
         ("analytics_invoices", "revenue/invoices", 900.0),
+        ("analytics_customers", "customers", 900.0),
     ] {
         let mut harness = render(path, height);
         results.add(harness.try_snapshot(name));
