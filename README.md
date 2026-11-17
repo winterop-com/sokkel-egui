@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/winterop-com/sokkel-egui/actions/workflows/ci.yml/badge.svg)](https://github.com/winterop-com/sokkel-egui/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/winterop-com/sokkel-egui/actions/workflows/codeql.yml/badge.svg)](https://github.com/winterop-com/sokkel-egui/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/winterop-com/sokkel-egui/badge)](https://scorecard.dev/viewer/?uri=github.com/winterop-com/sokkel-egui)
 [![Docs](https://github.com/winterop-com/sokkel-egui/actions/workflows/pages.yml/badge.svg)](https://winterop-com.github.io/sokkel-egui/)
 [![Rust 2024](https://img.shields.io/badge/rust-2024-orange)](Cargo.toml)
 [![egui 0.36](https://img.shields.io/badge/egui-0.36-blue)](https://github.com/emilk/egui)
