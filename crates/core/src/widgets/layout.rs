@@ -8,6 +8,7 @@ pub struct Columns {
     count: usize,
     min: f32,
     gap: f32,
+    fields: bool,
 }
 
 impl Columns {
@@ -17,7 +18,15 @@ impl Columns {
             count: count.max(1),
             min: 224.0,
             gap: 24.0,
+            fields: false,
         }
+    }
+
+    /// Fields in the columns, each row's labels, descriptions, controls and help lined up across
+    /// it, as the web's `Columns fields`.
+    pub fn fields(mut self, fields: bool) -> Self {
+        self.fields = fields;
+        self
     }
 
     /// The least width of a column: `xs` 120, `sm` 160, `md` 224, `lg` 288, `xl` 448.
@@ -40,7 +49,16 @@ impl Columns {
         let width = (room - self.gap * (columns - 1) as f32) / columns as f32;
         let gap = ui.spacing().item_spacing;
         ui.spacing_mut().item_spacing.y = self.gap;
+        let grid = ui.auto_id_with("sokkel-columns");
         for start in (0..items).step_by(columns) {
+            let row = grid.with(start);
+            if self.fields {
+                let wanted: super::fields::FieldRow = ui.data(|d| d.get_temp(row)).unwrap_or_default();
+                ui.data_mut(|d| {
+                    d.insert_temp(super::fields::field_row_id(), (row, wanted));
+                    d.remove::<super::fields::FieldRow>(row.with("measured"));
+                });
+            }
             ui.horizontal_top(|ui| {
                 ui.spacing_mut().item_spacing.x = self.gap;
                 for index in start..(start + columns).min(items) {
@@ -50,6 +68,22 @@ impl Columns {
                     });
                 }
             });
+            if self.fields {
+                let (wanted, seen): (super::fields::FieldRow, super::fields::FieldRow) = ui.data(|d| {
+                    (
+                        d.get_temp(row).unwrap_or_default(),
+                        d.get_temp(row.with("measured")).unwrap_or_default(),
+                    )
+                });
+                // a part grown past what the row was laid to: the next frame lines it up again
+                if seen != wanted {
+                    ui.data_mut(|d| d.insert_temp(row, seen));
+                    ui.ctx().request_repaint();
+                }
+            }
+        }
+        if self.fields {
+            ui.data_mut(|d| d.remove::<(egui::Id, super::fields::FieldRow)>(super::fields::field_row_id()));
         }
         ui.spacing_mut().item_spacing = gap;
     }

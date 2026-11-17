@@ -51,6 +51,8 @@ pub struct RecordsApp {
     pub keep_place: bool,
     /// The place the last form was filed for.
     pub last_place: Option<String>,
+    /// The form being filled.
+    pub fill: Option<crate::form_fill::Fill>,
     /// When the server was last asked whether it answers, and whether it did.
     probed_at: i64,
     answered: Option<bool>,
@@ -90,6 +92,7 @@ impl RecordsApp {
             settings: None,
             keep_place: true,
             last_place: None,
+            fill: None,
             probed_at: now - PROBE,
             answered: Some(true),
             foot: Foot::default(),
@@ -269,6 +272,13 @@ impl RecordsApp {
             ShellPart::Page => match (known.is_some(), first.as_str()) {
                 (true, "") => Page::scroll(ui, |ui| self.overview(ui)),
                 (true, "forms") if self.path.len() == 1 => Page::scroll(ui, |ui| self.forms_page(ui)),
+                (true, "forms") if self.path.get(2).is_none_or(|p| p == "for") => {
+                    let form = self.path[1].clone();
+                    let household = (self.path.get(2).map(String::as_str) == Some("for"))
+                        .then(|| self.path.get(3).cloned())
+                        .flatten();
+                    self.form_fill(ui, &form, household.as_deref());
+                }
                 _ => Page::scroll(ui, |ui| {
                     sokkel_egui::Empty::new("Not found")
                         .description("No page has this address.")

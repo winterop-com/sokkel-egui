@@ -3,19 +3,21 @@
 use egui::{Id, Key, Modifiers, Response, Ui, Widget};
 
 use super::Input;
-use crate::{TextRole, tokens};
 
 /// The words a number field says.
 #[derive(Clone, Debug)]
 pub struct NumberFieldWords {
     /// Said when what is typed is not a number.
     pub unreadable: String,
+    /// Said when a whole number is wanted and what is typed has a fraction.
+    pub whole: String,
 }
 
 impl Default for NumberFieldWords {
     fn default() -> Self {
         Self {
             unreadable: "Enter a number".into(),
+            whole: "Enter a whole number".into(),
         }
     }
 }
@@ -45,15 +47,56 @@ pub fn read_number(text: &str) -> Option<f64> {
 pub struct NumberField<'a> {
     id: Id,
     label: String,
-    value: &'a mut f64,
+    value: Held<'a>,
     suffix: String,
     step: f64,
     width: Option<f32>,
+    integer: bool,
+    required: bool,
+    hint: Option<String>,
+    description: Option<String>,
+    help: Option<String>,
+    error: Option<String>,
     words: NumberFieldWords,
+}
+
+/// The value a number field holds: always a number, or a number or none.
+enum Held<'a> {
+    Always(&'a mut f64),
+    Maybe(&'a mut Option<f64>),
+}
+
+impl Held<'_> {
+    fn get(&self) -> Option<f64> {
+        match self {
+            Held::Always(v) => Some(**v),
+            Held::Maybe(v) => **v,
+        }
+    }
+
+    fn set(&mut self, value: Option<f64>) {
+        match self {
+            Held::Always(v) => {
+                if let Some(value) = value {
+                    **v = value;
+                }
+            }
+            Held::Maybe(v) => **v = value,
+        }
+    }
 }
 
 impl<'a> NumberField<'a> {
     pub fn new(id: impl egui::AsIdSalt, label: impl Into<String>, value: &'a mut f64) -> Self {
+        Self::holding(id, label, Held::Always(value))
+    }
+
+    /// A number that may be left empty: emptied, it holds none, as an unanswered question.
+    pub fn optional(id: impl egui::AsIdSalt, label: impl Into<String>, value: &'a mut Option<f64>) -> Self {
+        Self::holding(id, label, Held::Maybe(value))
+    }
+
+    fn holding(id: impl egui::AsIdSalt, label: impl Into<String>, value: Held<'a>) -> Self {
         Self {
             id: Id::unique(id),
             label: label.into(),
@@ -61,8 +104,47 @@ impl<'a> NumberField<'a> {
             suffix: String::new(),
             step: 1.0,
             width: None,
+            integer: false,
+            required: false,
+            hint: None,
+            description: None,
+            help: None,
+            error: None,
             words: NumberFieldWords::default(),
         }
+    }
+
+    /// Whole numbers only: a fraction typed is said to be one.
+    pub fn integer(mut self, integer: bool) -> Self {
+        self.integer = integer;
+        self
+    }
+
+    pub fn required(mut self, required: bool) -> Self {
+        self.required = required;
+        self
+    }
+
+    /// A short word after the label, such as the unit.
+    pub fn hint(mut self, hint: Option<impl Into<String>>) -> Self {
+        self.hint = hint.map(Into::into);
+        self
+    }
+
+    pub fn description(mut self, description: Option<impl Into<String>>) -> Self {
+        self.description = description.map(Into::into);
+        self
+    }
+
+    pub fn help(mut self, help: Option<impl Into<String>>) -> Self {
+        self.help = help.map(Into::into);
+        self
+    }
+
+    /// The app's own word on the value, such as one past the range a form takes.
+    pub fn error(mut self, error: Option<impl Into<String>>) -> Self {
+        self.error = error.map(Into::into);
+        self
     }
 
     /// Words after the number, such as its unit: `ms`, `%`.
@@ -97,84 +179,95 @@ struct Typing {
 }
 
 impl Widget for NumberField<'_> {
-    fn ui(self, ui: &mut Ui) -> Response {
-        let t = tokens(ui.ctx());
+    fn ui(mut self, ui: &mut Ui) -> Response {
         let key = self.id.with("typing");
+        let shown = self.value.get();
         let mut typing = ui.data(|d| d.get_temp::<Typing>(key)).unwrap_or_else(|| Typing {
-            text: write_number(*self.value),
+            text: shown.map(write_number).unwrap_or_default(),
             unreadable: false,
         });
         let width = self.width.unwrap_or_else(|| ui.available_width());
         let mut changed = false;
-        let response = ui
-            .vertical(|ui| {
-                ui.spacing_mut().item_spacing.y = 6.0;
-                let label = ui.label(TextRole::Label.rich(&t, &self.label).color(t.color("foreground")));
-                let mut text = typing.text.clone();
-                let mut response = ui
-                    .push_id(self.id, |ui| {
-                        ui.add(
-                            Input::new(&mut text)
-                                .name(&self.label)
-                                .width(width)
-                                .suffix(self.suffix.trim())
-                                .invalid(typing.unreadable),
-                        )
-                    })
-                    .inner
-                    .labelled_by(label.id);
-                typing.text = text;
-                if response.has_focus() {
-                    // the arrows step the value, ten steps with Shift
-                    let steps = ui.input_mut(|i| {
-                        let mut steps = 0.0;
-                        for (modifiers, by) in [(Modifiers::NONE, 1.0), (Modifiers::SHIFT, 10.0)] {
-                            if i.consume_key(modifiers, Key::ArrowUp) {
-                                steps += by;
-                            }
-                            if i.consume_key(modifiers, Key::ArrowDown) {
-                                steps -= by;
-                            }
+        let whole = |v: f64| !self.integer || v.fract() == 0.0;
+        let issue = if typing.unreadable {
+            Some(self.words.unreadable.clone())
+        } else if read_number(&typing.text).is_some_and(|v| !whole(v)) {
+            Some(self.words.whole.clone())
+        } else {
+            self.error.clone()
+        };
+        let mut field = super::Field::new(&self.label)
+            .required(self.required)
+            .hint(self.hint.clone())
+            .help_if(self.help.clone())
+            .error(issue);
+        if let Some(description) = &self.description {
+            field = field.description(description);
+        }
+        let response = field.show(ui, |ui| {
+            let mut text = typing.text.clone();
+            let mut response = ui
+                .push_id(self.id, |ui| {
+                    ui.add(
+                        Input::new(&mut text)
+                            .name(&self.label)
+                            .width(width)
+                            .suffix(self.suffix.trim()),
+                    )
+                })
+                .inner;
+            typing.text = text;
+            if response.has_focus() {
+                // the arrows step the value, ten steps with Shift
+                let steps = ui.input_mut(|i| {
+                    let mut steps = 0.0;
+                    for (modifiers, by) in [(Modifiers::NONE, 1.0), (Modifiers::SHIFT, 10.0)] {
+                        if i.consume_key(modifiers, Key::ArrowUp) {
+                            steps += by;
                         }
-                        steps
-                    });
-                    if steps != 0.0 {
-                        let from = read_number(&typing.text).unwrap_or(*self.value);
-                        let next = ((from / self.step).round() + steps) * self.step;
-                        *self.value = next;
-                        typing.text = write_number(next);
+                        if i.consume_key(modifiers, Key::ArrowDown) {
+                            steps -= by;
+                        }
+                    }
+                    steps
+                });
+                if steps != 0.0 {
+                    let from = read_number(&typing.text).or(shown).unwrap_or(0.0);
+                    let next = ((from / self.step).round() + steps) * self.step;
+                    self.value.set(Some(next));
+                    typing.text = write_number(next);
+                    typing.unreadable = false;
+                    changed = true;
+                }
+            }
+            if response.lost_focus() || response.changed() {
+                let empty = typing.text.trim().is_empty();
+                match read_number(&typing.text) {
+                    Some(next) => {
+                        if Some(next) != self.value.get() {
+                            self.value.set(Some(next));
+                            changed = true;
+                        }
                         typing.unreadable = false;
-                        changed = true;
-                    }
-                }
-                if response.lost_focus() || (response.changed() && read_number(&typing.text).is_some()) {
-                    match read_number(&typing.text) {
-                        Some(next) => {
-                            if next != *self.value {
-                                *self.value = next;
-                                changed = true;
-                            }
-                            typing.unreadable = false;
-                            if response.lost_focus() {
-                                typing.text = write_number(next);
-                            }
+                        if response.lost_focus() {
+                            typing.text = write_number(next);
                         }
-                        None => typing.unreadable = true,
                     }
+                    None if empty && matches!(self.value, Held::Maybe(_)) => {
+                        if self.value.get().is_some() {
+                            self.value.set(None);
+                            changed = true;
+                        }
+                        typing.unreadable = false;
+                    }
+                    None => typing.unreadable = response.lost_focus() || typing.unreadable,
                 }
-                if typing.unreadable {
-                    ui.label(
-                        TextRole::Help
-                            .rich(&t, &self.words.unreadable)
-                            .color(t.color("critical-ink")),
-                    );
-                }
-                if changed {
-                    response.mark_changed();
-                }
-                response
-            })
-            .inner;
+            }
+            if changed {
+                response.mark_changed();
+            }
+            response
+        });
         // away from the field it shows the value as given, so a value set elsewhere shows
         if response.has_focus() || typing.unreadable {
             ui.data_mut(|d| d.insert_temp(key, typing));

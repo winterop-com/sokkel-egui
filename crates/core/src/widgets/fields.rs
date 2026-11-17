@@ -519,6 +519,17 @@ impl FormBar {
 
     /// Draws the band across the room; `actions` are laid out from its end.
     pub fn show<R>(self, ui: &mut egui::Ui, actions: impl FnOnce(&mut egui::Ui) -> R) -> R {
+        self.show_with(ui, |_| {}, actions)
+    }
+
+    /// Draws the band with `start` before the note, kept apart from the verbs at the end, as the
+    /// web's `start`: a form's Clear and Fill.
+    pub fn show_with<R>(
+        self,
+        ui: &mut egui::Ui,
+        start: impl FnOnce(&mut egui::Ui),
+        actions: impl FnOnce(&mut egui::Ui) -> R,
+    ) -> R {
         let t = crate::tokens(ui.ctx());
         let height = Self::height(ui.ctx());
         let (band, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), egui::Sense::hover());
@@ -537,8 +548,21 @@ impl FormBar {
         );
         child.spacing_mut().item_spacing.x = 8.0;
         let out = actions(&mut child);
+        let mut lead = ui.new_child(
+            egui::UiBuilder::new()
+                .max_rect(row)
+                .layout(Layout::left_to_right(Align::Center)),
+        );
+        lead.spacing_mut().item_spacing.x = 8.0;
+        start(&mut lead);
+        let started = lead.min_rect();
+        let note_left = if started.width() > 0.0 {
+            started.right() + 8.0
+        } else {
+            row.left()
+        };
         if let Some(note) = &self.note {
-            let room = (child.min_rect().left() - row.left() - 8.0).max(1.0);
+            let room = (child.min_rect().left() - note_left - 8.0).max(1.0);
             let galley = egui::WidgetText::from(crate::TextRole::Body.rich(&t, note)).into_galley(
                 ui,
                 Some(egui::TextWrapMode::Truncate),
@@ -546,7 +570,7 @@ impl FormBar {
                 crate::TextRole::Body.font(&t),
             );
             ui.painter().galley(
-                egui::pos2(row.left(), row.center().y - galley.size().y / 2.0),
+                egui::pos2(note_left, row.center().y - galley.size().y / 2.0),
                 galley,
                 t.color("muted-foreground"),
             );
@@ -561,12 +585,30 @@ impl Default for FormBar {
     }
 }
 
-/// A label over a control with a line saying what it sets, after sokkel-ui's `Field` with
-/// `description` (under the label, 4 down, muted) and `help` (under the control, small and muted).
+/// The heights of the four parts of the fields in one row of a fields grid: the label line, the
+/// description, the control and the help, so the fields beside each other line up.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub(crate) struct FieldRow {
+    pub parts: [f32; 4],
+}
+
+/// Where the fields of the row being drawn read their parts' heights, and report their own.
+pub(crate) fn field_row_id() -> egui::Id {
+    egui::Id::unique("sokkel-field-row")
+}
+
+/// A label over a control, after sokkel-ui's `Field`: the label with a required mark and a hint
+/// beside it, a description under it, the control, and help under that. An error edges the control
+/// in the critical ink and puts a mark at its end that says the error on hover. In a fields grid
+/// (`Columns::fields`) the four parts line up with the fields beside it.
 pub struct Field {
     label: String,
     description: Option<String>,
     help: Option<String>,
+    hint: Option<String>,
+    required: bool,
+    error: Option<String>,
+    help_ui: Option<super::section::Tools<'static>>,
 }
 
 impl Field {
@@ -575,7 +617,18 @@ impl Field {
             label: label.into(),
             description: None,
             help: None,
+            hint: None,
+            required: false,
+            error: None,
+            help_ui: None,
         }
+    }
+
+    /// Help drawn by the caller under the control, in the help's type and ink, such as a reason
+    /// with its formula.
+    pub fn help_ui(mut self, help: impl FnOnce(&mut egui::Ui) + 'static) -> Self {
+        self.help_ui = Some(Box::new(help));
+        self
     }
 
     /// A sentence under the label saying what the control sets.
@@ -590,33 +643,156 @@ impl Field {
         self
     }
 
-    pub fn show<R>(self, ui: &mut egui::Ui, control: impl FnOnce(&mut egui::Ui) -> R) -> R {
+    pub fn help_if(mut self, help: Option<impl Into<String>>) -> Self {
+        self.help = help.map(Into::into);
+        self
+    }
+
+    /// A short word after the label in the faint ink, such as a unit.
+    pub fn hint(mut self, hint: Option<impl Into<String>>) -> Self {
+        self.hint = hint.map(Into::into);
+        self
+    }
+
+    /// A star after the label in the critical ink.
+    pub fn required(mut self, required: bool) -> Self {
+        self.required = required;
+        self
+    }
+
+    /// What is wrong with the value: the control edged in the critical ink, a mark at its end.
+    pub fn error(mut self, error: Option<impl Into<String>>) -> Self {
+        self.error = error.map(Into::into);
+        self
+    }
+
+    pub fn show<R>(mut self, ui: &mut egui::Ui, control: impl FnOnce(&mut egui::Ui) -> R) -> R {
         let t = crate::tokens(ui.ctx());
-        ui.vertical(|ui| {
-            ui.spacing_mut().item_spacing.y = 6.0;
-            ui.label(
+        let row: Option<(egui::Id, FieldRow)> = ui.data(|d| d.get_temp(field_row_id()));
+        let lined = row.is_some();
+        let (row_id, wanted) = row.unwrap_or((egui::Id::NULL, FieldRow::default()));
+        let mut had = [0.0_f32; 4];
+        let out = ui
+            .vertical(|ui| {
+                ui.spacing_mut().item_spacing.y = if lined { 0.0 } else { 6.0 };
+                // the label line: the label, the star, and the hint 8 after them on its baseline
+                let top = ui.cursor().top();
+                // the label line as one text: the label, the star, and the hint after them
+                let mut line = egui::text::LayoutJob::default();
+                let style = ui.style().clone();
                 crate::TextRole::Label
                     .rich(&t, &self.label)
-                    .color(t.color("foreground")),
-            );
-            if let Some(description) = &self.description {
-                ui.add_space(-2.0);
-                ui.add(
-                    egui::Label::new(
-                        crate::TextRole::Body
-                            .rich(&t, description)
-                            .color(t.color("muted-foreground")),
-                    )
-                    .wrap(),
-                );
-            }
-            let out = control(ui);
-            if let Some(help) = &self.help {
-                ui.label(crate::TextRole::Help.rich(&t, help).color(t.color("muted-foreground")));
-            }
-            out
-        })
-        .inner
+                    .color(t.color("foreground"))
+                    .append_to(&mut line, &style, egui::FontSelection::Default, egui::Align::BOTTOM);
+                if self.required {
+                    crate::TextRole::Label
+                        .rich(&t, " *")
+                        .color(t.color("critical-ink"))
+                        .append_to(&mut line, &style, egui::FontSelection::Default, egui::Align::BOTTOM);
+                }
+                if let Some(hint) = &self.hint {
+                    // 8 of room before the hint, as the web's `gap-x-2`
+                    crate::TextRole::Help
+                        .rich(&t, format!("\u{2002}\u{2009}{hint}"))
+                        .color(t.color("faint"))
+                        .append_to(&mut line, &style, egui::FontSelection::Default, egui::Align::BOTTOM);
+                }
+                ui.label(line);
+                had[0] = ui.cursor().top() - top;
+                if lined && wanted.parts[0] > had[0] {
+                    ui.add_space(wanted.parts[0] - had[0]);
+                }
+                let top = ui.cursor().top();
+                if let Some(description) = &self.description {
+                    // 4 under the label, as the web's description sits
+                    ui.add_space(if lined { 6.0 } else { -2.0 });
+                    ui.add(
+                        egui::Label::new(
+                            crate::TextRole::Body
+                                .rich(&t, description)
+                                .color(t.color("muted-foreground")),
+                        )
+                        .wrap(),
+                    );
+                }
+                had[1] = ui.cursor().top() - top;
+                if lined && wanted.parts[1] > had[1] {
+                    ui.add_space(wanted.parts[1] - had[1]);
+                }
+                let top = ui.cursor().top();
+                if lined {
+                    ui.add_space(6.0);
+                }
+                let inner = ui.scope(|ui| control(ui));
+                if let Some(error) = &self.error {
+                    let rect = inner.response.rect;
+                    let control_rect = egui::Rect::from_min_max(
+                        egui::pos2(rect.left(), rect.top()),
+                        egui::pos2(
+                            rect.right(),
+                            rect.top() + rect.height().min(t.density("control").max(32.0)),
+                        ),
+                    );
+                    ui.painter().rect_stroke(
+                        control_rect,
+                        t.radius("control"),
+                        egui::Stroke::new(1.0, t.color("critical")),
+                        egui::StrokeKind::Inside,
+                    );
+                    let mark = egui::Rect::from_center_size(
+                        egui::pos2(control_rect.right() - 18.0, control_rect.center().y),
+                        egui::vec2(20.0, 20.0),
+                    );
+                    let hit = ui.interact(mark, ui.scope_id().with(("issue", &self.label)), egui::Sense::hover());
+                    hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, format!("Issue: {error}")));
+                    crate::icons::paint(
+                        ui.painter(),
+                        mark.center(),
+                        crate::Icon::CircleAlert,
+                        16.0,
+                        t.color("critical-ink"),
+                    );
+                    hit.on_hover_text(error.clone());
+                }
+                had[2] = ui.cursor().top() - top;
+                if lined && wanted.parts[2] > had[2] {
+                    ui.add_space(wanted.parts[2] - had[2]);
+                }
+                let top = ui.cursor().top();
+                if let Some(help) = &self.help {
+                    if lined {
+                        ui.add_space(6.0);
+                    }
+                    ui.add(
+                        egui::Label::new(crate::TextRole::Help.rich(&t, help).color(t.color("muted-foreground")))
+                            .wrap(),
+                    );
+                }
+                if let Some(help) = self.help_ui.take() {
+                    if lined {
+                        ui.add_space(6.0);
+                    }
+                    help(ui);
+                }
+                had[3] = ui.cursor().top() - top;
+                if lined && wanted.parts[3] > had[3] {
+                    ui.add_space(wanted.parts[3] - had[3]);
+                }
+                inner.inner
+            })
+            .inner;
+        if lined {
+            // what this field took of each part, for the next frame to line the row up to
+            let key = row_id.with("measured");
+            ui.data_mut(|d| {
+                let mut seen: FieldRow = d.get_temp(key).unwrap_or_default();
+                for (part, height) in had.iter().enumerate() {
+                    seen.parts[part] = seen.parts[part].max(*height);
+                }
+                d.insert_temp(key, seen);
+            });
+        }
+        out
     }
 }
 

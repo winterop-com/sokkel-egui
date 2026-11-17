@@ -325,6 +325,9 @@ pub struct DateField<'a> {
     value: &'a mut Option<Day>,
     today: Day,
     error: Option<String>,
+    required: bool,
+    description: Option<String>,
+    help: Option<String>,
     words: DateFieldWords,
 }
 
@@ -343,8 +346,29 @@ impl<'a> DateField<'a> {
             value,
             today,
             error: None,
+            required: false,
+            description: None,
+            help: None,
             words: DateFieldWords::default(),
         }
+    }
+
+    /// A star after the label, as a `Field`'s.
+    pub fn required(mut self, required: bool) -> Self {
+        self.required = required;
+        self
+    }
+
+    /// A sentence under the label saying what the day is.
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
+        self
+    }
+
+    /// Small words under the field.
+    pub fn help(mut self, help: impl Into<String>) -> Self {
+        self.help = Some(help.into());
+        self
     }
 
     /// What is wrong with the day, as the app says it under the field.
@@ -368,20 +392,25 @@ impl<'a> DateField<'a> {
         }
         let mut changed = false;
         let width = ui.available_width();
-        ui.vertical(|ui| {
-            ui.spacing_mut().item_spacing.y = 6.0;
-            ui.label(TextRole::Label.rich(&t, &self.label).color(t.color("foreground")));
+        let unreadable = !held.text.trim().is_empty() && Day::parse(held.text.trim()).is_none();
+        let issue = if unreadable {
+            Some(format!(
+                "{} {}",
+                self.words.unreadable,
+                self.words.example.replace("{}", &self.today.to_string())
+            ))
+        } else {
+            self.error.clone()
+        };
+        let mut field = super::Field::new(&self.label)
+            .required(self.required)
+            .error(issue.clone())
+            .help_if(self.help.clone());
+        if let Some(description) = &self.description {
+            field = field.description(description);
+        }
+        field.show(ui, |ui| {
             let typed_before = held.text.clone();
-            let unreadable = !held.text.trim().is_empty() && Day::parse(held.text.trim()).is_none();
-            let issue = if unreadable {
-                Some(format!(
-                    "{} {}",
-                    self.words.unreadable,
-                    self.words.example.replace("{}", &self.today.to_string())
-                ))
-            } else {
-                self.error.clone()
-            };
             let field = ui.add(
                 Input::new(&mut held.text)
                     .name(&self.label)
@@ -415,9 +444,6 @@ impl<'a> DateField<'a> {
                 *self.value = Some(day);
                 held.from = Some(day);
                 changed = true;
-            }
-            if let Some(issue) = &issue {
-                ui.label(TextRole::Help.rich(&t, issue).color(t.color("critical-ink")));
             }
             if held.open {
                 let mut day = *self.value;

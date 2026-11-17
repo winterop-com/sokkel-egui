@@ -143,6 +143,8 @@ pub struct Select<'a> {
     dots: Option<Vec<egui::Color32>>,
     small: bool,
     bare: bool,
+    codes: Option<Vec<String>>,
+    placeholder: Option<String>,
 }
 
 impl<'a> Select<'a> {
@@ -162,7 +164,22 @@ impl<'a> Select<'a> {
             dots: None,
             small: false,
             bare: false,
+            codes: None,
+            placeholder: None,
         }
+    }
+
+    /// A code after each option's label, small in the code face and quiet, as a period's id
+    /// after its name.
+    pub fn codes(mut self, codes: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        self.codes = Some(codes.into_iter().map(Into::into).collect());
+        self
+    }
+
+    /// Muted words in the trigger while no option is chosen.
+    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
+        self.placeholder = Some(placeholder.into());
+        self
     }
 
     /// The small size, as the web's `size="sm"`: `control-sm` tall, its words in the help role.
@@ -309,7 +326,9 @@ impl Widget for Select<'_> {
                 painter.rect_filled(rect.shrink(1.0), radius, ground);
             }
         }
-        let current = self.options.get(*self.chosen).cloned().unwrap_or_default();
+        let current = self.options.get(*self.chosen).cloned();
+        let unset = current.is_none();
+        let current = current.unwrap_or_else(|| self.placeholder.clone().unwrap_or_default());
         let lead = self.lead();
         if let Some(dot) = self.dots.as_ref().and_then(|d| d.get(*self.chosen)) {
             painter.circle_filled(pos2(rect.left() + 10.0 + 5.0, rect.center().y), 5.0, *dot);
@@ -329,11 +348,27 @@ impl Widget for Select<'_> {
             rect.width() - 30.0 - pad - lead,
             role.font(&t),
         );
+        let label_width = galley.size().x;
         painter.galley(
             pos2(rect.left() + pad + lead, rect.center().y - galley.size().y / 2.0),
             galley,
-            t.color("foreground"),
+            if unset {
+                t.color("muted-foreground")
+            } else {
+                t.color("foreground")
+            },
         );
+        let code_of = |index: usize| self.codes.as_ref().and_then(|c| c.get(index)).cloned();
+        let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+        if let Some(code) = code_of(*self.chosen) {
+            painter.text(
+                pos2(rect.left() + pad + lead + label_width + 8.0, rect.center().y),
+                egui::Align2::LEFT_CENTER,
+                code,
+                mono.clone(),
+                t.color("muted-foreground"),
+            );
+        }
         icons::paint(
             painter,
             pos2(rect.right() - pad - chevron / 2.0 + 2.0, rect.center().y),
@@ -392,11 +427,21 @@ impl Widget for Select<'_> {
                         row.width() - 40.0 - lead,
                         role.font(&t),
                     );
+                    let option_width = galley.size().x;
                     ui.painter().galley(
                         pos2(row.left() + 8.0 + lead, row.center().y - galley.size().y / 2.0),
                         galley,
                         ink,
                     );
+                    if let Some(code) = code_of(index) {
+                        ui.painter().text(
+                            pos2(row.left() + 8.0 + lead + option_width + 8.0, row.center().y),
+                            egui::Align2::LEFT_CENTER,
+                            code,
+                            mono.clone(),
+                            t.color("muted-foreground"),
+                        );
+                    }
                     if chosen {
                         icons::paint(
                             ui.painter(),

@@ -26,7 +26,12 @@ pub fn render(path: &str) -> Harness<'static, RecordsApp> {
 #[test]
 fn every_screen() {
     let mut results = SnapshotResults::new();
-    let screens: &[(&str, &str)] = &[("records_overview", ""), ("records_forms", "forms")];
+    let screens: &[(&str, &str)] = &[
+        ("records_overview", ""),
+        ("records_forms", "forms"),
+        ("records_form", "forms/FRM-MONTH"),
+        ("records_form_site", "forms/FRM-SITE"),
+    ];
     for &(name, path) in screens {
         let mut harness = render(path);
         results.add(harness.try_snapshot(name));

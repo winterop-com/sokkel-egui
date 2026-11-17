@@ -112,6 +112,8 @@ pub struct Input<'a> {
     suffix: Option<String>,
     /// What a screen reader calls it, where no label beside it says.
     name: Option<String>,
+    /// Shown, never typed in, on the muted ground, as a worked-out value's `readOnly` input.
+    read_only: bool,
 }
 
 impl<'a> Input<'a> {
@@ -120,6 +122,7 @@ impl<'a> Input<'a> {
             value,
             placeholder: None,
             invalid: false,
+            read_only: false,
             enabled: true,
             width: None,
             multiline: false,
@@ -149,6 +152,12 @@ impl<'a> Input<'a> {
 
     pub fn invalid(mut self, invalid: bool) -> Self {
         self.invalid = invalid;
+        self
+    }
+
+    /// Shown and never typed in, on the muted ground, in the full ink: a value worked out.
+    pub fn read_only(mut self, read_only: bool) -> Self {
+        self.read_only = read_only;
         self
     }
 
@@ -208,12 +217,14 @@ impl Widget for Input<'_> {
             .text_color(ink)
             .frame(Frame::NONE)
             .desired_width(width - 20.0 - room)
+            .interactive(!self.read_only)
             .margin(Margin::symmetric(0, 0));
         if let Some(placeholder) = &self.placeholder {
             edit = edit.hint_text(body.rich(&t, placeholder).color(t.color("muted-foreground")));
         }
         let height = super::finger_tall(ui.ctx(), &t, t.density("control"));
         let ground = match (self.enabled, t.dark) {
+            _ if self.read_only => t.color("muted"),
             (true, _) => t.color("field"),
             (false, false) => t.color_at("input", 0.5),
             (false, true) => t.color_at("input", 0.8),

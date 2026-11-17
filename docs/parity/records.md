@@ -30,4 +30,15 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   of `row_height`) and a chevron at the row's end (`DataTable::chevron`); the request behind the
   page as the web's `ApiLink` (new in the library: the method in its ink, the path, and a copy
   button).
+- A form being filled, for the sectioned forms: Filed for (the place from the hierarchy in a
+  `TreeSelect`, the visit's day, the household, the identifier the server gives), each section's
+  questions lined up across their columns as the web's `Columns fields` lines them (a `Field`'s
+  label, description, control and help each one height across the row), and the bar at the foot
+  with Clear, Fill with test data and its seed, the count of answers, the errors (`IssueCount`)
+  and Submit, which files to the backend and opens the receipt. New in the library for it:
+  `Field::required`, `hint` and `error` (an issue mark at the control's end), `NumberField` over
+  `Field` with an optional value, `ComputedField`, `YesNoField`, `TimeField`, `RepeatedGroup`,
+  `PeriodPicker`, `TreeSelect`, `Select::codes`, a read-only `Input`, and `FormBar::show_with`.
+  The count grid of a periodic report is next: it wants a table of row groups, banded column heads
+  and numbers edited in its stacked rows.
 - Open: the Playground waits for the code editor's spec, as `ApiPlayground` is built on it.

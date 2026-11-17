@@ -17,6 +17,7 @@ mod empty;
 mod fields;
 mod file_preview;
 mod filters;
+mod form_fields;
 mod frame;
 mod info;
 mod inline_edit;
@@ -45,6 +46,7 @@ mod time;
 mod time_range;
 mod toast;
 mod tree;
+mod tree_select;
 mod uptime;
 mod variables;
 mod week;
@@ -80,6 +82,10 @@ pub use file_preview::{FileKind, FilePreview, FilePreviewWords, format_size, par
 pub use filters::{
     Filter, FilterBar, FilterBarWords, FilterField, FilterOperator, FilterType, FilterValue, ListViewState, SavedView,
     SavedViews, SavedViewsAsked, SavedViewsWords, filter_rows, matches_filter, operator_word, same_filters,
+};
+pub use form_fields::{
+    ComputedField, ComputedFieldWords, IssueCount, IssueEntry, PeriodPicker, PeriodPickerWords, RepeatedGroup,
+    RepeatedGroupWords, RepeatedOutcome, TimeField, TimeFieldWords, YesNoField, YesNoFieldWords, read_time,
 };
 pub use frame::{
     AppBar, DesktopWindow, Rail, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine, StatusTone,
@@ -121,6 +127,7 @@ pub use toast::{Toast, ToastKind, Toaster, ToasterWords, close_toast, toast_acte
 pub use tree::{
     Tree, TreeNode, TreeResponse, TreeRow, TreeWords, tree_ancestors, tree_matches, tree_node, visible_rows,
 };
+pub use tree_select::{TreeSelect, TreeSelectWords};
 pub use uptime::{UptimeBar, UptimeBarWords, UptimeDay, format_uptime, overall_uptime, uptime_color};
 pub use week::{CalendarEvent, PlacedEvent, WeekGrid, WeekGridResponse, layout_day};
 

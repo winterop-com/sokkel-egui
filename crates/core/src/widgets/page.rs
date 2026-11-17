@@ -56,7 +56,7 @@ pub struct PageHeader {
     description: Option<String>,
     back: Option<String>,
     chips: Vec<(String, crate::ChipTone)>,
-    meta: Option<String>,
+    meta: Vec<String>,
     edit: Option<crate::InlineEdit>,
 }
 
@@ -78,7 +78,7 @@ impl PageHeader {
             description: None,
             back: None,
             chips: Vec::new(),
-            meta: None,
+            meta: Vec::new(),
             edit: None,
         }
     }
@@ -108,9 +108,10 @@ impl PageHeader {
         self
     }
 
-    /// Words after the chips on their line, muted, such as how long the thing has been open.
+    /// Words after the chips on their line, muted, such as how long the thing has been open; each
+    /// call adds more, 6 after the last.
     pub fn meta(mut self, meta: impl Into<String>) -> Self {
-        self.meta = Some(meta.into());
+        self.meta.push(meta.into());
         self
     }
 
@@ -210,7 +211,7 @@ impl PageHeader {
                     ui.set_max_width(65.0 * zero);
                     ui.label(TextRole::Body.rich(&t, description).color(t.color("muted-foreground")));
                 }
-                if !self.chips.is_empty() || self.meta.is_some() {
+                if !self.chips.is_empty() || !self.meta.is_empty() {
                     // the chips and the meta on one line, `gap-xs` apart, 8 down
                     ui.add_space(8.0);
                     // the line as tall as its chips, not a control's height: set before the row is made
@@ -222,7 +223,7 @@ impl PageHeader {
                         for (label, tone) in &self.chips {
                             ui.add(crate::Chip::new(label.clone()).tone(*tone));
                         }
-                        if let Some(meta) = &self.meta {
+                        for meta in &self.meta {
                             ui.label(TextRole::Help.rich(&t, meta).color(t.color("muted-foreground")));
                         }
                     });
