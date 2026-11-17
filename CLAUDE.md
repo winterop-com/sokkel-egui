@@ -67,3 +67,7 @@ its canvas alone (`Storybook::show_story`), so adding a story changes no other p
 locally on main (the owner asked for one commit per iteration), staging named paths, conventional
 commits, no attribution lines. The remote is github.com/winterop-com/sokkel-egui (public, under
 `LICENSE`); push only when the owner asks.
+
+GitHub's CI checks formatting, clippy and the unit tests, not the screens: those run only here,
+with `make test`. A Dependabot update (or any other) is merged only after it is pulled and
+`make test` passes on it, its changed pictures looked at; an egui update above all.
