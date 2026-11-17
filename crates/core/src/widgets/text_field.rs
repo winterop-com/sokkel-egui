@@ -108,6 +108,8 @@ pub struct Input<'a> {
     width: Option<f32>,
     /// A text area that grows with its text, at least 112 tall, rather than one line.
     multiline: bool,
+    /// Muted words after the text at the input's end, such as a unit.
+    suffix: Option<String>,
 }
 
 impl<'a> Input<'a> {
@@ -119,11 +121,19 @@ impl<'a> Input<'a> {
             enabled: true,
             width: None,
             multiline: false,
+            suffix: None,
         }
     }
 
     pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
         self.placeholder = Some(placeholder.into());
+        self
+    }
+
+    /// Muted words at the input's end, after the text, such as its unit: `ms`, `%`.
+    pub fn suffix(mut self, suffix: impl Into<String>) -> Self {
+        let suffix = suffix.into();
+        self.suffix = (!suffix.is_empty()).then_some(suffix);
         self
     }
 
@@ -174,11 +184,20 @@ impl Widget for Input<'_> {
         } else {
             TextEdit::singleline(self.value)
         };
+        let suffix = self.suffix.as_ref().map(|words| {
+            egui::WidgetText::from(body.rich(&t, words)).into_galley(
+                ui,
+                Some(egui::TextWrapMode::Extend),
+                f32::INFINITY,
+                body.font(&t),
+            )
+        });
+        let room = suffix.as_ref().map_or(0.0, |g| g.size().x + 8.0);
         let mut edit = edit
             .font(body.font(&t))
             .text_color(ink)
             .frame(Frame::NONE)
-            .desired_width(width - 20.0)
+            .desired_width(width - 20.0 - room)
             .margin(Margin::symmetric(0, 0));
         if let Some(placeholder) = &self.placeholder {
             edit = edit.hint_text(body.rich(&t, placeholder).color(t.color("muted-foreground")));
@@ -224,7 +243,17 @@ impl Widget for Input<'_> {
                 (false, false) => t.color("input"),
             });
         prepared.frame.stroke = Stroke::new(1.0, edge);
+        if room > 0.0 {
+            prepared.content_ui.add_space(room);
+        }
         let outer = prepared.end(ui);
+        if let Some(suffix) = suffix {
+            let at = egui::pos2(
+                outer.rect.right() - 10.0 - suffix.size().x,
+                outer.rect.center().y - suffix.size().y / 2.0,
+            );
+            ui.painter().galley(at, suffix, t.color("muted-foreground"));
+        }
         if focused {
             // the 1px ring outside the edge, or the 3px critical one an invalid input wears
             let ring = if self.invalid {

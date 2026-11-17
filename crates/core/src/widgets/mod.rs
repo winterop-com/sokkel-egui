@@ -23,6 +23,7 @@ mod log_view;
 mod markdown;
 mod menu;
 mod meta_line;
+mod number_field;
 mod overlay;
 mod page;
 mod panel_menu;
@@ -54,7 +55,9 @@ pub use button::{Button, ButtonSize, ButtonVariant, IconButton};
 pub use calendar::{Calendar, CalendarWords, RangeCalendar, WeekStart, calendar_forget};
 pub use chip::{Chip, ChipTone, TagChips};
 pub use chip_bar::ChipBar;
-pub use choice::{Checkbox, Choice, ChoiceList, Segmented, SegmentedVariant, Tabs, TabsVariant, checkbox_list};
+pub use choice::{
+    Checkbox, Choice, ChoiceList, Segmented, SegmentedVariant, SwatchGroup, Tabs, TabsVariant, checkbox_list,
+};
 pub use commands::{AppearanceCommandWords, appearance_commands, place_commands, place_of, run_appearance_command};
 pub use dashboard::{
     DashboardGrid, DashboardPanel, GridCells, PanelSpan, body_room, cell_height, report_natural_height, took_room,
@@ -63,7 +66,10 @@ pub use datetime::{DateTimeField, DateTimeFieldResponse, DateTimeFieldWords, Mom
 pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton};
 pub use empty::Empty;
 pub(crate) use fields::search_field;
-pub use fields::{DueState, DueText, QuickAdd, SearchField, SwitchField, due_state, field, form_bar, toolbar};
+pub use fields::{
+    DueState, DueText, Field, FormBar, QuickAdd, SearchField, SwitchField, due_state, field, form_bar, pane_toolbar,
+    toolbar,
+};
 pub use file_preview::{FileKind, FilePreview, FilePreviewWords, format_size, parse_csv};
 pub use frame::{
     AppBar, DesktopWindow, Rail, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine, StatusTone,
@@ -76,7 +82,10 @@ pub use log_view::{LogLevel, LogLine, LogView, LogViewWords};
 pub use markdown::Markdown;
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use meta_line::MetaLine;
-pub use overlay::{ConfirmAnswer, ConfirmDialog, Dialog, Select, tooltip, tooltip_shown};
+pub use number_field::{NumberField, NumberFieldWords, read_number, write_number};
+pub use overlay::{
+    ConfirmAnswer, ConfirmDialog, Dialog, Select, UnsavedChangesWords, tooltip, tooltip_shown, unsaved_changes,
+};
 pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
 pub use panel_menu::{PanelAsked, PanelMenu, PanelWindow, PanelWords, body_drawn, panel_away, quiet_tools, windowed};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};

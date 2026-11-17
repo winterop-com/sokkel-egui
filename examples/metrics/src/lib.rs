@@ -3,6 +3,7 @@
 
 pub mod app;
 pub mod board;
+pub mod editor;
 pub mod model;
 pub mod panel_data;
 pub mod panels;

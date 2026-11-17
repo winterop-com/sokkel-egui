@@ -42,10 +42,18 @@ manifest is `parity/metrics.json`; the web's screens are shot into `parity/metri
 - A table's sort arrow stands before the name of a column read from its end, and its bar holds the
   web's Columns menu (every column but the first can be hidden); the sort menu is for stacked rows.
 - Left out: Share. The web's builds a link to the view in its URL, which a window has none of.
+- The panel editor, from the head's Add panel, a panel's Edit, or an empty board's Add panel: the
+  web's preview (the time controls in a pane's toolbar, the panel drawn taller with its legend a
+  table, the line saying what it reads) beside its options in a `SplitPane` whose panes scroll,
+  and a `FormBar` at the page's foot. The options are the web's: the title, the visualization and
+  the width (`Segmented` with `fill`, wrapping its options onto even lines), the metric, its
+  aggregation, the grouping, the value, the service and project, the unit, decimals, fill, stacking,
+  the stat's color mode, a gauge's ends (`NumberField`), the color (`SwatchGroup`), and the
+  thresholds (`Select` with `dots`). Leaving with changes asks first (`unsaved_changes`); saving
+  brings the panel into view on the board.
 - Open: Download CSV saves without a dialog asking where (a native save dialog needs a crate such
-  as `rfd`); the panel menu's Edit waits for the panel editor.
+  as `rfd`); a stat tile in the preview keeps its own height where the web's stands 224.
 - Open: the Services overview's request chart labels its axis every 90 seconds on the web where a
   fresh count of ECharts' `interval: 'auto'` gives 80, and the heatmap labels its axis more
   sparsely than the web's.
-- Still to come: Add panel with the panel editor, and Edit in each panel's menu.
 - Then Dashboards, the editor, Alerts and Settings, each in the rail once it works.

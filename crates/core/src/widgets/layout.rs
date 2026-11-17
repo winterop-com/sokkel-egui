@@ -170,6 +170,7 @@ pub struct SplitPane {
     min_share: f32,
     max_share: f32,
     narrow_below: f32,
+    scroll: bool,
 }
 
 impl SplitPane {
@@ -180,7 +181,14 @@ impl SplitPane {
             min_share: 0.2,
             max_share: 0.8,
             narrow_below: 640.0,
+            scroll: false,
         }
+    }
+
+    /// Each pane scrolls what runs past its height, as the web's panes do around a block of their own.
+    pub fn scroll(mut self, scroll: bool) -> Self {
+        self.scroll = scroll;
+        self
     }
 
     pub fn default_share(mut self, share: f32) -> Self {
@@ -215,7 +223,14 @@ impl SplitPane {
                     .layout(egui::Layout::top_down(egui::Align::Min)),
             );
             child.set_clip_rect(rect.intersect(ui.clip_rect()));
-            add(&mut child);
+            if self.scroll {
+                egui::ScrollArea::vertical()
+                    .id_salt((self.id, salt, "scroll"))
+                    .auto_shrink([false, false])
+                    .show(&mut child, |ui| add(ui));
+            } else {
+                add(&mut child);
+            }
         };
         if room.width() < self.narrow_below {
             let half = room.height() / 2.0;

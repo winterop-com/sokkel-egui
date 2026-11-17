@@ -377,6 +377,7 @@ pub struct GaugePanel<'a> {
     color: &'static str,
     unit: String,
     decimals: Option<usize>,
+    height: f32,
 }
 
 impl<'a> GaugePanel<'a> {
@@ -390,7 +391,14 @@ impl<'a> GaugePanel<'a> {
             color: "chart-2",
             unit: String::new(),
             decimals: None,
+            height: 128.0,
         }
+    }
+
+    /// The dial's height, 128 when not given, as the web's `bodyClassName` sets it.
+    pub fn height(mut self, height: f32) -> Self {
+        self.height = height;
+        self
     }
 
     pub fn range(mut self, min: f64, max: f64) -> Self {
@@ -430,7 +438,7 @@ impl<'a> GaugePanel<'a> {
         let steps = self.thresholds.iter().map(|s| (s.value, t.color(s.color))).collect();
         let gauge = Gauge::new(self.value, self.min, self.max, tone, written).steps(steps);
         chart_frame(ui, &self.title, None, |ui| {
-            let height = fill_height(ui, 128.0);
+            let height = fill_height(ui, self.height);
             ui.add(gauge.height(height));
         });
     }

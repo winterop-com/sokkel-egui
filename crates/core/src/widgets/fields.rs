@@ -490,3 +490,151 @@ pub fn field<R>(ui: &mut egui::Ui, label: &str, hint: Option<&str>, control: imp
     })
     .inner
 }
+
+/// A form's actions in a band at the foot of its page, after sokkel-ui's `FormBar` with
+/// `placement="foot"`: the shell's foot strip tall less its rule, on the `sidebar` ground under a
+/// `border-strong` rule, a muted note at its start and the actions at its end, 8 apart, inset as
+/// the page is. [`form_bar`] is the plain row closing a short form.
+pub struct FormBar {
+    note: Option<String>,
+}
+
+impl FormBar {
+    pub fn new() -> Self {
+        Self { note: None }
+    }
+
+    /// Muted words at the start, such as whether anything is unsaved.
+    pub fn note(mut self, note: impl Into<String>) -> Self {
+        self.note = Some(note.into());
+        self
+    }
+
+    /// The band's height: the shell's foot strip less its rule.
+    pub fn height(ctx: &egui::Context) -> f32 {
+        crate::tokens(ctx).length("spacing-shell-foot") - 1.0
+    }
+
+    /// Draws the band across the room; `actions` are laid out from its end.
+    pub fn show<R>(self, ui: &mut egui::Ui, actions: impl FnOnce(&mut egui::Ui) -> R) -> R {
+        let t = crate::tokens(ui.ctx());
+        let height = Self::height(ui.ctx());
+        let (band, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), egui::Sense::hover());
+        ui.painter().rect_filled(band, 0.0, t.color("sidebar"));
+        ui.painter().hline(
+            band.x_range(),
+            band.top() + 0.5,
+            egui::Stroke::new(1.0, t.color("border-strong")),
+        );
+        let inset = t.density("page-inset-wide");
+        let row = band.shrink2(vec2(inset, 0.0));
+        let mut child = ui.new_child(
+            egui::UiBuilder::new()
+                .max_rect(row)
+                .layout(Layout::right_to_left(Align::Center)),
+        );
+        child.spacing_mut().item_spacing.x = 8.0;
+        let out = actions(&mut child);
+        if let Some(note) = &self.note {
+            let room = (child.min_rect().left() - row.left() - 8.0).max(1.0);
+            let galley = egui::WidgetText::from(crate::TextRole::Body.rich(&t, note)).into_galley(
+                ui,
+                Some(egui::TextWrapMode::Truncate),
+                room,
+                crate::TextRole::Body.font(&t),
+            );
+            ui.painter().galley(
+                egui::pos2(row.left(), row.center().y - galley.size().y / 2.0),
+                galley,
+                t.color("muted-foreground"),
+            );
+        }
+        out
+    }
+}
+
+impl Default for FormBar {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// A label over a control with a line saying what it sets, after sokkel-ui's `Field` with
+/// `description` (under the label, 4 down, muted) and `help` (under the control, small and muted).
+pub struct Field {
+    label: String,
+    description: Option<String>,
+    help: Option<String>,
+}
+
+impl Field {
+    pub fn new(label: impl Into<String>) -> Self {
+        Self {
+            label: label.into(),
+            description: None,
+            help: None,
+        }
+    }
+
+    /// A sentence under the label saying what the control sets.
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
+        self
+    }
+
+    /// Small words under the control, such as what the chosen value means.
+    pub fn help(mut self, help: impl Into<String>) -> Self {
+        self.help = Some(help.into());
+        self
+    }
+
+    pub fn show<R>(self, ui: &mut egui::Ui, control: impl FnOnce(&mut egui::Ui) -> R) -> R {
+        let t = crate::tokens(ui.ctx());
+        ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.y = 6.0;
+            ui.label(
+                crate::TextRole::Label
+                    .rich(&t, &self.label)
+                    .color(t.color("foreground")),
+            );
+            if let Some(description) = &self.description {
+                ui.add_space(-2.0);
+                ui.add(
+                    egui::Label::new(
+                        crate::TextRole::Body
+                            .rich(&t, description)
+                            .color(t.color("muted-foreground")),
+                    )
+                    .wrap(),
+                );
+            }
+            let out = control(ui);
+            if let Some(help) = &self.help {
+                ui.label(crate::TextRole::Help.rich(&t, help).color(t.color("muted-foreground")));
+            }
+            out
+        })
+        .inner
+    }
+}
+
+/// A [`toolbar`] as a strip across the top of a pane, as the web's `Toolbar` with
+/// `variant="pane"`: `panel-pad` across, 8 over and under, a rule under it.
+pub fn pane_toolbar(ui: &mut Ui, start: impl FnOnce(&mut Ui), end: impl FnOnce(&mut Ui)) {
+    let t = tokens(ui.ctx());
+    let pad = t.density("panel-pad") as i8;
+    let strip = Frame::new()
+        .inner_margin(Margin::symmetric(pad, 8))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.spacing_mut().item_spacing.y = 0.0;
+            toolbar(ui, start, end);
+        })
+        .response
+        .rect;
+    ui.painter().hline(
+        strip.x_range(),
+        strip.bottom() - 0.5,
+        Stroke::new(1.0, t.color("border")),
+    );
+}

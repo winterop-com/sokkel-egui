@@ -267,6 +267,7 @@ pub struct Segmented<'a> {
     variant: SegmentedVariant,
     counts: Vec<Option<usize>>,
     dots: Vec<Option<Color32>>,
+    fill: bool,
 }
 
 impl<'a> Segmented<'a> {
@@ -277,7 +278,16 @@ impl<'a> Segmented<'a> {
             variant: SegmentedVariant::Track,
             counts: Vec::new(),
             dots: Vec::new(),
+            fill: false,
         }
+    }
+
+    /// Stretch the control across its room, as the web's `fill`, so controls stacked in one
+    /// column line up on both edges. Where the room is narrower than the options they wrap onto
+    /// more lines, each holding as many and shared out evenly.
+    pub fn fill(mut self, fill: bool) -> Self {
+        self.fill = fill;
+        self
     }
 
     /// How many each option holds, after its label, for options that filter a list.
@@ -366,8 +376,31 @@ impl Widget for Segmented<'_> {
         } else {
             height
         };
-        let width = widths.iter().sum::<f32>() + gap * (widths.len().saturating_sub(1)) as f32 + 2.0 * inset;
-        let (rect, mut response) = ui.allocate_exact_size(vec2(width, height + 2.0 * inset), Sense::hover());
+        let count = galleys.len().max(1);
+        let natural = widths.iter().sum::<f32>() + gap * (widths.len().saturating_sub(1)) as f32 + 2.0 * inset;
+        // as many options on a line as the room holds at their width, the lines then evened out
+        let room = ui.available_width();
+        let unit = widest + 20.0;
+        let fits = (((room - 2.0 * inset + gap) / (unit + gap)).floor() as usize).clamp(1, count);
+        let lines = count.div_ceil(fits);
+        let per_line = count.div_ceil(lines);
+        let width = if self.fill { room } else { natural.min(room) };
+        let (rect, mut response) =
+            ui.allocate_exact_size(vec2(width, lines as f32 * height + 2.0 * inset), Sense::hover());
+        // an option's place: its line, and its share of that line
+        let place = |index: usize| {
+            let line = index / per_line;
+            let on_line = (count - line * per_line).min(per_line);
+            let column = index % per_line;
+            let share = (width - 2.0 * inset - gap * (on_line - 1) as f32) / on_line as f32;
+            Rect::from_min_size(
+                pos2(
+                    rect.left() + inset + column as f32 * (share + gap),
+                    rect.top() + inset + line as f32 * height,
+                ),
+                vec2(share, height),
+            )
+        };
         let control = t.radius("control");
         let painter = ui.painter().clone();
         match variant {
@@ -392,10 +425,8 @@ impl Widget for Segmented<'_> {
             }
             SegmentedVariant::Tint => {}
         }
-        let count = galleys.len();
-        let mut x = rect.left() + inset;
-        for (index, (galley, option_width)) in galleys.into_iter().zip(widths).enumerate() {
-            let option = Rect::from_min_size(pos2(x, rect.top() + inset), vec2(option_width, height));
+        for (index, galley) in galleys.into_iter().enumerate() {
+            let option = place(index);
             let hit = ui.interact(option, response.id.with(index), Sense::click());
             let chosen = *self.chosen == index;
             hit.widget_info(|| WidgetInfo::selected(WidgetType::SelectableLabel, true, chosen, &self.options[index]));
@@ -467,7 +498,6 @@ impl Widget for Segmented<'_> {
                 );
             }
             focus_ring(&painter, &t, option, radius, &hit);
-            x += option_width + gap;
         }
         response
     }
@@ -579,4 +609,72 @@ pub fn checkbox_list<R>(ui: &mut egui::Ui, label: &str, boxes: impl FnOnce(&mut 
         boxes(ui)
     })
     .inner
+}
+
+/// One color among a few, each a swatch pressed in a row that wraps, as sokkel-ui's outline
+/// `ToggleGroup` of `Dot`s at `sm`: each a small control square with the `input` edge, its dot of
+/// 10 centered, 4 apart, the chosen one on the `muted` ground. Each is named by its label for a
+/// screen reader and the pointer.
+#[must_use = "add it with `ui.add(...)`"]
+pub struct SwatchGroup<'a> {
+    chosen: &'a mut usize,
+    swatches: &'a [(Color32, String)],
+}
+
+impl<'a> SwatchGroup<'a> {
+    pub fn new(chosen: &'a mut usize, swatches: &'a [(Color32, String)]) -> Self {
+        Self { chosen, swatches }
+    }
+}
+
+impl Widget for SwatchGroup<'_> {
+    fn ui(self, ui: &mut Ui) -> Response {
+        let t = tokens(ui.ctx());
+        let side = super::finger_tall(ui.ctx(), &t, t.density("control-sm"));
+        // a dot of 10 between 10 on each side, at least the control square
+        let width = (10.0 + 20.0_f32).max(side);
+        let gap = 4.0;
+        let room = ui.available_width();
+        let per_line = (((room + gap) / (width + gap)).floor() as usize).clamp(1, self.swatches.len().max(1));
+        let lines = self.swatches.len().div_ceil(per_line).max(1);
+        let used = per_line.min(self.swatches.len()) as f32 * (width + gap) - gap;
+        let (rect, mut response) =
+            ui.allocate_exact_size(vec2(used.max(0.0), lines as f32 * (side + gap) - gap), Sense::hover());
+        let r = t.radius("control");
+        let radius = CornerRadius::same(r.nw.min(12));
+        for (index, (color, label)) in self.swatches.iter().enumerate() {
+            let place = Rect::from_min_size(
+                pos2(
+                    rect.left() + (index % per_line) as f32 * (width + gap),
+                    rect.top() + (index / per_line) as f32 * (side + gap),
+                ),
+                vec2(width, side),
+            );
+            let hit = ui.interact(place, response.id.with(index), Sense::click());
+            let chosen = *self.chosen == index;
+            hit.widget_info(|| WidgetInfo::selected(WidgetType::SelectableLabel, true, chosen, label));
+            if hit.clicked() && !chosen {
+                *self.chosen = index;
+                response.mark_changed();
+            }
+            let ground = if chosen {
+                t.color("muted")
+            } else if hit.hovered() {
+                t.color("hover")
+            } else {
+                Color32::TRANSPARENT
+            };
+            ui.painter().rect(
+                place,
+                radius,
+                ground,
+                Stroke::new(1.0, t.color("input")),
+                StrokeKind::Inside,
+            );
+            ui.painter().circle_filled(place.center(), 5.0, *color);
+            focus_ring(ui.painter(), &t, place, radius, &hit);
+            let _ = hit.on_hover_text(label.clone());
+        }
+        response
+    }
 }

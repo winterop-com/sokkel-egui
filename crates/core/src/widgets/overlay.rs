@@ -140,6 +140,7 @@ pub struct Select<'a> {
     width: f32,
     default_open: bool,
     swatches: Option<Vec<Option<Swatch>>>,
+    dots: Option<Vec<egui::Color32>>,
     small: bool,
     bare: bool,
 }
@@ -158,6 +159,7 @@ impl<'a> Select<'a> {
             width: 220.0,
             default_open: false,
             swatches: None,
+            dots: None,
             small: false,
             bare: false,
         }
@@ -196,8 +198,20 @@ impl<'a> Select<'a> {
 
 impl Select<'_> {
     /// How far the label moves for the swatch before it: 28 and a gap of 8.
+    /// A dot of 10 before each option's label in its color, as sokkel-ui's `Dot` in a select's items.
+    pub fn dots(mut self, dots: impl IntoIterator<Item = egui::Color32>) -> Self {
+        self.dots = Some(dots.into_iter().collect());
+        self
+    }
+
     fn lead(&self) -> f32 {
-        if self.swatches.is_some() { 36.0 } else { 0.0 }
+        if self.swatches.is_some() {
+            36.0
+        } else if self.dots.is_some() {
+            18.0
+        } else {
+            0.0
+        }
     }
 }
 
@@ -296,6 +310,9 @@ impl Widget for Select<'_> {
         }
         let current = self.options.get(*self.chosen).cloned().unwrap_or_default();
         let lead = self.lead();
+        if let Some(dot) = self.dots.as_ref().and_then(|d| d.get(*self.chosen)) {
+            painter.circle_filled(pos2(rect.left() + 10.0 + 5.0, rect.center().y), 5.0, *dot);
+        }
         if let Some(swatches) = &self.swatches {
             paint_swatch(
                 painter,
@@ -357,6 +374,10 @@ impl Widget for Select<'_> {
                             t.radius("md"),
                             super::ground(&t, "select.base.highlighted.row", "accent"),
                         );
+                    }
+                    if let Some(dot) = self.dots.as_ref().and_then(|d| d.get(index)) {
+                        ui.painter()
+                            .circle_filled(pos2(row.left() + 8.0 + 5.0, row.center().y), 5.0, *dot);
                     }
                     if let Some(swatches) = &self.swatches {
                         paint_swatch(
@@ -660,4 +681,51 @@ impl ConfirmDialog {
         }
         answer.or((closed && !busy).then_some(ConfirmAnswer::Cancel))
     }
+}
+
+/// What the unsaved-changes question says, as sokkel-ui's `UnsavedChangesWords`.
+#[derive(Clone, Debug)]
+pub struct UnsavedChangesWords {
+    pub question: String,
+    pub detail: String,
+    /// The answer that goes back to the changes.
+    pub keep: String,
+    /// The answer that lets them go.
+    pub discard: String,
+}
+
+impl Default for UnsavedChangesWords {
+    /// The question a form asks before it closes with changes.
+    fn default() -> Self {
+        Self {
+            question: "Discard your changes?".into(),
+            detail: "What you changed in this form has not been saved.".into(),
+            keep: "Keep editing".into(),
+            discard: "Discard".into(),
+        }
+    }
+}
+
+impl UnsavedChangesWords {
+    /// The question asked before the app leaves a page with unsaved changes, as `LEAVE_WORDS`.
+    pub fn leave() -> Self {
+        Self {
+            question: "Leave without saving?".into(),
+            detail: "What you changed on this page has not been saved.".into(),
+            keep: "Stay".into(),
+            discard: "Leave".into(),
+        }
+    }
+}
+
+/// The question asked before unsaved changes are let go, after sokkel-ui's `UnsavedChanges`: a
+/// confirm dialog whose destructive answer discards them. True to let them go, false to keep them,
+/// `None` while it waits.
+pub fn unsaved_changes(ctx: &Context, id: impl egui::AsId, words: &UnsavedChangesWords) -> Option<bool> {
+    ConfirmDialog::new(id, &words.question, &words.discard)
+        .detail(&words.detail)
+        .cancel(&words.keep)
+        .destructive(true)
+        .show(ctx)
+        .map(|answer| answer == ConfirmAnswer::Confirm)
 }

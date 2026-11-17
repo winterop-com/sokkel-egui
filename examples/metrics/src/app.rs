@@ -49,6 +49,8 @@ pub struct MetricsApp {
     pub tables: std::collections::HashMap<String, TableState>,
     /// A panel open in its window, inspected, or asked to be deleted.
     pub panels: crate::panels::PanelDialogs,
+    /// A panel being edited or made, its page in the dashboard's place.
+    pub editor: Option<crate::editor::EditorState>,
     /// The panels being arranged: a draft Done keeps and Cancel throws away.
     pub edit: DashboardEdit<Panel>,
     /// How many panels and copies have been made, for their ids.
@@ -85,6 +87,7 @@ impl MetricsApp {
             last_view: None,
             tables: Default::default(),
             panels: Default::default(),
+            editor: None,
             edit: DashboardEdit::default(),
             made: 0,
             said: Vec::new(),
@@ -139,7 +142,10 @@ impl MetricsApp {
             .iter()
             .find(|b| b.id == self.place)
             .map_or(String::new(), |b| b.title.clone());
-        let trail = ["Metrics", title.as_str()];
+        let mut trail = vec!["Metrics", title.as_str()];
+        if self.editor.is_some() {
+            trail.push("Edit panel");
+        }
         let mode = if self.refresh == 0 {
             "refresh off".to_owned()
         } else if self.paused {
@@ -159,6 +165,7 @@ impl MetricsApp {
             ShellPart::Top => {
                 TopBar::new(&trail).show(ui, |_| {});
             }
+            ShellPart::Page if self.editor.is_some() => Page::show(ui, |ui| self.editor_page(ui)),
             ShellPart::Page => Page::scroll(ui, |ui| self.board_page(ui)),
             ShellPart::Foot => {
                 ui.add(
@@ -174,6 +181,7 @@ impl MetricsApp {
             self.place = place;
         }
         self.panel_dialogs(&ui.ctx().clone());
+        self.editor_dialogs(&ui.ctx().clone());
         self.board_dialogs(&ui.ctx().clone());
         if let Some(AccountAction::Scheme(scheme)) = account {
             self.appearance.scheme = scheme;
@@ -204,6 +212,23 @@ impl MetricsApp {
         let Some(index) = self.dashboards.iter().position(|b| b.id == board.id) else {
             return;
         };
+        if !editing && self.dashboards[index].panels.is_empty() {
+            let add = sokkel_egui::Empty::new("No panels yet")
+                .icon(Icon::LayoutDashboard)
+                .description("Add a panel, pick what it reads and how it draws it, and it lands here.")
+                .show(ui, |ui| {
+                    ui.add(
+                        sokkel_egui::Button::new("Add panel")
+                            .icon(Icon::Plus)
+                            .size(sokkel_egui::ButtonSize::Sm),
+                    )
+                    .clicked()
+                });
+            if add {
+                self.open_editor(None);
+            }
+            return;
+        }
         let layout = self.edit.layout(&mut self.dashboards[index].panels);
         for panel in layout.iter() {
             self.tables.entry(panel.id.clone()).or_default();
@@ -211,6 +236,7 @@ impl MetricsApp {
         let label = |p: &Panel| p.title.clone();
         let tables = &mut self.tables;
         let viewing = self.panels.viewing.clone();
+        let focus = self.panels.focus.take();
         let mut asked = None;
         let arranged = DashboardArrange::new(("board", &board.id), layout, &label)
             .arranging(editing)
@@ -218,7 +244,11 @@ impl MetricsApp {
             .palette(&palette)
             .show(ui, |ui, panel| {
                 if let Some(state) = tables.get_mut(&panel.id) {
-                    let (items, _) = crate::panels::panel_menu(panel);
+                    let (items, _) = crate::panels::panel_menu(panel, editing);
+                    // a panel the editor just saved is brought into view
+                    if focus.as_ref() == Some(&panel.id) {
+                        ui.scroll_to_rect(ui.max_rect(), Some(egui::Align::Center));
+                    }
                     let said = PanelMenu::new(items)
                         .expandable(panel.kind != crate::model::PanelKind::Stat)
                         .expanded(viewing.as_ref() == Some(&panel.id))
@@ -267,44 +297,7 @@ impl MetricsApp {
             // the range and the refresh at the row's end, as the web's `end`
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.spacing_mut().item_spacing.x = 6.0;
-                let updated = if self.refresh > 0 && self.paused {
-                    "paused".to_owned()
-                } else {
-                    format!("updated {}", clock_of(self.view_at))
-                };
-                let asked = RefreshControl::new(&mut self.refresh, &mut self.paused, &crate::query::INTERVALS)
-                    .updated(updated)
-                    .show(ui);
-                if asked.refresh {
-                    self.view_at = self.at;
-                }
-                let mut preset = match &self.range {
-                    Range::Preset(id) => (*id).to_owned(),
-                    Range::Between { .. } => String::new(),
-                };
-                // a custom span is of whole days: from the first's midnight to the end of the last
-                let day_of = |second: f64| sokkel_egui::Day((second / 86_400.0).floor() as i32);
-                let mut span = match &self.range {
-                    Range::Between { from, to } => Some((day_of(*from), day_of(*to))),
-                    Range::Preset(_) => None,
-                };
-                let presets: Vec<(&str, &str)> = crate::query::PRESETS.iter().map(|p| (p.id, p.label)).collect();
-                if TimeRangePicker::new(&mut preset, &presets)
-                    .custom(&mut span, day_of(self.at))
-                    .show(ui)
-                    .changed()
-                {
-                    match (crate::query::PRESETS.iter().find(|p| p.id == preset), span) {
-                        (Some(p), _) => self.range = Range::Preset(p.id),
-                        (None, Some((from, to))) => {
-                            self.range = Range::Between {
-                                from: f64::from(from.0) * 86_400.0,
-                                to: f64::from(to.0) * 86_400.0 + 86_399.0,
-                            };
-                        }
-                        (None, None) => {}
-                    }
-                }
+                self.time_controls(ui);
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                     ui.spacing_mut().item_spacing.x = 6.0;
                     self.chips(ui, &services, &hosts, &projects);
@@ -313,6 +306,53 @@ impl MetricsApp {
         });
         // a new range or new variables read the panels at once
         if (self.variables.clone(), self.range.clone()) != before {
+            self.view_at = self.at;
+        }
+    }
+
+    /// The range and the refresh, as the web's `TimeControls`, drawn right to left: the refresh,
+    /// then the range before it. A new range reads the panels at once.
+    pub(crate) fn time_controls(&mut self, ui: &mut Ui) {
+        let before = self.range.clone();
+        let updated = if self.refresh > 0 && self.paused {
+            "paused".to_owned()
+        } else {
+            format!("updated {}", clock_of(self.view_at))
+        };
+        let asked = RefreshControl::new(&mut self.refresh, &mut self.paused, &crate::query::INTERVALS)
+            .updated(updated)
+            .show(ui);
+        if asked.refresh {
+            self.view_at = self.at;
+        }
+        let mut preset = match &self.range {
+            Range::Preset(id) => (*id).to_owned(),
+            Range::Between { .. } => String::new(),
+        };
+        // a custom span is of whole days: from the first's midnight to the end of the last
+        let day_of = |second: f64| sokkel_egui::Day((second / 86_400.0).floor() as i32);
+        let mut span = match &self.range {
+            Range::Between { from, to } => Some((day_of(*from), day_of(*to))),
+            Range::Preset(_) => None,
+        };
+        let presets: Vec<(&str, &str)> = crate::query::PRESETS.iter().map(|p| (p.id, p.label)).collect();
+        if TimeRangePicker::new(&mut preset, &presets)
+            .custom(&mut span, day_of(self.at))
+            .show(ui)
+            .changed()
+        {
+            match (crate::query::PRESETS.iter().find(|p| p.id == preset), span) {
+                (Some(p), _) => self.range = Range::Preset(p.id),
+                (None, Some((from, to))) => {
+                    self.range = Range::Between {
+                        from: f64::from(from.0) * 86_400.0,
+                        to: f64::from(to.0) * 86_400.0 + 86_399.0,
+                    };
+                }
+                (None, None) => {}
+            }
+        }
+        if self.range != before {
             self.view_at = self.at;
         }
     }
@@ -367,6 +407,20 @@ pub(crate) fn draw_panel(
     at: f64,
     table: &mut TableState,
 ) {
+    draw_panel_as(ui, panel, variables, range, at, table, false);
+}
+
+/// One panel as `draw_panel` draws it, or with `preview` as the editor previews it, as the web's
+/// `PanelView` with `preview`: taller, and a time series' legend always a table.
+pub(crate) fn draw_panel_as(
+    ui: &mut Ui,
+    panel: &Panel,
+    variables: &Variables,
+    range: &Range,
+    at: f64,
+    table: &mut TableState,
+    preview: bool,
+) {
     let data = panel_data(panel, variables, range, at);
     let thresholds = &panel.thresholds;
     let unit = data.unit.trim().to_owned();
@@ -398,6 +452,8 @@ pub(crate) fn draw_panel(
         }
         Shape::Gauge { value } => {
             GaugePanel::new(&panel.title, value)
+                // h-72 in a preview
+                .height(if preview { 288.0 } else { 128.0 })
                 .range(panel.min, panel.max)
                 .thresholds(thresholds)
                 .color(panel.color)
@@ -433,8 +489,12 @@ pub(crate) fn draw_panel(
                     chart = chart.threshold(value, t.color(step.color));
                 }
             }
-            // more than three series read better as a table of their figures, as the web's
-            if series.len() > 3 {
+            // more than three series read better as a table of their figures, as the web's; a
+            // preview's always is, and it stands h-80
+            if preview {
+                chart = chart.height(320.0);
+            }
+            if series.len() > 3 || preview {
                 chart = chart.legend_table(&[LegendStat::Avg, LegendStat::Max, LegendStat::Current]);
             }
             for (one, color) in series {
@@ -486,9 +546,11 @@ pub(crate) fn draw_panel(
                 })
                 .collect();
             DashboardPanel::new(&panel.title).flush(true).show(ui, |ui| {
-                // h-56, or all its window has, as the web's `Sized`
+                // h-56 (h-80 in a preview), or all its window has, as the web's `Sized`
                 let height = if sokkel_egui::windowed(ui) {
                     ui.available_height()
+                } else if preview {
+                    320.0
                 } else {
                     224.0
                 };
@@ -527,6 +589,8 @@ pub(crate) fn draw_panel(
                     .framed(false)
                     .height(if sokkel_egui::windowed(ui) {
                         ui.available_height()
+                    } else if preview {
+                        320.0
                     } else {
                         256.0
                     })

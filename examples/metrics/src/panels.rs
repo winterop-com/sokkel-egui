@@ -18,13 +18,15 @@ use crate::source::{Variables, logs_until, metric_of};
 pub enum PanelAct {
     View,
     Inspect,
+    Edit,
     Duplicate,
     Delete,
 }
 
-/// A panel's menu, as the web's: View (but for a stat), Inspect data, Duplicate, and Delete after a
-/// separator; with what each item does, `None` for the separator.
-pub fn panel_menu(panel: &Panel) -> (Vec<MenuItem>, Vec<Option<PanelAct>>) {
+/// A panel's menu, as the web's: View (but for a stat), Inspect data, Edit (but while the board is
+/// arranged, as the editor is a page of its own), Duplicate, and Delete after a separator; with
+/// what each item does, `None` for the separator.
+pub fn panel_menu(panel: &Panel, editing: bool) -> (Vec<MenuItem>, Vec<Option<PanelAct>>) {
     let mut items = Vec::new();
     let mut acts = Vec::new();
     if panel.kind != PanelKind::Stat {
@@ -33,6 +35,10 @@ pub fn panel_menu(panel: &Panel) -> (Vec<MenuItem>, Vec<Option<PanelAct>>) {
     }
     items.push(MenuItem::action("Inspect data").icon(Icon::Table2));
     acts.push(Some(PanelAct::Inspect));
+    if !editing {
+        items.push(MenuItem::action("Edit").icon(Icon::PencilLine));
+        acts.push(Some(PanelAct::Edit));
+    }
     items.push(MenuItem::action("Duplicate").icon(Icon::Copy));
     acts.push(Some(PanelAct::Duplicate));
     items.push(MenuItem::Separator);
@@ -226,6 +232,8 @@ pub struct PanelDialogs {
     pub inspecting: Option<String>,
     /// The panel asked to be deleted, by its id.
     pub deleting: Option<String>,
+    /// The panel to bring into view on the board, by its id, once the editor saved it.
+    pub focus: Option<String>,
     pub(crate) inspect_table: TableState,
 }
 
@@ -234,7 +242,7 @@ impl MetricsApp {
     pub(crate) fn panel_asked(&mut self, panel: &Panel, asked: PanelAsked) {
         let act = match asked {
             PanelAsked::Expand => Some(PanelAct::View),
-            PanelAsked::Item(index) => panel_menu(panel).1.get(index).copied().flatten(),
+            PanelAsked::Item(index) => panel_menu(panel, self.edit.editing()).1.get(index).copied().flatten(),
         };
         match act {
             Some(PanelAct::View) => self.panels.viewing = Some(panel.id.clone()),
@@ -242,6 +250,7 @@ impl MetricsApp {
                 self.panels.inspecting = Some(panel.id.clone());
                 self.panels.inspect_table = TableState::default();
             }
+            Some(PanelAct::Edit) => self.open_editor(Some(panel)),
             Some(PanelAct::Duplicate) => self.duplicate_panel(panel),
             // while editing, Cancel brings a deleted panel back, so it goes without asking
             Some(PanelAct::Delete) if self.edit.editing() => self.remove_panel(&panel.id),

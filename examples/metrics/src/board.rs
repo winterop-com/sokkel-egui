@@ -4,8 +4,8 @@
 
 use eframe::egui::{self, Ui};
 use sokkel_egui::{
-    Button, ButtonVariant, ConfirmAnswer, ConfirmDialog, DashboardEditActions, DashboardWidget, Dialog, DropdownMenu,
-    Gap, Icon, IconButton, MenuItem, Stack, TextField, Toast, ToastKind,
+    Button, ButtonSize, ButtonVariant, ConfirmAnswer, ConfirmDialog, DashboardEditActions, DashboardWidget, Dialog,
+    DropdownMenu, Gap, Icon, IconButton, MenuItem, Stack, TextField, Toast, ToastKind,
 };
 
 use crate::MetricsApp;
@@ -64,8 +64,13 @@ impl MetricsApp {
             })
             .unwrap_or_default();
         let mut more = None;
+        let mut add = false;
         let (edit, kept) = (&mut self.edit, &mut self.dashboards[index].panels);
-        let mut actions = DashboardEditActions::new(edit, kept);
+        let mut actions = DashboardEditActions::new(edit, kept).primary(|ui| {
+            add = ui
+                .add(Button::new("Add panel").icon(Icon::Plus).size(ButtonSize::Sm))
+                .clicked();
+        });
         if !seeded.is_empty() {
             actions = actions.default_layout(&seeded);
         }
@@ -80,6 +85,9 @@ impl MetricsApp {
             more = DropdownMenu::new(&items).end(true).width(208.0).show(&trigger);
         });
         let _ = outcome;
+        if add {
+            self.open_editor(None);
+        }
         match more {
             Some(0) => {
                 self.details = Some(DetailsForm {

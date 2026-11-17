@@ -765,7 +765,11 @@ pub struct DashboardEditActions<'a, T: ArrangeItem = DashboardLayoutItem> {
     size: ButtonSize,
     guard_cancel: bool,
     words: DashboardEditWords,
+    primary: Option<Primary<'a>>,
 }
+
+/// A page's primary action, drawn by the edit buttons.
+type Primary<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
 
 impl<'a, T: ArrangeItem> DashboardEditActions<'a, T> {
     pub fn new(edit: &'a mut DashboardEdit<T>, kept: &'a mut Vec<T>) -> Self {
@@ -776,7 +780,15 @@ impl<'a, T: ArrangeItem> DashboardEditActions<'a, T> {
             size: ButtonSize::Sm,
             guard_cancel: false,
             words: DashboardEditWords::default(),
+            primary: None,
         }
+    }
+
+    /// The page's primary action, drawn after Edit while not editing so it stays last, as the
+    /// web's `primary` (a dashboard's Add panel); left out while editing.
+    pub fn primary(mut self, primary: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.primary = Some(Box::new(primary));
+        self
     }
 
     /// The layout Reset puts back; no Reset without it.
@@ -812,7 +824,11 @@ impl<'a, T: ArrangeItem> DashboardEditActions<'a, T> {
     pub fn show_with(self, ui: &mut Ui, before: impl FnOnce(&mut Ui)) -> DashboardEditOutcome {
         let mut outcome = DashboardEditOutcome::default();
         if !self.edit.editing() {
-            // drawn right to left: Edit first, so what comes before it in reading order stands left
+            // drawn right to left: the primary action, then Edit, so what comes before them in
+            // reading order stands left
+            if let Some(primary) = self.primary {
+                primary(ui);
+            }
             if ui
                 .add(
                     Button::new(&self.words.edit)
