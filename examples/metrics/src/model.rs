@@ -355,6 +355,62 @@ pub fn seed_dashboards() -> Vec<Dashboard> {
     ]
 }
 
+impl sokkel_egui::ArrangeItem for Panel {
+    fn id(&self) -> &str {
+        &self.id
+    }
+
+    fn span(&self) -> PanelSpan {
+        self.span
+    }
+
+    fn set_span(&mut self, span: PanelSpan) {
+        self.span = span;
+    }
+}
+
+/// The panels a dashboard being edited can add from its palette, by title, as the web's `CATALOG`.
+const CATALOG: [&str; 14] = [
+    "Requests",
+    "Error rate",
+    "Queue depth",
+    "api CPU",
+    "Memory",
+    "Mean run",
+    "Requests by service",
+    "Latency p95 by service",
+    "Duration by job",
+    "CPU by host",
+    "Requests by project",
+    "Latency p95 by host",
+    "Hosts by p95",
+    "Logs",
+];
+
+/// The seeded panels the palette offers, as the web's `widgetCatalog`.
+pub fn widget_catalog() -> Vec<Panel> {
+    let seeded: Vec<Panel> = seed_dashboards().into_iter().flat_map(|b| b.panels).collect();
+    CATALOG
+        .iter()
+        .filter_map(|title| seeded.iter().find(|p| p.title == *title).cloned())
+        .collect()
+}
+
+/// A kind's icon, as the web's `KIND_ICONS`.
+pub fn kind_icon(kind: PanelKind) -> sokkel_egui::Icon {
+    use sokkel_egui::Icon;
+    match kind {
+        PanelKind::TimeSeries => Icon::ChartArea,
+        PanelKind::Stat => Icon::SquareSigma,
+        PanelKind::Gauge => Icon::Gauge,
+        PanelKind::BarGauge => Icon::TextAlignStart,
+        PanelKind::Bar => Icon::ChartColumn,
+        PanelKind::Heatmap => Icon::Grid3x3,
+        PanelKind::Table => Icon::Table2,
+        PanelKind::Logs => Icon::ScrollText,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

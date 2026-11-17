@@ -28,5 +28,14 @@ manifest is `parity/metrics.json`; the web's screens are shot into `parity/metri
   `variable_select`; the panels read at each refresh). A table's rows name each group after a dot in its last value's threshold color
   (`Cell::Marked`). A time series of more than three series has its legend as a table of
   Avg, Max and Current (`TimeSeriesPanel::legend_table`). A line's time axis picks its labels as the web's engine does (each minute here,
-  the first and last always). Still to come: a sort arrow before its column's name, each panel's expand and menu, and the head's Share, Edit and Add panel.
+  the first and last always). The head edits the title in place and holds the web's More menu (Edit details, Duplicate
+  dashboard, Delete dashboard) and Edit, which arranges the panels in the web's dense grid with the
+  palette of the catalog's panels, in a draft Done keeps and Cancel throws away
+  (`DashboardEditActions`, `DashboardArrange`).
+- Left out: Share. The web's builds a link to the view in its URL, which a window has none of.
+- Open: the Services overview's request chart labels its axis every 90 seconds on the web where a
+  fresh count of ECharts' `interval: 'auto'` gives 80, and the heatmap labels its axis more
+  sparsely than the web's.
+- Still to come: Add panel with the panel editor, each panel's expand and menu (View, Inspect data,
+  Edit, Duplicate, Delete), a sort arrow before its column's name.
 - Then Dashboards, the editor, Alerts and Settings, each in the rail once it works.

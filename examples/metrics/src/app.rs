@@ -4,9 +4,10 @@
 
 use eframe::egui::{self, Ui};
 use sokkel_egui::{
-    AccountAction, AccountMenu, Appearance, Cell, Column, DashboardGrid, DashboardPanel, DataTable, DesktopWindow,
-    Icon, LogLevel, LogLine, LogView, Page, PageHeader, Rail, RailEntry, RailGroup, RefreshControl, Shell, ShellPart,
-    StatColorMode, StatPanel, StatusLine, StatusTone, TableState, TimeRangePicker, TopBar, format_value, install,
+    AccountAction, AccountMenu, Appearance, Cell, Column, DashboardArrange, DashboardEdit, DashboardPanel, DataTable,
+    DesktopWindow, Icon, LogLevel, LogLine, LogView, Page, PageHeader, Rail, RailEntry, RailGroup, RefreshControl,
+    Shell, ShellPart, StatColorMode, StatPanel, StatusLine, StatusTone, TableState, TimeRangePicker, Toast, TopBar,
+    format_value, install,
 };
 use sokkel_egui_charts::{
     BarGauge, BarPanel, Fill as ChartFill, GaugePanel, HeatmapPanel, LegendStat, Series, TimeSeriesPanel,
@@ -46,6 +47,15 @@ pub struct MetricsApp {
     last_scrape: Option<f64>,
     last_view: Option<f64>,
     tables: std::collections::HashMap<String, TableState>,
+    /// The panels being arranged: a draft Done keeps and Cancel throws away.
+    pub edit: DashboardEdit<Panel>,
+    /// How many panels and copies have been made, for their ids.
+    pub(crate) made: u32,
+    /// What the app has said since the last frame, shown as toasts on the next.
+    pub(crate) said: Vec<Toast>,
+    /// The dashboard's details being changed.
+    pub details: Option<crate::board::DetailsForm>,
+    pub asking: Option<crate::board::Asking>,
 }
 
 impl MetricsApp {
@@ -72,6 +82,11 @@ impl MetricsApp {
             last_scrape: None,
             last_view: None,
             tables: Default::default(),
+            edit: DashboardEdit::default(),
+            made: 0,
+            said: Vec::new(),
+            details: None,
+            asking: None,
         }
     }
 
@@ -110,6 +125,7 @@ impl MetricsApp {
                 .collect::<Vec<_>>(),
         )];
         let mut place = self.place.clone();
+        let was = place.clone();
         let shell = if self.desktop {
             Shell::new().desktop(DesktopWindow::native())
         } else {
@@ -150,9 +166,11 @@ impl MetricsApp {
                 );
             }
         });
-        if place != self.place {
+        // the rail's press moves the place; what the page did to it stands otherwise
+        if place != was {
             self.place = place;
         }
+        self.board_dialogs(&ui.ctx().clone());
         if let Some(AccountAction::Scheme(scheme)) = account {
             self.appearance.scheme = scheme;
         }
@@ -163,28 +181,48 @@ impl MetricsApp {
         let Some(board) = self.dashboards.iter().find(|b| b.id == self.place).cloned() else {
             return;
         };
-        PageHeader::new(&board.title)
+        let header = PageHeader::new(&board.title)
             .description(&board.description)
-            .show(ui, |_| {});
+            .edit_title("Title", |value| {
+                value.trim().is_empty().then(|| "A dashboard needs a title.".to_owned())
+            })
+            .show(ui, |ui| self.board_actions(ui, &board));
+        if let Some(title) = header.renamed
+            && let Some(kept) = self.dashboards.iter_mut().find(|b| b.id == board.id)
+        {
+            kept.title = title.trim().to_owned();
+        }
         // the variables right under the head, the page's own gap before the panels
         self.variables_bar(ui);
         let (variables, range, at) = (self.variables.clone(), self.range.clone(), self.view_at);
-        for panel in &board.panels {
+        let palette = self.palette(&board);
+        let editing = self.edit.editing();
+        let Some(index) = self.dashboards.iter().position(|b| b.id == board.id) else {
+            return;
+        };
+        let layout = self.edit.layout(&mut self.dashboards[index].panels);
+        for panel in layout.iter() {
             self.tables.entry(panel.id.clone()).or_default();
         }
-        // each panel's table state borrowed apart, so each cell holds its own
-        let mut states: std::collections::HashMap<&String, &mut TableState> = self.tables.iter_mut().collect();
-        DashboardGrid::new(("board", &board.id)).show(ui, |grid| {
-            for panel in &board.panels {
-                let Some(state) = states.remove(&panel.id) else {
-                    continue;
-                };
-                let (variables, range) = (variables.clone(), range.clone());
-                grid.cell(panel.span, move |ui| {
-                    draw_panel(ui, panel, &variables, &range, at, state)
-                });
-            }
-        });
+        let label = |p: &Panel| p.title.clone();
+        let tables = &mut self.tables;
+        let arranged = DashboardArrange::new(("board", &board.id), layout, &label)
+            .arranging(editing)
+            .dense(true)
+            .palette(&palette)
+            .show(ui, |ui, panel| {
+                if let Some(state) = tables.get_mut(&panel.id) {
+                    draw_panel(ui, panel, &variables, &range, at, state);
+                }
+            });
+        if let Some((id, at)) = arranged.added
+            && let Some(mut made) = crate::model::widget_catalog().into_iter().find(|p| p.id == id)
+        {
+            made.id = self.panel_id();
+            let layout = self.edit.layout(&mut self.dashboards[index].panels);
+            let at = at.min(layout.len());
+            layout.insert(at, made);
+        }
     }
 }
 

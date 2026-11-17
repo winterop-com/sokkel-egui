@@ -241,7 +241,8 @@ impl Frame {
                     _ => (x - width / 2.0, x + width / 2.0),
                 }
             };
-            let clear = |(a, b): (f32, f32), (c, d): (f32, f32)| b <= c || d <= a;
+            // two labels closer than 4 read as one word, so one of them gives way
+            let clear = |(a, b): (f32, f32), (c, d): (f32, f32)| b + 4.0 <= c || d + 4.0 <= a;
             let mut labels = vec![0];
             labels.extend(picked.iter().copied().filter(|i| *i != 0 && *i != last));
             labels.push(last);
