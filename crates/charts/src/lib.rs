@@ -480,6 +480,7 @@ pub struct LineChart {
     writing: Writing,
     every: Option<usize>,
     thresholds: Vec<(f64, Color32)>,
+    marks: Vec<(f64, Color32)>,
     height: f32,
     stacked: bool,
 }
@@ -505,6 +506,7 @@ impl LineChart {
             writing: Writing::default(),
             every: None,
             thresholds: Vec::new(),
+            marks: Vec::new(),
             height: 240.0,
             stacked: false,
         }
@@ -555,6 +557,13 @@ impl LineChart {
     /// A dashed line across at `value` in `color`, a threshold's step, drawn where the axis reaches it.
     pub fn threshold(mut self, value: f64, color: Color32) -> Self {
         self.thresholds.push((value, color));
+        self
+    }
+
+    /// A target: a dashed line across at `value` in `color`, the axis reaching it, its value written
+    /// short at its end above it, as the web's thresholds with a value draw a goal's line.
+    pub fn mark(mut self, value: f64, color: Color32) -> Self {
+        self.marks.push((value, color));
         self
     }
 
@@ -613,6 +622,7 @@ impl Widget for LineChart {
             .as_ref()
             .map_or(0.0, |(_, high)| high.iter().copied().fold(0.0, f64::max));
         let max = tops.iter().map(|v| max_of(v.iter())).fold(band_top, f64::max);
+        let max = self.marks.iter().map(|m| m.0).fold(max, f64::max);
         let axes = Axes {
             writing: self.writing.clone(),
             every: self.every,
@@ -678,6 +688,22 @@ impl Widget for LineChart {
                     4.0,
                 ));
             }
+        }
+        for (value, color) in &self.marks {
+            let y = frame.y(*value);
+            painter.add(Shape::dashed_line(
+                &[pos2(frame.plot.left(), y), pos2(frame.plot.right(), y)],
+                Stroke::new(1.0, *color),
+                4.0,
+                4.0,
+            ));
+            painter.text(
+                pos2(frame.plot.right() - 4.0, y - 2.0),
+                Align2::RIGHT_BOTTOM,
+                self.writing.tick(*value),
+                axis_font(&t),
+                *color,
+            );
         }
         if let Some((low, high)) = &self.band {
             let color = self

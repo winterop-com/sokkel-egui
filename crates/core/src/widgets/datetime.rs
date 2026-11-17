@@ -296,3 +296,158 @@ impl<'a> DateTimeField<'a> {
         picked
     }
 }
+
+/// The words a date field says.
+#[derive(Clone, Debug)]
+pub struct DateFieldWords {
+    pub unreadable: String,
+    /// `{}` a day written as the field writes it.
+    pub example: String,
+    pub pick: String,
+}
+
+impl Default for DateFieldWords {
+    fn default() -> Self {
+        Self {
+            unreadable: "Enter a date".into(),
+            example: "As in {}.".into(),
+            pick: "Choose a date".into(),
+        }
+    }
+}
+
+/// A day typed as `YYYY-MM-DD`, with a button at its end opening a calendar to pick from, as
+/// sokkel-ui's `DateField`. Text that is not a date keeps the day as it was and is said under the
+/// field; an app's own refusal (`error`) is said there too. Picking a day closes the calendar.
+pub struct DateField<'a> {
+    id: Id,
+    label: String,
+    value: &'a mut Option<Day>,
+    today: Day,
+    error: Option<String>,
+    words: DateFieldWords,
+}
+
+#[derive(Clone, Default)]
+struct HeldDay {
+    text: String,
+    from: Option<Day>,
+    open: bool,
+}
+
+impl<'a> DateField<'a> {
+    pub fn new(id: impl egui::AsIdSalt, label: impl Into<String>, value: &'a mut Option<Day>, today: Day) -> Self {
+        Self {
+            id: Id::unique(id),
+            label: label.into(),
+            value,
+            today,
+            error: None,
+            words: DateFieldWords::default(),
+        }
+    }
+
+    /// What is wrong with the day, as the app says it under the field.
+    pub fn error(mut self, error: Option<impl Into<String>>) -> Self {
+        self.error = error.map(Into::into);
+        self
+    }
+
+    pub fn words(mut self, words: DateFieldWords) -> Self {
+        self.words = words;
+        self
+    }
+
+    /// Draws the field; true when its day changed, by typing or picking.
+    pub fn show(self, ui: &mut Ui) -> bool {
+        let t = tokens(ui.ctx());
+        let mut held: HeldDay = ui.data(|d| d.get_temp(self.id)).unwrap_or_default();
+        if held.from != *self.value || (held.text.is_empty() && self.value.is_some()) {
+            held.text = self.value.map(|d| d.to_string()).unwrap_or_default();
+            held.from = *self.value;
+        }
+        let mut changed = false;
+        let width = ui.available_width();
+        ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.y = 6.0;
+            ui.label(TextRole::Label.rich(&t, &self.label).color(t.color("foreground")));
+            let typed_before = held.text.clone();
+            let unreadable = !held.text.trim().is_empty() && Day::parse(held.text.trim()).is_none();
+            let issue = if unreadable {
+                Some(format!(
+                    "{} {}",
+                    self.words.unreadable,
+                    self.words.example.replace("{}", &self.today.to_string())
+                ))
+            } else {
+                self.error.clone()
+            };
+            let field = ui.add(
+                Input::new(&mut held.text)
+                    .name(&self.label)
+                    .placeholder("yyyy-mm-dd")
+                    .width(width)
+                    .invalid(issue.is_some()),
+            );
+            let button = Rect::from_center_size(
+                egui::pos2(field.rect.right() - 4.0 - 14.0, field.rect.center().y),
+                vec2(28.0, 28.0),
+            );
+            let hit = ui.interact(button, self.id.with("pick"), Sense::click());
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.pick));
+            if hit.hovered() {
+                ui.painter().rect_filled(button, t.radius("md"), t.color("hover"));
+            }
+            icons::paint(
+                ui.painter(),
+                button.center(),
+                Icon::CalendarDays,
+                14.0,
+                t.color("muted-foreground"),
+            );
+            super::focus_ring(ui.painter(), &t, button, t.radius("md"), &hit);
+            if hit.clicked() {
+                held.open = !held.open;
+            }
+            if held.text != typed_before
+                && let Some(day) = Day::parse(held.text.trim())
+            {
+                *self.value = Some(day);
+                held.from = Some(day);
+                changed = true;
+            }
+            if let Some(issue) = &issue {
+                ui.label(TextRole::Help.rich(&t, issue).color(t.color("critical-ink")));
+            }
+            if held.open {
+                let mut day = *self.value;
+                let area = egui::Area::new(self.id.with("picker"))
+                    .order(egui::Order::Foreground)
+                    .fixed_pos(egui::pos2(field.rect.left(), field.rect.bottom() + 4.0))
+                    .show(ui.ctx(), |ui| {
+                        super::popup_frame(&t).show(ui, |ui| {
+                            ui.add(Calendar::new(self.id.with("calendar"), &mut day, self.today));
+                        });
+                    });
+                if day != *self.value
+                    && let Some(day) = day
+                {
+                    *self.value = Some(day);
+                    held.text = day.to_string();
+                    held.from = Some(day);
+                    held.open = false;
+                    changed = true;
+                }
+                let outside = ui.input(|i| i.pointer.any_pressed())
+                    && ui
+                        .input(|i| i.pointer.interact_pos())
+                        .is_some_and(|pos| !area.response.rect.contains(pos) && !field.rect.contains(pos));
+                if outside || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                    held.open = false;
+                }
+            }
+        });
+        ui.data_mut(|d| d.insert_temp(self.id, held));
+        changed
+    }
+}

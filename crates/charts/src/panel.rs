@@ -236,6 +236,13 @@ impl TimeSeriesPanel {
         self
     }
 
+    /// A target: a dashed line across at `value` in `color`, the axis reaching it, its value
+    /// written at its end, as a goal's line.
+    pub fn mark(mut self, value: f64, color: Color32) -> Self {
+        self.chart = self.chart.mark(value, color);
+        self
+    }
+
     /// A threshold's step: a dashed line across at `value`, in `color`.
     pub fn threshold(mut self, value: f64, color: Color32) -> Self {
         self.chart = self.chart.threshold(value, color);

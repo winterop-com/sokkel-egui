@@ -76,6 +76,12 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
   panels as the dashboards draw them; Export CSV writes the web's file to the Downloads folder
   (`sokkel_egui::download`, as the web's `lib/download`, which metrics now uses too). Leaving a
   report with changes not saved asks first, as the web's `useUnsavedChanges` holds a route.
+- Goals: each goal as a stat tile with its target's meter (`StatPanel::target`) beside its line
+  toward the target, the dashed pace and the target drawn across with its value
+  (`TimeSeriesPanel::mark`); every figure (how far along, on pace or behind, heading for) the web's.
+  The dialog sets or changes one, its days in the new `DateField`; Delete asks first. Open: the
+  web's target field starts empty and writes the currency's sign before the number, where egui's
+  starts at 0 with the code after it.
 - Open: a value chosen in place stands 10 further in than the values around it, where the web
   lines it up with them.
 - Open: the web map keeps clear of its legend as it frames the points; the egui map frames them
@@ -86,4 +92,4 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
 
 ## Next
 
-- Goals, Settings and the palette.
+- Settings and the palette.

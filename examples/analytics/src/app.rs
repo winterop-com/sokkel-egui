@@ -105,6 +105,8 @@ pub struct AnalyticsApp {
     kpis: HashMap<KpiKey, Kpis>,
     /// A page asked for while a report has changes not saved, held until the question is answered.
     pub leaving: Option<String>,
+    /// The goals and the one in the dialog.
+    pub goals: crate::goals::GoalsPage,
     /// The saved reports and the one being composed.
     pub reports: crate::reports::ReportsPage,
     /// The saved funnels and the one being built.
@@ -184,6 +186,7 @@ impl AnalyticsApp {
             customer: Default::default(),
             funnels: crate::funnels::FunnelsPage::new(now),
             reports: crate::reports::ReportsPage::new(now),
+            goals: crate::goals::GoalsPage::new(now),
             leaving: None,
             map: sokkel_egui_maps::MapView::new(30.0, 10.0, 1.0).framed(false),
             map_framed: false,
@@ -488,6 +491,7 @@ impl AnalyticsApp {
             }
             ShellPart::Page if page == "funnels" => Page::scroll(ui, |ui| self.funnels_page(ui)),
             ShellPart::Page if page == "reports" => Page::scroll(ui, |ui| self.reports_page(ui)),
+            ShellPart::Page if page == "goals" => Page::scroll(ui, |ui| self.goals_page(ui)),
             ShellPart::Page => {}
             ShellPart::Foot => {
                 ui.add(

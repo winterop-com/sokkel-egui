@@ -7,6 +7,7 @@ pub mod customer;
 pub mod customers;
 pub mod days;
 pub mod funnels;
+pub mod goals;
 pub mod invoices;
 pub mod metrics;
 pub mod model;

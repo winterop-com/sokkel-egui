@@ -64,7 +64,7 @@ pub use commands::{AppearanceCommandWords, appearance_commands, place_commands, 
 pub use dashboard::{
     DashboardGrid, DashboardPanel, GridCells, PanelSpan, body_room, cell_height, report_natural_height, took_room,
 };
-pub use datetime::{DateTimeField, DateTimeFieldResponse, DateTimeFieldWords, Moment};
+pub use datetime::{DateField, DateFieldWords, DateTimeField, DateTimeFieldResponse, DateTimeFieldWords, Moment};
 pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton};
 pub use empty::Empty;
 pub(crate) use fields::search_field;

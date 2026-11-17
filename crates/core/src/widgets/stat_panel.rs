@@ -151,6 +151,7 @@ pub struct StatPanel<'a> {
     delta: Option<String>,
     good: Option<bool>,
     format: Option<&'a dyn Fn(f64) -> String>,
+    target: Option<(f64, Option<(f64, f64)>)>,
     info: Option<String>,
     note: Option<String>,
     words: StatWords,
@@ -170,6 +171,7 @@ impl<'a> StatPanel<'a> {
             delta: None,
             good: None,
             format: None,
+            target: None,
             info: None,
             note: None,
             words: StatWords::default(),
@@ -229,6 +231,13 @@ impl<'a> StatPanel<'a> {
         self
     }
 
+    /// The value the reading aims for, drawn as a meter under it with the target written out, as
+    /// the web's `target`; the meter runs from 0 to the larger of the two unless `range` is given.
+    pub fn target(mut self, target: f64, range: Option<(f64, f64)>) -> Self {
+        self.target = Some((target, range));
+        self
+    }
+
     /// What the tile counts, said in a tooltip on the Info mark in its head.
     pub fn info(mut self, info: impl Into<String>) -> Self {
         self.info = Some(info.into());
@@ -250,7 +259,12 @@ impl<'a> StatPanel<'a> {
         let t = tokens(ui.ctx());
         let cell = ui.scope_id();
         let width = ui.available_width();
-        let natural = 112.0;
+        // taller with a target's meter, as the web's `min-h-36`
+        let natural = if self.target.is_some() && self.value.is_some() {
+            144.0
+        } else {
+            112.0
+        };
         let height = cell_height(ui).unwrap_or(0.0).max(natural);
         report_natural_height(ui, cell, natural);
         let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
@@ -378,13 +392,71 @@ impl<'a> StatPanel<'a> {
                     )
                 });
                 let note_height = note.as_ref().map_or(0.0, |n| n.size().y);
+                // the meter: 8 down, a 6 tall track, 4, the target's line, 12 under it
+                let target_line = self.target.map(|(target, _)| {
+                    let written = match self.format {
+                        Some(format) => format(target),
+                        None => format_value(target, self.decimals),
+                    };
+                    let written = format!("{written}{}", self.unit.clone().unwrap_or_default());
+                    (
+                        WidgetText::from(TextRole::Help.rich(&t, "Target")).into_galley(
+                            ui,
+                            Some(TextWrapMode::Extend),
+                            f32::INFINITY,
+                            TextRole::Help.font(&t),
+                        ),
+                        WidgetText::from(
+                            egui::RichText::new(written).font(egui::FontId::monospace(TextRole::Help.font(&t).size)),
+                        )
+                        .into_galley(
+                            ui,
+                            Some(TextWrapMode::Extend),
+                            f32::INFINITY,
+                            TextRole::Help.font(&t),
+                        ),
+                    )
+                });
+                let meter_height = target_line
+                    .as_ref()
+                    .map_or(0.0, |(label, _)| 8.0 + 6.0 + 4.0 + label.size().y + 12.0);
                 let total = figure.size().x + unit.as_ref().map_or(0.0, |u| u.size().x + 4.0);
                 let x = body.center().x - total / 2.0;
-                // the value and the note under it centered together
-                let top = body.center().y - (figure.size().y + note_height) / 2.0;
+                // the value, the note and the meter under it centered together
+                let top = body.center().y - (figure.size().y + note_height + meter_height) / 2.0;
                 if let Some(note) = note {
                     let at = pos2(body.center().x - note.size().x / 2.0, top + figure.size().y);
                     painter.galley(at, note, muted);
+                }
+                if let (Some((target, range)), Some((label, figure_text))) = (self.target, target_line) {
+                    let reading = ink.unwrap_or(muted);
+                    let width = body.width().min(192.0);
+                    let track_top = top + figure.size().y + note_height + 8.0;
+                    let track =
+                        egui::Rect::from_min_size(pos2(body.center().x - width / 2.0, track_top), vec2(width, 6.0));
+                    let (low, high) = range.unwrap_or((0.0, value.max(target)));
+                    let at = |v: f64| (((v - low) / (high - low).max(f64::MIN_POSITIVE)).clamp(0.0, 1.0)) as f32;
+                    let corner = t.radius("mini");
+                    painter.rect_filled(track, corner, reading.gamma_multiply(0.15));
+                    let reach = egui::Rect::from_min_size(track.min, vec2(width * at(value), 6.0));
+                    painter.rect_filled(reach, corner, reading);
+                    let mark = track.left() + width * at(target);
+                    let tick = egui::Rect::from_min_max(
+                        pos2(mark - 1.0, track.top() - 4.0),
+                        pos2(mark + 1.0, track.bottom() + 4.0),
+                    );
+                    let tick_ink = if filled {
+                        t.color("on-fill")
+                    } else {
+                        t.color("foreground")
+                    };
+                    painter.rect_filled(tick, corner, tick_ink);
+                    let line_top = track.bottom() + 4.0;
+                    let both = label.size().x + 4.0 + figure_text.size().x;
+                    let left = body.center().x - both / 2.0;
+                    let label_width = label.size().x;
+                    painter.galley(pos2(left, line_top), label, muted);
+                    painter.galley(pos2(left + label_width + 4.0, line_top), figure_text, muted);
                 }
                 let base = top + figure.rows.first().map_or(0.0, |r| r.max_y());
                 let figure_width = figure.size().x;
