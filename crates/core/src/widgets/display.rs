@@ -73,7 +73,7 @@ impl Widget for Badge {
         );
         let lead = if self.icon.is_some() { 12.0 + 4.0 } else { 0.0 };
         let (rect, response) = ui.allocate_exact_size(vec2(galley.size().x + lead + 12.0, 20.0), Sense::hover());
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, &self.label));
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, &self.label));
         if ui.is_rect_visible(rect) {
             let painter = ui.painter();
             painter.rect(
@@ -413,7 +413,7 @@ impl Banner {
         let (rect, response) = ui.allocate_exact_size(egui::vec2(width, height), egui::Sense::hover());
         // what it says, for a screen reader
         let said = self.text.clone();
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, &said));
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, &said));
         let painter = ui.painter();
         painter.rect_filled(rect, egui::CornerRadius::ZERO, t.color_at(key, 0.12));
         painter.hline(

@@ -144,8 +144,8 @@ impl PageHeader {
                 let line = TextRole::PageTitle.font(&t).size * 1.25 + if self.edit.is_some() { 4.0 } else { 0.0 };
                 let (slot, _) = ui.allocate_exact_size(egui::vec2(28.0, line), egui::Sense::hover());
                 let button = egui::Rect::from_center_size(slot.center(), egui::vec2(28.0, 28.0));
-                let hit = ui.interact(button, ui.id().with("page-back"), egui::Sense::click());
-                hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, label));
+                let hit = ui.interact(button, ui.scope_id().with("page-back"), egui::Sense::click());
+                hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, label));
                 if hit.hovered() {
                     ui.painter().rect_filled(button, t.radius("control"), t.color("hover"));
                 }

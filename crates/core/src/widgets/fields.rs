@@ -52,12 +52,12 @@ pub struct QuickAdd<'a> {
 }
 
 impl<'a> QuickAdd<'a> {
-    pub fn new(id: impl egui::AsId, text: &'a mut String) -> Self {
+    pub fn new(id: impl egui::AsIdSalt, text: &'a mut String) -> Self {
         Self {
             text,
             placeholder: "Add".into(),
             width: 256.0,
-            id: egui::Id::new(id),
+            id: egui::Id::unique(id),
         }
     }
 
@@ -72,8 +72,8 @@ impl<'a> QuickAdd<'a> {
     }
 
     /// The id of its text field, to move the focus to it from elsewhere (a command).
-    pub fn field_id(id: impl egui::AsId) -> egui::Id {
-        egui::Id::new(id).with("field")
+    pub fn field_id(id: impl egui::AsIdSalt) -> egui::Id {
+        egui::Id::unique(id).with("field")
     }
 
     pub fn show(self, ui: &mut Ui) -> Option<String> {
@@ -128,7 +128,7 @@ fn icon_field(ui: &mut Ui, rect: Rect, text: &mut String, icon: Icon, placeholde
         .margin(Margin::ZERO)
         .desired_width(inner.width())
         .hint_text(body.rich(&t, placeholder).color(t.color("muted-foreground")));
-    let response = child.add(edit);
+    let response = child.add(edit).accessible_name(placeholder);
     let focused = response.has_focus();
     ui.painter().set(
         ground,
@@ -170,11 +170,11 @@ pub struct SearchField<'a> {
 }
 
 impl<'a> SearchField<'a> {
-    pub fn new(id: impl egui::AsId, text: &'a mut String) -> Self {
+    pub fn new(id: impl egui::AsIdSalt, text: &'a mut String) -> Self {
         Self {
             text,
             placeholder: "Search".into(),
-            id: egui::Id::new(id),
+            id: egui::Id::unique(id),
             keys: None,
             width: None,
         }
@@ -250,7 +250,7 @@ impl<'a> SearchField<'a> {
 
 /// The search field a part draws in the room it is given.
 pub(crate) fn search_field(ui: &mut Ui, text: &mut String, placeholder: &str) -> Response {
-    let id = ui.id().with("search");
+    let id = ui.scope_id().with("search");
     SearchField::new(id, text).placeholder(placeholder).show(ui)
 }
 
@@ -321,7 +321,7 @@ impl Widget for SwitchField<'_> {
                 pos2(rect.left() + label_width + 6.0 + 8.0, rect.center().y),
                 vec2(16.0, 16.0),
             );
-            let help = ui.interact(spot, ui.id().with(("switch-help", &self.label)), Sense::hover());
+            let help = ui.interact(spot, ui.scope_id().with(("switch-help", &self.label)), Sense::hover());
             let ink = if help.hovered() {
                 t.color("muted-foreground")
             } else {

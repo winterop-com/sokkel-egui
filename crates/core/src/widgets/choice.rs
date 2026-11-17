@@ -1,8 +1,8 @@
 //! Choosing: Checkbox, Tabs and Segmented, after sokkel-ui's components of the same names.
 
 use egui::{
-    Color32, CornerRadius, Rect, Response, Sense, Stroke, StrokeKind, TextWrapMode, Ui, Widget, WidgetInfo, WidgetText,
-    WidgetType, pos2, vec2,
+    Color32, CornerRadius, Rect, Response, Role, Sense, Stroke, StrokeKind, TextWrapMode, Ui, Widget, WidgetInfo,
+    WidgetText, pos2, vec2,
 };
 
 use super::{dim, focus_ring};
@@ -92,7 +92,7 @@ impl Widget for Checkbox<'_> {
             response.mark_changed();
         }
         let on = *self.checked || self.indeterminate;
-        response.widget_info(|| WidgetInfo::selected(WidgetType::Checkbox, self.enabled, on, &self.label));
+        response.widget_info(|| WidgetInfo::selected(Role::CheckBox, self.enabled, on, &self.label));
         if !ui.is_rect_visible(rect) {
             return response;
         }
@@ -209,7 +209,7 @@ impl Widget for Tabs<'_> {
             let id = response.id.with(index);
             let hit = ui.interact(tab, id, Sense::click());
             let chosen = *self.chosen == index;
-            hit.widget_info(|| WidgetInfo::selected(WidgetType::SelectableLabel, true, chosen, &self.tabs[index]));
+            hit.widget_info(|| WidgetInfo::selected(Role::Button, true, chosen, &self.tabs[index]));
             if hit.clicked() && !chosen {
                 *self.chosen = index;
                 response.mark_changed();
@@ -429,7 +429,7 @@ impl Widget for Segmented<'_> {
             let option = place(index);
             let hit = ui.interact(option, response.id.with(index), Sense::click());
             let chosen = *self.chosen == index;
-            hit.widget_info(|| WidgetInfo::selected(WidgetType::SelectableLabel, true, chosen, &self.options[index]));
+            hit.widget_info(|| WidgetInfo::selected(Role::Button, true, chosen, &self.options[index]));
             if hit.clicked() && !chosen {
                 *self.chosen = index;
                 response.mark_changed();
@@ -547,9 +547,8 @@ impl<'a> ChoiceList<'a> {
                 });
                 let height = 16.0 + label.size().y + line.as_ref().map_or(0.0, |l| l.size().y);
                 let (rect, response) = ui.allocate_exact_size(egui::vec2(width, height), egui::Sense::click());
-                response.widget_info(|| {
-                    egui::WidgetInfo::selected(egui::WidgetType::RadioButton, true, chosen, choice.label)
-                });
+                response
+                    .widget_info(|| egui::WidgetInfo::selected(egui::Role::RadioButton, true, chosen, choice.label));
                 let painter = ui.painter();
                 if chosen {
                     painter.rect_filled(rect, t.radius("control"), t.color("secondary"));
@@ -593,7 +592,7 @@ impl<'a> ChoiceList<'a> {
             }
         })
         .response
-        .widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Other, true, self.label));
+        .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Unknown, true, self.label));
         changed
     }
 }
@@ -652,7 +651,7 @@ impl Widget for SwatchGroup<'_> {
             );
             let hit = ui.interact(place, response.id.with(index), Sense::click());
             let chosen = *self.chosen == index;
-            hit.widget_info(|| WidgetInfo::selected(WidgetType::SelectableLabel, true, chosen, label));
+            hit.widget_info(|| WidgetInfo::selected(Role::Button, true, chosen, label));
             if hit.clicked() && !chosen {
                 *self.chosen = index;
                 response.mark_changed();

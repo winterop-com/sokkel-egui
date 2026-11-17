@@ -146,7 +146,7 @@ impl MapPopup {
         let tip_x = point.x.clamp(card.left() + 14.0, card.right() - 14.0);
 
         // the card takes the pointer, so pressing it does not press the map under it
-        let _ = ui.interact(card, ui.id().with("map-popup"), Sense::click());
+        let _ = ui.interact(card, ui.scope_id().with("map-popup"), Sense::click());
         let ink = t.color("popover-foreground");
         let ring = t.color_at("foreground", 0.10);
         let painter = ui.painter().clone();

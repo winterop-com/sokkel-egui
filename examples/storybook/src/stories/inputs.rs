@@ -29,14 +29,14 @@ pub fn input(state: &mut State, ui: &mut Ui) {
     // a form's column, as the web's stories hold their fields (`max-w-md`)
     ui.set_max_width(448.0);
     section(ui, "Plain");
-    ui.add(Input::new(&mut state.job));
+    ui.add(Input::new(&mut state.job).name("Job"));
     section(ui, "Placeholder");
     ui.add(Input::new(&mut state.empty).placeholder("Search jobs"));
     section(ui, "Invalid");
-    ui.add(Input::new(&mut state.schedule).invalid(true));
+    ui.add(Input::new(&mut state.schedule).name("Schedule").invalid(true));
     section(ui, "Disabled");
     let mut fixed = "worker".to_owned();
-    ui.add(Input::new(&mut fixed).enabled(false));
+    ui.add(Input::new(&mut fixed).name("Service").enabled(false));
 }
 
 pub fn tabs(state: &mut State, ui: &mut Ui) {

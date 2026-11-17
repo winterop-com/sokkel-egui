@@ -66,9 +66,9 @@ pub struct Calendar<'a> {
 }
 
 impl<'a> Calendar<'a> {
-    pub fn new(id: impl egui::AsId, chosen: &'a mut Option<Day>, today: Day) -> Self {
+    pub fn new(id: impl egui::AsIdSalt, chosen: &'a mut Option<Day>, today: Day) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             chosen,
             today,
             week_start: WeekStart::Monday,
@@ -141,7 +141,7 @@ impl Widget for Calendar<'_> {
         ] {
             let place = Rect::from_center_size(pos2(column(c), head), vec2(CELL, CELL));
             let hit = ui.interact(place, self.id.with(("step", step)), Sense::click());
-            hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, label));
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, label));
             if hit.hovered() {
                 painter.rect_filled(place, t.radius("control"), t.color("hover"));
             }
@@ -200,7 +200,7 @@ impl Widget for Calendar<'_> {
                 );
                 let hit = ui.interact(place, self.id.with(("day", day.0)), Sense::click());
                 let chosen = *self.chosen == Some(day);
-                hit.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::Button, true, chosen, day.to_string()));
+                hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, chosen, day.to_string()));
                 let radius = t.radius("control");
                 let ink = if chosen {
                     painter.rect_filled(place, radius, t.color("primary"));
@@ -246,8 +246,8 @@ impl Widget for Calendar<'_> {
 }
 
 /// Forget the month a calendar shows, so it opens next on its chosen day's month.
-pub fn calendar_forget(ctx: &egui::Context, id: impl egui::AsId) {
-    ctx.data_mut(|d| d.remove::<(i32, u32)>(Id::new(id).with("month")));
+pub fn calendar_forget(ctx: &egui::Context, id: impl egui::AsIdSalt) {
+    ctx.data_mut(|d| d.remove::<(i32, u32)>(Id::unique(id).with("month")));
 }
 
 /// Two months side by side to pick a span of days from, as sokkel-ui's `Calendar` with
@@ -266,9 +266,9 @@ pub struct RangeCalendar<'a> {
 }
 
 impl<'a> RangeCalendar<'a> {
-    pub fn new(id: impl egui::AsId, from: &'a mut Option<Day>, to: &'a mut Option<Day>, today: Day) -> Self {
+    pub fn new(id: impl egui::AsIdSalt, from: &'a mut Option<Day>, to: &'a mut Option<Day>, today: Day) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             from,
             to,
             today,
@@ -322,7 +322,7 @@ impl Widget for RangeCalendar<'_> {
         ] {
             let place = Rect::from_center_size(pos2(x, head), vec2(CELL, CELL));
             let hit = ui.interact(place, self.id.with(("step", step)), Sense::click());
-            hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, label));
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, label));
             if hit.hovered() {
                 painter.rect_filled(place, t.radius("control"), t.color("hover"));
             }
@@ -389,7 +389,7 @@ impl Widget for RangeCalendar<'_> {
                     let between = matches!((from, to), (Some(a), Some(b)) if a < day && day < b);
                     let chosen = is_start || is_end;
                     hit.widget_info(|| {
-                        egui::WidgetInfo::selected(egui::WidgetType::Button, true, chosen || between, day.to_string())
+                        egui::WidgetInfo::selected(egui::Role::Button, true, chosen || between, day.to_string())
                     });
                     let ink = if chosen {
                         // the end's band toward the span's middle, under its fill

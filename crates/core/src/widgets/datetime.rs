@@ -90,9 +90,9 @@ struct Held {
 }
 
 impl<'a> DateTimeField<'a> {
-    pub fn new(id: impl egui::AsId, label: impl Into<String>, value: &'a mut Option<Moment>, today: Day) -> Self {
+    pub fn new(id: impl egui::AsIdSalt, label: impl Into<String>, value: &'a mut Option<Moment>, today: Day) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             label: label.into(),
             value,
             min: None,
@@ -145,14 +145,19 @@ impl<'a> DateTimeField<'a> {
                 (Some(at), Some(min)) if at < min => Some(self.words.under.replace("{}", &min.written())),
                 _ => None,
             };
-            let field = ui.add(Input::new(&mut held.text).width(width).invalid(issue.is_some()));
+            let field = ui.add(
+                Input::new(&mut held.text)
+                    .name(&self.label)
+                    .width(width)
+                    .invalid(issue.is_some()),
+            );
             // the picker's button inside the field's end, 28 square
             let button = Rect::from_center_size(
                 egui::pos2(field.rect.right() - 4.0 - 14.0, field.rect.center().y),
                 vec2(28.0, 28.0),
             );
             let hit = ui.interact(button, self.id.with("pick"), Sense::click());
-            hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.pick));
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.pick));
             if hit.hovered() {
                 ui.painter().rect_filled(button, t.radius("md"), t.color("hover"));
             }
@@ -242,7 +247,7 @@ impl<'a> DateTimeField<'a> {
                                         );
                                         let words = format!("{:02}:{:02}", minutes / 60, minutes % 60);
                                         hit.widget_info(|| {
-                                            egui::WidgetInfo::selected(egui::WidgetType::Button, !shut, chosen, &words)
+                                            egui::WidgetInfo::selected(egui::Role::Button, !shut, chosen, &words)
                                         });
                                         if chosen {
                                             ui.painter().rect_filled(rect, t.radius("md"), t.color("primary"));

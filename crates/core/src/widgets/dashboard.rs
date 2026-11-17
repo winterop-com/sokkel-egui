@@ -43,7 +43,7 @@ struct CellNatural(f32);
 
 /// The height a panel drawn in `ui` stretches to: its grid row's, where the grid has measured it.
 pub fn cell_height(ui: &Ui) -> Option<f32> {
-    ui.data(|d| d.get_temp::<CellHeight>(ui.id())).map(|h| h.0)
+    ui.data(|d| d.get_temp::<CellHeight>(ui.scope_id())).map(|h| h.0)
 }
 
 /// What a panel's body may grow by and how much it did, for a body that fills a stretched panel.
@@ -57,14 +57,15 @@ struct BodyRoom {
 /// grid row: for a part that grows to fill its panel, as the web's `grow` in a panel's column.
 /// The part says what it took with [`took_room`].
 pub fn body_room(ui: &Ui) -> f32 {
-    ui.data(|d| d.get_temp::<BodyRoom>(ui.id())).map_or(0.0, |r| r.room)
+    ui.data(|d| d.get_temp::<BodyRoom>(ui.scope_id()))
+        .map_or(0.0, |r| r.room)
 }
 
 /// Tells the panel the body grew by `height` into its [`body_room`], so the panel's own height,
 /// which its row is sized by, leaves it out.
 pub fn took_room(ui: &Ui, height: f32) {
     ui.data_mut(|d| {
-        let room = d.get_temp_mut_or_default::<BodyRoom>(ui.id());
+        let room = d.get_temp_mut_or_default::<BodyRoom>(ui.scope_id());
         room.took += height;
     });
 }
@@ -102,7 +103,7 @@ pub struct DashboardGrid {
 impl DashboardGrid {
     pub fn new(id_salt: impl std::hash::Hash + std::fmt::Debug) -> Self {
         Self {
-            id: Id::new(("sokkel-dashboard", id_salt)),
+            id: Id::unique(("sokkel-dashboard", id_salt)),
             dense: false,
         }
     }
@@ -153,13 +154,13 @@ impl DashboardGrid {
                         .max_rect(rect)
                         .layout(egui::Layout::top_down(egui::Align::Min)),
                 );
-                child.data_mut(|d| d.insert_temp(child.id(), CellHeight(held)));
+                child.data_mut(|d| d.insert_temp(child.scope_id(), CellHeight(held)));
                 child.set_width(w);
-                child.data_mut(|d| d.remove_temp::<CellNatural>(child.id()));
+                child.data_mut(|d| d.remove_temp::<CellNatural>(child.scope_id()));
                 draw(&mut child);
                 // a panel's own height, unstretched; anything else, the height it took
                 let natural = child
-                    .data(|d| d.get_temp::<CellNatural>(child.id()))
+                    .data(|d| d.get_temp::<CellNatural>(child.scope_id()))
                     .map_or(child.min_rect().height(), |n| n.0);
                 tallest = tallest.max(natural);
                 x += w + gap;
@@ -237,7 +238,7 @@ impl<'a> DashboardPanel<'a> {
         let t = tokens(ui.ctx());
         let width = ui.available_width();
         let stretch = cell_height(ui).unwrap_or(0.0);
-        let cell = ui.id();
+        let cell = ui.scope_id();
         let radius = t.radius("surface");
         let ink = t.color("muted-foreground");
         let rule = Stroke::new(1.0, t.color("border"));
@@ -323,9 +324,11 @@ impl<'a> DashboardPanel<'a> {
                     .inner_margin(egui::Margin::same(margin))
                     .show(ui, |ui| {
                         ui.set_width(ui.available_width());
-                        ui.data_mut(|d| d.insert_temp(ui.id(), BodyRoom { room, took: 0.0 }));
+                        ui.data_mut(|d| d.insert_temp(ui.scope_id(), BodyRoom { room, took: 0.0 }));
                         let out = super::panel_menu::body_or_away(ui, cell, body);
-                        let took = ui.data(|d| d.get_temp::<BodyRoom>(ui.id())).map_or(0.0, |r| r.took);
+                        let took = ui
+                            .data(|d| d.get_temp::<BodyRoom>(ui.scope_id()))
+                            .map_or(0.0, |r| r.took);
                         (out, took)
                     })
                     .inner;

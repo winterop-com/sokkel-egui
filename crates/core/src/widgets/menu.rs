@@ -154,7 +154,7 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
     let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
     let sense = if *disabled { Sense::hover() } else { Sense::click() };
     let hit = ui.interact(row, id, sense).union(hit);
-    hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, !*disabled, label));
+    hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, !*disabled, label));
     let painter = ui.painter();
     let lit = !*disabled && (highlighted || hit.hovered() || hit.has_focus());
     if lit {
@@ -203,10 +203,16 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
     // the shortcut (or the hint) first, so the label takes only the room it leaves
     let keys = shortcut
         .as_ref()
-        .map(|keys| TextRole::Help.rich(t, keys).extra_letter_spacing(1.0))
-        .or_else(|| hint.as_ref().map(|hint| TextRole::Help.rich(t, hint)))
-        .map(|rich| {
-            WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Help.font(t))
+        .map(|keys| super::keys_galley(ui, t, TextRole::Help, keys, 1.0))
+        .or_else(|| {
+            hint.as_ref().map(|hint| {
+                WidgetText::from(TextRole::Help.rich(t, hint)).into_galley(
+                    ui,
+                    Some(TextWrapMode::Extend),
+                    f32::INFINITY,
+                    TextRole::Help.font(t),
+                )
+            })
         });
     let room = row.right() - 8.0 - x - keys.as_ref().map_or(0.0, |k| k.size().x + 16.0);
     let galley = WidgetText::from(TextRole::Body.rich(t, label)).into_galley(
@@ -299,7 +305,8 @@ impl<'a> DropdownMenu<'a> {
                         + if icon.is_some() { 24.0 } else { 0.0 }
                         + shortcut
                             .as_deref()
-                            .map_or(0.0, |keys| 24.0 + measure(keys, TextRole::Help))
+                            // "⌘" is drawn as an icon about as wide as a capital, which the text faces stand in for
+                            .map_or(0.0, |keys| 24.0 + measure(&keys.replace('⌘', "W"), TextRole::Help))
                 }
                 MenuItem::Label(label) => 12.0 + measure(label, TextRole::Badge),
                 MenuItem::Separator => 0.0,
@@ -434,7 +441,7 @@ pub fn palette_shortcut(ctx: &Context) -> bool {
 }
 
 fn palette_seen_id() -> Id {
-    Id::new("sokkel-palette-seen")
+    Id::unique("sokkel-palette-seen")
 }
 
 /// A palette was drawn on the frame before this one.
@@ -474,13 +481,13 @@ struct Since {
 
 impl<'a> CommandPalette<'a> {
     pub fn new(
-        id: impl egui::AsId,
+        id: impl egui::AsIdSalt,
         groups: &'a [CommandGroup],
         query: &'a mut String,
         highlight: &'a mut usize,
     ) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             groups,
             query,
             highlight,
@@ -654,7 +661,7 @@ impl<'a> CommandPalette<'a> {
                             .color(t.color("muted-foreground")),
                     )
                     .desired_width(text.width());
-                child.add(edit).request_focus();
+                child.add(edit).accessible_name(&self.words.placeholder).request_focus();
                 // released, a row at the list's top lets the running command go
                 if busy && released {
                     ui.add_space(4.0);
@@ -787,7 +794,7 @@ impl<'a> CommandPalette<'a> {
                                 // what a screen reader hears of the running row
                                 let said = self.words.running.clone();
                                 ui.interact(hit.rect, self.id.with("running"), Sense::hover())
-                                    .widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, &said));
+                                    .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, &said));
                             }
                             if choosing && hit.hovered() && ui.input(|i| i.pointer.delta() != egui::Vec2::ZERO) {
                                 *self.highlight = position;
@@ -800,7 +807,7 @@ impl<'a> CommandPalette<'a> {
                     });
                 // the foot fades while more is below, as shadcn's `scroll-fade-b`: over its last
                 // twelfth, at most 40, to nothing at the edge
-                let below = list.content_size.y - list.inner_rect.height() - list.state.offset.y;
+                let below = list.content_size.y - list.inner_rect.height() - list.state.clamped_offset().y;
                 if below > 0.5 {
                     let size = (list.inner_rect.height() * 0.12).min(40.0);
                     let fade = egui::Rect::from_min_max(

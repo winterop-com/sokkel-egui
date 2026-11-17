@@ -64,7 +64,7 @@ struct RowsState {
 }
 
 fn rows_state_id() -> Id {
-    Id::new("sokkel-egui/settings-rows")
+    Id::unique("sokkel-egui/settings-rows")
 }
 
 /// The words a settings dialog says, English by default.
@@ -114,9 +114,9 @@ pub struct SettingsDialog<'a> {
 }
 
 impl<'a> SettingsDialog<'a> {
-    pub fn new(id: impl egui::AsId, sections: &'a [SettingsSection], active: &'a mut String) -> Self {
+    pub fn new(id: impl egui::AsIdSalt, sections: &'a [SettingsSection], active: &'a mut String) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             sections,
             active,
             words: SettingsWords::default(),
@@ -197,7 +197,7 @@ impl<'a> SettingsDialog<'a> {
                         vec2(control, control),
                     );
                     let hit = ui.interact(back, self.id.with("back"), Sense::click());
-                    hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.back));
+                    hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.back));
                     if hit.hovered() {
                         painter.rect_filled(back, t.radius("control"), t.color("hover"));
                     }
@@ -230,7 +230,7 @@ impl<'a> SettingsDialog<'a> {
                     vec2(control, control),
                 );
                 let close_hit = ui.interact(close, self.id.with("close"), Sense::click());
-                close_hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.close));
+                close_hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.close));
                 if close_hit.hovered() {
                     painter.rect_filled(close, t.radius("control"), t.color("hover"));
                 }
@@ -291,9 +291,7 @@ impl<'a> SettingsDialog<'a> {
                     let row = Rect::from_min_size(pos2(nav.left() + 12.0, y), vec2(nav.width() - 24.0, entry));
                     let hit = ui.interact(row, self.id.with(("section", &section.id)), Sense::click());
                     let active = !phone && *self.active == section.id && query.trim().is_empty();
-                    hit.widget_info(|| {
-                        egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, active, &section.label)
-                    });
+                    hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, active, &section.label));
                     if hit.clicked() {
                         *self.active = section.id.clone();
                         query.clear();

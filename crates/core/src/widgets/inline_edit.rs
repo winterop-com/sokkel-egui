@@ -64,7 +64,7 @@ pub struct InlineEdit {
 impl InlineEdit {
     pub fn new(id: impl std::hash::Hash + std::fmt::Debug, label: impl Into<String>, value: impl Into<String>) -> Self {
         Self {
-            id: Id::new(("sokkel-inline-edit", id)),
+            id: Id::unique(("sokkel-inline-edit", id)),
             label: label.into(),
             value: value.into(),
             look: InlineEditLook::Field,
@@ -151,7 +151,7 @@ impl InlineEdit {
             let (rect, response) = ui.allocate_exact_size(vec2(width, height), sense);
             response.widget_info(|| {
                 egui::WidgetInfo::labeled(
-                    egui::WidgetType::Button,
+                    egui::Role::Button,
                     !self.disabled,
                     format!("{} {}", self.label, self.words.edit),
                 )
@@ -294,7 +294,7 @@ impl InlineEdit {
                 .margin(Margin::ZERO)
                 .desired_width(inner.width()),
         );
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, true, &self.label));
+        let response = response.accessible_name(&self.label);
         if fresh {
             response.request_focus();
             let mut state = egui::text_edit::TextEditState::load(ui.ctx(), editor_id).unwrap_or_default();
@@ -311,7 +311,7 @@ impl InlineEdit {
         if let Some(error) = &open.error {
             let spot = Rect::from_center_size(pos2(field.right() + 8.0 + 8.0, field.center().y), vec2(16.0, 16.0));
             let hit = ui.interact(spot, self.id.with("issue"), Sense::hover());
-            hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, error));
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, error));
             icons::paint(
                 ui.painter(),
                 spot.center(),

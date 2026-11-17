@@ -272,7 +272,8 @@ impl Widget for Select<'_> {
             self.width
         };
         let (rect, mut response) = ui.allocate_exact_size(vec2(width, height), Sense::click());
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::ComboBox, true, &self.label));
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ComboBox, true, &self.label));
+        response = response.accessible_name(&self.label);
         let popup_id = response.id.with("list");
         let opened_once = response.id.with("opened-once");
         if self.default_open && !ui.ctx().data(|d| d.get_temp::<bool>(opened_once).unwrap_or(false)) {
@@ -358,9 +359,7 @@ impl Widget for Select<'_> {
                 for (index, option) in self.options.iter().enumerate() {
                     let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), row_height), Sense::click());
                     let chosen = index == *self.chosen;
-                    hit.widget_info(|| {
-                        egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, chosen, option)
-                    });
+                    hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, chosen, option));
                     // lit in the accent, as every list of choices is
                     let lit = hit.hovered() || hit.has_focus();
                     let ink = if lit {
@@ -435,9 +434,9 @@ pub struct Dialog {
 }
 
 impl Dialog {
-    pub fn new(id: impl egui::AsId, title: impl Into<String>) -> Self {
+    pub fn new(id: impl egui::AsIdSalt, title: impl Into<String>) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             title: title.into(),
             description: None,
             width: 512.0,
@@ -577,9 +576,9 @@ pub struct ConfirmDialog {
 }
 
 impl ConfirmDialog {
-    pub fn new(id: impl egui::AsId, question: impl Into<String>, confirm: impl Into<String>) -> Self {
+    pub fn new(id: impl egui::AsIdSalt, question: impl Into<String>, confirm: impl Into<String>) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             question: question.into(),
             detail: None,
             confirm: confirm.into(),
@@ -721,7 +720,7 @@ impl UnsavedChangesWords {
 /// The question asked before unsaved changes are let go, after sokkel-ui's `UnsavedChanges`: a
 /// confirm dialog whose destructive answer discards them. True to let them go, false to keep them,
 /// `None` while it waits.
-pub fn unsaved_changes(ctx: &Context, id: impl egui::AsId, words: &UnsavedChangesWords) -> Option<bool> {
+pub fn unsaved_changes(ctx: &Context, id: impl egui::AsIdSalt, words: &UnsavedChangesWords) -> Option<bool> {
     ConfirmDialog::new(id, &words.question, &words.discard)
         .detail(&words.detail)
         .cancel(&words.keep)

@@ -161,9 +161,9 @@ impl ListRow {
             };
             egui::WidgetInfo::labeled(
                 if self.pressable {
-                    egui::WidgetType::Button
+                    egui::Role::Button
                 } else {
-                    egui::WidgetType::Label
+                    egui::Role::Label
                 },
                 true,
                 name,

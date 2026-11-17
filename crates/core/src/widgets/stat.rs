@@ -92,7 +92,7 @@ impl Stat {
             + self.trend.as_ref().map_or(0.0, |_| 8.0 + SPARK.y)
             + 16.0;
         let (rect, response) = ui.allocate_exact_size(vec2(width, height), Sense::click());
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.label));
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.label));
         let painter = ui.painter();
         let radius = t.radius("surface");
         let hot = response.hovered();

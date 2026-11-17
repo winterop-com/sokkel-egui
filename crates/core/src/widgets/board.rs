@@ -40,7 +40,7 @@ struct Places {
 }
 
 fn board_id() -> Id {
-    Id::new("sokkel-egui/board")
+    Id::unique("sokkel-egui/board")
 }
 
 /// A board: its columns side by side, drawn by `columns`, and the drag of a card between them.
@@ -49,8 +49,8 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new(id: impl egui::AsId) -> Self {
-        Self { id: Id::new(id) }
+    pub fn new(id: impl egui::AsIdSalt) -> Self {
+        Self { id: Id::unique(id) }
     }
 
     /// Draw the columns with `columns`; the card dropped this frame in a new place, if one was.
@@ -234,7 +234,7 @@ impl BoardColumn {
         } else {
             child.push_id(&self.id, |ui| {
                 ui.ctx()
-                    .data_mut(|d| d.insert_temp(Id::new("sokkel-egui/board-column"), self.id.clone()));
+                    .data_mut(|d| d.insert_temp(Id::unique("sokkel-egui/board-column"), self.id.clone()));
                 cards(ui);
             });
         }
@@ -378,7 +378,7 @@ impl BoardCard {
         let t = tokens(ui.ctx());
         let width = ui.available_width();
         let board = ui.ctx().data(|d| d.get_temp::<Id>(board_id()));
-        let column: Option<String> = ui.ctx().data(|d| d.get_temp(Id::new("sokkel-egui/board-column")));
+        let column: Option<String> = ui.ctx().data(|d| d.get_temp(Id::unique("sokkel-egui/board-column")));
         let held_id = board.map(|b| b.with("held"));
         let in_hand = held_id
             .and_then(|id| ui.ctx().data(|d| d.get_temp::<Held>(id)))
@@ -393,7 +393,7 @@ impl BoardCard {
             })
             .inner;
         let rect = face.rect;
-        let response = ui.interact(rect, ui.id().with(("card", &self.id)), Sense::click_and_drag());
+        let response = ui.interact(rect, ui.scope_id().with(("card", &self.id)), Sense::click_and_drag());
         if response.hovered() && !in_hand {
             ui.painter().rect_stroke(
                 rect,
@@ -432,8 +432,8 @@ impl BoardCard {
         let mut chosen = None;
         if !self.menu.is_empty() && !in_hand {
             let button = Rect::from_min_size(pos2(rect.right() - 34.0, rect.top() + 8.0), vec2(28.0, 28.0));
-            let trigger = ui.interact(button, ui.id().with(("card-menu", &self.id)), Sense::click());
-            trigger.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.menu_label));
+            let trigger = ui.interact(button, ui.scope_id().with(("card-menu", &self.id)), Sense::click());
+            trigger.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.menu_label));
             let open = egui::Popup::is_id_open(ui.ctx(), trigger.id.with("menu"));
             let shown = open || ui.rect_contains_pointer(rect);
             if shown {

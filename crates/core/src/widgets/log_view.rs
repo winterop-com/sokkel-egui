@@ -83,7 +83,7 @@ pub struct LogView<'a> {
 impl<'a> LogView<'a> {
     pub fn new(id: impl std::hash::Hash + std::fmt::Debug, lines: &'a [LogLine]) -> Self {
         Self {
-            id: egui::Id::new(("sokkel-log", id)),
+            id: egui::Id::unique(("sokkel-log", id)),
             lines,
             follow: false,
             numbered: true,
@@ -290,7 +290,7 @@ impl<'a> LogView<'a> {
         });
         // a following log the reader scrolled up from offers the way back
         let room = output.inner_rect.height();
-        let away = output.state.offset.y < content.y - room - 8.0;
+        let away = output.state.clamped_offset().y < content.y - room - 8.0;
         if self.follow && away {
             let galley = inside.painter().layout_no_wrap(
                 self.words.jump.clone(),
@@ -300,7 +300,7 @@ impl<'a> LogView<'a> {
             let size = vec2(12.0 + 14.0 + 6.0 + galley.size().x + 12.0, 24.0);
             let spot = Rect::from_min_size(outer.right_bottom() - size - vec2(12.0, 12.0), size);
             let response = inside.interact(spot, self.id.with("jump-button"), Sense::click());
-            response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.jump));
+            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.jump));
             let ground = if response.hovered() {
                 t.color_at("terminal-muted", 0.3)
             } else {

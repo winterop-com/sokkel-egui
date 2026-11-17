@@ -201,7 +201,7 @@ pub struct SplitPane {
 impl SplitPane {
     pub fn new(id_salt: impl std::hash::Hash + std::fmt::Debug) -> Self {
         Self {
-            id: egui::Id::new(("sokkel-split-pane", id_salt)),
+            id: egui::Id::unique(("sokkel-split-pane", id_salt)),
             default_share: 0.5,
             min_share: 0.2,
             max_share: 0.8,
@@ -276,7 +276,7 @@ impl SplitPane {
         let response = ui
             .interact(handle, self.id.with("handle"), egui::Sense::click_and_drag())
             .on_hover_cursor(egui::CursorIcon::ResizeHorizontal);
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Other, true, "Resize"));
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Unknown, true, "Resize"));
         if response.dragged()
             && let Some(pos) = response.interact_pointer_pos()
         {

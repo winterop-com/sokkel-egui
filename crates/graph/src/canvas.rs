@@ -104,7 +104,7 @@ pub struct GraphCanvas<'a> {
 impl<'a> GraphCanvas<'a> {
     pub fn new(id: impl std::hash::Hash + std::fmt::Debug, nodes: &'a [GraphNode], links: &'a [GraphLink]) -> Self {
         Self {
-            id: Id::new(("sokkel-graph", id)),
+            id: Id::unique(("sokkel-graph", id)),
             nodes,
             links,
             direction: GraphDirection::Right,
@@ -148,7 +148,7 @@ impl<'a> GraphCanvas<'a> {
             (drawing.height() * fit + FITTED_GROUND).ceil().max(FITTED_MIN_HEIGHT) + BUTTON_ROW
         };
         let (rect, ground) = ui.allocate_exact_size(vec2(width, height), Sense::click_and_drag());
-        ground.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Other, true, &self.words.label));
+        ground.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Unknown, true, &self.words.label));
         let moved_id = self.id.with("moved");
         let mut moved = ui.data(|d| d.get_temp::<Moved>(moved_id));
         if ground.dragged()
@@ -180,7 +180,7 @@ impl<'a> GraphCanvas<'a> {
             let title = node.name.clone().unwrap_or_else(|| node.code.clone());
             response.widget_info(|| {
                 egui::WidgetInfo::selected(
-                    egui::WidgetType::Button,
+                    egui::Role::Button,
                     true,
                     self.selected == Some(node.id.as_str()),
                     &title,
@@ -231,7 +231,7 @@ impl<'a> GraphCanvas<'a> {
         for (k, (icon, word)) in buttons.into_iter().enumerate() {
             let spot = Rect::from_min_size(group.min + vec2(1.0 + k as f32 * BUTTON, 1.0), Vec2::splat(BUTTON));
             let response = ui.interact(spot, self.id.with(("button", k)), Sense::click());
-            response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, word.as_str()));
+            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, word.as_str()));
             if k > 0 {
                 painter.vline(spot.left() - 0.5, spot.y_range(), Stroke::new(1.0, t.color("border")));
             }

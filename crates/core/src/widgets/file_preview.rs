@@ -168,7 +168,7 @@ pub struct FilePreview<'a> {
 impl<'a> FilePreview<'a> {
     pub fn new(id: impl std::hash::Hash + std::fmt::Debug, name: &'a str, kind: FileKind) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             name,
             kind,
             text: None,

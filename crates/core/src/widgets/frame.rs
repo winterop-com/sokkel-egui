@@ -180,7 +180,7 @@ impl Widget for Rail<'_> {
         // collapsed and collapsible, the mark is the button that widens the rail again
         let expand = (narrow && self.toggle.is_some()).then(|| {
             let hit = ui.interact(mark, response.id.with("expand"), Sense::click());
-            hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.expand));
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.expand));
             hit
         });
         painter.rect_filled(mark, t.radius("md"), t.color("primary"));
@@ -209,7 +209,7 @@ impl Widget for Rail<'_> {
             .then(|| Rect::from_center_size(pos2(head.right() - 12.0 - 16.0, head.center().y), vec2(32.0, 32.0)));
         if let Some(button) = collapse {
             let hit = ui.interact(button, response.id.with("collapse"), Sense::click());
-            hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.collapse));
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.collapse));
             frame_control(&painter, &t, button, &hit, Icon::PanelLeftClose);
             if hit.clicked()
                 && let Some(toggle) = self.toggle.as_deref_mut()
@@ -242,7 +242,7 @@ impl Widget for Rail<'_> {
             // the head's end: the control that closes the drawer, 32 square
             let close = Rect::from_center_size(pos2(head.right() - 12.0 - 16.0, head.center().y), vec2(32.0, 32.0));
             let hit = ui.interact(close, response.id.with("close"), Sense::click());
-            hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, ShellWords::default().close));
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, ShellWords::default().close));
             frame_control(&painter, &t, close, &hit, Icon::X);
             if hit.clicked() {
                 set_drawer(ui.ctx(), |d| d.open = false);
@@ -332,9 +332,7 @@ impl Widget for Rail<'_> {
                 };
                 let hit = ui.interact(bounds, response.id.with(&entry.id), Sense::click());
                 let active = *self.active == entry.id;
-                hit.widget_info(|| {
-                    egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, active, &entry.label)
-                });
+                hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, active, &entry.label));
                 if hit.clicked() {
                     *self.active = entry.id.clone();
                     // a place chosen in the drawer closes it, as a change of route does
@@ -427,7 +425,7 @@ fn paint_mark(ui: &Ui, painter: &egui::Painter, t: &crate::Tokens, tile: Rect, s
         Some(svg) => {
             // the mark's ink is `currentColor`: drawn white, then tinted with the tile's ink
             let white = svg.replace("currentColor", "#ffffff");
-            let uri = format!("bytes://rail-mark-{}.svg", egui::Id::new(svg).value());
+            let uri = format!("bytes://rail-mark-{}.svg", egui::Id::unique(svg).value());
             egui::Image::from_bytes(uri, white.into_bytes())
                 .tint(t.color("primary-foreground"))
                 .paint_at(ui, Rect::from_center_size(tile.center(), vec2(16.0, 16.0)));
@@ -705,7 +703,7 @@ fn search_icon(ui: &mut Ui, word: &str) -> Response {
     let t = tokens(ui.ctx());
     let finger = t.length("spacing-finger");
     let (rect, response) = ui.allocate_exact_size(vec2(finger, finger), Sense::click());
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, word));
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, word));
     phone_control(ui.painter(), &t, rect, &response, Icon::Search);
     response
 }
@@ -715,7 +713,7 @@ fn search_icon(ui: &mut Ui, word: &str) -> Response {
 fn search_button(ui: &mut Ui, word: &str, keys: &str) -> Response {
     let t = tokens(ui.ctx());
     let (rect, response) = ui.allocate_exact_size(vec2(224.0, t.density("control")), Sense::click());
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, word));
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, word));
     let hot = response.hovered();
     let focused = response.has_focus();
     let painter = ui.painter();
@@ -752,7 +750,7 @@ fn search_button(ui: &mut Ui, word: &str, keys: &str) -> Response {
         ink,
     );
     // the key cap: muted ground, the small radius, the help size
-    let cap_text = galley(ui, TextRole::Badge, keys, 80.0);
+    let cap_text = super::keys_galley(ui, &t, TextRole::Badge, keys, 0.0);
     let cap = Rect::from_min_size(
         pos2(rect.right() - 6.0 - cap_text.size().x - 10.0, rect.center().y - 10.0),
         vec2(cap_text.size().x + 10.0, 20.0),
@@ -928,7 +926,7 @@ struct Drawer {
 }
 
 fn drawer_id() -> egui::Id {
-    egui::Id::new("sokkel-shell-drawer")
+    egui::Id::unique("sokkel-shell-drawer")
 }
 
 fn drawer(ctx: &egui::Context) -> Drawer {
@@ -971,7 +969,7 @@ pub enum ShellPart {
 }
 
 fn desktop_id() -> egui::Id {
-    egui::Id::new("sokkel-shell-desktop")
+    egui::Id::unique("sokkel-shell-desktop")
 }
 
 /// Room at the frame's top start for the window's own buttons, where the shell stands in a desktop
@@ -1173,7 +1171,7 @@ impl Shell {
             vec2(finger, finger),
         );
         let menu_hit = ui.interact(menu, drawer_id().with("menu"), Sense::click());
-        menu_hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.menu));
+        menu_hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.menu));
         // as the rail's head control looks, its focus outline inside it
         phone_control(ui.painter(), &t, menu, &menu_hit, Icon::Menu);
         if menu_hit.clicked() {
@@ -1213,7 +1211,7 @@ impl Shell {
             .show(&ctx, |ui| {
                 // the scrim over the frame, a press on it closing the drawer
                 let scrim = ui.interact(rect, drawer_id().with("scrim"), Sense::click());
-                scrim.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.close));
+                scrim.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.close));
                 ui.painter().rect_filled(rect, CornerRadius::ZERO, t.color("scrim"));
                 if scrim.clicked() {
                     set_drawer(&ctx, |d| d.open = false);

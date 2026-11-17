@@ -87,7 +87,7 @@ impl PanelMenu {
 
     /// Draw the panel `panel` draws in `ui`, with these tools in its head; what they asked for.
     pub fn show(self, ui: &mut Ui, panel: impl FnOnce(&mut Ui)) -> Option<PanelAsked> {
-        let cell = ui.id();
+        let cell = ui.scope_id();
         ui.data_mut(|d| {
             d.insert_temp(cell, self.head);
             d.remove::<PanelAsked>(asked_key(cell));
@@ -197,7 +197,7 @@ struct Windowed;
 /// Whether a panel drawn in `ui` is drawn in its window: its head and card left out, its content
 /// filling what the window has.
 pub fn windowed(ui: &Ui) -> bool {
-    ui.data(|d| d.get_temp::<Windowed>(ui.id())).is_some()
+    ui.data(|d| d.get_temp::<Windowed>(ui.scope_id())).is_some()
 }
 
 /// The window an expanded panel's content opens in: over the page, 24 in from the window's edges
@@ -210,9 +210,9 @@ pub struct PanelWindow {
 }
 
 impl PanelWindow {
-    pub fn new(id: impl egui::AsId, title: impl Into<String>) -> Self {
+    pub fn new(id: impl egui::AsIdSalt, title: impl Into<String>) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             title: title.into(),
             words: PanelWords::default(),
         }
@@ -284,7 +284,7 @@ impl PanelWindow {
                         .layout(egui::Layout::top_down(egui::Align::Min)),
                 );
                 content.set_clip_rect(body.intersect(ui.clip_rect()));
-                let id = content.id();
+                let id = content.scope_id();
                 content.data_mut(|d| d.insert_temp(id, Windowed));
                 panel(&mut content);
                 ui.data_mut(|d| d.remove::<Windowed>(id));

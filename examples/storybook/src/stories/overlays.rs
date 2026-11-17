@@ -80,7 +80,7 @@ pub fn tooltips(_: &mut State, ui: &mut Ui) {
 /// and a button that adds one more.
 pub fn toasts(_: &mut State, ui: &mut Ui) {
     let ctx = ui.ctx().clone();
-    let seeded = ui.id().with("toasts-seeded");
+    let seeded = ui.scope_id().with("toasts-seeded");
     if !ui.data(|d| d.get_temp::<bool>(seeded).unwrap_or(false)) {
         ui.data_mut(|d| d.insert_temp(seeded, true));
         Toast::new("Overview deleted").timeout(None).show(&ctx);

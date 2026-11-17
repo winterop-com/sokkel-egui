@@ -421,9 +421,14 @@ const GAP: f32 = 12.0;
 const ACTIONS: f32 = 40.0;
 
 impl<'a> DataTable<'a> {
-    pub fn new(id: impl egui::AsId, columns: &'a [Column], rows: &'a [Vec<Cell>], state: &'a mut TableState) -> Self {
+    pub fn new(
+        id: impl egui::AsIdSalt,
+        columns: &'a [Column],
+        rows: &'a [Vec<Cell>],
+        state: &'a mut TableState,
+    ) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             columns,
             rows,
             state,
@@ -507,8 +512,8 @@ impl<'a> DataTable<'a> {
     /// Name each row by what it holds (a task's id), in the order of the rows given, as
     /// sokkel-ui's `rowKey`: the active cell, an open editor and a refused draft stay with their
     /// row when the rows move, and go when it does. Without keys a row is known by its index.
-    pub fn keys<K: egui::AsId>(mut self, keys: impl IntoIterator<Item = K>) -> Self {
-        self.keys = keys.into_iter().map(Id::new).collect();
+    pub fn keys<K: egui::AsIdSalt>(mut self, keys: impl IntoIterator<Item = K>) -> Self {
+        self.keys = keys.into_iter().map(Id::unique).collect();
         self
     }
 
@@ -614,10 +619,21 @@ impl<'a> DataTable<'a> {
         editing: &Editing<'_>,
     ) -> Option<CellEdit> {
         let mut open = self.state.open.take()?;
+        let name = self
+            .columns
+            .get(open.column)
+            .map(|c| c.title.clone())
+            .unwrap_or_default();
         let moved = match editor {
-            Editor::Text => table_edit::text(ui, place, &mut open, id),
+            Editor::Text => {
+                let moved = table_edit::text(ui, place, &mut open, id);
+                ui.ctx().accesskit_node_builder(id, |b| b.set_label(name));
+                moved
+            }
             Editor::Date(week_start) => {
-                table_edit::date(ui, place, &mut open, id, *week_start, self.today, &self.words.edit)
+                let moved = table_edit::date(ui, place, &mut open, id, *week_start, self.today, &self.words.edit);
+                ui.ctx().accesskit_node_builder(id.with("field"), |b| b.set_label(name));
+                moved
             }
             Editor::Select(options) => table_edit::select(ui, place, &mut open, id, options),
         };
@@ -668,7 +684,7 @@ impl<'a> DataTable<'a> {
         if self.reorder {
             let grip = Rect::from_min_size(pos2(x, line.top()), vec2(GRIP, line.height()));
             let hit = ui.interact(grip, self.id.with(("grip", index)), Sense::drag());
-            hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Move"));
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "Move"));
             if hit.hovered() || hit.dragged() {
                 ui.ctx().set_cursor_icon(if hit.dragged() {
                     CursorIcon::Grabbing
@@ -726,8 +742,11 @@ impl<'a> DataTable<'a> {
                     if edit.is_some() {
                         // named by what it says, as the web's title button is
                         let hit = ui.interact(place, self.id.with(("edit", index, c)), Sense::click());
-                        let words = row[c].draft();
-                        hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &words));
+                        // an empty value is named by its column
+                        let words = Some(row[c].draft())
+                            .filter(|w| !w.is_empty())
+                            .unwrap_or_else(|| self.columns[c].title.clone());
+                        hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &words));
                         if hit.clicked() {
                             open_cell(self.state, rows, editing.keys, (index, c));
                         }
@@ -809,8 +828,11 @@ impl<'a> DataTable<'a> {
                 let place = Rect::from_min_size(pos2(fx, facts.top()), vec2(width, facts.height()));
                 let hit = ui.interact(place, self.id.with(("edit", index, c)), Sense::click());
                 // named by what it says, as the web's value button is
-                let words = row[c].draft();
-                hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &words));
+                // an empty value is named by its column
+                let words = Some(row[c].draft())
+                    .filter(|w| !w.is_empty())
+                    .unwrap_or_else(|| column.title.clone());
+                hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &words));
                 if hit.clicked() {
                     open_cell(self.state, rows, editing.keys, (index, c));
                 }
@@ -1084,7 +1106,7 @@ impl<'a> DataTable<'a> {
                     if self.reorder {
                         let grip = Rect::from_min_size(pos2(left, y), vec2(GRIP, 24.0));
                         let hold = ui.interact(grip, self.id.with(("card-grip", index)), Sense::drag());
-                        hold.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Move"));
+                        hold.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "Move"));
                         if hold.hovered() || hold.dragged() {
                             ui.ctx().set_cursor_icon(if hold.dragged() {
                                 CursorIcon::Grabbing
@@ -1135,7 +1157,7 @@ impl<'a> DataTable<'a> {
                     if !items.is_empty() {
                         let button = Rect::from_center_size(pos2(right - 14.0, y + 12.0), vec2(28.0, 24.0));
                         let trigger = ui.interact(button, self.id.with(("actions", index)), Sense::click());
-                        trigger.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Actions"));
+                        trigger.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "Actions"));
                         if trigger.hovered() {
                             ui.painter().rect_filled(button, t.radius("control"), t.color("hover"));
                         }
@@ -1369,7 +1391,7 @@ impl<'a> DataTable<'a> {
         let keys: Vec<Id> = (0..self.rows.len())
             .map(|index| match self.keys.get(index) {
                 Some(key) if self.keys.len() == self.rows.len() => *key,
-                _ => Id::new(("row", index)),
+                _ => Id::unique(("row", index)),
             })
             .collect();
         follow_keys(self.state, &keys);
@@ -1651,7 +1673,7 @@ impl<'a> DataTable<'a> {
                                 .filter(|d| !d.is_empty())
                                 .collect::<Vec<_>>()
                                 .join(", ");
-                            egui::WidgetInfo::labeled(egui::WidgetType::Button, true, name)
+                            egui::WidgetInfo::labeled(egui::Role::Button, true, name)
                         });
                         if row.clicked() {
                             self.state.opened = if self.state.opened == Some(index) {
@@ -1739,7 +1761,7 @@ impl<'a> DataTable<'a> {
                                 // the grip: drag it to move the row
                                 let grip = Rect::from_min_size(pos2(x - 4.0, rect.top()), vec2(GRIP, rect.height()));
                                 let hit = ui.interact(grip, self.id.with(("grip", index)), Sense::drag());
-                                hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Move"));
+                                hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "Move"));
                                 if hit.hovered() || hit.dragged() {
                                     ui.ctx().set_cursor_icon(if hit.dragged() {
                                         CursorIcon::Grabbing
@@ -1837,8 +1859,7 @@ impl<'a> DataTable<'a> {
                             };
                             let button = Rect::from_center_size(middle, vec2(28.0, 28.0));
                             let trigger = ui.interact(button, self.id.with(("actions", index)), Sense::click());
-                            trigger
-                                .widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "Actions"));
+                            trigger.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "Actions"));
                             if trigger.hovered() {
                                 ui.painter().rect_filled(button, t.radius("control"), t.color("hover"));
                             }

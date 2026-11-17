@@ -118,7 +118,7 @@ fn legend_table(
                 .sortable(false),
         );
     }
-    let id = ui.id().with("legend-table");
+    let id = ui.scope_id().with("legend-table");
     let mut state: TableState = ui.data_mut(|d| d.get_temp_mut_or_default::<TableState>(id).clone());
     let mut table = DataTable::new(id, &columns, &rows, &mut state)
         .variant(TableVariant::List)
@@ -310,7 +310,7 @@ fn fill_height(ui: &Ui, height: f32) -> f32 {
         return height;
     }
     let under = ui
-        .data(|d| d.get_temp::<f32>(ui.id().with("under-chart")))
+        .data(|d| d.get_temp::<f32>(ui.scope_id().with("under-chart")))
         .unwrap_or(0.0);
     (ui.available_height() - under).max(height)
 }
@@ -318,7 +318,7 @@ fn fill_height(ui: &Ui, height: f32) -> f32 {
 /// Keeps how much was drawn under a chart since `top`, for [`fill_height`].
 fn drawn_under(ui: &Ui, top: f32) {
     let under = ui.min_rect().bottom() - top;
-    ui.data_mut(|d| d.insert_temp(ui.id().with("under-chart"), under));
+    ui.data_mut(|d| d.insert_temp(ui.scope_id().with("under-chart"), under));
 }
 
 /// A chart's frame, as sokkel-ui's `ChartFrame`: a card with the plain border, its title and
@@ -379,7 +379,7 @@ fn chart_frame_with(ui: &mut Ui, head_of: Head<'_>, actions: Option<HeadActions<
     let t = tokens(ui.ctx());
     let width = ui.available_width();
     let stretch = cell_height(ui).unwrap_or(0.0);
-    let cell = ui.id();
+    let cell = ui.scope_id();
     let ink = t.color("muted-foreground");
     egui::Frame::new()
         .fill(t.color("card"))

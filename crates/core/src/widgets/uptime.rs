@@ -95,7 +95,7 @@ pub struct UptimeBar<'a> {
 impl<'a> UptimeBar<'a> {
     pub fn new(id_salt: impl std::hash::Hash + std::fmt::Debug, days: &'a [UptimeDay]) -> Self {
         Self {
-            id: Id::new(("sokkel-uptime", id_salt)),
+            id: Id::unique(("sokkel-uptime", id_salt)),
             days,
             min_bar_width: 3.0,
             words: UptimeBarWords::default(),

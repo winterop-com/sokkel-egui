@@ -53,9 +53,9 @@ pub struct NumberField<'a> {
 }
 
 impl<'a> NumberField<'a> {
-    pub fn new(id: impl egui::AsId, label: impl Into<String>, value: &'a mut f64) -> Self {
+    pub fn new(id: impl egui::AsIdSalt, label: impl Into<String>, value: &'a mut f64) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             label: label.into(),
             value,
             suffix: String::new(),
@@ -115,6 +115,7 @@ impl Widget for NumberField<'_> {
                     .push_id(self.id, |ui| {
                         ui.add(
                             Input::new(&mut text)
+                                .name(&self.label)
                                 .width(width)
                                 .suffix(self.suffix.trim())
                                 .invalid(typing.unreadable),

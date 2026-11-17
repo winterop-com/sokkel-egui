@@ -248,7 +248,7 @@ impl<'a> StatPanel<'a> {
 
     pub fn show(self, ui: &mut Ui) {
         let t = tokens(ui.ctx());
-        let cell = ui.id();
+        let cell = ui.scope_id();
         let width = ui.available_width();
         let natural = 112.0;
         let height = cell_height(ui).unwrap_or(0.0).max(natural);

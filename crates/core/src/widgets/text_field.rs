@@ -110,6 +110,8 @@ pub struct Input<'a> {
     multiline: bool,
     /// Muted words after the text at the input's end, such as a unit.
     suffix: Option<String>,
+    /// What a screen reader calls it, where no label beside it says.
+    name: Option<String>,
 }
 
 impl<'a> Input<'a> {
@@ -122,7 +124,15 @@ impl<'a> Input<'a> {
             width: None,
             multiline: false,
             suffix: None,
+            name: None,
         }
+    }
+
+    /// What a screen reader calls the input, where no label beside it says, as the web's
+    /// `aria-label`; its placeholder when not given.
+    pub fn name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
+        self
     }
 
     pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
@@ -224,7 +234,10 @@ impl Widget for Input<'_> {
             // at least 112 tall with its edge, as the web's `min-h-28`, growing with its text
             prepared.content_ui.set_min_height(112.0 - 16.0 - 2.0);
         }
-        let response = prepared.content_ui.add_enabled(self.enabled, edit);
+        let mut response = prepared.content_ui.add_enabled(self.enabled, edit);
+        if let Some(name) = self.name.as_ref().or(self.placeholder.as_ref()) {
+            response = response.accessible_name(name);
+        }
         let focused = response.has_focus();
         // the control's edge in its state, as sokkel-design paints it
         let state = match (self.invalid, focused) {

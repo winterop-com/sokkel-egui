@@ -178,7 +178,7 @@ fn preset_rows(ui: &mut Ui, t: &crate::Tokens, presets: &[(&str, &str)], chosen:
     for (id, label) in presets {
         let is_chosen = *id == chosen;
         let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), 32.0), Sense::click());
-        hit.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::Button, true, is_chosen, *label));
+        hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, is_chosen, *label));
         let ground = if is_chosen {
             Some(t.color("secondary"))
         } else if hit.hovered() {
@@ -318,8 +318,8 @@ impl<'a> RefreshControl<'a> {
                 let mut part = |ui: &mut Ui, w: f32, label: &str, id: &str| {
                     let rect = egui::Rect::from_min_size(egui::pos2(x, group.top()), vec2(w, side));
                     x += w;
-                    let hit = ui.interact(rect, ui.id().with(("refresh", id)), Sense::click());
-                    hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, label));
+                    let hit = ui.interact(rect, ui.scope_id().with(("refresh", id)), Sense::click());
+                    hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, label));
                     if hit.hovered() {
                         painter.rect_filled(rect.shrink(1.0), radius, t.color("hover"));
                     }
@@ -376,7 +376,7 @@ impl<'a> RefreshControl<'a> {
                             let words = written(*seconds);
                             let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), 32.0), Sense::click());
                             hit.widget_info(|| {
-                                egui::WidgetInfo::selected(egui::WidgetType::RadioButton, true, chosen, &words)
+                                egui::WidgetInfo::selected(egui::Role::RadioButton, true, chosen, &words)
                             });
                             if hit.hovered() {
                                 ui.painter().rect_filled(row, t.radius("md"), t.color("accent"));

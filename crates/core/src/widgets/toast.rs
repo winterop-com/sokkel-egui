@@ -98,7 +98,7 @@ struct Shown {
 }
 
 fn store() -> Id {
-    Id::new("sokkel-toasts")
+    Id::unique("sokkel-toasts")
 }
 
 impl Toast {

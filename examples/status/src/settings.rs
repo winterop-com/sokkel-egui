@@ -234,7 +234,7 @@ impl StatusApp {
             }
             "page" => {
                 setting_row_below(ui, "Title", "What the status page is called at its top.", &[], |ui| {
-                    ui.add(Input::new(&mut options.page_title).width(320.0));
+                    ui.add(Input::new(&mut options.page_title).name("Title").width(320.0));
                 });
                 setting_row(ui, "Show the last 90 days", "A bar a day under each service.", |ui| {
                     ui.add(Switch::new(&mut options.show_uptime, "Show the last 90 days"));

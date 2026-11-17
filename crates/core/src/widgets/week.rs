@@ -117,7 +117,7 @@ pub struct WeekGrid<'a> {
 impl<'a> WeekGrid<'a> {
     pub fn new(id_salt: impl std::hash::Hash + std::fmt::Debug, days: &'a [Day], events: &'a [CalendarEvent]) -> Self {
         Self {
-            id: Id::new(("sokkel-week", id_salt)),
+            id: Id::unique(("sokkel-week", id_salt)),
             days,
             events,
             now: None,
@@ -249,7 +249,7 @@ impl<'a> WeekGrid<'a> {
                     );
                     let id = self.id.with(("event", placed.index, i));
                     let hit = ui.interact(block, id, Sense::click());
-                    hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &event.title));
+                    hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &event.title));
                     if hit.clicked() {
                         pressed = Some(placed.index);
                     }
@@ -280,7 +280,7 @@ impl<'a> WeekGrid<'a> {
                 }
             }
         });
-        ui.data_mut(|d| d.insert_temp(self.id.with("offset"), output.state.offset.y));
+        ui.data_mut(|d| d.insert_temp(self.id.with("offset"), output.state.clamped_offset().y));
         WeekGridResponse { pressed }
     }
 }

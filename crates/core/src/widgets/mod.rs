@@ -204,6 +204,33 @@ pub const PAINTS_READ: &[&str] = &[
 
 /// A popup's surface (a select's list, a menu, a submenu, the account menu): the popover's
 /// ground, the surface's corners, a 1px `border-strong` edge and `elevation-pop`'s shadow.
+/// Keys written for a reader, as a key cap or a menu's shortcut says them: the text in `role`,
+/// spaced by `spacing`, with "⌘" drawn as Lucide's command glyph, since the text faces have none.
+/// Its ink is the painter's, as the galley is drawn.
+pub fn keys_galley(
+    ui: &egui::Ui,
+    tokens: &Tokens,
+    role: crate::TextRole,
+    keys: &str,
+    spacing: f32,
+) -> std::sync::Arc<egui::Galley> {
+    let mut job = egui::text::LayoutJob::default();
+    let style = ui.style();
+    let size = role.font(tokens).size;
+    let mut add = |rich: egui::RichText| {
+        rich.append_to(&mut job, style, egui::FontSelection::Default, egui::Align::Center);
+    };
+    for (index, part) in keys.split('⌘').enumerate() {
+        if index > 0 {
+            add(egui::RichText::new(char::from(crate::Icon::Command).to_string()).font(crate::icons::font(size)));
+        }
+        if !part.is_empty() {
+            add(role.rich(tokens, part).extra_letter_spacing(spacing));
+        }
+    }
+    ui.painter().layout_job(job)
+}
+
 pub(crate) fn popup_frame(tokens: &Tokens) -> egui::Frame {
     egui::Frame::new()
         .fill(ground(tokens, "dropdown-menu.base.rest.popup", "popover"))

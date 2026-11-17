@@ -221,7 +221,9 @@ impl Storybook {
                         for level in densities() {
                             ui.selectable_value(&mut self.appearance.density, level.to_owned(), level);
                         }
-                    });
+                    })
+                    .response
+                    .accessible_name("Density");
                 for (scheme, label) in [
                     (Scheme::System, "System"),
                     (Scheme::Dark, "Dark"),
@@ -239,7 +241,9 @@ impl Storybook {
                             ui.selectable_value(&mut self.appearance.theme, theme.name.clone(), &theme.label)
                                 .on_hover_text(theme.description.clone().unwrap_or_default());
                         }
-                    });
+                    })
+                    .response
+                    .accessible_name("Theme");
             });
         });
     }
@@ -278,7 +282,7 @@ fn group_heading(ui: &mut Ui, title: &str, depth: usize) {
 fn story_row(ui: &mut Ui, name: &str, depth: usize, selected: bool) -> egui::Response {
     let t = tokens(ui.ctx());
     let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), 28.0), Sense::click());
-    response.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, selected, name));
+    response.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, selected, name));
     if ui.is_rect_visible(rect) {
         let painter = ui.painter();
         let radius = t.radius("control");

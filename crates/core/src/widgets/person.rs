@@ -113,7 +113,7 @@ impl Widget for PersonAvatar {
         let t = tokens(ui.ctx());
         let (side, _, _) = self.size.box_and_letters();
         let (rect, response) = ui.allocate_exact_size(vec2(side, side), Sense::hover());
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Image, true, &self.name));
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, &self.name));
         if ui.is_rect_visible(rect) {
             paint_avatar(ui, &t, rect, &self.name, self.size, self.primary);
         }
@@ -237,7 +237,7 @@ impl AccountMenu {
         let trigger = ui.interact(row, ui.auto_id_with(("account", &self.name)), Sense::click());
         // a collapsed rail's cell holds the avatar alone
         let narrow = cell.width() < 120.0;
-        trigger.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.words.account));
+        trigger.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.account));
         let popup_id = trigger.id.with("menu");
         if trigger.hovered() || Popup::is_id_open(ui.ctx(), popup_id) {
             ui.painter().rect_filled(row, t.radius("md"), t.color("hover"));
@@ -367,7 +367,7 @@ pub(crate) fn menu_row(ui: &mut Ui, t: &Tokens, icon: Option<Icon>, label: &str,
     // a control tall, a finger tall on a phone, as every list of choices
     let height = super::choice_row_height(ui.ctx(), t);
     let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
-    hit.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::Button, true, checked, label));
+    hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, checked, label));
     if hit.hovered() || hit.has_focus() {
         ui.painter().rect_filled(row, t.radius("md"), t.color("hover"));
     }

@@ -194,7 +194,7 @@ impl<'a> Tree<'a> {
         open: &'a mut HashSet<String>,
     ) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             nodes,
             selected,
             open,
@@ -247,8 +247,7 @@ impl<'a> Tree<'a> {
             let expanded = branch && (matches.is_some() || self.open.contains(&row.node.id));
             let chosen = self.selected.as_deref() == Some(row.node.id.as_str());
             hit.widget_info(|| {
-                let mut info =
-                    egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, chosen, &row.node.label);
+                let mut info = egui::WidgetInfo::selected(egui::Role::Button, true, chosen, &row.node.label);
                 info.selected = Some(chosen);
                 info
             });

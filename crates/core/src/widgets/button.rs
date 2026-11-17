@@ -1,6 +1,6 @@
 use egui::{
-    Color32, CornerRadius, Response, Sense, Stroke, StrokeKind, TextWrapMode, Ui, Widget, WidgetInfo, WidgetText,
-    WidgetType, pos2, vec2,
+    Color32, CornerRadius, Response, Role, Sense, Stroke, StrokeKind, TextWrapMode, Ui, Widget, WidgetInfo, WidgetText,
+    pos2, vec2,
 };
 
 use super::{dim, focus_ring};
@@ -184,7 +184,7 @@ impl Widget for Button {
             Sense::hover()
         };
         let (rect, mut response) = ui.allocate_exact_size(size, sense);
-        response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, enabled, &self.label));
+        response.widget_info(|| WidgetInfo::labeled(Role::Button, enabled, &self.label));
         if let Some(reason) = &self.reason {
             response = super::tooltip(response, reason.clone());
         }
@@ -380,7 +380,7 @@ impl egui::Widget for IconButton {
             egui::CornerRadius::same(r.nw.min(12))
         };
         let (rect, response) = ui.allocate_exact_size(egui::vec2(side, side), egui::Sense::click());
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &self.label));
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.label));
         let hot = response.hovered();
         if self.outline {
             let (fill, border) = if t.dark {

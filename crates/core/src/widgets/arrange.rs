@@ -234,7 +234,7 @@ fn arrange_tools(ui: &mut Ui, cell: Id) {
     let side = t.density("control-xs");
     let (rect, _) = ui.allocate_exact_size(vec2(side, side), Sense::hover());
     let grip = ui.interact(rect, grip_id(cell), Sense::click_and_drag());
-    grip.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, &tools.move_label));
+    grip.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &tools.move_label));
     let hot = grip.hovered() || grip.dragged();
     if hot {
         ui.painter().rect_filled(rect, t.radius("control"), t.color("hover"));
@@ -318,7 +318,7 @@ impl<'a, T: ArrangeItem> DashboardArrange<'a, T> {
         label: &'a dyn Fn(&T) -> String,
     ) -> Self {
         Self {
-            id: Id::new(("sokkel-arrange", id)),
+            id: Id::unique(("sokkel-arrange", id)),
             layout,
             label,
             arranging: true,
@@ -416,7 +416,7 @@ impl<'a, T: ArrangeItem> DashboardArrange<'a, T> {
                 let removable = self.removable;
                 let refocus = refocus.as_deref() == Some(item.id());
                 grid.cell(item.span(), move |ui| {
-                    let cell = ui.id();
+                    let cell = ui.scope_id();
                     if arranging {
                         ui.data_mut(|d| {
                             d.insert_temp(
@@ -614,7 +614,7 @@ fn palette_chip(ui: &mut Ui, widget: &DashboardWidget, add: &str) -> egui::Respo
         .layout_no_wrap(widget.label.clone(), TextRole::Body.font(&t), t.color("foreground"));
     let width = 10.0 + widget.icon.map_or(0.0, |_| 16.0 + 6.0) + galley.size().x + 10.0;
     let (rect, response) = ui.allocate_exact_size(vec2(width, 32.0), Sense::click_and_drag());
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, add));
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, add));
     let painter = ui.painter();
     let radius = t.radius("control");
     let ground = if response.hovered() {

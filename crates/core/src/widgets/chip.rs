@@ -57,7 +57,7 @@ impl Widget for Chip {
             role.font(&t),
         );
         let (rect, response) = ui.allocate_exact_size(vec2(galley.size().x + 12.0, 20.0), Sense::hover());
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, &self.label));
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, &self.label));
         if ui.is_rect_visible(rect) {
             paint(ui.painter(), &t, rect, galley, self.tone, self.selected);
         }
@@ -170,7 +170,7 @@ impl egui::Widget for TagChips<'_> {
                     .x
                     + 12.0;
                 let (rect, response) = ui.allocate_exact_size(vec2(width, 20.0), egui::Sense::hover());
-                response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, tag));
+                response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, tag));
                 paint_tag_at(ui, rect.left(), rect.center().y, tag);
             }
         })

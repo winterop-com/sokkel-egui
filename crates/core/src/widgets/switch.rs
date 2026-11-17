@@ -1,4 +1,4 @@
-use egui::{Response, Sense, Ui, Widget, WidgetInfo, WidgetType, pos2, vec2};
+use egui::{Response, Role, Sense, Ui, Widget, WidgetInfo, pos2, vec2};
 
 use super::{dim, focus_ring};
 use crate::tokens;
@@ -53,7 +53,7 @@ impl Widget for Switch<'_> {
             response.mark_changed();
         }
         let on = *self.on;
-        response.widget_info(|| WidgetInfo::selected(WidgetType::Checkbox, self.enabled, on, &self.label));
+        response.widget_info(|| WidgetInfo::selected(Role::CheckBox, self.enabled, on, &self.label));
         if !ui.is_rect_visible(rect) {
             return response;
         }

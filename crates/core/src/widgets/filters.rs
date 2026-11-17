@@ -459,9 +459,9 @@ pub struct FilterBar<'a, 'f, T> {
 }
 
 impl<'a, 'f, T> FilterBar<'a, 'f, T> {
-    pub fn new(id: impl egui::AsId, fields: &'a [FilterField<'f, T>], filters: &'a mut Vec<Filter>) -> Self {
+    pub fn new(id: impl egui::AsIdSalt, fields: &'a [FilterField<'f, T>], filters: &'a mut Vec<Filter>) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             fields,
             filters,
             words: FilterBarWords::default(),
@@ -832,13 +832,13 @@ pub struct SavedViews<'a> {
 
 impl<'a> SavedViews<'a> {
     pub fn new(
-        id: impl egui::AsId,
+        id: impl egui::AsIdSalt,
         views: &'a [SavedView],
         chosen: Option<&'a str>,
         current: &'a ListViewState,
     ) -> Self {
         Self {
-            id: Id::new(id),
+            id: Id::unique(id),
             views,
             chosen,
             current,
@@ -956,7 +956,7 @@ impl<'a> SavedViews<'a> {
                         ui.set_width(256.0);
                         ui.label(TextRole::Label.rich(&t, &self.words.name));
                         ui.add_space(6.0);
-                        let field = ui.add(Input::new(&mut name).width(256.0).invalid(taken));
+                        let field = ui.add(Input::new(&mut name).name(&self.words.name).width(256.0).invalid(taken));
                         if taken {
                             ui.label(
                                 TextRole::Help

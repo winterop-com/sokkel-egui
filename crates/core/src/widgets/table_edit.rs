@@ -212,7 +212,7 @@ fn alert(ui: &mut Ui, t: &Tokens, cell: Rect, error: Option<&str>) {
         let place = Rect::from_center_size(pos2(cell.right() - 20.0, cell.center().y), vec2(20.0, 20.0));
         let hit = ui.interact(
             place,
-            ui.id().with(("refused", cell.min.x as i32, cell.min.y as i32)),
+            ui.scope_id().with(("refused", cell.min.x as i32, cell.min.y as i32)),
             Sense::hover(),
         );
         icons::paint(
@@ -286,7 +286,7 @@ pub(crate) fn date(
         (pick, Icon::Calendar, &words.pick_date, 1),
     ] {
         let hit = ui.interact(place, id.with(("button", which)), Sense::click());
-        hit.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, label));
+        hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, label));
         if hit.hovered() || (which == 1 && open.calendar) {
             ui.painter().rect_filled(place, t.radius("control"), t.color("hover"));
         }
@@ -420,9 +420,7 @@ pub(crate) fn select(ui: &mut Ui, cell: Rect, open: &mut OpenCell, id: Id, optio
                 for (index, option) in options.iter().enumerate() {
                     let (row, hit) = ui.allocate_exact_size(vec2(width - 2.0, option_height), Sense::click());
                     let marked = Some(index) == chosen;
-                    hit.widget_info(|| {
-                        egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, true, marked, option)
-                    });
+                    hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, marked, option));
                     if hit.hovered() {
                         open.highlight = index;
                     }

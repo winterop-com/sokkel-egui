@@ -12,7 +12,7 @@ mod popup;
 pub use popup::{MapPopup, MapPopupResponse, MapPopupRow, MapPopupWords};
 
 use walkers::{
-    HttpOptions, HttpTiles, Layer, Map, MapMemory, Position, Projector, Style, TileId, Tiles, lat_lon,
+    HttpOptions, HttpTiles, Map, MapMemory, Position, Projector, Style, StyleLayer, TileId, Tiles, lat_lon,
     sources::{Attribution, OpenFreeMap, TileSource},
 };
 
@@ -462,7 +462,7 @@ impl MapView {
             ui.ctx().request_repaint();
         }
         let screen = ui.ctx().content_rect();
-        egui::Area::new(ui.id().with("map-full"))
+        egui::Area::new(ui.scope_id().with("map-full"))
             .order(egui::Order::Foreground)
             .fixed_pos(screen.min)
             .show(ui.ctx(), |ui| self.draw(ui, screen.size(), markers, routes))
@@ -637,8 +637,8 @@ impl MapView {
             ui.painter().rect_filled(whole, corners, t.color("popover"));
             for (i, (icon, label)) in group.iter().enumerate() {
                 let button = Rect::from_min_size(pos2(whole.left(), whole.top() + i as f32 * SIZE), vec2(SIZE, SIZE));
-                let response = ui.interact(button, ui.id().with(("map-control", *label)), Sense::click());
-                response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, *label));
+                let response = ui.interact(button, ui.scope_id().with(("map-control", *label)), Sense::click());
+                response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, *label));
                 if response.hovered() {
                     let corner = |first: bool| if first { corners.nw } else { 0 };
                     let last = i + 1 == group.len();
@@ -703,7 +703,7 @@ impl MapView {
         let size = vec2(208.0, 4.0 + LABEL + ROW * Basemap::ALL.len() as f32 + 4.0);
         let menu = Rect::from_min_size(pos2(button.left() - 4.0 - size.x, button.top()), size);
         // over the map and its legend, a full screen map too
-        let area = egui::Area::new(ui.id().with("map-basemap-menu"))
+        let area = egui::Area::new(ui.scope_id().with("map-basemap-menu"))
             .order(egui::Order::Tooltip)
             .fixed_pos(menu.min)
             .show(ui.ctx(), |ui| Self::basemap_rows(ui, t, menu, shown));
@@ -755,9 +755,9 @@ impl MapView {
                 pos2(menu.left() + 4.0, menu.top() + 4.0 + LABEL + i as f32 * ROW),
                 vec2(size.x - 8.0, ROW),
             );
-            let response = ui.interact(row, ui.id().with(("map-basemap", basemap.name())), Sense::click());
+            let response = ui.interact(row, ui.scope_id().with(("map-basemap", basemap.name())), Sense::click());
             response.widget_info(|| {
-                egui::WidgetInfo::selected(egui::WidgetType::RadioButton, true, basemap == shown, basemap.name())
+                egui::WidgetInfo::selected(egui::Role::RadioButton, true, basemap == shown, basemap.name())
             });
             if response.hovered() {
                 ui.painter().rect_filled(row, t.radius("md"), t.color("accent"));
@@ -820,7 +820,7 @@ impl MapView {
 
 /// A basemap's preview as a texture, decoded once and kept by the context.
 fn preview_texture(ctx: &egui::Context, name: &str, bytes: &[u8]) -> Option<egui::TextureHandle> {
-    let id = egui::Id::new(("sokkel-map-preview", name));
+    let id = egui::Id::unique(("sokkel-map-preview", name));
     if let Some(texture) = ctx.data(|d| d.get_temp::<egui::TextureHandle>(id)) {
         return Some(texture);
     }
@@ -955,10 +955,12 @@ fn street_style(t: &Tokens, dark: bool) -> Style {
     let ink = t.color("foreground");
     let tone = |share: f32| walkers::Color(walkers::json!(sokkel_egui::hex(mix(ink, ground, share))));
     let source = |layer: &walkers::SourceLayer| layer.to_string();
-    style.layers.retain(|layer| !matches!(layer, Layer::Background { .. }));
+    style
+        .layers
+        .retain(|layer| !matches!(layer, StyleLayer::Background { .. }));
     for layer in &mut style.layers {
         match layer {
-            Layer::Fill {
+            StyleLayer::Fill {
                 source_layer, paint, ..
             } => {
                 let from = source(source_layer);
@@ -971,7 +973,7 @@ fn street_style(t: &Tokens, dark: bool) -> Style {
                 };
                 paint.fill_color = Some(tone(share));
             }
-            Layer::Line {
+            StyleLayer::Line {
                 source_layer, paint, ..
             } => {
                 let from = source(source_layer);
@@ -984,11 +986,12 @@ fn street_style(t: &Tokens, dark: bool) -> Style {
                 };
                 paint.line_color = Some(tone(share));
             }
-            Layer::Symbol {
+            StyleLayer::Symbol {
                 source_layer,
                 filter,
                 layout,
                 paint,
+                ..
             } => {
                 let place = source(source_layer).contains("place");
                 // a country's name small, as the web's street maps write it, not walkers' 18
