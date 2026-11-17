@@ -1023,6 +1023,198 @@ impl<'a> SavedViews<'a> {
     }
 }
 
+/// One facet chosen from its options on its own, after sokkel-ui's `FilterChip` with `options`
+/// and `multiple`: a control-tall chip naming the facet, opening a menu of the options to tick; once
+/// one is ticked it names them (two, or the first and how many more) on the accent ground with a
+/// button that clears them. Answers whether the choice changed.
+pub struct FilterChip<'a> {
+    id: egui::Id,
+    facet: String,
+    options: &'a [(String, String)],
+    selected: &'a mut Vec<String>,
+}
+
+impl<'a> FilterChip<'a> {
+    /// `options` are each a value and its label.
+    pub fn new(
+        id: impl egui::AsIdSalt,
+        facet: impl Into<String>,
+        options: &'a [(String, String)],
+        selected: &'a mut Vec<String>,
+    ) -> Self {
+        Self {
+            id: egui::Id::unique(id),
+            facet: facet.into(),
+            options,
+            selected,
+        }
+    }
+
+    pub fn show(self, ui: &mut Ui) -> bool {
+        let t = tokens(ui.ctx());
+        let labels: Vec<&str> = self
+            .options
+            .iter()
+            .filter(|(v, _)| self.selected.contains(v))
+            .map(|(_, l)| l.as_str())
+            .collect();
+        let said = match labels.len() {
+            0 => None,
+            1 | 2 => Some(labels.join(", ")),
+            n => Some(format!("{} +{}", labels[0], n - 1)),
+        };
+        let lay = |ui: &Ui, rich: egui::RichText| {
+            egui::WidgetText::from(rich).into_galley(
+                ui,
+                Some(egui::TextWrapMode::Extend),
+                f32::INFINITY,
+                TextRole::Body.font(&t),
+            )
+        };
+        let facet = lay(
+            ui,
+            TextRole::Body.rich(&t, &self.facet).color(if said.is_some() {
+                t.color("muted-foreground")
+            } else {
+                t.color("foreground")
+            }),
+        );
+        let value = said.as_ref().map(|s| {
+            lay(
+                ui,
+                TextRole::Body
+                    .rich(&t, s)
+                    .variation("wght", 500.0)
+                    .color(t.color("foreground")),
+            )
+        });
+        let face_width =
+            10.0 + facet.size().x + value.as_ref().map_or(6.0 + 14.0, |v| 6.0 + v.size().x.min(192.0)) + 10.0;
+        let clear_width = if said.is_some() { 26.0 } else { 0.0 };
+        let height = t.density("control");
+        let (rect, _) = ui.allocate_exact_size(egui::vec2(face_width + clear_width, height), egui::Sense::hover());
+        let face_rect = egui::Rect::from_min_size(rect.min, egui::vec2(face_width, height));
+        let face = ui.interact(face_rect, self.id.with("face"), egui::Sense::click());
+        face.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.facet));
+        let popup = self.id.with("menu");
+        let open = egui::Popup::is_id_open(ui.ctx(), popup);
+        let (ground, edge) = if said.is_some() {
+            (t.color("accent"), t.color_at("primary", 0.4))
+        } else {
+            (t.color("field"), t.color("input"))
+        };
+        let radius = t.radius("control");
+        ui.painter().rect(
+            rect,
+            radius,
+            ground,
+            egui::Stroke::new(1.0, edge),
+            egui::StrokeKind::Inside,
+        );
+        if face.hovered() || open {
+            ui.painter()
+                .rect_filled(face_rect.shrink(1.0), radius, t.color("hover"));
+        }
+        let mut x = rect.left() + 10.0;
+        let facet_width = facet.size().x;
+        ui.painter().galley(
+            pos2(x, rect.center().y - facet.size().y / 2.0),
+            facet,
+            t.color("foreground"),
+        );
+        x += facet_width + 6.0;
+        match value {
+            Some(value) => {
+                ui.painter().galley(
+                    pos2(x, rect.center().y - value.size().y / 2.0),
+                    value,
+                    t.color("foreground"),
+                );
+            }
+            None => icons::paint(
+                ui.painter(),
+                pos2(x + 7.0, rect.center().y),
+                Icon::ChevronDown,
+                14.0,
+                t.color("muted-foreground"),
+            ),
+        }
+        let mut changed = false;
+        if said.is_some() {
+            let clear_rect = egui::Rect::from_min_max(pos2(face_rect.right(), rect.top()), rect.max);
+            ui.painter().vline(
+                clear_rect.left(),
+                rect.y_range(),
+                egui::Stroke::new(1.0, t.color_at("primary", 0.3)),
+            );
+            let clear = ui.interact(clear_rect, self.id.with("clear"), egui::Sense::click());
+            let words = format!("Clear {}", self.facet);
+            clear.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &words));
+            if clear.hovered() {
+                ui.painter()
+                    .rect_filled(clear_rect.shrink(1.0), radius, t.color("hover"));
+            }
+            icons::paint(
+                ui.painter(),
+                clear_rect.center(),
+                Icon::X,
+                14.0,
+                t.color("muted-foreground"),
+            );
+            if clear.clicked() {
+                self.selected.clear();
+                changed = true;
+            }
+        }
+        egui::Popup::menu(&face)
+            .id(popup)
+            .frame(super::popup_frame(&t).inner_margin(4.0))
+            .gap(4.0)
+            .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+            .show(|ui| {
+                ui.set_min_width(rect.width().max(160.0));
+                ui.spacing_mut().item_spacing.y = 0.0;
+                for (value, label) in self.options {
+                    let mut on = self.selected.contains(value);
+                    let (row, hit) = ui.allocate_exact_size(
+                        egui::vec2(ui.available_width().max(200.0), t.density("control")),
+                        egui::Sense::click(),
+                    );
+                    hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::CheckBox, true, on, label));
+                    if hit.hovered() {
+                        ui.painter().rect_filled(row, t.radius("md"), t.color("accent"));
+                    }
+                    if on {
+                        icons::paint(
+                            ui.painter(),
+                            pos2(row.left() + 8.0 + 7.0, row.center().y),
+                            Icon::Check,
+                            14.0,
+                            t.color("popover-foreground"),
+                        );
+                    }
+                    ui.painter().text(
+                        pos2(row.left() + 8.0 + 14.0 + 8.0, row.center().y),
+                        egui::Align2::LEFT_CENTER,
+                        label,
+                        TextRole::Body.font(&t),
+                        t.color("popover-foreground"),
+                    );
+                    if hit.clicked() {
+                        on = !on;
+                        if on {
+                            self.selected.push(value.clone());
+                        } else {
+                            self.selected.retain(|v| v != value);
+                        }
+                        changed = true;
+                    }
+                }
+            });
+        changed
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -75,6 +75,7 @@ pub struct EntryGrid<'a> {
     label_width: f32,
     column_width: f32,
     total: bool,
+    read_only: bool,
     query: Option<&'a mut String>,
     words: EntryGridWords,
 }
@@ -94,6 +95,7 @@ impl<'a> EntryGrid<'a> {
             label_width: 224.0,
             column_width: 104.0,
             total: true,
+            read_only: false,
             query: None,
             words: EntryGridWords::default(),
         }
@@ -109,6 +111,12 @@ impl<'a> EntryGrid<'a> {
     /// A total column at the end; on by default.
     pub fn total(mut self, total: bool) -> Self {
         self.total = total;
+        self
+    }
+
+    /// The values shown, never typed in, as a record's answers are read.
+    pub fn read_only(mut self, read_only: bool) -> Self {
+        self.read_only = read_only;
         self
     }
 
@@ -133,39 +141,41 @@ impl<'a> EntryGrid<'a> {
         let shown = self.rows.len();
         ui.vertical(|ui| {
             ui.spacing_mut().item_spacing.y = 0.0;
-            // the toolbar: the search and the count of rows, the caller's controls under them
-            egui::Frame::new()
-                .inner_margin(egui::Margin::symmetric(pad as i8, 8))
-                .show(ui, |ui| {
-                    ui.set_width(width - 2.0 * pad);
-                    ui.spacing_mut().item_spacing.y = 8.0;
-                    if let Some(query) = query {
-                        ui.horizontal(|ui| {
-                            SearchField::new(self.id.with("search"), query)
-                                .width(256.0)
-                                .keys("/")
-                                .show(ui);
-                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
-                                ui.label(
-                                    egui::RichText::new(self.words.rows.replace("{}", &shown.to_string()))
-                                        .font(mono)
-                                        .color(t.color("muted-foreground")),
-                                );
+            if !self.read_only {
+                // the toolbar: the search and the count of rows, the caller's controls under them
+                egui::Frame::new()
+                    .inner_margin(egui::Margin::symmetric(pad as i8, 8))
+                    .show(ui, |ui| {
+                        ui.set_width(width - 2.0 * pad);
+                        ui.spacing_mut().item_spacing.y = 8.0;
+                        if let Some(query) = query {
+                            ui.horizontal(|ui| {
+                                SearchField::new(self.id.with("search"), query)
+                                    .width(256.0)
+                                    .keys("/")
+                                    .show(ui);
+                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                    let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                                    ui.label(
+                                        egui::RichText::new(self.words.rows.replace("{}", &shown.to_string()))
+                                            .font(mono)
+                                            .color(t.color("muted-foreground")),
+                                    );
+                                });
                             });
+                        }
+                        ui.horizontal(|ui| {
+                            ui.spacing_mut().item_spacing.x = 8.0;
+                            toolbar(ui);
                         });
-                    }
-                    ui.horizontal(|ui| {
-                        ui.spacing_mut().item_spacing.x = 8.0;
-                        toolbar(ui);
                     });
-                });
-            let rule = |ui: &mut Ui| {
-                let (r, _) = ui.allocate_exact_size(vec2(width, 1.0), Sense::hover());
-                ui.painter()
-                    .hline(r.x_range(), r.center().y, Stroke::new(1.0, t.color("border")));
-            };
-            rule(ui);
+                let rule = |ui: &mut Ui| {
+                    let (r, _) = ui.allocate_exact_size(vec2(width, 1.0), Sense::hover());
+                    ui.painter()
+                        .hline(r.x_range(), r.center().y, Stroke::new(1.0, t.color("border")));
+                };
+                rule(ui);
+            }
             if self.rows.is_empty() {
                 ui.add_space(24.0);
                 ui.vertical_centered(|ui| {
@@ -180,6 +190,9 @@ impl<'a> EntryGrid<'a> {
             }
             let across = self.columns.len() + usize::from(self.total);
             let fits = self.label_width + across as f32 * self.column_width + 2.0 * pad <= width;
+            if fits {
+                self.band_head(ui, width, pad);
+            }
             let mut group: Option<&String> = None;
             let mut first = true;
             for row in self.rows {
@@ -229,11 +242,6 @@ impl<'a> EntryGrid<'a> {
                                 held.shut.insert(name.clone());
                             }
                         }
-                        if fits && !shut {
-                            self.band_head(ui, width, pad);
-                        }
-                    } else if fits {
-                        self.band_head(ui, width, pad);
                     }
                 }
                 if group.is_some_and(|g| held.shut.contains(g)) {
@@ -318,6 +326,18 @@ impl<'a> EntryGrid<'a> {
     ) {
         let key = (row.id.clone(), column.id.clone());
         let value = (self.value)(&row.id, &column.id);
+        if self.read_only {
+            let t = tokens(ui.ctx());
+            let (slot, _) = ui.allocate_exact_size(vec2(ui.available_width(), t.density("control")), Sense::hover());
+            ui.painter().text(
+                pos2(slot.right() - 8.0, slot.center().y),
+                egui::Align2::RIGHT_CENTER,
+                value.map(|v| crate::format_value(v, Some(0))).unwrap_or_default(),
+                TextRole::Body.font(&t),
+                t.color("foreground"),
+            );
+            return;
+        }
         let at = held.typing.iter().position(|(k, _)| *k == key);
         let mut text = at.map_or_else(
             || value.map(write_number).unwrap_or_default(),

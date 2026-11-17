@@ -432,3 +432,53 @@ impl Banner {
         response
     }
 }
+
+/// Words that go somewhere, after sokkel-ui's `TextLink`: in the link's ink, underlined under the
+/// pointer, pressed as a link.
+#[must_use = "add it with `ui.add(...)`"]
+pub struct TextLink {
+    label: String,
+    role: TextRole,
+}
+
+impl TextLink {
+    pub fn new(label: impl Into<String>) -> Self {
+        Self {
+            label: label.into(),
+            role: TextRole::Body,
+        }
+    }
+
+    /// Its text in another role, such as the help's beside a help line.
+    pub fn role(mut self, role: TextRole) -> Self {
+        self.role = role;
+        self
+    }
+}
+
+impl Widget for TextLink {
+    fn ui(self, ui: &mut egui::Ui) -> Response {
+        let t = tokens(ui.ctx());
+        let galley = egui::WidgetText::from(self.role.rich(&t, &self.label)).into_galley(
+            ui,
+            Some(egui::TextWrapMode::Extend),
+            f32::INFINITY,
+            self.role.font(&t),
+        );
+        let (rect, response) = ui.allocate_exact_size(galley.size(), Sense::click());
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Link, true, &self.label));
+        let ink = t.color_or("link", t.color("primary-ink"));
+        let baseline = galley
+            .rows
+            .first()
+            .map_or(rect.bottom(), |r| rect.top() + r.max_y() - 2.0);
+        ui.painter().galley(rect.min, galley, ink);
+        if response.hovered() {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+            ui.painter()
+                .hline(rect.x_range(), baseline + 1.0, egui::Stroke::new(1.0, ink));
+        }
+        super::focus_ring(ui.painter(), &t, rect.expand(2.0), t.radius("mini"), &response);
+        response
+    }
+}

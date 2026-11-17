@@ -48,4 +48,13 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   and kept on the server (`Tree::movable`, `Tree::choosing`, `move_tree_node`, new in the
   library), Reset back to the form's own order, and the refusal for a grid of counts. Open: the
   web also moves the focused row with Alt and the arrows.
+- Responses: the states as a segmented choice with their counts and dots, the list (search, the
+  Form filter as the web's `FilterChip`, each row's menu to open the page, copy the receipt, send
+  it on or withdraw it), and the response chosen open in a sheet beside the list (`DetailSheet`,
+  new in the library: the code over the title, the chips and actions, the body, the foot, and an
+  edge that drags it wider). A response's own page and the sheet share its body: received, filed
+  for (with links as the web's `TextLink`), its answers (a monthly report's as a read-only
+  `EntryGrid`), and its history; Withdraw asks first. A table asked to show all its rows now does
+  so inside a page that scrolls. Open: the web's Raw record opens the record in a `SourceSheet`,
+  a code view, which waits for the code editor.
 - Open: the Playground waits for the code editor's spec, as `ApiPlayground` is built on it.

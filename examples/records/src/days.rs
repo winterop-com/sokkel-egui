@@ -18,6 +18,11 @@ pub fn set_local_offset(seconds: i64) {
     OFFSET.store(seconds * 1000, Ordering::Relaxed);
 }
 
+/// How far the local zone is ahead of UTC, in milliseconds.
+pub fn local_offset() -> i64 {
+    offset()
+}
+
 fn offset() -> i64 {
     OFFSET.load(Ordering::Relaxed)
 }

@@ -9,9 +9,13 @@ use records::app::DEMO_START;
 use sokkel_egui::Appearance;
 
 pub fn render(path: &str) -> Harness<'static, RecordsApp> {
+    render_at(path, 900.0)
+}
+
+pub fn render_at(path: &str, height: f32) -> Harness<'static, RecordsApp> {
     let mut app = RecordsApp::at(DEMO_START, Appearance::default());
     app.go(path);
-    let mut harness = Harness::builder().with_size([1440.0, 900.0]).build_ui_state(
+    let mut harness = Harness::builder().with_size([1440.0, height]).build_ui_state(
         |ui, app: &mut RecordsApp| {
             egui::CentralPanel::default()
                 .frame(egui::Frame::NONE)
@@ -33,9 +37,17 @@ fn every_screen() {
         ("records_form_site", "forms/FRM-SITE"),
         ("records_form_layout", "forms/FRM-MONTH/layout"),
         ("records_form_layout_site", "forms/FRM-SITE/layout"),
+        ("records_responses", "responses"),
     ];
     for &(name, path) in screens {
         let mut harness = render(path);
+        results.add(harness.try_snapshot(name));
+    }
+    for (name, path) in [
+        ("records_receipt", "responses/9832602a1b1ccacffb3c8507bd2d5fdf"),
+        ("records_receipt_site", "responses/7f3d438ab4b07185d993c7ecf06aad0e"),
+    ] {
+        let mut harness = render_at(path, 1500.0);
         results.add(harness.try_snapshot(name));
     }
 }

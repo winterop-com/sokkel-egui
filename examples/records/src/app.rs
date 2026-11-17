@@ -53,6 +53,8 @@ pub struct RecordsApp {
     pub last_place: Option<String>,
     /// The form being filled.
     pub fill: Option<crate::form_fill::Fill>,
+    /// What the responses' list holds open.
+    pub responses: crate::responses::ResponsesView,
     /// How a periodic report's grid of counts is laid.
     pub grid_view: crate::count_grid::GridView,
     /// When the server was last asked whether it answers, and whether it did.
@@ -96,6 +98,7 @@ impl RecordsApp {
             last_place: None,
             fill: None,
             grid_view: Default::default(),
+            responses: Default::default(),
             probed_at: now - PROBE,
             answered: Some(true),
             foot: Foot::default(),
@@ -275,6 +278,14 @@ impl RecordsApp {
             ShellPart::Page => match (known.is_some(), first.as_str()) {
                 (true, "") => Page::scroll(ui, |ui| self.overview(ui)),
                 (true, "forms") if self.path.len() == 1 => Page::scroll(ui, |ui| self.forms_page(ui)),
+                (true, "responses") if self.path.get(1).is_none_or(|p| p == "in") => {
+                    let state = self.path.get(2).cloned();
+                    Page::show(ui, |ui| self.responses_page(ui, state.as_deref()));
+                }
+                (true, "responses") => {
+                    let code = self.path[1].clone();
+                    Page::scroll(ui, |ui| self.receipt_page(ui, &code));
+                }
                 (true, "forms") if self.path.get(2).is_some_and(|p| p == "layout") => {
                     let form = self.path[1].clone();
                     Page::scroll(ui, |ui| self.form_layout(ui, &form));

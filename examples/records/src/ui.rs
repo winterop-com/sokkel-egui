@@ -92,3 +92,18 @@ pub fn answer_text(question: Option<&Question>, value: Option<&AnswerValue>) -> 
         Some(value) => value.written(),
     }
 }
+
+/// A moment as a date and a time in the local zone: `Nov 18, 2026, 10:13 AM`.
+pub fn when(at: i64) -> String {
+    use crate::days::{DAY, day_of, local_offset};
+    let minutes = (at + local_offset()).rem_euclid(DAY) / 60_000;
+    let (hour, minute) = (minutes / 60, minutes % 60);
+    let half = if hour < 12 { "AM" } else { "PM" };
+    let shown = if hour % 12 == 0 { 12 } else { hour % 12 };
+    format!("{}, {shown}:{minute:02} {half}", crate::days::long_day(day_of(at)))
+}
+
+/// A `YYYY-MM-DD` day as a date: `Nov 18, 2026`.
+pub fn on_day(iso: &str) -> String {
+    crate::days::day_from_iso(&iso[..iso.len().min(10)]).map_or_else(|| iso.to_owned(), crate::days::long_day)
+}

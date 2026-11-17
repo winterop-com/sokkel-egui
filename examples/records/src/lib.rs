@@ -12,6 +12,7 @@ pub mod forms;
 pub mod forms_page;
 pub mod geo;
 pub mod overview;
+pub mod responses;
 pub mod ui;
 
 pub use app::RecordsApp;

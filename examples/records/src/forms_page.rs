@@ -93,6 +93,7 @@ impl RecordsApp {
                                     Cell::Lines {
                                         title: form.title.into(),
                                         detail: detail.into(),
+                                        over: false,
                                     },
                                     Cell::Chip(
                                         form.kind.label().into(),

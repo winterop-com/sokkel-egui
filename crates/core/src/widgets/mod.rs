@@ -37,6 +37,7 @@ mod person;
 mod section;
 mod server_menu;
 mod settings;
+mod sheet;
 mod stat;
 mod stat_panel;
 mod switch;
@@ -72,7 +73,7 @@ pub use dashboard::{
     DashboardGrid, DashboardPanel, GridCells, PanelSpan, body_room, cell_height, report_natural_height, took_room,
 };
 pub use datetime::{DateField, DateFieldWords, DateTimeField, DateTimeFieldResponse, DateTimeFieldWords, Moment};
-pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton};
+pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton, TextLink};
 pub use empty::Empty;
 pub use entry_grid::{EntryColumn, EntryEdit, EntryGrid, EntryGridWords, EntryRow};
 pub(crate) use fields::search_field;
@@ -82,8 +83,8 @@ pub use fields::{
 };
 pub use file_preview::{FileKind, FilePreview, FilePreviewWords, format_size, parse_csv};
 pub use filters::{
-    Filter, FilterBar, FilterBarWords, FilterField, FilterOperator, FilterType, FilterValue, ListViewState, SavedView,
-    SavedViews, SavedViewsAsked, SavedViewsWords, filter_rows, matches_filter, operator_word, same_filters,
+    Filter, FilterBar, FilterBarWords, FilterChip, FilterField, FilterOperator, FilterType, FilterValue, ListViewState,
+    SavedView, SavedViews, SavedViewsAsked, SavedViewsWords, filter_rows, matches_filter, operator_word, same_filters,
 };
 pub use form_fields::{
     ComputedField, ComputedFieldWords, IssueCount, IssueEntry, PeriodPicker, PeriodPickerWords, RepeatedGroup,
@@ -115,6 +116,7 @@ pub use settings::{
     SettingRow, SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, ThemeWords, setting_row,
     setting_row_below, setting_row_found_by, theme_settings,
 };
+pub use sheet::{DetailSheet, DetailSheetWords};
 pub use stat::{KpiRow, Stat, StatTiles, sparkline};
 pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_compact, format_value, threshold_color};
 pub use switch::Switch;

@@ -142,6 +142,8 @@ pub enum Cell {
     Lines {
         title: String,
         detail: String,
+        /// The small line over the name rather than under it.
+        over: bool,
     },
     /// An id or a code, in the mono face.
     Mono(String),
@@ -1674,16 +1676,21 @@ impl<'a> DataTable<'a> {
                     let position = order.iter().position(|r| *r == o.row)?;
                     (extra > 0.0).then_some((position, extra))
                 });
-                let area = egui::ScrollArea::vertical()
+                let tall = if self.stretch {
+                    // what is left under the bar and the head, less the foot and the frame's edge
+                    (limit - ui.cursor().top() - foot_room - 1.0).max(row_height)
+                } else {
+                    // never taller than its rows: a height without bound shows them all
+                    self.height.min(order.len() as f32 * row_height + 1.0)
+                };
+                let mut area = egui::ScrollArea::vertical()
                     .id_salt(self.id.with("rows"))
-                    .max_height(if self.stretch {
-                        // what is left under the bar and the head, less the foot and the frame's edge
-                        (limit - ui.cursor().top() - foot_room - 1.0).max(row_height)
-                    } else {
-                        // never taller than its rows: a height without bound shows them all
-                        self.height.min(order.len() as f32 * row_height + 1.0)
-                    })
+                    .max_height(tall)
                     .auto_shrink([false, true]);
+                if !self.stretch {
+                    // as tall as asked, even inside a page that scrolls itself
+                    area = area.min_scrolled_height(tall);
+                }
                 let count = order.len();
                 let mut body = |ui: &mut Ui, range: std::ops::Range<usize>| {
                     for position in range {
@@ -2190,22 +2197,25 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
         ),
         Cell::Muted(label) => text(ui, TextRole::Body.rich(t, label), t.color("muted-foreground")),
         Cell::Toned(label, ink) => text(ui, TextRole::Body.rich(t, label), t.color(ink)),
-        Cell::Lines { title, detail } => {
+        Cell::Lines { title, detail, over } => {
             let lay = |ui: &mut Ui, rich: egui::RichText, role: TextRole| {
                 WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), room.max(1.0), role.font(t))
             };
-            let top_line = lay(
+            let name = lay(
                 ui,
                 TextRole::Body.rich(t, title).variation("wght", 500.0),
                 TextRole::Body,
             );
-            let under = lay(ui, TextRole::Help.rich(t, detail), TextRole::Help);
-            let y = rect.center().y - (top_line.size().y + under.size().y) / 2.0;
-            let height = top_line.size().y;
-            ui.painter()
-                .galley(pos2(rect.left(), y), top_line, t.color("foreground"));
-            ui.painter()
-                .galley(pos2(rect.left(), y + height), under, t.color("muted-foreground"));
+            let small = lay(ui, TextRole::Help.rich(t, detail), TextRole::Help);
+            let y = rect.center().y - (name.size().y + small.size().y) / 2.0;
+            let (first, second, first_ink, second_ink) = if *over {
+                (small, name, t.color("muted-foreground"), t.color("foreground"))
+            } else {
+                (name, small, t.color("foreground"), t.color("muted-foreground"))
+            };
+            let height = first.size().y;
+            ui.painter().galley(pos2(rect.left(), y), first, first_ink);
+            ui.painter().galley(pos2(rect.left(), y + height), second, second_ink);
         }
         Cell::Mono(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
