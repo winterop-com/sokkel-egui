@@ -26,6 +26,8 @@ pub struct World {
     /// How many changes the live stream and people made, out of the history.
     pub live_count: usize,
     pub names: Names,
+    /// Every change of every team with what it was before and after, which the figures read.
+    pub ledger: crate::metrics::Ledger,
 }
 
 impl World {
@@ -306,6 +308,7 @@ pub fn build(base: &Base, kept: &Kept, now: i64) -> World {
     merged.sort_by_key(|change| std::cmp::Reverse(change.at));
     merged.truncate(80);
     World {
+        ledger: crate::metrics::Ledger::of(&teams, now),
         now,
         teams,
         by_id,

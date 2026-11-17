@@ -13,7 +13,9 @@ use egui::{
 use std::sync::Arc;
 
 mod panel;
-pub use panel::{BarGauge, BarPanel, GaugePanel, HeatmapPanel, LegendStat, LegendWords, TimeSeriesPanel};
+pub use panel::{
+    BarGauge, BarPanel, FunnelPanel, GaugePanel, HeatmapPanel, LegendStat, LegendWords, PanelWords, TimeSeriesPanel,
+};
 
 use sokkel_egui::{TextRole, Tokens, tokens};
 
@@ -24,6 +26,11 @@ pub struct Series {
     pub values: Vec<Option<f64>>,
     /// A color token's name; the series takes its place in `SERIES_ORDER` when `None`.
     pub color: Option<&'static str>,
+    /// The stack it is drawn on with the series of the same stack, in a stacked chart; series of
+    /// none share one stack of their own.
+    pub stack: Option<&'static str>,
+    /// A thin dashed line with no area, for a reference such as the period before.
+    pub dashed: bool,
 }
 
 impl Series {
@@ -32,7 +39,29 @@ impl Series {
             name: name.into(),
             values: values.into_iter().map(Some).collect(),
             color: None,
+            stack: None,
+            dashed: false,
         }
+    }
+
+    /// A run with gaps: `None` draws nothing at its category, as a bucket that has not come yet.
+    pub fn gappy(name: impl Into<String>, values: impl IntoIterator<Item = Option<f64>>) -> Self {
+        Self {
+            values: values.into_iter().collect(),
+            ..Self::new(name, [])
+        }
+    }
+
+    /// Drawn on the series of `stack`, apart from the others, as a web series' `stack`.
+    pub fn stack(mut self, stack: &'static str) -> Self {
+        self.stack = Some(stack);
+        self
+    }
+
+    /// A thin dashed line with no area, as a web series' `dashed`.
+    pub fn dashed(mut self) -> Self {
+        self.dashed = true;
+        self
     }
 
     /// Drawn in this color token, as a web series' `color`, instead of its place's.
@@ -91,16 +120,61 @@ fn nice_step(max: f64, ticks: usize) -> f64 {
     nice * power
 }
 
-/// How a value axis writes its values: a unit after each, and a fixed number of decimals.
+/// How a value axis writes its values: a unit after each, and a fixed number of decimals, or the
+/// chart's own writer.
 #[derive(Clone, Default)]
 struct Writing {
     unit: String,
     decimals: Option<usize>,
+    format: Option<Format>,
+}
+
+/// A chart's own way of writing a figure, such as money.
+pub type Format = Arc<dyn Fn(f64) -> String + Send + Sync>;
+
+/// A tick written by a chart's own writer, short, as the web's `compactWritten`: the figure the
+/// writer writes for the tick is swapped for the compact one, keeping the words around it, so
+/// `$30,000` reads `$30K`. Where it writes another figure, its text is kept.
+fn compact_written(text: &str, value: f64) -> String {
+    let bytes = text.as_bytes();
+    let Some(start) = bytes.iter().position(u8::is_ascii_digit) else {
+        return text.to_owned();
+    };
+    let mut end = start;
+    while end < bytes.len() && (bytes[end].is_ascii_digit() || bytes[end] == b',') {
+        end += 1;
+    }
+    if end + 1 < bytes.len() && bytes[end] == b'.' && bytes[end + 1].is_ascii_digit() {
+        end += 1;
+        while end < bytes.len() && bytes[end].is_ascii_digit() {
+            end += 1;
+        }
+    }
+    let figure: f64 = text[start..end].replace(',', "").parse().unwrap_or(f64::NAN);
+    let size = value.abs();
+    if (figure - size).abs() > (size * 0.01).max(0.5) {
+        return text.to_owned();
+    }
+    format!("{}{}{}", &text[..start], format_tick(size), &text[end..])
+}
+
+/// A figure written for a value axis' tick, as the web's `formatTick`: short from ten up, `1.2K`
+/// for 1,200, and with up to two decimals below.
+fn format_tick(value: f64) -> String {
+    if value.abs() < 10.0 {
+        let fixed = format!("{value:.2}");
+        fixed.trim_end_matches('0').trim_end_matches('.').to_owned()
+    } else {
+        sokkel_egui::format_compact(value)
+    }
 }
 
 impl Writing {
     /// A value on the axis: its decimals with the trailing zeros dropped, and the unit.
     fn tick(&self, value: f64) -> String {
+        if let Some(format) = &self.format {
+            return format!("{}{}", compact_written(&format(value), value), self.unit);
+        }
         let number = match self.decimals {
             Some(d) => {
                 let fixed = format!("{value:.d$}");
@@ -117,6 +191,9 @@ impl Writing {
 
     /// A value read out, as under the pointer: all its decimals, and the unit.
     fn value(&self, value: f64) -> String {
+        if let Some(format) = &self.format {
+            return format!("{}{}", format(value), self.unit);
+        }
         match self.decimals {
             Some(d) => format!("{value:.d$}{}", self.unit),
             None => format!("{}{}", label(value), self.unit),
@@ -468,6 +545,12 @@ impl LineChart {
         self
     }
 
+    /// Writes each figure under the pointer, and the axis' ticks short, as the web's `format`.
+    pub fn format(mut self, format: Format) -> Self {
+        self.writing.format = Some(format);
+        self
+    }
+
     /// A dashed line across at `value` in `color`, a threshold's step, drawn where the axis reaches it.
     pub fn threshold(mut self, value: f64, color: Color32) -> Self {
         self.thresholds.push((value, color));
@@ -499,24 +582,29 @@ impl Widget for LineChart {
         let count = self.categories.len();
         // where each series is drawn: its values, or stacked on the series before it
         let mut tops: Vec<Vec<Option<f64>>> = Vec::new();
-        for series in &self.series {
-            let drawn: Vec<Option<f64>> = if self.stacked {
-                series
+        // the series each is stacked on: the one before it in its stack, as the web's `stackOf`
+        let mut below: Vec<Option<usize>> = Vec::new();
+        let mut last_of: Vec<(&str, usize)> = Vec::new();
+        for (index, series) in self.series.iter().enumerate() {
+            let stack = if self.stacked {
+                Some(series.stack.unwrap_or("all"))
+            } else {
+                series.stack
+            };
+            let under = stack.and_then(|k| last_of.iter().rev().find(|(name, _)| *name == k).map(|(_, at)| *at));
+            if let Some(k) = stack {
+                last_of.push((k, index));
+            }
+            let drawn: Vec<Option<f64>> = match under {
+                Some(at) => series
                     .values
                     .iter()
                     .enumerate()
-                    .map(|(i, v)| {
-                        v.map(|v| {
-                            v + tops
-                                .last()
-                                .and_then(|below: &Vec<Option<f64>>| below.get(i).copied().flatten())
-                                .unwrap_or(0.0)
-                        })
-                    })
-                    .collect()
-            } else {
-                series.values.clone()
+                    .map(|(i, v)| v.map(|v| v + tops[at].get(i).copied().flatten().unwrap_or(0.0)))
+                    .collect(),
+                None => series.values.clone(),
             };
+            below.push(under);
             tops.push(drawn);
         }
         let band_top = self
@@ -542,22 +630,26 @@ impl Widget for LineChart {
             let crest = frame.y(max);
             let floor = frame.plot.bottom();
             for (index, values) in tops.iter().enumerate() {
+                // a reference is a line alone
+                if self.series[index].dashed {
+                    continue;
+                }
                 let color = color_of(&t, &self.series[index], index);
+                let in_stack = self.stacked || self.series[index].stack.is_some();
                 let shade = |y: f32| match fill {
                     Fill::Gradient => {
                         let at = ((y - crest) / (floor - crest).max(1.0)).clamp(0.0, 1.0);
                         color.gamma_multiply(0.40 + (0.04 - 0.40) * at)
                     }
+                    // a stack's areas are stronger, as the web fills them
+                    _ if in_stack => color.gamma_multiply(0.55),
                     _ => color.gamma_multiply(0.15),
                 };
                 let mut mesh = egui::Mesh::default();
                 // stacked, an area runs down to the series under it; else to the axis
-                let under = |i: usize| {
-                    if self.stacked && index > 0 {
-                        tops[index - 1].get(i).copied().flatten().map_or(floor, |v| frame.y(v))
-                    } else {
-                        floor
-                    }
+                let under = |i: usize| match below[index] {
+                    Some(at) => tops[at].get(i).copied().flatten().map_or(floor, |v| frame.y(v)),
+                    None => floor,
                 };
                 for i in 0..values.len().saturating_sub(1) {
                     if let (Some(a), Some(b)) = (values[i], values[i + 1]) {
@@ -618,17 +710,22 @@ impl Widget for LineChart {
                     }
                 }
             }
-            // a run of values between gaps is one line
+            // a run of values between gaps is one line; a reference is thin and dashed
+            let line = |points: Vec<Pos2>| {
+                if series.dashed {
+                    painter.extend(Shape::dashed_line(&points, Stroke::new(1.25, color), 5.0, 2.5));
+                } else {
+                    painter.add(Shape::line(points, Stroke::new(2.0, color)));
+                }
+            };
             let mut run: Vec<Pos2> = Vec::new();
             for (i, value) in tops[index].iter().enumerate() {
                 match value {
                     Some(v) => run.push(pos2(x(i), frame.y(*v))),
-                    None => {
-                        painter.add(Shape::line(std::mem::take(&mut run), Stroke::new(2.0, color)));
-                    }
+                    None => line(std::mem::take(&mut run)),
                 }
             }
-            painter.add(Shape::line(run, Stroke::new(2.0, color)));
+            line(run);
         }
         if let Some(i) = frame.hovered(&response, count) {
             painter.vline(x(i), frame.plot.y_range(), Stroke::new(1.0, t.color("border-strong")));
@@ -666,6 +763,7 @@ impl Widget for LineChart {
 pub struct BarChart {
     categories: Vec<String>,
     series: Vec<Series>,
+    writing: Writing,
     stacked: bool,
     horizontal: bool,
     height: f32,
@@ -676,6 +774,7 @@ impl BarChart {
         Self {
             categories: categories.into_iter().map(Into::into).collect(),
             series: Vec::new(),
+            writing: Writing::default(),
             stacked: false,
             horizontal: false,
             height: 240.0,
@@ -689,6 +788,12 @@ impl BarChart {
 
     pub fn stacked(mut self, stacked: bool) -> Self {
         self.stacked = stacked;
+        self
+    }
+
+    /// Writes each figure under the pointer, and the axis' ticks short, as the web's `format`.
+    pub fn format(mut self, format: Format) -> Self {
+        self.writing.format = Some(format);
         self
     }
 
@@ -724,7 +829,11 @@ impl Widget for BarChart {
             self.lying(ui, &t, rect, max);
             return response;
         }
-        let frame = Frame::draw(ui, rect, &t, &self.categories, max, &Axes::default());
+        let axes = Axes {
+            writing: self.writing.clone(),
+            ..Default::default()
+        };
+        let frame = Frame::draw(ui, rect, &t, &self.categories, max, &axes);
         let step = frame.band(count);
         let hovered = frame.hovered(&response, count);
         let painter = ui.painter();
@@ -775,7 +884,7 @@ impl Widget for BarChart {
                 })
                 .collect();
             let category = self.categories[i].clone();
-            tooltip(response.clone(), t.clone(), &category, rows, &Writing::default());
+            tooltip(response.clone(), t.clone(), &category, rows, &self.writing);
         }
         response
     }
@@ -884,7 +993,7 @@ impl BarChart {
             painter.text(
                 pos2(x(value), plot.bottom() + 8.0),
                 Align2::CENTER_TOP,
-                Writing::default().tick(value),
+                self.writing.tick(value),
                 font.clone(),
                 ink,
             );
@@ -1034,10 +1143,28 @@ mod tests {
     }
 
     #[test]
+    fn a_writers_ticks_read_short() {
+        let money = Writing {
+            format: Some(std::sync::Arc::new(|v: f64| {
+                format!("${}", sokkel_egui::format_value(v, Some(0)))
+            })),
+            ..Default::default()
+        };
+        assert_eq!(money.tick(30_000.0), "$30K");
+        assert_eq!(money.tick(5000.0), "$5K");
+        assert_eq!(money.tick(0.0), "$0");
+        assert_eq!(money.value(30_000.0), "$30,000");
+        assert_eq!(sokkel_egui::format_compact(577_236.0), "577.2K");
+        assert_eq!(sokkel_egui::format_compact(1_259_417.0), "1.3M");
+        assert_eq!(sokkel_egui::format_compact(999.0), "999");
+    }
+
+    #[test]
     fn axis_values_drop_trailing_zeros_and_keep_the_unit() {
         let writing = Writing {
             unit: "%".into(),
             decimals: Some(2),
+            format: None,
         };
         assert_eq!(writing.tick(0.0), "0%");
         assert_eq!(writing.tick(0.15), "0.15%");

@@ -298,9 +298,28 @@ impl Widget for Rail<'_> {
                 }
             }
             for entry in &group.entries {
-                // a described entry: 6 over and under its 22 label line and its 20 description
+                // a described entry: 6 over and under its 22 label line and its description's 20
+                // tall lines, wrapped beside the count as the web's `text-pretty` wraps them
                 let described = !narrow && entry.description.is_some();
-                let height = if described { 6.0 + 22.0 + 20.0 + 6.0 } else { row };
+                let count_room = entry.count.map_or(0.0, |count| {
+                    let rich = TextRole::Badge.rich(&t, count.to_string()).variation("wght", 600.0);
+                    WidgetText::from(rich)
+                        .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Badge.font(&t))
+                        .size()
+                        .x
+                        + 12.0
+                });
+                let words = entry
+                    .description
+                    .as_deref()
+                    .filter(|_| described)
+                    .map(|d| pretty_lines(ui, TextRole::Help, d, rect.width() - 17.0 - 52.0 - count_room));
+                let lines = words.as_ref().map_or(1, Vec::len) as f32;
+                let height = if described {
+                    6.0 + 22.0 + 20.0 * lines + 6.0
+                } else {
+                    row
+                };
                 let bounds = if narrow {
                     Rect::from_center_size(pos2(rect.center().x, y + row / 2.0), vec2(36.0, row))
                 } else {
@@ -370,16 +389,17 @@ impl Widget for Rail<'_> {
                     let role = if active { TextRole::Action } else { TextRole::Body };
                     let label = galley(ui, role, &entry.label, bounds.width() - 80.0);
                     painter.galley(pos2(bounds.left() + 40.0, line - label.size().y / 2.0), label, ink);
-                    if let Some(description) = entry.description.as_deref().filter(|_| described) {
-                        let words = galley(ui, TextRole::Help, description, bounds.width() - 52.0);
-                        painter.galley(
-                            pos2(
-                                bounds.left() + 40.0,
-                                bounds.top() + 6.0 + 22.0 + 10.0 - words.size().y / 2.0,
-                            ),
-                            words,
-                            t.color("muted-foreground"),
-                        );
+                    if let Some(lines) = &words {
+                        let quiet = if active {
+                            t.color("sidebar-accent-foreground").gamma_multiply(0.75)
+                        } else {
+                            t.color("muted-foreground")
+                        };
+                        for (index, line) in lines.iter().enumerate() {
+                            let words = galley(ui, TextRole::Help, line, bounds.width() - 52.0);
+                            let middle = bounds.top() + 6.0 + 22.0 + 20.0 * index as f32 + 10.0;
+                            painter.galley(pos2(bounds.left() + 40.0, middle - words.size().y / 2.0), words, quiet);
+                        }
                     }
                     if let Some(count) = entry.count {
                         // the count at 600
@@ -454,6 +474,36 @@ fn phone_control(painter: &egui::Painter, t: &crate::Tokens, rect: Rect, hit: &R
     };
     icons::paint(painter, rect.center(), icon, 16.0, ink);
     super::focus_ring_inset(painter, t, rect, t.radius("md"), hit);
+}
+
+/// `text` cut into lines no wider than `width`, as CSS `text-wrap: pretty` cuts them: a word at a
+/// time, then a last line of one word takes the word before it down, when that fits.
+fn pretty_lines(ui: &Ui, role: TextRole, text: &str, width: f32) -> Vec<String> {
+    let t = tokens(ui.ctx());
+    let wide = |line: &str| {
+        WidgetText::from(role.rich(&t, line))
+            .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, role.font(&t))
+            .size()
+            .x
+    };
+    let mut lines: Vec<Vec<&str>> = Vec::new();
+    for word in text.split_whitespace() {
+        match lines.last_mut() {
+            Some(line) if wide(&format!("{} {word}", line.join(" "))) <= width => line.push(word),
+            _ => lines.push(vec![word]),
+        }
+    }
+    let count = lines.len();
+    if count >= 2 && lines[count - 1].len() == 1 && lines[count - 2].len() >= 2 {
+        let moved = lines[count - 2].pop().unwrap_or_default();
+        let candidate = format!("{moved} {}", lines[count - 1].join(" "));
+        if wide(&candidate) <= width {
+            lines[count - 1].insert(0, moved);
+        } else {
+            lines[count - 2].push(moved);
+        }
+    }
+    lines.into_iter().map(|line| line.join(" ")).collect()
 }
 
 fn galley(ui: &Ui, role: TextRole, text: &str, width: f32) -> std::sync::Arc<egui::Galley> {

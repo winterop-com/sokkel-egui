@@ -135,6 +135,8 @@ pub enum Cell {
     Struck(String),
     /// Text in the muted ink: a quieter fact beside the row's own, as a `text-muted-foreground` cell.
     Muted(String),
+    /// Text in a token's ink, such as `critical-ink` for a fall: a change written in its tone.
+    Toned(String, &'static str),
     /// An id or a code, in the mono face.
     Mono(String),
     /// A state as a chip.
@@ -200,6 +202,7 @@ impl Cell {
             | Cell::Strong(text)
             | Cell::Struck(text)
             | Cell::Muted(text)
+            | Cell::Toned(text, _)
             | Cell::Mono(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
@@ -218,6 +221,7 @@ impl Cell {
             | Cell::Strong(text)
             | Cell::Struck(text)
             | Cell::Muted(text)
+            | Cell::Toned(text, _)
             | Cell::Mono(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
@@ -1959,6 +1963,7 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
             t.color("muted-foreground"),
         ),
         Cell::Muted(label) => text(ui, TextRole::Body.rich(t, label), t.color("muted-foreground")),
+        Cell::Toned(label, ink) => text(ui, TextRole::Body.rich(t, label), t.color(ink)),
         Cell::Mono(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
             text(ui, rich, t.color("foreground"));
@@ -2154,6 +2159,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Relative { .. } => text(ui, TextRole::Help.rich(t, cell.draft()), quiet, at.x, room),
         Cell::Struck(label) => text(ui, TextRole::Help.rich(t, label).strikethrough(), quiet, at.x, room),
         Cell::Muted(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
+        Cell::Toned(label, ink) => text(ui, TextRole::Help.rich(t, label), t.color(ink), at.x, room),
         Cell::Mono(label) | Cell::Marked { text: label, .. } => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
             text(ui, rich, quiet, at.x, room)

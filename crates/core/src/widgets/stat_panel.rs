@@ -73,16 +73,51 @@ pub fn format_value(value: f64, decimals: Option<usize>) -> String {
     }
 }
 
+/// A figure written short, as `Intl.NumberFormat`'s compact notation writes it with one decimal at
+/// most: `999`, `1.2K`, `30K`, `577.2K`, `12.3K`, `1.3M`.
+pub fn format_compact(value: f64) -> String {
+    let size = value.abs();
+    let sign = if value < 0.0 { "-" } else { "" };
+    let steps = [(1e12, "T"), (1e9, "B"), (1e6, "M"), (1e3, "K")];
+    let short = |v: f64| {
+        let rounded = (v * 10.0).round() / 10.0;
+        if rounded.fract() == 0.0 {
+            format!("{}", rounded as i64)
+        } else {
+            format!("{rounded:.1}")
+        }
+    };
+    for (index, (scale, suffix)) in steps.iter().enumerate() {
+        if size >= *scale {
+            let figure = (size / scale * 10.0).round() / 10.0;
+            // 999.95K rounds to 1000K, which reads as the next step up
+            if figure >= 1000.0 && index > 0 {
+                let (up, word) = steps[index - 1];
+                return format!("{sign}{}{word}", short(size / up));
+            }
+            return format!("{sign}{}{suffix}", short(size / scale));
+        }
+    }
+    // 999.95 rounds to 1000, which compact notation writes as the next step up
+    if (1000.0 - 0.05..1000.0).contains(&size) {
+        return format!("{sign}1K");
+    }
+    format!("{sign}{}", short(size))
+}
+
 /// The words a stat tile says.
 #[derive(Clone, Debug)]
 pub struct StatWords {
     pub no_data: String,
+    /// What the info mark is called for a screen reader.
+    pub info: String,
 }
 
 impl Default for StatWords {
     fn default() -> Self {
         Self {
             no_data: "No data".into(),
+            info: "About this panel".into(),
         }
     }
 }
@@ -115,6 +150,9 @@ pub struct StatPanel<'a> {
     sparkline: &'a [f64],
     delta: Option<String>,
     good: Option<bool>,
+    format: Option<&'a dyn Fn(f64) -> String>,
+    info: Option<String>,
+    note: Option<String>,
     words: StatWords,
 }
 
@@ -131,6 +169,9 @@ impl<'a> StatPanel<'a> {
             sparkline: &[],
             delta: None,
             good: None,
+            format: None,
+            info: None,
+            note: None,
             words: StatWords::default(),
         }
     }
@@ -179,6 +220,24 @@ impl<'a> StatPanel<'a> {
     /// Whether the change is an improvement; neutral when not given.
     pub fn good(mut self, good: Option<bool>) -> Self {
         self.good = good;
+        self
+    }
+
+    /// Writes the value; `decimals` and grouped thousands when not given.
+    pub fn format(mut self, format: &'a dyn Fn(f64) -> String) -> Self {
+        self.format = Some(format);
+        self
+    }
+
+    /// What the tile counts, said in a tooltip on the Info mark in its head.
+    pub fn info(mut self, info: impl Into<String>) -> Self {
+        self.info = Some(info.into());
+        self
+    }
+
+    /// A line under the value, muted: `MRR times twelve`, `3 invoices`.
+    pub fn note(mut self, note: impl Into<String>) -> Self {
+        self.note = Some(note.into());
         self
     }
 
@@ -242,6 +301,10 @@ impl<'a> StatPanel<'a> {
         super::panel_tools(&mut tools, cell);
         let tools_width = tools.min_rect().width();
         let mut end = head.right() - if tools_width > 1.0 { tools_width + 4.0 } else { 0.0 };
+        if let Some(info) = &self.info {
+            super::info_tip(ui, pos2(end - 10.0, head.center().y), info, &self.words.info);
+            end -= 24.0;
+        }
         if let (Some(delta), Some(_)) = (&self.delta, self.value) {
             let color = match self.good {
                 _ if filled => muted,
@@ -288,7 +351,10 @@ impl<'a> StatPanel<'a> {
                 painter.galley(body.center() - galley.size() / 2.0, galley, muted);
             }
             Some(value) => {
-                let written = format_value(value, self.decimals);
+                let written = match self.format {
+                    Some(format) => format(value),
+                    None => format_value(value, self.decimals),
+                };
                 let figure = WidgetText::from(TextRole::Statistic.rich(&t, written)).into_galley(
                     ui,
                     Some(TextWrapMode::Extend),
@@ -303,9 +369,23 @@ impl<'a> StatPanel<'a> {
                         TextRole::Body.font(&t),
                     )
                 });
+                let note = self.note.as_ref().map(|n| {
+                    WidgetText::from(TextRole::Help.rich(&t, n)).into_galley(
+                        ui,
+                        Some(TextWrapMode::Truncate),
+                        body.width(),
+                        TextRole::Help.font(&t),
+                    )
+                });
+                let note_height = note.as_ref().map_or(0.0, |n| n.size().y);
                 let total = figure.size().x + unit.as_ref().map_or(0.0, |u| u.size().x + 4.0);
                 let x = body.center().x - total / 2.0;
-                let top = body.center().y - figure.size().y / 2.0;
+                // the value and the note under it centered together
+                let top = body.center().y - (figure.size().y + note_height) / 2.0;
+                if let Some(note) = note {
+                    let at = pos2(body.center().x - note.size().x / 2.0, top + figure.size().y);
+                    painter.galley(at, note, muted);
+                }
                 let base = top + figure.rows.first().map_or(0.0, |r| r.max_y());
                 let figure_width = figure.size().x;
                 painter.galley(pos2(x, top), figure, ink.unwrap_or(t.color("card-foreground")));

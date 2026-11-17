@@ -62,9 +62,9 @@ pub struct Ledger {
 }
 
 impl Ledger {
-    pub fn of(world: &World) -> Self {
+    pub fn of(teams: &[Team], now: i64) -> Self {
         let mut entries = Vec::new();
-        for (at_team, team) in world.teams.iter().enumerate() {
+        for (at_team, team) in teams.iter().enumerate() {
             let mut state = NONE;
             let mut paid = false;
             let mut last = 0;
@@ -104,7 +104,7 @@ impl Ledger {
                 && state.active == 1
             {
                 let at = start_of(dormant);
-                if at > last && at <= world.now {
+                if at > last && at <= now {
                     entries.push(Entry {
                         at,
                         team: at_team,
@@ -129,7 +129,7 @@ impl Ledger {
 /// The world with its ledger, which every figure reads.
 pub struct Figures<'a> {
     pub world: &'a World,
-    ledger: Ledger,
+    ledger: &'a Ledger,
 }
 
 fn in_region(region: Region, segment: Segment) -> bool {
@@ -290,7 +290,7 @@ fn step_at(team: &Team, step: Step, plan: Option<Plan>) -> Option<i64> {
 impl<'a> Figures<'a> {
     pub fn new(world: &'a World) -> Self {
         Self {
-            ledger: Ledger::of(world),
+            ledger: &world.ledger,
             world,
         }
     }

@@ -16,6 +16,7 @@ mod empty;
 mod fields;
 mod file_preview;
 mod frame;
+mod info;
 mod inline_edit;
 mod layout;
 mod list_row;
@@ -75,6 +76,7 @@ pub use frame::{
     AppBar, DesktopWindow, Rail, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine, StatusTone,
     TopBar, desktop_viewport, is_phone,
 };
+pub use info::info_tip;
 pub use inline_edit::{InlineEdit, InlineEditLook, InlineEditWords};
 pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
 pub use list_row::{ListRow, ListRows, RowAside, RowMark};
@@ -95,7 +97,7 @@ pub use settings::{
     setting_row_found_by, theme_settings,
 };
 pub use stat::{KpiRow, Stat, sparkline};
-pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_value, threshold_color};
+pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_compact, format_value, threshold_color};
 pub use switch::Switch;
 pub use table::{
     Cell, CellEdit, Column, DataTable, RowActions, StackLayout, StackPlace, TableOutput, TableState, TableVariant,
@@ -257,4 +259,4 @@ pub(crate) fn spinner(ui: &Ui, painter: &Painter, center: egui::Pos2, radius: f3
     ui.ctx().request_repaint();
 }
 pub use time_range::{RefreshAsked, RefreshControl, RefreshWords, TimeRangePicker, TimeRangeWords, range_label};
-pub use variables::variable_select;
+pub use variables::{variable_select, variable_toggle};

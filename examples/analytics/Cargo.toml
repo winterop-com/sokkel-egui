@@ -8,7 +8,10 @@ publish.workspace = true
 
 [dependencies]
 sokkel-egui.workspace = true
+sokkel-egui-charts.workspace = true
+eframe.workspace = true
 serde.workspace = true
+time = { version = "0.3", features = ["local-offset"] }
 
 [dev-dependencies]
 egui_kittest.workspace = true

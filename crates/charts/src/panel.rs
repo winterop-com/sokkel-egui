@@ -139,6 +139,9 @@ fn legend_table(
 pub struct TimeSeriesPanel {
     title: String,
     subtitle: Option<String>,
+    info: Option<String>,
+    empty: bool,
+    words: PanelWords,
     chart: LineChart,
     series: Vec<Series>,
     legend: bool,
@@ -152,6 +155,9 @@ impl TimeSeriesPanel {
         Self {
             title: title.into(),
             subtitle: None,
+            info: None,
+            empty: false,
+            words: PanelWords::default(),
             chart: LineChart::new(x).fill(Fill::Gradient),
             series: Vec::new(),
             legend: true,
@@ -172,6 +178,29 @@ impl TimeSeriesPanel {
         if let Some((_, held)) = &mut self.table {
             *held = words;
         }
+        self
+    }
+
+    /// What the panel shows, behind the Info mark beside its title.
+    pub fn info(mut self, info: impl Into<String>) -> Self {
+        self.info = Some(info.into());
+        self
+    }
+
+    /// Nothing to draw, as a segment with no figures: the body says so instead.
+    pub fn empty(mut self, empty: bool) -> Self {
+        self.empty = empty;
+        self
+    }
+
+    /// Writes each figure under the pointer, and the axis' ticks short, as the web's `format`.
+    pub fn format(mut self, format: impl Fn(f64) -> String + Send + Sync + 'static) -> Self {
+        self.chart = self.chart.format(std::sync::Arc::new(format));
+        self
+    }
+
+    pub fn words(mut self, words: PanelWords) -> Self {
+        self.words = words;
         self
     }
 
@@ -233,7 +262,13 @@ impl TimeSeriesPanel {
 
     pub fn show(self, ui: &mut Ui) {
         let (chart, height, legend_on, names, table) = (self.chart, self.height, self.legend, self.series, self.table);
-        chart_frame(ui, &self.title, self.subtitle.as_deref(), |ui| {
+        let head = Head {
+            subtitle: self.subtitle.as_deref(),
+            info: self.info.as_deref(),
+            empty: self.empty.then_some(self.words.empty.as_str()),
+            ..Head::new(&self.title)
+        };
+        chart_frame(ui, head, |ui| {
             let writing = chart.writing.clone();
             let height = fill_height(ui, height);
             ui.add(chart.height(height));
@@ -283,7 +318,46 @@ fn drawn_under(ui: &Ui, top: f32) {
 /// A chart's frame, as sokkel-ui's `ChartFrame`: a card with the plain border, its title and
 /// subtitle in a 32 tall head with an arrangement's tools at its end, the body 8 in and under. In
 /// a `DashboardGrid` it stretches to its row.
-fn chart_frame(ui: &mut Ui, title: &str, subtitle: Option<&str>, body: impl FnOnce(&mut Ui)) {
+/// What a chart frame's head says, and whether its body has anything to draw.
+#[derive(Clone, Copy, Default)]
+struct Head<'a> {
+    title: &'a str,
+    subtitle: Option<&'a str>,
+    /// What the panel shows, behind the Info mark beside the title.
+    info: Option<&'a str>,
+    /// Nothing to draw: the body says so instead, as the web's `empty`.
+    empty: Option<&'a str>,
+}
+
+impl<'a> Head<'a> {
+    fn new(title: &'a str) -> Self {
+        Self {
+            title,
+            ..Default::default()
+        }
+    }
+}
+
+/// The words a chart panel says, English by default.
+#[derive(Clone, Debug)]
+pub struct PanelWords {
+    /// What the Info mark is called for a screen reader.
+    pub info: String,
+    /// Said in the body of a panel with nothing to draw.
+    pub empty: String,
+}
+
+impl Default for PanelWords {
+    fn default() -> Self {
+        Self {
+            info: "About this panel".into(),
+            empty: "No data for this range.".into(),
+        }
+    }
+}
+
+fn chart_frame(ui: &mut Ui, head_of: Head<'_>, body: impl FnOnce(&mut Ui)) {
+    let (title, subtitle) = (head_of.title, head_of.subtitle);
     // in its window the chart alone fills what the window has
     if sokkel_egui::windowed(ui) {
         body(ui);
@@ -324,11 +398,13 @@ fn chart_frame(ui: &mut Ui, title: &str, subtitle: Option<&str>, body: impl FnOn
                 inner.max(1.0),
                 TextRole::Help.font(&t),
             );
+            // the title, then the Info mark 20 wide, then the subtitle, each 6 apart
+            let info_room = if head_of.info.is_some() { 26.0 } else { 0.0 };
             let subtitle = subtitle.map(|s| {
                 WidgetText::from(TextRole::Help.rich(&t, s)).into_galley(
                     ui,
                     Some(TextWrapMode::Truncate),
-                    (inner - title.size().x - 6.0).max(1.0),
+                    (inner - title.size().x - 6.0 - info_room).max(1.0),
                     TextRole::Help.font(&t),
                 )
             });
@@ -336,9 +412,16 @@ fn chart_frame(ui: &mut Ui, title: &str, subtitle: Option<&str>, body: impl FnOn
             let title_width = title.size().x;
             ui.painter()
                 .galley(pos2(head.left() + 12.0, top), title, t.color("card-foreground"));
+            if let Some(info) = head_of.info {
+                let center = pos2(head.left() + 12.0 + title_width + 6.0 + 10.0, head.center().y);
+                sokkel_egui::info_tip(ui, center, info, &PanelWords::default().info);
+            }
             if let Some(subtitle) = subtitle {
-                ui.painter()
-                    .galley(pos2(head.left() + 12.0 + title_width + 6.0, top), subtitle, ink);
+                ui.painter().galley(
+                    pos2(head.left() + 12.0 + title_width + 6.0 + info_room, top),
+                    subtitle,
+                    ink,
+                );
             }
             egui::Frame::new()
                 .inner_margin(egui::Margin {
@@ -349,7 +432,14 @@ fn chart_frame(ui: &mut Ui, title: &str, subtitle: Option<&str>, body: impl FnOn
                 })
                 .show(ui, |ui| {
                     ui.set_width(ui.available_width());
-                    if !sokkel_egui::panel_away(ui, cell) {
+                    if let Some(empty) = head_of.empty {
+                        // 16 in and 32 over and under, centered, as the web's empty body
+                        ui.add_space(24.0);
+                        ui.vertical_centered(|ui| {
+                            ui.label(TextRole::Body.rich(&t, empty).color(ink));
+                        });
+                        ui.add_space(32.0);
+                    } else if !sokkel_egui::panel_away(ui, cell) {
                         let top = ui.cursor().top();
                         body(ui);
                         sokkel_egui::body_drawn(ui, cell, ui.min_rect().bottom() - top);
@@ -437,7 +527,7 @@ impl<'a> GaugePanel<'a> {
             .unwrap_or_default();
         let steps = self.thresholds.iter().map(|s| (s.value, t.color(s.color))).collect();
         let gauge = Gauge::new(self.value, self.min, self.max, tone, written).steps(steps);
-        chart_frame(ui, &self.title, None, |ui| {
+        chart_frame(ui, Head::new(&self.title), |ui| {
             let height = fill_height(ui, self.height);
             ui.add(gauge.height(height));
         });
@@ -508,7 +598,7 @@ impl<'a> BarGauge<'a> {
             sokkel_egui::mono_size(&t, TextRole::Help.font(&t).size),
             500.0,
         );
-        chart_frame(ui, &self.title, None, |ui| {
+        chart_frame(ui, Head::new(&self.title), |ui| {
             ui.add_space(4.0);
             let width = ui.available_width();
             // each row as tall as the small text's line (the bar 16 in it), 6 between, as the
@@ -661,7 +751,7 @@ impl HeatmapPanel {
             let one = format!("{v:.1}");
             format!("{}{}", one.trim_end_matches('0').trim_end_matches('.'), self.unit)
         };
-        chart_frame(ui, &self.title, None, |ui| {
+        chart_frame(ui, Head::new(&self.title), |ui| {
             let width = ui.available_width();
             let height = fill_height(ui, 192.0);
             let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
@@ -758,9 +848,13 @@ impl HeatmapPanel {
 pub struct BarPanel {
     title: String,
     subtitle: Option<String>,
+    info: Option<String>,
+    empty: bool,
+    words: PanelWords,
     chart: BarChart,
     series: Vec<Series>,
     legend: bool,
+    height: f32,
 }
 
 impl BarPanel {
@@ -768,10 +862,37 @@ impl BarPanel {
         Self {
             title: title.into(),
             subtitle: None,
+            info: None,
+            empty: false,
+            words: PanelWords::default(),
+            height: 192.0,
             chart: BarChart::new(x).height(192.0),
             series: Vec::new(),
             legend: true,
         }
+    }
+
+    /// What the panel shows, behind the Info mark beside its title.
+    pub fn info(mut self, info: impl Into<String>) -> Self {
+        self.info = Some(info.into());
+        self
+    }
+
+    /// Nothing to draw, as a segment with no figures: the body says so instead.
+    pub fn empty(mut self, empty: bool) -> Self {
+        self.empty = empty;
+        self
+    }
+
+    /// Writes each figure under the pointer, and the axis' ticks short, as the web's `format`.
+    pub fn format(mut self, format: impl Fn(f64) -> String + Send + Sync + 'static) -> Self {
+        self.chart = self.chart.format(std::sync::Arc::new(format));
+        self
+    }
+
+    pub fn words(mut self, words: PanelWords) -> Self {
+        self.words = words;
+        self
     }
 
     pub fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
@@ -798,6 +919,12 @@ impl BarPanel {
         self
     }
 
+    /// The chart's height, 192 (`h-48`) when not given.
+    pub fn height(mut self, height: f32) -> Self {
+        self.height = height;
+        self
+    }
+
     /// The legend under the bars; shown for more than one series unless turned off.
     pub fn legend(mut self, legend: bool) -> Self {
         self.legend = legend;
@@ -805,9 +932,15 @@ impl BarPanel {
     }
 
     pub fn show(self, ui: &mut Ui) {
-        let (chart, names, legend_on) = (self.chart, self.series, self.legend);
-        chart_frame(ui, &self.title, self.subtitle.as_deref(), |ui| {
-            let height = fill_height(ui, 192.0);
+        let (chart, names, legend_on, height) = (self.chart, self.series, self.legend, self.height);
+        let head = Head {
+            subtitle: self.subtitle.as_deref(),
+            info: self.info.as_deref(),
+            empty: self.empty.then_some(self.words.empty.as_str()),
+            ..Head::new(&self.title)
+        };
+        chart_frame(ui, head, |ui| {
+            let height = fill_height(ui, height);
             ui.add(chart.height(height));
             let under = ui.min_rect().bottom();
             if legend_on && names.len() > 1 {
@@ -821,6 +954,169 @@ impl BarPanel {
                 legend_of(ui, &items);
             }
             drawn_under(ui, under);
+        });
+    }
+}
+
+/// A dashboard panel of stages narrowing by their figure, as sokkel-ui's `ChartPanel` of the
+/// `funnel` kind: each stage as wide as its figure against the largest (8% at least), 2 apart, a
+/// trapezoid to the next stage's width, the last a band of its own; each written inside with its
+/// figure and its share of the first, the stages fading from the first series color toward the
+/// card. On a 256 tall body, as the web's `h-64`.
+#[must_use = "draw it with `show`"]
+pub struct FunnelPanel {
+    title: String,
+    subtitle: Option<String>,
+    info: Option<String>,
+    empty: bool,
+    words: PanelWords,
+    stages: Vec<(String, f64)>,
+    format: Option<crate::Format>,
+    height: f32,
+}
+
+impl FunnelPanel {
+    pub fn new(title: impl Into<String>, stages: impl IntoIterator<Item = (String, f64)>) -> Self {
+        Self {
+            title: title.into(),
+            subtitle: None,
+            info: None,
+            empty: false,
+            words: PanelWords::default(),
+            stages: stages.into_iter().collect(),
+            format: None,
+            height: 256.0,
+        }
+    }
+
+    pub fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
+        self.subtitle = Some(subtitle.into());
+        self
+    }
+
+    /// What the panel shows, behind the Info mark beside its title.
+    pub fn info(mut self, info: impl Into<String>) -> Self {
+        self.info = Some(info.into());
+        self
+    }
+
+    pub fn empty(mut self, empty: bool) -> Self {
+        self.empty = empty;
+        self
+    }
+
+    /// Writes each stage's figure; grouped thousands when not given.
+    pub fn format(mut self, format: impl Fn(f64) -> String + Send + Sync + 'static) -> Self {
+        self.format = Some(std::sync::Arc::new(format));
+        self
+    }
+
+    pub fn words(mut self, words: PanelWords) -> Self {
+        self.words = words;
+        self
+    }
+
+    /// The body's height, 256 when not given.
+    pub fn height(mut self, height: f32) -> Self {
+        self.height = height;
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui) {
+        let head = Head {
+            subtitle: self.subtitle.as_deref(),
+            info: self.info.as_deref(),
+            empty: self.empty.then_some(self.words.empty.as_str()),
+            ..Head::new(&self.title)
+        };
+        let (stages, format, height) = (&self.stages, self.format.clone(), self.height);
+        chart_frame(ui, head, |ui| {
+            let height = fill_height(ui, height);
+            let t = tokens(ui.ctx());
+            let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
+            let area = rect.shrink(8.0);
+            let count = stages.len();
+            if count == 0 {
+                return;
+            }
+            let gap = 2.0;
+            let tall = (area.height() - gap * (count - 1) as f32) / count as f32;
+            let most = stages.iter().map(|(_, v)| *v).fold(1.0, f64::max);
+            let width_of = |value: f64| area.width() * (0.08 + 0.92 * (value / most).clamp(0.0, 1.0) as f32);
+            let first = stages[0].1;
+            let share = |value: f64| {
+                let percent = if first == 0.0 { 0.0 } else { value / first * 100.0 };
+                if percent >= 10.0 || percent == 0.0 {
+                    format!("{}%", percent.round() as i64)
+                } else {
+                    format!("{percent:.1}%")
+                }
+            };
+            let written = |value: f64| match &format {
+                Some(f) => f(value),
+                None => sokkel_egui::format_value(value, None),
+            };
+            let base = t.color(crate::SERIES_ORDER[0]);
+            let card = t.color("card");
+            let painter = ui.painter();
+            let font = TextRole::Help.font(&t);
+            let mut hovered = None;
+            for (index, (name, value)) in stages.iter().enumerate() {
+                let top = area.top() + index as f32 * (tall + gap);
+                let bottom = top + tall;
+                let upper = width_of(*value);
+                let lower = stages.get(index + 1).map_or(upper, |(_, next)| width_of(*next));
+                let middle = area.center().x;
+                let shape = vec![
+                    pos2(middle - upper / 2.0, top),
+                    pos2(middle + upper / 2.0, top),
+                    pos2(middle + lower / 2.0, bottom),
+                    pos2(middle - lower / 2.0, bottom),
+                ];
+                // the first stage 80% of the color over the card, the last 35%
+                let strength = if count <= 1 {
+                    0.80
+                } else {
+                    (80.0 - 45.0 * index as f32 / (count - 1) as f32).round() / 100.0
+                };
+                let fill = card.lerp_to_gamma(base, strength);
+                let over = response.hover_pos().is_some_and(|p| {
+                    p.y >= top && p.y < bottom + gap && (p.x - middle).abs() <= upper.max(lower) / 2.0
+                });
+                if over {
+                    hovered = Some(index);
+                }
+                painter.add(egui::Shape::convex_polygon(shape, fill, Stroke::new(1.0, card)));
+                let mut label = TextRole::Help.rich(&t, format!("{name}  {} · {}", written(*value), share(*value)));
+                if over {
+                    label = label.variation("wght", 600.0);
+                }
+                let galley =
+                    WidgetText::from(label).into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, font.clone());
+                painter.galley(
+                    pos2(
+                        middle - galley.size().x / 2.0,
+                        (top + bottom) / 2.0 - galley.size().y / 2.0,
+                    ),
+                    galley,
+                    t.color("foreground"),
+                );
+            }
+            if let Some(index) = hovered {
+                let (name, value) = &stages[index];
+                let strength = if count <= 1 {
+                    0.80
+                } else {
+                    (80.0 - 45.0 * index as f32 / (count - 1) as f32).round() / 100.0
+                };
+                let color = card.lerp_to_gamma(base, strength);
+                let rows = vec![(color, name.clone(), Some(*value))];
+                let writing = crate::Writing {
+                    format: format.clone(),
+                    ..Default::default()
+                };
+                crate::tooltip(response.clone(), t.clone(), name, rows, &writing);
+            }
         });
     }
 }
