@@ -238,10 +238,10 @@ impl Widget for Input<'_> {
             .inner_margin(if self.multiline {
                 Margin::symmetric(10, 8)
             } else {
-                // what is left of the control's height around one line of the text as egui lays it
+                // what is left of the control's height, less its edge, around one line of the text
                 Margin::symmetric(
                     10,
-                    ((height - ui.fonts_mut(|f| f.row_height(&body.font(&t)))) / 2.0)
+                    ((height - 2.0 - ui.fonts_mut(|f| f.row_height(&body.font(&t)))) / 2.0)
                         .floor()
                         .max(0.0) as i8,
                 )
@@ -251,8 +251,18 @@ impl Widget for Input<'_> {
             // at least 112 tall with its edge, as the web's `min-h-28`, growing with its text
             prepared.content_ui.set_min_height(112.0 - 16.0 - 2.0);
         }
-        // the line alone sets the field's height, not egui's least height for something to press
+        // the line alone sets the field's height, not egui's least height for something to press,
+        // nor the height of a row it stands in
         prepared.content_ui.spacing_mut().interact_size.y = 0.0;
+        if !self.multiline {
+            // the content as tall as leaves the control its height exactly, edge and all
+            let margin = ((height - 2.0 - ui.fonts_mut(|f| f.row_height(&body.font(&t)))) / 2.0)
+                .floor()
+                .max(0.0);
+            let inside = (height - 2.0 - 2.0 * margin).max(0.0);
+            prepared.content_ui.set_min_height(inside);
+            prepared.content_ui.set_max_height(inside);
+        }
         let mut response = prepared.content_ui.add_enabled(self.enabled, edit);
         if let Some(name) = self.name.as_ref().or(self.placeholder.as_ref()) {
             response = response.accessible_name(name);

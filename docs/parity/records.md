@@ -39,6 +39,9 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   `Field::required`, `hint` and `error` (an issue mark at the control's end), `NumberField` over
   `Field` with an optional value, `ComputedField`, `YesNoField`, `TimeField`, `RepeatedGroup`,
   `PeriodPicker`, `TreeSelect`, `Select::codes`, a read-only `Input`, and `FormBar::show_with`.
-  The count grid of a periodic report is next: it wants a table of row groups, banded column heads
-  and numbers edited in its stacked rows.
+  The monthly report's count grid is the web's: questions in rows or in columns, a search and
+  Unfilled only over a long run, the rows in groups that fold with their count, and each row's cells
+  as fields named by their band and cut where the columns do not fit (`EntryGrid`, new in the
+  library; a banded table of number inputs where they do). An input is now 32 tall with its edge,
+  as the web's, in every app.
 - Open: the Playground waits for the code editor's spec, as `ApiPlayground` is built on it.

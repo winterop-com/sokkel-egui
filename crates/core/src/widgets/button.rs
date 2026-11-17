@@ -56,6 +56,7 @@ pub struct Button {
     trailing: Option<Icon>,
     muted: bool,
     note: Option<String>,
+    pressed: Option<bool>,
 }
 
 impl Button {
@@ -71,7 +72,15 @@ impl Button {
             trailing: None,
             muted: false,
             note: None,
+            pressed: None,
         }
+    }
+
+    /// A toggle: pressed, it stands on the muted ground, as the web's `Toggle` with
+    /// `aria-pressed`, and says so to a screen reader.
+    pub fn pressed(mut self, pressed: bool) -> Self {
+        self.pressed = Some(pressed);
+        self
     }
 
     /// Its words in the muted ink, as a quiet ghost button's `text-muted-foreground`.
@@ -184,7 +193,10 @@ impl Widget for Button {
             Sense::hover()
         };
         let (rect, mut response) = ui.allocate_exact_size(size, sense);
-        response.widget_info(|| WidgetInfo::labeled(Role::Button, enabled, &self.label));
+        response.widget_info(|| match self.pressed {
+            Some(pressed) => WidgetInfo::selected(Role::Button, enabled, pressed, &self.label),
+            None => WidgetInfo::labeled(Role::Button, enabled, &self.label),
+        });
         if let Some(reason) = &self.reason {
             response = super::tooltip(response, reason.clone());
         }
@@ -249,6 +261,11 @@ impl Widget for Button {
                 paint.ink.unwrap_or(ink),
             ),
             None => (ground, border, ink),
+        };
+        let ground = if self.pressed == Some(true) {
+            t.color("muted")
+        } else {
+            ground
         };
         let painter = ui.painter();
         painter.rect(

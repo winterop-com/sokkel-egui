@@ -14,6 +14,7 @@ mod dashboard;
 mod datetime;
 mod display;
 mod empty;
+mod entry_grid;
 mod fields;
 mod file_preview;
 mod filters;
@@ -73,6 +74,7 @@ pub use dashboard::{
 pub use datetime::{DateField, DateFieldWords, DateTimeField, DateTimeFieldResponse, DateTimeFieldWords, Moment};
 pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton};
 pub use empty::Empty;
+pub use entry_grid::{EntryColumn, EntryEdit, EntryGrid, EntryGridWords, EntryRow};
 pub(crate) use fields::search_field;
 pub use fields::{
     DueState, DueText, Field, FormBar, QuickAdd, SearchField, SwitchField, due_state, field, form_bar, pane_toolbar,

@@ -53,6 +53,8 @@ pub struct RecordsApp {
     pub last_place: Option<String>,
     /// The form being filled.
     pub fill: Option<crate::form_fill::Fill>,
+    /// How a periodic report's grid of counts is laid.
+    pub grid_view: crate::count_grid::GridView,
     /// When the server was last asked whether it answers, and whether it did.
     probed_at: i64,
     answered: Option<bool>,
@@ -93,6 +95,7 @@ impl RecordsApp {
             keep_place: true,
             last_place: None,
             fill: None,
+            grid_view: Default::default(),
             probed_at: now - PROBE,
             answered: Some(true),
             foot: Foot::default(),
