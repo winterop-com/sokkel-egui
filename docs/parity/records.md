@@ -57,4 +57,12 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   `EntryGrid`), and its history; Withdraw asks first. A table asked to show all its rows now does
   so inside a page that scrolls. Open: the web's Raw record opens the record in a `SourceSheet`,
   a code view, which waits for the code editor.
+- Households: the list searched by identifier (`DataTable::search_placeholder`) and filtered by
+  region, water source and state, each row opening its household; a household's page with the
+  banner over a second registration of its identifier, its identifier, what it told the survey,
+  its program, and its visits, each unfolding to its answers (`Unfoldable`, new in the library),
+  Record a visit and Exit interview opening those forms for it, and Remove after asking. A page
+  header's meta words now stand 12 apart, as the web's `gap-x-3`, or 6 where the app gives them as
+  one row (`PageHeader::meta_row`, as status' incident and analytics' customer do). Open: Raw
+  record waits for the code editor, and the banner names the other household without linking it.
 - Open: the Playground waits for the code editor's spec, as `ApiPlayground` is built on it.

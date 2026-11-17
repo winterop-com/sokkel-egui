@@ -57,6 +57,7 @@ pub struct PageHeader {
     back: Option<String>,
     chips: Vec<(String, crate::ChipTone)>,
     meta: Vec<String>,
+    meta_row: bool,
     edit: Option<crate::InlineEdit>,
 }
 
@@ -79,6 +80,7 @@ impl PageHeader {
             back: None,
             chips: Vec::new(),
             meta: Vec::new(),
+            meta_row: false,
             edit: None,
         }
     }
@@ -112,6 +114,13 @@ impl PageHeader {
     /// call adds more, 6 after the last.
     pub fn meta(mut self, meta: impl Into<String>) -> Self {
         self.meta.push(meta.into());
+        self
+    }
+
+    /// The chips and the meta as one tight row, 6 apart, as an app's `Row gap="xs"` in the
+    /// web's `meta`; 12 apart, the header's own gap, otherwise.
+    pub fn meta_row(mut self, row: bool) -> Self {
+        self.meta_row = row;
         self
     }
 
@@ -212,14 +221,15 @@ impl PageHeader {
                     ui.label(TextRole::Body.rich(&t, description).color(t.color("muted-foreground")));
                 }
                 if !self.chips.is_empty() || !self.meta.is_empty() {
-                    // the chips and the meta on one line, `gap-xs` apart, 8 down
+                    // the chips and the meta on one line, 8 down: 12 apart as the header's own
+                    // `gap-x-3`, or 6 where the app gives them as one `Row gap="xs"`
                     ui.add_space(8.0);
                     // the line as tall as its chips, not a control's height: set before the row is made
                     let kept = ui.spacing().interact_size.y;
                     ui.spacing_mut().interact_size.y = 0.0;
                     ui.horizontal(|ui| {
                         ui.spacing_mut().interact_size.y = kept;
-                        ui.spacing_mut().item_spacing.x = 6.0;
+                        ui.spacing_mut().item_spacing.x = if self.meta_row { 6.0 } else { 12.0 };
                         for (label, tone) in &self.chips {
                             ui.add(crate::Chip::new(label.clone()).tone(*tone));
                         }

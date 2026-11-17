@@ -414,6 +414,7 @@ pub struct DataTable<'a> {
     /// The width below which the rows stack, in place of 480 and the columns' own.
     stack_below: Option<f32>,
     search: Option<&'a mut String>,
+    search_placeholder: Option<String>,
     bar: bool,
     toolbar: Option<Toolbar<'a>>,
     foot: Option<String>,
@@ -447,6 +448,7 @@ impl<'a> DataTable<'a> {
             selectable: false,
             variant: TableVariant::Table,
             height: 360.0,
+            search_placeholder: None,
             row_height: None,
             chevron: false,
             words: TableWords::default(),
@@ -549,6 +551,12 @@ impl<'a> DataTable<'a> {
     pub fn search(mut self, text: &'a mut String) -> Self {
         self.search = Some(text);
         self.bar = true;
+        self
+    }
+
+    /// The search field's word in place of "Search", such as what it searches by: "Identifier".
+    pub fn search_placeholder(mut self, placeholder: impl Into<String>) -> Self {
+        self.search_placeholder = Some(placeholder.into());
         self
     }
 
@@ -901,6 +909,7 @@ impl<'a> DataTable<'a> {
                     .max_rect(place)
                     .layout(egui::Layout::left_to_right(egui::Align::Center)),
             );
+            child.spacing_mut().item_spacing.x = 8.0;
             toolbar(&mut child);
         }
         ui.painter()
@@ -913,7 +922,11 @@ impl<'a> DataTable<'a> {
         if let Some(text) = self.search.as_deref_mut() {
             let field = Rect::from_min_size(row.min, vec2(256.0_f32.min(row.width()), control));
             let mut child = ui.new_child(egui::UiBuilder::new().max_rect(field));
-            SearchField::new(id, text).keys("/").show(&mut child);
+            let mut search = SearchField::new(id, text).keys("/");
+            if let Some(placeholder) = &self.search_placeholder {
+                search = search.placeholder(placeholder);
+            }
+            search.show(&mut child);
         }
         let mut child = ui.new_child(
             egui::UiBuilder::new()

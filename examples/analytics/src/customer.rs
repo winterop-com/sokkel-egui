@@ -118,6 +118,7 @@ impl AnalyticsApp {
         let say = |what: Asked| *asked.borrow_mut() = Some(what);
         let header = PageHeader::new(&name)
             .back("Customers")
+            .meta_row(true)
             .chip(
                 now.plan.name(),
                 match plan_chip(now.plan) {

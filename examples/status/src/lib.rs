@@ -947,6 +947,7 @@ impl StatusApp {
                     title.trim().is_empty().then(|| "An incident needs a title.".to_owned())
                 })
                 .code(&i.code)
+                .meta_row(true)
                 .chip(state_words(i.state), state_tone(i.state))
                 .chip(severity_words(i.severity).to_lowercase(), severity_tone(i.severity))
                 .meta(format!(

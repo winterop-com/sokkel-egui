@@ -38,6 +38,7 @@ fn every_screen() {
         ("records_form_layout", "forms/FRM-MONTH/layout"),
         ("records_form_layout_site", "forms/FRM-SITE/layout"),
         ("records_responses", "responses"),
+        ("records_households", "people"),
     ];
     for &(name, path) in screens {
         let mut harness = render(path);
@@ -46,6 +47,7 @@ fn every_screen() {
     for (name, path) in [
         ("records_receipt", "responses/9832602a1b1ccacffb3c8507bd2d5fdf"),
         ("records_receipt_site", "responses/7f3d438ab4b07185d993c7ecf06aad0e"),
+        ("records_household", "people/household-1"),
     ] {
         let mut harness = render_at(path, 1500.0);
         results.add(harness.try_snapshot(name));

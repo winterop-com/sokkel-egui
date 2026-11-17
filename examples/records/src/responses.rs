@@ -80,7 +80,16 @@ impl RecordsApp {
         let shown: Vec<&Receipt> = all
             .iter()
             .filter(|r| {
-                chosen.is_none_or(|c| r.state == c) && (view.forms.is_empty() || view.forms.contains(&r.form_id))
+                let words = format!(
+                    "{} {} {}",
+                    r.receipt,
+                    form_of(&r.form_id).map_or("", |f| f.title),
+                    place_name(&r.place)
+                )
+                .to_lowercase();
+                chosen.is_none_or(|c| r.state == c)
+                    && (view.forms.is_empty() || view.forms.contains(&r.form_id))
+                    && (view.query.trim().is_empty() || words.contains(&view.query.trim().to_lowercase()))
             })
             .collect();
         let waiting = all.iter().filter(|r| r.state == ReceiptState::Received).count();

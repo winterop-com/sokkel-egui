@@ -482,3 +482,96 @@ impl Widget for TextLink {
         response
     }
 }
+
+/// A row that unfolds what is under it, after sokkel-ui's `Unfoldable`: a chevron that turns, the
+/// heading at medium weight, and an aside at its end; open, its content 8 under it, in from the
+/// chevron.
+pub struct Unfoldable<'a> {
+    id: egui::Id,
+    heading: String,
+    open_first: bool,
+    aside: Option<super::section::Tools<'a>>,
+}
+
+impl<'a> Unfoldable<'a> {
+    pub fn new(id: impl egui::AsIdSalt, heading: impl Into<String>) -> Self {
+        Self {
+            id: egui::Id::unique(id),
+            heading: heading.into(),
+            open_first: false,
+            aside: None,
+        }
+    }
+
+    /// Open the first time it is drawn.
+    pub fn default_open(mut self, open: bool) -> Self {
+        self.open_first = open;
+        self
+    }
+
+    /// Small parts at the row's end, such as a state's chip.
+    pub fn aside(mut self, aside: impl FnOnce(&mut egui::Ui) + 'a) -> Self {
+        self.aside = Some(Box::new(aside));
+        self
+    }
+
+    pub fn show(self, ui: &mut egui::Ui, content: impl FnOnce(&mut egui::Ui)) {
+        let t = tokens(ui.ctx());
+        let mut open: bool = ui.data(|d| d.get_temp(self.id)).unwrap_or(self.open_first);
+        let width = ui.available_width();
+        ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.y = 8.0;
+            let line = TextRole::Body.line_height(&t).max(20.0) + 8.0;
+            let (row, _) = ui.allocate_exact_size(vec2(width, line), Sense::hover());
+            let mut aside_width = 0.0;
+            if let Some(aside) = self.aside {
+                let mut child = ui.new_child(
+                    egui::UiBuilder::new()
+                        .max_rect(row)
+                        .layout(egui::Layout::right_to_left(egui::Align::Center)),
+                );
+                child.spacing_mut().item_spacing.x = 8.0;
+                aside(&mut child);
+                aside_width = child.min_rect().width() + 8.0;
+            }
+            let face = egui::Rect::from_min_max(row.min, pos2(row.right() - aside_width, row.bottom()));
+            let hit = ui.interact(face, self.id.with("row"), Sense::click());
+            hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, open, &self.heading));
+            if hit.hovered() {
+                ui.painter().rect_filled(face, t.radius("md"), t.color("hover"));
+            }
+            icons::paint(
+                ui.painter(),
+                pos2(face.left() + 4.0 + 7.0, face.center().y),
+                if open { Icon::ChevronDown } else { Icon::ChevronRight },
+                14.0,
+                t.color("muted-foreground"),
+            );
+            let galley = WidgetText::from(TextRole::Body.rich(&t, &self.heading).variation("wght", 500.0)).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                (face.width() - 30.0).max(1.0),
+                TextRole::Body.font(&t),
+            );
+            ui.painter().galley(
+                pos2(face.left() + 4.0 + 14.0 + 8.0, face.center().y - galley.size().y / 2.0),
+                galley,
+                t.color("foreground"),
+            );
+            super::focus_ring_inset(ui.painter(), &t, face, t.radius("md"), &hit);
+            if hit.clicked() {
+                open = !open;
+            }
+            if open {
+                ui.horizontal(|ui| {
+                    ui.add_space(22.0);
+                    ui.vertical(|ui| {
+                        ui.set_width(width - 22.0);
+                        content(ui);
+                    });
+                });
+            }
+        });
+        ui.data_mut(|d| d.insert_temp(self.id, open));
+    }
+}
