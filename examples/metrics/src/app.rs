@@ -22,6 +22,9 @@ use crate::source::Variables;
 /// shots are taken.
 pub const DEMO_NOW: f64 = 1_794_992_405.0;
 
+/// The place of the Dashboards page, beside the dashboards' own ids.
+pub const DASHBOARDS: &str = "dashboards";
+
 /// The Tidevann mark the rail heads with.
 const TIDEVANN_MARK: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="currentColor"><path d="M12 4c-1 1.8-3 3.5-3 5a3 3 0 0 0 6 0c0-1.5-2-3.2-3-5Z"/><path d="M5 13c2-2 4 2 7 0s5-2 7 0v1a7 7 0 0 1-14 0Z"/></svg>"#;
 
@@ -51,6 +54,8 @@ pub struct MetricsApp {
     pub panels: crate::panels::PanelDialogs,
     /// A panel being edited or made, its page in the dashboard's place.
     pub editor: Option<crate::editor::EditorState>,
+    /// The Dashboards page's list.
+    pub(crate) list: TableState,
     /// The panels being arranged: a draft Done keeps and Cancel throws away.
     pub edit: DashboardEdit<Panel>,
     /// How many panels and copies have been made, for their ids.
@@ -88,6 +93,7 @@ impl MetricsApp {
             tables: Default::default(),
             panels: Default::default(),
             editor: None,
+            list: TableState::default(),
             edit: DashboardEdit::default(),
             made: 0,
             said: Vec::new(),
@@ -123,13 +129,16 @@ impl MetricsApp {
             }
             ui.ctx().request_repaint_after(std::time::Duration::from_secs(1));
         }
-        let groups = vec![RailGroup::new(
-            Some("Dashboards"),
-            self.dashboards
-                .iter()
-                .map(|b| RailEntry::new(b.id.clone(), b.title.clone(), Icon::LayoutDashboard))
-                .collect::<Vec<_>>(),
-        )];
+        let groups = vec![
+            RailGroup::new(None, [RailEntry::new(DASHBOARDS, "Dashboards", Icon::LayoutGrid)]),
+            RailGroup::new(
+                Some("Dashboards"),
+                self.dashboards
+                    .iter()
+                    .map(|b| RailEntry::new(b.id.clone(), b.title.clone(), Icon::LayoutDashboard))
+                    .collect::<Vec<_>>(),
+            ),
+        ];
         let mut place = self.place.clone();
         let was = place.clone();
         let shell = if self.desktop {
@@ -137,11 +146,14 @@ impl MetricsApp {
         } else {
             Shell::new()
         };
-        let title = self
-            .dashboards
-            .iter()
-            .find(|b| b.id == self.place)
-            .map_or(String::new(), |b| b.title.clone());
+        let title = if self.place == DASHBOARDS {
+            "Dashboards".to_owned()
+        } else {
+            self.dashboards
+                .iter()
+                .find(|b| b.id == self.place)
+                .map_or(String::new(), |b| b.title.clone())
+        };
         let mut trail = vec!["Metrics", title.as_str()];
         if self.editor.is_some() {
             trail.push("Edit panel");
@@ -166,6 +178,7 @@ impl MetricsApp {
                 TopBar::new(&trail).show(ui, |_| {});
             }
             ShellPart::Page if self.editor.is_some() => Page::show(ui, |ui| self.editor_page(ui)),
+            ShellPart::Page if self.place == DASHBOARDS => Page::show(ui, |ui| self.dashboards_page(ui)),
             ShellPart::Page => Page::scroll(ui, |ui| self.board_page(ui)),
             ShellPart::Foot => {
                 ui.add(
@@ -176,9 +189,10 @@ impl MetricsApp {
                 );
             }
         });
-        // the rail's press moves the place; what the page did to it stands otherwise
+        // the rail's press moves the place, leaving the editor; what the page did to it stands otherwise
         if place != was {
             self.place = place;
+            self.editor = None;
         }
         self.panel_dialogs(&ui.ctx().clone());
         self.editor_dialogs(&ui.ctx().clone());

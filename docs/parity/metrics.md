@@ -51,9 +51,13 @@ manifest is `parity/metrics.json`; the web's screens are shot into `parity/metri
   the stat's color mode, a gauge's ends (`NumberField`), the color (`SwatchGroup`), and the
   thresholds (`Select` with `dots`). Leaving with changes asks first (`unsaved_changes`); saving
   brings the panel into view on the board.
+- Dashboards, at the rail's head: the dashboards as a list (`TableVariant::List`, the title in
+  `Cell::Strong`) dragged into the order the rail lists them, each opened by a press or its menu's
+  Open, or deleted after asking; New opens the web's New dashboard dialog, empty or a copy of one's
+  panels. Deleting the dashboard shown lands on Dashboards, as the web's does.
 - Open: Download CSV saves without a dialog asking where (a native save dialog needs a crate such
   as `rfd`); a stat tile in the preview keeps its own height where the web's stands 224.
 - Open: the Services overview's request chart labels its axis every 90 seconds on the web where a
   fresh count of ECharts' `interval: 'auto'` gives 80, and the heatmap labels its axis more
   sparsely than the web's.
-- Then Dashboards, the editor, Alerts and Settings, each in the rail once it works.
+- Then Alerts and Settings, each in the rail once it works.

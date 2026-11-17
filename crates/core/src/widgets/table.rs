@@ -129,6 +129,8 @@ impl Column {
 #[derive(Clone, Debug)]
 pub enum Cell {
     Text(String),
+    /// Text at medium weight: a row's name, as a `font-medium` cell.
+    Strong(String),
     /// Text struck through and muted: a thing done.
     Struck(String),
     /// Text in the muted ink: a quieter fact beside the row's own, as a `text-muted-foreground` cell.
@@ -182,6 +184,7 @@ impl Cell {
     fn draft(&self) -> String {
         match self {
             Cell::Text(text)
+            | Cell::Strong(text)
             | Cell::Struck(text)
             | Cell::Muted(text)
             | Cell::Mono(text)
@@ -198,6 +201,7 @@ impl Cell {
     fn sort_key(&self) -> String {
         match self {
             Cell::Text(text)
+            | Cell::Strong(text)
             | Cell::Struck(text)
             | Cell::Muted(text)
             | Cell::Mono(text)
@@ -1578,8 +1582,14 @@ impl<'a> DataTable<'a> {
                         {
                             ui.painter().rect_filled(rect, CornerRadius::ZERO, t.color("hover"));
                         }
-                        ui.painter()
-                            .hline(rect.x_range(), rect.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
+                        // a list's last row leaves its rule to the frame, as the web's `border-b-0`
+                        if !(self.variant == TableVariant::List && position + 1 == count) {
+                            ui.painter().hline(
+                                rect.x_range(),
+                                rect.bottom() - 0.5,
+                                Stroke::new(1.0, t.color("border")),
+                            );
+                        }
                         if self.selectable {
                             let mut checked = selected;
                             let place =
@@ -1916,6 +1926,11 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
         Cell::Text(label) | Cell::Number { text: label, .. } => {
             text(ui, TextRole::Body.rich(t, label), t.color("foreground"))
         }
+        Cell::Strong(label) => text(
+            ui,
+            TextRole::Body.rich(t, label).variation("wght", 500.0),
+            t.color("foreground"),
+        ),
         Cell::Struck(label) => text(
             ui,
             TextRole::Body.rich(t, label).strikethrough(),
@@ -2075,7 +2090,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         width
     };
     match cell {
-        Cell::Text(label) | Cell::Number { text: label, .. } => {
+        Cell::Text(label) | Cell::Strong(label) | Cell::Number { text: label, .. } => {
             text(ui, TextRole::Help.rich(t, label), quiet, at.x, room)
         }
         Cell::Chip(label, tone) => super::chip::paint_at(ui, at.x, at.y, label, *tone),

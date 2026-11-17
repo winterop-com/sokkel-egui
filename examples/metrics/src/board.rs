@@ -5,24 +5,30 @@
 use eframe::egui::{self, Ui};
 use sokkel_egui::{
     Button, ButtonSize, ButtonVariant, ConfirmAnswer, ConfirmDialog, DashboardEditActions, DashboardWidget, Dialog,
-    DropdownMenu, Gap, Icon, IconButton, MenuItem, Stack, TextField, Toast, ToastKind,
+    DropdownMenu, Field, Gap, Icon, IconButton, MenuItem, Select, Stack, TextField, Toast, ToastKind,
 };
 
 use crate::MetricsApp;
+use crate::app::DASHBOARDS;
 use crate::model::{Dashboard, kind_icon, seed_dashboards, widget_catalog};
 
 /// A question the board is asking over the page.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Asking {
-    /// Delete the dashboard shown.
-    DeleteBoard,
+    /// Delete a dashboard, by its id.
+    DeleteBoard(String),
 }
 
-/// A dashboard's title and description being changed, as the web's `DashboardDialog` with `editing`.
-#[derive(Clone, Debug, PartialEq, Eq)]
+/// A dashboard being made, or its title and description being changed, as the web's
+/// `DashboardDialog`.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct DetailsForm {
     pub title: String,
     pub description: String,
+    /// The dashboard whose details change, by its id; a new one is made without it.
+    pub editing: Option<String>,
+    /// What a new one starts from: 0 empty, else a copy of the dashboard at this place less one.
+    pub from: usize,
 }
 
 impl MetricsApp {
@@ -93,10 +99,12 @@ impl MetricsApp {
                 self.details = Some(DetailsForm {
                     title: board.title.clone(),
                     description: board.description.clone(),
+                    editing: Some(board.id.clone()),
+                    from: 0,
                 })
             }
             Some(1) => self.duplicate_board(index),
-            Some(3) => self.asking = Some(Asking::DeleteBoard),
+            Some(3) => self.asking = Some(Asking::DeleteBoard(board.id.clone())),
             _ => {}
         }
     }
@@ -149,22 +157,38 @@ impl MetricsApp {
         for toast in self.said.drain(..) {
             toast.show(ctx);
         }
-        let Some(index) = self.board_index() else {
-            return;
-        };
         if let Some(mut form) = self.details.take() {
             let missing = form.title.trim().is_empty();
+            let new = form.editing.is_none();
             let mut answer = None;
-            let close = Dialog::new("dashboard-details", "Dashboard details").show(
+            let starts: Vec<String> = std::iter::once("Empty".to_owned())
+                .chain(self.dashboards.iter().map(|b| format!("A copy of {}", b.title)))
+                .collect();
+            let close = Dialog::new(
+                "dashboard-details",
+                if new { "New dashboard" } else { "Dashboard details" },
+            )
+            .show(
                 ctx,
                 |ui| {
                     Stack::new(Gap::Md).show(ui, |ui| {
                         ui.add(TextField::new("Title", &mut form.title));
                         ui.add(TextField::new("Description", &mut form.description).multiline(true));
+                        if new {
+                            Field::new("Start from")
+                                .description("An empty dashboard, or a copy of one's panels.")
+                                .show(ui, |ui| {
+                                    let width = ui.available_width();
+                                    ui.add(
+                                        Select::new(&mut form.from, starts.iter().map(String::as_str), "Start from")
+                                            .width(width),
+                                    );
+                                });
+                        }
                     });
                 },
                 |ui| {
-                    let mut save = Button::new("Save");
+                    let mut save = Button::new(if new { "Create" } else { "Save" });
                     if missing {
                         save = save.reason("A dashboard needs a title.");
                     }
@@ -177,16 +201,16 @@ impl MetricsApp {
                 },
             );
             match answer.or(close.then_some(false)) {
-                Some(true) => {
-                    let board = &mut self.dashboards[index];
-                    board.title = form.title.trim().to_owned();
-                    board.description = form.description.trim().to_owned();
-                }
+                Some(true) => self.keep_details(form),
                 Some(false) => {}
                 None => self.details = Some(form),
             }
         }
-        if let Some(Asking::DeleteBoard) = self.asking {
+        if let Some(Asking::DeleteBoard(id)) = self.asking.clone() {
+            let Some(index) = self.dashboards.iter().position(|b| b.id == id) else {
+                self.asking = None;
+                return;
+            };
             let board = &self.dashboards[index];
             let count = board.panels.len();
             let dialog = ConfirmDialog::new("delete-dashboard", format!("Delete {}?", board.title), "Delete")
@@ -199,15 +223,52 @@ impl MetricsApp {
                 Some(ConfirmAnswer::Confirm) => {
                     self.asking = None;
                     let gone = self.dashboards.remove(index);
-                    self.edit.cancel();
+                    if self.place == gone.id {
+                        self.edit.cancel();
+                        self.place = DASHBOARDS.into();
+                    }
                     Toast::new(format!("{} deleted", gone.title))
                         .kind(ToastKind::Success)
                         .show(ctx);
-                    self.place = self.dashboards.first().map_or_else(String::new, |b| b.id.clone());
                 }
                 Some(_) => self.asking = None,
                 None => {}
             }
         }
+    }
+}
+
+impl MetricsApp {
+    /// Keeps the details asked for: a dashboard's title and description changed, or a new one
+    /// made, empty or with a copy of another's panels, and shown at once.
+    fn keep_details(&mut self, form: DetailsForm) {
+        let (title, description) = (form.title.trim().to_owned(), form.description.trim().to_owned());
+        if let Some(id) = &form.editing {
+            if let Some(board) = self.dashboards.iter_mut().find(|b| &b.id == id) {
+                board.title = title;
+                board.description = description;
+            }
+            return;
+        }
+        let copied = form
+            .from
+            .checked_sub(1)
+            .and_then(|at| self.dashboards.get(at))
+            .map(|b| b.panels.clone())
+            .unwrap_or_default();
+        let mut panels = Vec::new();
+        for mut panel in copied {
+            panel.id = self.panel_id();
+            panels.push(panel);
+        }
+        let made = Dashboard {
+            id: self.board_id(&title),
+            title,
+            description,
+            panels,
+        };
+        self.said.push(Toast::success(format!("{} made", made.title)));
+        self.place = made.id.clone();
+        self.dashboards.push(made);
     }
 }

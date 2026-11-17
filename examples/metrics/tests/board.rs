@@ -81,5 +81,5 @@ fn deleting_a_dashboard_asks_first() {
     harness.run_steps(3);
     let app = harness.state();
     assert_eq!(app.dashboards.len(), 2);
-    assert_eq!(app.place, "workers");
+    assert_eq!(app.place, "dashboards");
 }
