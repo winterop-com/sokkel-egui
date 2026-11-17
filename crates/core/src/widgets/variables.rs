@@ -73,7 +73,11 @@ pub fn variable_toggle(ui: &mut Ui, label: &str, on: &mut bool) -> Response {
         TextRole::Help.font(&t),
     );
     let label_width = 8.0 + name.size().x + 8.0;
-    let (rect, _) = ui.allocate_exact_size(vec2(label_width + 1.0 + 8.0 + 24.0 + 8.0, height), Sense::hover());
+    let switch = vec2(
+        t.length("spacing-switch-width-sm"),
+        t.length("spacing-switch-height-sm"),
+    );
+    let (rect, _) = ui.allocate_exact_size(vec2(label_width + 1.0 + 8.0 + switch.x + 8.0, height), Sense::hover());
     let radius = t.radius("control");
     let painter = ui.painter().clone();
     painter.rect_filled(rect, radius, t.color("field"));
@@ -94,8 +98,8 @@ pub fn variable_toggle(ui: &mut Ui, label: &str, on: &mut bool) -> Response {
         t.color("muted-foreground"),
     );
     let place = egui::Rect::from_center_size(
-        pos2(label_rect.right() + 1.0 + 8.0 + 12.0, rect.center().y),
-        vec2(24.0, 14.0),
+        pos2(label_rect.right() + 1.0 + 8.0 + switch.x / 2.0, rect.center().y),
+        switch,
     );
     let response = ui.put(place, Switch::new(on, label).small(true));
     painter.rect_stroke(rect, radius, Stroke::new(1.0, t.color("border")), StrokeKind::Inside);

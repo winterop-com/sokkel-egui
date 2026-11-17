@@ -3,8 +3,8 @@ use egui::{Response, Sense, Ui, Widget, WidgetInfo, WidgetType, pos2, vec2};
 use super::{dim, focus_ring};
 use crate::tokens;
 
-/// A switch, 32 by 18.4 (24 by 14 small): `primary` when on, `input` when off, its thumb in
-/// `background`.
+/// A switch, `switch-width` by `switch-height` (the `-sm` ones small): `primary` when on, `input`
+/// when off, its thumb in `background`, 2 less than the track is tall.
 #[must_use = "add it with `ui.add(...)`"]
 pub struct Switch<'a> {
     on: &'a mut bool,
@@ -29,7 +29,7 @@ impl<'a> Switch<'a> {
         self
     }
 
-    /// The small switch, as the web's `size="sm"`: 24 by 14, its thumb 12.
+    /// The small switch, as the web's `size="sm"`.
     pub fn small(mut self, small: bool) -> Self {
         self.small = small;
         self
@@ -40,11 +40,13 @@ impl Widget for Switch<'_> {
     fn ui(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
         let sense = if self.enabled { Sense::click() } else { Sense::hover() };
-        let (track_size, size) = if self.small {
-            (vec2(24.0, 14.0), 12.0)
-        } else {
-            (vec2(32.0, 18.4), 16.0)
-        };
+        let sm = if self.small { "-sm" } else { "" };
+        let track_size = vec2(
+            t.length(&format!("spacing-switch-width{sm}")),
+            t.length(&format!("spacing-switch-height{sm}")),
+        );
+        // the thumb fills the track inside its 1px border, as `size-4` and `size-3` do
+        let size = (track_size.y - 2.0).floor();
         let (rect, mut response) = ui.allocate_exact_size(track_size, sense);
         if response.clicked() {
             *self.on = !*self.on;

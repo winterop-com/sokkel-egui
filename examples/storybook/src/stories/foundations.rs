@@ -32,14 +32,7 @@ const GROUPS: &[(&str, &[&str])] = &[
     ),
     (
         "Actions and brand",
-        &[
-            "primary",
-            "primary-foreground",
-            "primary-ink",
-            "destructive",
-            "brand",
-            "brand-foreground",
-        ],
+        &["primary", "primary-foreground", "primary-ink", "destructive", "brand"],
     ),
     (
         "States",
