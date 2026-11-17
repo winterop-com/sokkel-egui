@@ -3853,6 +3853,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "records"
+version = "0.1.0"
+dependencies = [
+ "eframe",
+ "egui_kittest",
+ "serde",
+ "serde_json",
+ "sokkel-egui",
+ "time",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
