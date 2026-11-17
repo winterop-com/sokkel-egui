@@ -9,6 +9,7 @@ pub mod model;
 pub mod panel_data;
 pub mod panels;
 pub mod query;
+pub mod settings;
 pub mod source;
 
 pub use app::MetricsApp;

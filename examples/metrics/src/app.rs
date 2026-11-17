@@ -22,8 +22,40 @@ use crate::source::Variables;
 /// shots are taken.
 pub const DEMO_NOW: f64 = 1_794_992_405.0;
 
+/// Where the times on the axes, the logs and the alerts are read.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Zone {
+    /// The computer's own zone.
+    #[default]
+    Local,
+    Utc,
+}
+
+/// The app's preferences, as the web's `Preferences`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Preferences {
+    /// The range a dashboard opens on until the reader picks one, by its preset's id.
+    pub range: &'static str,
+    /// The refresh a dashboard opens on until the reader picks one, in seconds.
+    pub refresh: u32,
+    pub zone: Zone,
+}
+
+impl Default for Preferences {
+    fn default() -> Self {
+        Self {
+            range: "15m",
+            refresh: 5,
+            zone: Zone::Local,
+        }
+    }
+}
+
 /// The place of the Dashboards page, beside the dashboards' own ids.
 pub const DASHBOARDS: &str = "dashboards";
+
+/// The place of the settings, opened over the page shown.
+pub const SETTINGS: &str = "settings";
 
 /// The Tidevann mark the rail heads with.
 const TIDEVANN_MARK: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="currentColor"><path d="M12 4c-1 1.8-3 3.5-3 5a3 3 0 0 0 6 0c0-1.5-2-3.2-3-5Z"/><path d="M5 13c2-2 4 2 7 0s5-2 7 0v1a7 7 0 0 1-14 0Z"/></svg>"#;
@@ -56,6 +88,15 @@ pub struct MetricsApp {
     pub editor: Option<crate::editor::EditorState>,
     /// The Dashboards page's list.
     pub(crate) list: TableState,
+    pub prefs: Preferences,
+    /// How far the computer's zone is from UTC, in seconds, read as the app starts.
+    pub local_offset: f64,
+    /// The reader picked the range or the refresh, which the preferences then leave be.
+    pub range_chosen: bool,
+    pub(crate) refresh_chosen: bool,
+    /// The settings over the page, open on the section named.
+    pub settings: Option<String>,
+    pub(crate) resetting: bool,
     /// The panels being arranged: a draft Done keeps and Cancel throws away.
     pub edit: DashboardEdit<Panel>,
     /// How many panels and copies have been made, for their ids.
@@ -68,9 +109,11 @@ pub struct MetricsApp {
 }
 
 impl MetricsApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    /// The app in its window, its times read `local_offset` seconds from UTC, the computer's zone.
+    pub fn new(_cc: &eframe::CreationContext<'_>, local_offset: f64) -> Self {
         let mut app = Self::on(Appearance::default());
         app.desktop = true;
+        app.local_offset = local_offset;
         app
     }
 
@@ -94,6 +137,12 @@ impl MetricsApp {
             panels: Default::default(),
             editor: None,
             list: TableState::default(),
+            prefs: Preferences::default(),
+            local_offset: 0.0,
+            range_chosen: false,
+            refresh_chosen: false,
+            settings: None,
+            resetting: false,
             edit: DashboardEdit::default(),
             made: 0,
             said: Vec::new(),
@@ -138,6 +187,7 @@ impl MetricsApp {
                     .map(|b| RailEntry::new(b.id.clone(), b.title.clone(), Icon::LayoutDashboard))
                     .collect::<Vec<_>>(),
             ),
+            RailGroup::new(Some("System"), [RailEntry::new(SETTINGS, "Settings", Icon::Settings2)]),
         ];
         let mut place = self.place.clone();
         let was = place.clone();
@@ -165,7 +215,8 @@ impl MetricsApp {
         } else {
             format!("refresh every {}s", self.refresh)
         };
-        let note = format!("Scraped {}, {mode}", clock_of(self.at));
+        let utc = if self.prefs.zone == Zone::Utc { " UTC" } else { "" };
+        let note = format!("Scraped {}{utc}, {mode}", clock_of(self.at + self.offset()));
         let mut account = None;
         shell.show_window(ui, |part, ui| match part {
             ShellPart::Rail => {
@@ -190,15 +241,20 @@ impl MetricsApp {
             }
         });
         // the rail's press moves the place, leaving the editor; what the page did to it stands otherwise
-        if place != was {
+        if place == SETTINGS {
+            self.settings = Some("dashboards".into());
+        } else if place != was {
             self.place = place;
             self.editor = None;
         }
         self.panel_dialogs(&ui.ctx().clone());
         self.editor_dialogs(&ui.ctx().clone());
+        self.settings_dialog(&ui.ctx().clone());
         self.board_dialogs(&ui.ctx().clone());
-        if let Some(AccountAction::Scheme(scheme)) = account {
-            self.appearance.scheme = scheme;
+        match account {
+            Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
+            Some(AccountAction::Settings) => self.settings = Some("dashboards".into()),
+            None => {}
         }
     }
 
@@ -220,7 +276,7 @@ impl MetricsApp {
         }
         // the variables right under the head, the page's own gap before the panels
         self.variables_bar(ui);
-        let (variables, range, at) = (self.variables.clone(), self.range.clone(), self.view_at);
+        let view = self.view();
         let palette = self.palette(&board);
         let editing = self.edit.editing();
         let Some(index) = self.dashboards.iter().position(|b| b.id == board.id) else {
@@ -266,7 +322,7 @@ impl MetricsApp {
                     let said = PanelMenu::new(items)
                         .expandable(panel.kind != crate::model::PanelKind::Stat)
                         .expanded(viewing.as_ref() == Some(&panel.id))
-                        .show(ui, |ui| draw_panel(ui, panel, &variables, &range, at, state));
+                        .show(ui, |ui| draw_panel(ui, panel, &view, state));
                     if let Some(said) = said {
                         asked = Some((panel.clone(), said));
                     }
@@ -287,6 +343,24 @@ impl MetricsApp {
 }
 
 impl MetricsApp {
+    /// What the panels read now.
+    pub fn view(&self) -> View {
+        View {
+            variables: self.variables.clone(),
+            range: self.range.clone(),
+            at: self.view_at,
+            offset: self.offset(),
+        }
+    }
+
+    /// How far the zone the reader chose is from UTC, in seconds.
+    pub fn offset(&self) -> f64 {
+        match self.prefs.zone {
+            Zone::Local => self.local_offset,
+            Zone::Utc => 0.0,
+        }
+    }
+
     /// The dashboard's variables, as the web's `variables()`: a service, a host of that service,
     /// and a project, each `All` or one.
     fn variables_bar(&mut self, ui: &mut Ui) {
@@ -328,10 +402,11 @@ impl MetricsApp {
     /// then the range before it. A new range reads the panels at once.
     pub(crate) fn time_controls(&mut self, ui: &mut Ui) {
         let before = self.range.clone();
+        let refresh = self.refresh;
         let updated = if self.refresh > 0 && self.paused {
             "paused".to_owned()
         } else {
-            format!("updated {}", clock_of(self.view_at))
+            format!("updated {}", clock_of(self.view_at + self.offset()))
         };
         let asked = RefreshControl::new(&mut self.refresh, &mut self.paused, &crate::query::INTERVALS)
             .updated(updated)
@@ -368,6 +443,10 @@ impl MetricsApp {
         }
         if self.range != before {
             self.view_at = self.at;
+            self.range_chosen = true;
+        }
+        if self.refresh != refresh {
+            self.refresh_chosen = true;
         }
     }
 
@@ -412,30 +491,25 @@ impl MetricsApp {
     }
 }
 
+/// What the panels read, as the web's `View`: the variables, the range, the second they are read
+/// up to, and how far the reader's zone is from UTC, in seconds.
+#[derive(Clone, Debug, PartialEq)]
+pub struct View {
+    pub variables: Variables,
+    pub range: Range,
+    pub at: f64,
+    pub offset: f64,
+}
+
 /// One panel, read from the source and drawn by its kind, as the web's `PanelView`.
-pub(crate) fn draw_panel(
-    ui: &mut Ui,
-    panel: &Panel,
-    variables: &Variables,
-    range: &Range,
-    at: f64,
-    table: &mut TableState,
-) {
-    draw_panel_as(ui, panel, variables, range, at, table, false);
+pub(crate) fn draw_panel(ui: &mut Ui, panel: &Panel, view: &View, table: &mut TableState) {
+    draw_panel_as(ui, panel, view, table, false);
 }
 
 /// One panel as `draw_panel` draws it, or with `preview` as the editor previews it, as the web's
 /// `PanelView` with `preview`: taller, and a time series' legend always a table.
-pub(crate) fn draw_panel_as(
-    ui: &mut Ui,
-    panel: &Panel,
-    variables: &Variables,
-    range: &Range,
-    at: f64,
-    table: &mut TableState,
-    preview: bool,
-) {
-    let data = panel_data(panel, variables, range, at);
+pub(crate) fn draw_panel_as(ui: &mut Ui, panel: &Panel, view: &View, table: &mut TableState, preview: bool) {
+    let data = panel_data(panel, &view.variables, &view.range, view.at, view.offset);
     let thresholds = &panel.thresholds;
     let unit = data.unit.trim().to_owned();
     match data.shape {

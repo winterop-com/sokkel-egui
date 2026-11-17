@@ -55,9 +55,14 @@ manifest is `parity/metrics.json`; the web's screens are shot into `parity/metri
   `Cell::Strong`) dragged into the order the rail lists them, each opened by a press or its menu's
   Open, or deleted after asking; New opens the web's New dashboard dialog, empty or a copy of one's
   panels. Deleting the dashboard shown lands on Dashboards, as the web's does.
+- Settings, from the rail's System or the account menu, over the page shown: the dashboards' range,
+  auto refresh and time zone, the look, and resetting the demo's data. A default reaches the board
+  while the reader has not picked their own range or refresh, as a link naming none follows the
+  web's preferences. The zone is the computer's ("This computer" for the web's "This browser"),
+  read as the app starts, or UTC, which the foot strip then names.
 - Open: Download CSV saves without a dialog asking where (a native save dialog needs a crate such
   as `rfd`); a stat tile in the preview keeps its own height where the web's stands 224.
 - Open: the Services overview's request chart labels its axis every 90 seconds on the web where a
   fresh count of ECharts' `interval: 'auto'` gives 80, and the heatmap labels its axis more
   sparsely than the web's.
-- Then Alerts and Settings, each in the rail once it works.
+- Then Alerts, with its section in Settings, and the search palette.

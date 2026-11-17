@@ -57,7 +57,8 @@ pub struct Inspected {
     pub csv: String,
 }
 
-pub fn inspect(panel: &Panel, vars: &Variables, range: &Range, at: f64) -> Inspected {
+/// Its times are written `offset` seconds from UTC, the zone the reader chose.
+pub fn inspect(panel: &Panel, vars: &Variables, range: &Range, at: f64, offset: f64) -> Inspected {
     let metric = metric_of(panel.metric);
     let decimals = panel.decimals.unwrap_or(metric.decimals);
     let unit = panel.unit.clone().unwrap_or_else(|| metric.unit.to_owned());
@@ -73,7 +74,7 @@ pub fn inspect(panel: &Panel, vars: &Variables, range: &Range, at: f64) -> Inspe
             .iter()
             .map(|line| {
                 vec![
-                    Cell::Mono(clock_of(line.second)),
+                    Cell::Mono(clock_of(line.second + offset)),
                     Cell::Mono(line.level.to_owned()),
                     Cell::Mono(line.host.to_owned()),
                     Cell::Text(line.text.clone()),
@@ -84,7 +85,7 @@ pub fn inspect(panel: &Panel, vars: &Variables, range: &Range, at: f64) -> Inspe
             .chain(lines.iter().map(|line| {
                 format!(
                     "{},{},{},{}",
-                    clock_of(line.second),
+                    clock_of(line.second + offset),
                     line.level,
                     line.host,
                     json_string(&line.text)
@@ -116,7 +117,7 @@ pub fn inspect(panel: &Panel, vars: &Variables, range: &Range, at: f64) -> Inspe
     let rows = steps
         .iter()
         .map(|&i| {
-            std::iter::once(Cell::Mono(time_label(span.times[i], &span)))
+            std::iter::once(Cell::Mono(time_label(span.times[i] + offset, &span)))
                 .chain(series.iter().map(|one| {
                     let value = one.values.get(i).copied().unwrap_or(0.0);
                     Cell::Number {
@@ -308,12 +309,13 @@ impl MetricsApp {
     /// The panel's window, its data inspected, and the question before deleting it.
     pub(crate) fn panel_dialogs(&mut self, ctx: &egui::Context) {
         let (variables, range, at) = (self.variables.clone(), self.range.clone(), self.view_at);
+        let view = self.view();
         let viewing = self.panels.viewing.clone();
         match self.shown_panel(viewing.as_ref()) {
             Some(panel) => {
                 let table = self.tables.entry(panel.id.clone()).or_default();
                 let close = PanelWindow::new(("panel-window", &panel.id), &panel.title).show(ctx, |ui| {
-                    crate::app::draw_panel(ui, &panel, &variables, &range, at, table);
+                    crate::app::draw_panel(ui, &panel, &view, table);
                 });
                 if close {
                     self.panels.viewing = None;
@@ -324,7 +326,7 @@ impl MetricsApp {
         let inspecting = self.panels.inspecting.clone();
         match self.shown_panel(inspecting.as_ref()) {
             Some(panel) => {
-                let inspected = inspect(&panel, &variables, &range, at);
+                let inspected = inspect(&panel, &variables, &range, at, view.offset);
                 let mut answer = None;
                 let state = &mut self.panels.inspect_table;
                 let close = Dialog::new("inspect-panel", format!("Inspect {}", panel.title))

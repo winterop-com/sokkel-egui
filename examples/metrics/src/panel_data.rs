@@ -98,7 +98,8 @@ pub fn log_filter(panel: &Panel, vars: &Variables) -> Option<Vec<(Label, String)
 }
 
 /// Reads what a panel draws over its range, up to the second `at`.
-pub fn panel_data(panel: &Panel, vars: &Variables, range: &Range, at: f64) -> PanelData {
+/// Times are written `offset` seconds from UTC, the zone the reader chose.
+pub fn panel_data(panel: &Panel, vars: &Variables, range: &Range, at: f64, offset: f64) -> PanelData {
     let metric = metric_of(panel.metric);
     let unit = panel.unit.clone().unwrap_or_else(|| metric.unit.to_owned());
     let decimals = panel.decimals.unwrap_or(metric.decimals);
@@ -117,7 +118,7 @@ pub fn panel_data(panel: &Panel, vars: &Variables, range: &Range, at: f64) -> Pa
             (
                 series.is_empty(),
                 Shape::Series {
-                    x: span.times.iter().map(|t| time_label(*t, &span)).collect(),
+                    x: span.times.iter().map(|t| time_label(*t + offset, &span)).collect(),
                     series: colored(series),
                 },
             )
@@ -128,7 +129,7 @@ pub fn panel_data(panel: &Panel, vars: &Variables, range: &Range, at: f64) -> Pa
             (
                 series.is_empty(),
                 Shape::Series {
-                    x: wide.times.iter().map(|t| time_label(*t, &wide)).collect(),
+                    x: wide.times.iter().map(|t| time_label(*t + offset, &wide)).collect(),
                     series: colored(series),
                 },
             )
@@ -190,7 +191,7 @@ pub fn panel_data(panel: &Panel, vars: &Variables, range: &Range, at: f64) -> Pa
             (
                 series.is_empty(),
                 Shape::Heatmap {
-                    x: wide.times.iter().map(|t| time_label(*t, &wide)).collect(),
+                    x: wide.times.iter().map(|t| time_label(*t + offset, &wide)).collect(),
                     y: series.iter().map(|s| s.name.clone()).collect(),
                     cells,
                 },
@@ -216,7 +217,7 @@ pub fn panel_data(panel: &Panel, vars: &Variables, range: &Range, at: f64) -> Pa
                     crate::source::logs_until(span.end, span.start, &filter, 200)
                         .into_iter()
                         .map(|line| LogRow {
-                            at: clock_of(line.second),
+                            at: clock_of(line.second + offset),
                             level: line.level,
                             source: line.host.to_owned(),
                             text: line.text,

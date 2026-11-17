@@ -175,7 +175,8 @@ impl MetricsApp {
         let bar = FormBar::height(ui.ctx());
         let gap = ui.spacing().item_spacing.y;
         let room = (ui.available_height() - bar - gap).max(240.0);
-        let (variables, range, at) = (self.variables.clone(), self.range.clone(), self.view_at);
+        let view = self.view();
+        let (range, at) = (view.range.clone(), view.at);
         // the preview draws the draft as it stood when the frame began
         let shown = editor.draft.clone();
         ui.allocate_ui(egui::vec2(ui.available_width(), room), |ui| {
@@ -191,7 +192,7 @@ impl MetricsApp {
                         egui::Frame::new().inner_margin(4).show(ui, |ui| {
                             Stack::new(Gap::Md).show(ui, |ui| {
                                 sokkel_egui::pane_toolbar(ui, |_| {}, |ui| self.time_controls(ui));
-                                crate::app::draw_panel_as(ui, &shown, &variables, &range, at, &mut editor.table, true);
+                                crate::app::draw_panel_as(ui, &shown, &view, &mut editor.table, true);
                                 let t = sokkel_egui::tokens(ui.ctx());
                                 ui.label(
                                     sokkel_egui::TextRole::Help
