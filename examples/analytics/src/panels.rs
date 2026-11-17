@@ -2,7 +2,7 @@
 //! comparison and segment of the view, so the overview, the revenue page and a report draw the
 //! same panel the same way.
 
-use eframe::egui::Ui;
+use eframe::egui::{self, Ui};
 use sokkel_egui::{
     ActivityItem, ActivityList, ActivityTone, ActivityWords, Button, ButtonSize, ButtonVariant, Cell, ChipTone, Column,
     DashboardPanel, DataTable, Icon, IconButton, PanelSpan, StatPanel, TableVariant,
@@ -166,7 +166,8 @@ impl AnalyticsApp {
             WidgetId::Feed => self.feed_panel(ui, 7),
             WidgetId::Customers => self.customers_panel(ui),
             WidgetId::Regions => self.regions_panel(ui),
-            WidgetId::Plans | WidgetId::Countries | WidgetId::Movements | WidgetId::Cohorts => {}
+            WidgetId::Countries => self.countries_panel(ui),
+            WidgetId::Plans | WidgetId::Movements | WidgetId::Cohorts => {}
             kpi => self.kpi_panel(ui, kpi),
         }
     }
@@ -558,6 +559,87 @@ impl AnalyticsApp {
             let path = format!("customers/{}", self.world.teams[one.team].id);
             self.go(&path);
         }
+    }
+
+    /// Paid revenue by country on a map, each country a point sized and colored by it, with its
+    /// change in a popup.
+    pub fn countries_panel(&mut self, ui: &mut Ui) {
+        use sokkel_egui_maps::{MapLegend, MapPopup, MapPopupRow, Marker, class_of, point_radius, sequential_colors};
+        let segment = self.segment();
+        let (span, previous) = self.spans();
+        let figures = Figures::new(&self.world).countries(segment, &span, &previous);
+        let most = figures.iter().map(|f| f.revenue).max().unwrap_or(0).max(1) as f64;
+        let breaks: Vec<f64> = [0.1, 0.25, 0.5, 0.75]
+            .iter()
+            .map(|share| crate::seed::round(most * share))
+            .collect();
+        let total: i64 = figures.iter().map(|f| f.revenue).sum();
+        let money = self.money();
+        let range = range_name(&self.view.range);
+        let compare = self.view.compare;
+        let t = sokkel_egui::tokens(ui.ctx());
+        let colors = sequential_colors(&t, "chart-2", breaks.len() + 1);
+        let markers: Vec<Marker> = figures
+            .iter()
+            .map(|f| {
+                Marker::new(f.at.1, f.at.0, "")
+                    .id(f.name)
+                    .color(colors[class_of(&breaks, f.revenue as f64)])
+                    .radius(point_radius(f.revenue as f64, most, 4.0, 20.0))
+            })
+            .collect();
+        if !self.map_framed {
+            let (mut west, mut south, mut east, mut north) = (180.0f64, 90.0f64, -180.0f64, -90.0f64);
+            for f in &figures {
+                west = west.min(f.at.0);
+                east = east.max(f.at.0);
+                south = south.min(f.at.1);
+                north = north.max(f.at.1);
+            }
+            self.map.frame(Some([west, south, east, north]));
+            self.map_framed = true;
+        }
+        let map = &mut self.map;
+        DashboardPanel::new("Revenue by country")
+            .subtitle(format!("{}, {}", money.short(total as f64), range.to_lowercase()))
+            .flush(true)
+            .show(ui, |ui| {
+                let room = sokkel_egui::body_room(ui);
+                let height = 320.0 + room;
+                sokkel_egui::took_room(ui, room);
+                let response = map.show(ui, egui::vec2(ui.available_width(), height), &markers, &[]);
+                MapLegend::new("Revenue")
+                    .description(range.clone())
+                    .ramp(colors.clone(), "Less", "More")
+                    .show(ui, &response);
+                let chosen = map
+                    .selected
+                    .clone()
+                    .and_then(|id| figures.iter().find(|f| f.name == id).cloned());
+                if let Some(chosen) = chosen {
+                    let mut popup = MapPopup::new(chosen.name).description(chosen.region.name()).row(
+                        MapPopupRow::new("Revenue", money.full(chosen.revenue as f64))
+                            .color(colors[class_of(&breaks, chosen.revenue as f64)]),
+                    );
+                    if compare {
+                        popup = popup
+                            .row(MapPopupRow::new("Period before", money.full(chosen.before as f64)))
+                            .row(MapPopupRow::new(
+                                "Change",
+                                change(chosen.revenue as f64, chosen.before as f64).unwrap_or_else(|| "new".into()),
+                            ));
+                    }
+                    let share = if total == 0 {
+                        0.0
+                    } else {
+                        chosen.revenue as f64 / total as f64 * 100.0
+                    };
+                    popup = popup.row(MapPopupRow::new("Share of all", format!("{share:.1}%")));
+                    if popup.show(ui, map).closed {
+                        map.selected = None;
+                    }
+                }
+            });
     }
 
     /// Paid revenue by region, beside the period before.

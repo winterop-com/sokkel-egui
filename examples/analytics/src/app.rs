@@ -103,6 +103,9 @@ pub struct AnalyticsApp {
     pub tables: HashMap<String, TableState>,
     /// The key figures of a segment and span, counted once per world.
     kpis: HashMap<KpiKey, Kpis>,
+    /// The map of revenue by country, and whether it has been framed on its points.
+    pub map: sokkel_egui_maps::MapView,
+    pub map_framed: bool,
     /// Where a toast's Open goes, by the toast's id.
     pub opens: HashMap<u64, String>,
     said: Vec<(Toast, Option<String>)>,
@@ -110,12 +113,19 @@ pub struct AnalyticsApp {
 
 impl AnalyticsApp {
     /// The app in its window, its clock the computer's and its days read at its zone.
-    pub fn new(_cc: &eframe::CreationContext<'_>, local_offset: i64) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>, local_offset: i64) -> Self {
         crate::days::set_local_offset(local_offset);
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_or(DEMO_START, |d| d.as_millis() as i64);
         let mut app = Self::at(now, Appearance::default());
+        // the street map only in the running app: tests draw the map without the network
+        sokkel_egui_maps::install(cc.wgpu_render_state.as_ref());
+        app.map = std::mem::replace(&mut app.map, sokkel_egui_maps::MapView::new(0.0, 0.0, 1.0)).with_tiles(
+            &cc.egui_ctx,
+            "tidevann-analytics/0.1 (an example app of a component library)",
+            std::env::temp_dir().join("sokkel-egui-tiles").into(),
+        );
         app.desktop = true;
         app.held = false;
         app
@@ -157,6 +167,8 @@ impl AnalyticsApp {
             read: Vec::new(),
             tables: HashMap::new(),
             kpis: HashMap::new(),
+            map: sokkel_egui_maps::MapView::new(30.0, 10.0, 1.0).framed(false),
+            map_framed: false,
             opens: HashMap::new(),
             said: Vec::new(),
         }

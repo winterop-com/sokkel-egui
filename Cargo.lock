@@ -168,6 +168,7 @@ dependencies = [
  "serde",
  "sokkel-egui",
  "sokkel-egui-charts",
+ "sokkel-egui-maps",
  "time",
 ]
 

@@ -33,6 +33,8 @@ pub struct Marker {
     pub label: String,
     pub series: usize,
     pub color: Option<Color32>,
+    /// Its radius; 7 when not sized by a value.
+    pub radius: f32,
 }
 
 impl Marker {
@@ -45,7 +47,15 @@ impl Marker {
             label,
             series: 0,
             color: None,
+            radius: 7.0,
         }
+    }
+
+    /// The point this large, as a point layer sizes each by its value: larger points are drawn
+    /// first, under the smaller, with a thin ring in the card.
+    pub fn radius(mut self, radius: f32) -> Self {
+        self.radius = radius;
+        self
     }
 
     pub fn series(mut self, series: usize) -> Self {
@@ -73,6 +83,7 @@ pub struct MapLegend {
     title: String,
     description: Option<String>,
     rows: Vec<(Color32, String, usize)>,
+    ramp: Option<(Vec<Color32>, String, String)>,
 }
 
 impl MapLegend {
@@ -81,7 +92,15 @@ impl MapLegend {
             title: title.into(),
             description: None,
             rows: Vec::new(),
+            ramp: None,
         }
+    }
+
+    /// A sequential scale's classes as a stepped ramp 10 tall, with `low` and `high` under its
+    /// ends, as the web's legend of a scale with `captions`.
+    pub fn ramp(mut self, colors: Vec<Color32>, low: impl Into<String>, high: impl Into<String>) -> Self {
+        self.ramp = Some((colors, low.into(), high.into()));
+        self
     }
 
     pub fn description(mut self, description: impl Into<String>) -> Self {
@@ -103,7 +122,9 @@ impl MapLegend {
         let font = TextRole::Help.font(&t);
         let line = t.text("help").line_height;
         let rows = self.rows.len() as f32;
-        let height = 12.0 + line + self.description.as_ref().map_or(0.0, |_| line) + 8.0 + rows * 24.0 + 8.0;
+        let ramp_height = self.ramp.as_ref().map_or(0.0, |_| 10.0 + 4.0 + line);
+        let height =
+            12.0 + line + self.description.as_ref().map_or(0.0, |_| line) + 8.0 + rows * 24.0 + ramp_height + 8.0;
         let width = 224.0_f32.min(map.width() - 24.0);
         let card = Rect::from_min_size(
             pos2(map.left() + 12.0, map.bottom() - 12.0 - height),
@@ -139,6 +160,36 @@ impl MapLegend {
             y += line;
         }
         y += 8.0;
+        if let Some((colors, low, high)) = &self.ramp {
+            let bar = Rect::from_min_size(pos2(x, y), vec2(width - 24.0, 10.0));
+            let step = bar.width() / colors.len().max(1) as f32;
+            for (index, color) in colors.iter().enumerate() {
+                let cell = Rect::from_min_size(pos2(bar.left() + step * index as f32, bar.top()), vec2(step, 10.0));
+                painter.rect_filled(cell, CornerRadius::ZERO, *color);
+            }
+            painter.rect_stroke(
+                bar,
+                t.radius("mini"),
+                Stroke::new(1.0, t.color_at("foreground", 0.1)),
+                StrokeKind::Outside,
+            );
+            let under = bar.bottom() + 4.0 + line / 2.0;
+            painter.text(
+                pos2(bar.left(), under),
+                egui::Align2::LEFT_CENTER,
+                low,
+                font.clone(),
+                muted,
+            );
+            painter.text(
+                pos2(bar.right(), under),
+                egui::Align2::RIGHT_CENTER,
+                high,
+                font.clone(),
+                muted,
+            );
+            y += ramp_height;
+        }
         for (color, label, count) in &self.rows {
             let middle = y + 12.0;
             painter.circle_filled(pos2(x + 6.0, middle), 6.0, *color);
@@ -247,6 +298,9 @@ pub struct MapView {
     room: Rect,
     /// The bounds last framed, which Fit goes back to; every marker when none were.
     bounds: Option<[f64; 4]>,
+    /// The size and zoom the bounds were last framed at: a map the reader has not moved since is
+    /// framed again when its size changes, as a grid settles its widths.
+    fitted: Option<(Vec2, f64)>,
     /// Drawn over the whole window, as the web's full screen.
     pub full: bool,
     /// The layer the map was drawn in on the last frame, which its legend and card draw in too.
@@ -278,6 +332,7 @@ impl MapView {
             points: Vec::new(),
             room: Rect::NOTHING,
             bounds: None,
+            fitted: None,
             full: false,
             layer: egui::LayerId::background(),
             basemap: None,
@@ -309,8 +364,8 @@ impl MapView {
         let (top, bottom) = (y(north), y(south));
         let wide = ((east - west) / 360.0).max(1e-6);
         let tall = (bottom - top).max(1e-6);
-        // 48 of room around the bounds, as a map frames its data
-        let room = |side: f32| f64::from((side - 96.0).max(side * 0.5));
+        // 24 of room around the bounds, as the web's `FIT_MARGIN` frames its data
+        let room = |side: f32| f64::from((side - 48.0).max(side * 0.5));
         let zoom = (room(size.x) / (wide * 256.0))
             .log2()
             .min((room(size.y) / (tall * 256.0)).log2())
@@ -320,6 +375,7 @@ impl MapView {
         self.home = lat_lon(lat, (west + east) / 2.0);
         self.memory = MapMemory::default();
         let _ = self.memory.set_zoom(zoom);
+        self.fitted = Some((size, self.memory.zoom()));
     }
 
     /// Draw OpenFreeMap's vector street map under the map, light or dark by the scheme, as
@@ -426,7 +482,14 @@ impl MapView {
         match self.pending.take() {
             Some(Some(bounds)) => self.fit(bounds, size),
             Some(None) => self.reset(),
-            None => {}
+            None => {
+                let unmoved = self.fitted.is_some_and(|(at, zoom)| {
+                    at != size && self.memory.detached().is_none() && self.memory.zoom() == zoom
+                });
+                if unmoved && let Some(bounds) = self.bounds {
+                    self.fit(bounds, size);
+                }
+            }
         }
         // never so far out that the world is narrower than the map: it is drawn once, not
         // repeated sideways, so the room either side of it would stand empty
@@ -481,7 +544,10 @@ impl MapView {
                         overlays(&painter, &t, projector, markers, routes);
                         points = markers
                             .iter()
-                            .map(|m| (m.id.clone(), projector.project(lat_lon(m.lat, m.lon)).to_pos2()))
+                            .map(|m| {
+                                let at = projector.project(lat_lon(m.lat, m.lon)).to_pos2();
+                                (m.id.clone(), at, m.radius)
+                            })
                             .collect();
                         if has_tiles && let Some(credits) = shown.credits() {
                             attribution(ui, &painter, &t, response.rect, credits);
@@ -495,9 +561,9 @@ impl MapView {
         let near = |pos: Pos2| {
             points
                 .iter()
-                .filter(|(_, at)| at.distance(pos) <= 10.0)
+                .filter(|(_, at, radius)| at.distance(pos) <= radius.max(7.0) + 3.0)
                 .min_by(|a, b| a.1.distance(pos).total_cmp(&b.1.distance(pos)))
-                .map(|(id, _)| id.clone())
+                .map(|(id, _, _)| id.clone())
         };
         if response.hover_pos().and_then(near).is_some() {
             ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
@@ -506,11 +572,11 @@ impl MapView {
             self.selected = response.interact_pointer_pos().and_then(near);
         }
         if let Some(chosen) = &self.selected
-            && !points.iter().any(|(id, _)| id == chosen)
+            && !points.iter().any(|(id, _, _)| id == chosen)
         {
             self.selected = None;
         }
-        self.points = points;
+        self.points = points.into_iter().map(|(id, at, _)| (id, at)).collect();
         self.room = rect;
         self.layer = response.layer_id;
         let t = t_page;
@@ -1006,13 +1072,17 @@ fn overlays(painter: &egui::Painter, t: &Tokens, projector: &Projector, markers:
         ));
     }
     let font = TextRole::Help.font(t);
-    for marker in markers {
+    let mut order: Vec<&Marker> = markers.iter().collect();
+    order.sort_by(|a, b| b.radius.total_cmp(&a.radius));
+    for marker in order {
         let point = at(marker.lat, marker.lon);
+        let sized = marker.radius != 7.0;
+        let fill = marker.color.unwrap_or_else(|| series_color(t, marker.series));
         painter.circle(
             point,
-            7.0,
-            marker.color.unwrap_or_else(|| series_color(t, marker.series)),
-            Stroke::new(1.5, t.color("card")),
+            marker.radius,
+            if sized { fill.gamma_multiply(0.95) } else { fill },
+            Stroke::new(if sized { 1.25 } else { 1.5 }, t.color("card")),
         );
         if marker.label.is_empty() {
             continue;
@@ -1044,6 +1114,44 @@ fn attribution(ui: &Ui, painter: &egui::Painter, t: &Tokens, rect: Rect, credits
     );
     painter.rect_filled(pill, t.radius("chip"), t.color("popover").gamma_multiply(0.9));
     painter.galley(pill.min + vec2(5.0, 2.0), text, t.color("muted-foreground"));
+}
+
+/// The colors of a sequential scale of `count` classes, as sokkel-ui-maps' `sequentialScale` ramps
+/// them from `hue`: the first 70% of the way from 26% of the hue over the card to the hue itself,
+/// the rest toward the foreground, 35% at the last.
+pub fn sequential_colors(t: &Tokens, hue: &str, count: usize) -> Vec<Color32> {
+    let hue = t.color(hue);
+    (0..count)
+        .map(|index| {
+            let at = if count <= 1 {
+                1.0
+            } else {
+                index as f32 / (count - 1) as f32
+            };
+            if at <= 0.7 {
+                let share = (26.0 + 74.0 * at / 0.7).round() / 100.0;
+                mix(hue, t.color("card"), share)
+            } else {
+                let share = (35.0 * (at - 0.7) / 0.3).round() / 100.0;
+                mix(t.color("foreground"), hue, share)
+            }
+        })
+        .collect()
+}
+
+/// The class of `value` on a scale of ascending `breaks`: how many breaks it reaches.
+pub fn class_of(breaks: &[f64], value: f64) -> usize {
+    breaks.iter().take_while(|b| value >= **b).count()
+}
+
+/// A point's radius sized by its value, as sokkel-ui-maps' `pointRadius`: the value's square root
+/// drawn from `near` to `far` across the domain from 0 to `most`.
+pub fn point_radius(value: f64, most: f64, near: f32, far: f32) -> f32 {
+    if most <= 0.0 {
+        return far;
+    }
+    let share = (value.max(0.0).sqrt() / most.sqrt()).clamp(0.0, 1.0) as f32;
+    near + (far - near) * share
 }
 
 #[cfg(test)]
