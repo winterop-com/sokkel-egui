@@ -2,7 +2,7 @@
 # and sokkel-ui is read from .parity/sokkel-ui (scripts/sokkel.ts): clones fetched from GitHub on
 # every run, read and never written.
 
-.PHONY: help tokens tokens-check parity parity-web fmt fmt-check check test snapshots storybook runs tasks status logs planner storage dashboard apps all
+.PHONY: help tokens tokens-check parity parity-web fmt fmt-check check test snapshots clean storybook runs tasks status logs planner storage dashboard apps all
 
 help:
 	@echo "make tokens        copy sokkel-design's resolved tokens, as GitHub has them, into the core crate"
@@ -21,6 +21,13 @@ help:
 	@echo "make logs, make planner, make storage   run egui's own example apps"
 	@echo "make apps          build every example app in release and bundle each as a macOS .app in dist/apps/"
 	@echo "make all           fmt-check, check and test"
+	@echo "make clean         remove the build, the bundled apps and snapshot leftovers (keeps .parity)"
+
+# The sokkel-ui and sokkel-design clones in .parity stay: they are fetched again on every run anyway.
+clean:
+	cargo clean
+	rm -rf dist
+	find crates examples -name '*.new.png' -o -name '*.diff.png' -o -name '*.old.png' | xargs rm -f
 
 tokens:
 	bun scripts/design.ts
