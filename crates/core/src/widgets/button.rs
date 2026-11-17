@@ -54,6 +54,8 @@ pub struct Button {
     reason: Option<String>,
     icon: Option<Icon>,
     trailing: Option<Icon>,
+    muted: bool,
+    note: Option<String>,
 }
 
 impl Button {
@@ -67,7 +69,22 @@ impl Button {
             reason: None,
             icon: None,
             trailing: None,
+            muted: false,
+            note: None,
         }
+    }
+
+    /// Its words in the muted ink, as a quiet ghost button's `text-muted-foreground`.
+    pub fn muted(mut self, muted: bool) -> Self {
+        self.muted = muted;
+        self
+    }
+
+    /// A few words after its label at the regular weight in the muted ink, as a trigger saying its
+    /// view has changed.
+    pub fn note(mut self, note: impl Into<String>) -> Self {
+        self.note = Some(note.into());
+        self
     }
 
     /// An icon after the words in the muted ink, as a trigger's chevron.
@@ -138,7 +155,16 @@ impl Widget for Button {
         } else {
             0.0
         };
-        let tail = if self.trailing.is_some() { gap + glyph } else { 0.0 };
+        let note = self.note.as_ref().map(|n| {
+            WidgetText::from(TextRole::Body.rich(&t, n)).into_galley(
+                ui,
+                Some(TextWrapMode::Extend),
+                f32::INFINITY,
+                TextRole::Body.font(&t),
+            )
+        });
+        let tail =
+            if self.trailing.is_some() { gap + glyph } else { 0.0 } + note.as_ref().map_or(0.0, |n| gap + n.size().x);
         let pad = if lead > 0.0 || tail > 0.0 { pad - 2.0 } else { pad };
         let radius = CornerRadius::same(control.min(cap).floor() as u8);
         let galley = WidgetText::from(role.rich(&t, &self.label)).into_galley(
@@ -234,7 +260,14 @@ impl Widget for Button {
         );
         focus_ring(painter, &t, rect, radius, &response);
 
-        let ink = dim(ink, enabled);
+        let ink = dim(
+            if self.muted && !hot {
+                t.color("muted-foreground")
+            } else {
+                ink
+            },
+            enabled,
+        );
         let mut x = rect.center().x - (galley.size().x + lead + tail) / 2.0;
         if self.busy {
             super::spinner(ui, painter, pos2(x + glyph / 2.0, rect.center().y), glyph * 0.4, ink);
@@ -247,8 +280,13 @@ impl Widget for Button {
             let y = pos.y + galley.size().y - 3.0;
             painter.hline(pos.x..=pos.x + galley.size().x, y, Stroke::new(1.0, ink));
         }
-        let words_end = pos.x + galley.size().x;
+        let mut words_end = pos.x + galley.size().x;
         painter.galley(pos, galley, ink);
+        if let Some(note) = note {
+            let at = pos2(words_end + gap, rect.center().y - note.size().y / 2.0);
+            words_end = at.x + note.size().x;
+            painter.galley(at, note, dim(t.color("muted-foreground"), enabled));
+        }
         if let Some(icon) = self.trailing {
             icons::paint(
                 painter,

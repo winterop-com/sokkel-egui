@@ -23,7 +23,9 @@ impl AnalyticsApp {
             self.go(if tab == 1 { "revenue/invoices" } else { "revenue" });
         }
         self.view_bar(ui);
-        if !invoices {
+        if invoices {
+            self.invoices_page(ui);
+        } else {
             self.board(ui, BoardId::Revenue);
         }
     }

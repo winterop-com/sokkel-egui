@@ -3,6 +3,7 @@
 
 pub mod app;
 pub mod days;
+pub mod invoices;
 pub mod metrics;
 pub mod model;
 pub mod overview;

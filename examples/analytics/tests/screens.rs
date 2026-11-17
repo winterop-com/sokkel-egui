@@ -27,8 +27,12 @@ pub fn render(path: &str, height: f32) -> Harness<'static, AnalyticsApp> {
 #[test]
 fn every_screen() {
     let mut results = SnapshotResults::new();
-    for (name, path) in [("analytics_overview", ""), ("analytics_revenue", "revenue")] {
-        let mut harness = render(path, 1100.0);
+    for (name, path, height) in [
+        ("analytics_overview", "", 1100.0),
+        ("analytics_revenue", "revenue", 1100.0),
+        ("analytics_invoices", "revenue/invoices", 900.0),
+    ] {
+        let mut harness = render(path, height);
         results.add(harness.try_snapshot(name));
     }
 }

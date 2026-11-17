@@ -103,6 +103,8 @@ pub struct AnalyticsApp {
     pub tables: HashMap<String, TableState>,
     /// The key figures of a segment and span, counted once per world.
     kpis: HashMap<KpiKey, Kpis>,
+    /// Revenue's invoices: their views and the listing's setup.
+    pub invoices: crate::invoices::InvoicesPage,
     /// The map of revenue by country, and whether it has been framed on its points.
     pub map: sokkel_egui_maps::MapView,
     pub map_framed: bool,
@@ -167,6 +169,7 @@ impl AnalyticsApp {
             read: Vec::new(),
             tables: HashMap::new(),
             kpis: HashMap::new(),
+            invoices: Default::default(),
             map: sokkel_egui_maps::MapView::new(30.0, 10.0, 1.0).framed(false),
             map_framed: false,
             opens: HashMap::new(),
@@ -220,6 +223,12 @@ impl AnalyticsApp {
             }
             self.stream.wait(landed, self.prefs.pace);
         }
+    }
+
+    /// The world built again now, from what the backend keeps.
+    pub fn rebuild(&mut self) {
+        self.world = build(&self.base, &self.kept, self.now());
+        self.kpis.clear();
     }
 
     /// The notes the stream leaves in the corner, as the settings ask: a big order, a team leaving.
@@ -423,6 +432,9 @@ impl AnalyticsApp {
                     .search;
             }
             ShellPart::Page if page == "overview" => Page::scroll(ui, |ui| self.overview(ui)),
+            ShellPart::Page if page == "revenue" && self.view.path.get(1).is_some_and(|p| p == "invoices") => {
+                Page::show(ui, |ui| self.revenue(ui))
+            }
             ShellPart::Page if page == "revenue" => Page::scroll(ui, |ui| self.revenue(ui)),
             ShellPart::Page => {}
             ShellPart::Foot => {

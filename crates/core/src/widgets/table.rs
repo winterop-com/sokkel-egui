@@ -391,7 +391,12 @@ pub struct DataTable<'a> {
     stack_below: Option<f32>,
     search: Option<&'a mut String>,
     bar: bool,
+    toolbar: Option<Toolbar<'a>>,
+    foot: Option<String>,
 }
+
+/// What a table's toolbar line draws.
+type Toolbar<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
 
 /// How wide a row's grip is, in the first column before its content.
 const GRIP: f32 = 22.0;
@@ -423,6 +428,8 @@ impl<'a> DataTable<'a> {
             keys: Vec::new(),
             stack_layout: StackLayout::Never,
             stack_below: None,
+            toolbar: None,
+            foot: None,
             search: None,
             bar: false,
         }
@@ -552,6 +559,20 @@ impl<'a> DataTable<'a> {
 
     pub fn today(mut self, today: Day) -> Self {
         self.today = today;
+        self
+    }
+
+    /// A line of the bar under its search, as the web's `toolbar`: a filter bar.
+    pub fn toolbar(mut self, toolbar: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.toolbar = Some(Box::new(toolbar));
+        self.bar = true;
+        self
+    }
+
+    /// A line inside the frame under the rows, in the code face, as the web's `foot`: what the
+    /// rows add up to.
+    pub fn foot(mut self, foot: impl Into<String>) -> Self {
+        self.foot = Some(foot.into());
         self
     }
 
@@ -789,7 +810,29 @@ impl<'a> DataTable<'a> {
             t,
             t.density(if self.search.is_some() { "control" } else { "control-sm" }),
         );
-        let (bar, _) = ui.allocate_exact_size(vec2(ui.available_width(), 8.0 + control + 8.0 + 1.0), Sense::hover());
+        // the toolbar's line under the search, as tall as a control, 8 under it
+        let toolbar = self.toolbar.take();
+        let line = if toolbar.is_some() {
+            t.density("control") + 8.0
+        } else {
+            0.0
+        };
+        let (bar, _) = ui.allocate_exact_size(
+            vec2(ui.available_width(), 8.0 + control + 8.0 + line + 1.0),
+            Sense::hover(),
+        );
+        if let Some(toolbar) = toolbar {
+            let place = Rect::from_min_size(
+                pos2(bar.left() + 12.0, bar.top() + 8.0 + control + 8.0),
+                vec2(bar.width() - 24.0, t.density("control")),
+            );
+            let mut child = ui.new_child(
+                egui::UiBuilder::new()
+                    .max_rect(place)
+                    .layout(egui::Layout::left_to_right(egui::Align::Center)),
+            );
+            toolbar(&mut child);
+        }
         ui.painter()
             .hline(bar.x_range(), bar.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
         let row = Rect::from_min_max(
@@ -890,7 +933,7 @@ impl<'a> DataTable<'a> {
         let words = if count == 1 { &self.words.row } else { &self.words.rows };
         let mono = egui::FontId::monospace(TextRole::Help.font(t).size);
         child.label(
-            egui::RichText::new(words.replace("{count}", &count.to_string()))
+            egui::RichText::new(words.replace("{count}", &super::format_value(count as f64, Some(0))))
                 .font(mono)
                 .color(t.color("muted-foreground")),
         );
@@ -1824,6 +1867,20 @@ impl<'a> DataTable<'a> {
                         ui.ctx().data_mut(|d| d.remove::<usize>(drag_id));
                     }
                 }
+                // the foot: a rule over it, its words in the code face, 12 in and 8 down
+                if let Some(foot) = &self.foot {
+                    let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                    let (line, _) = ui.allocate_exact_size(vec2(ui.available_width(), 32.0), Sense::hover());
+                    ui.painter()
+                        .hline(line.x_range(), line.top() + 0.5, Stroke::new(1.0, t.color("border")));
+                    ui.painter().text(
+                        pos2(line.left() + 12.0, line.center().y),
+                        egui::Align2::LEFT_CENTER,
+                        foot,
+                        mono,
+                        t.color("muted-foreground"),
+                    );
+                }
             })
             .response;
         // on the head row, the keys sort: Left and Right choose a column, Enter or Space cycles its
@@ -1922,7 +1979,10 @@ impl<'a> DataTable<'a> {
             ui.add_space(6.0);
             ui.label(
                 TextRole::Help
-                    .rich(&t, words.replace("{count}", &count.to_string()))
+                    .rich(
+                        &t,
+                        words.replace("{count}", &super::format_value(count as f64, Some(0))),
+                    )
                     .color(t.color("muted-foreground")),
             );
         }

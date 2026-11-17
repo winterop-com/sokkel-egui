@@ -45,6 +45,15 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
   (`WaterfallPanel`), revenue by region and retention by cohort (`HeatmapPanel` with a subtitle,
   info and height). Their figures are the web's: $6.9M, 1,656, $349, $5,664 over 17 invoices,
   $548K to $577.2K.
+- Revenue's invoices: the invoices of the range and segment, newest first, under the saved views
+  (`SavedViews`: All invoices, Failed payments, Refunds and Large Business invoices, each setting
+  the listing's filters, sort and columns; Changed, Reset and Save beside it once the listing
+  differs; Save as new view, Rename and Delete) and the filter bar in the table's toolbar
+  (`FilterBar`: State, Plan, Region, For, Amount and Date, each a chip saying what it keeps, its
+  editor of operators over a value or a list to tick; `filter_rows` and `ListViewState` after the
+  web's `lib/filters` and `lib/list-views`). Each row opens its team, and its menu copies the
+  number, charges again, marks it paid or refunds it after a question; the foot says what the rows
+  paid (`DataTable::toolbar`, `foot`, the count with its thousands; `Button::muted`, `note`).
 - Open: the web map keeps clear of its legend as it frames the points; the egui map frames them
   without it, so it centers a little higher.
 - Open: the web's arranged dashboard drew its stat tiles at their content's 94 rather than the
@@ -53,5 +62,5 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
 
 ## Next
 
-- Revenue's invoices (the filter bar and saved views), Customers and a customer, Funnels,
+- Customers and a customer, Funnels,
   Reports, Goals, Settings and the palette.

@@ -15,6 +15,7 @@ mod display;
 mod empty;
 mod fields;
 mod file_preview;
+mod filters;
 mod frame;
 mod info;
 mod inline_edit;
@@ -72,6 +73,10 @@ pub use fields::{
     toolbar,
 };
 pub use file_preview::{FileKind, FilePreview, FilePreviewWords, format_size, parse_csv};
+pub use filters::{
+    Filter, FilterBar, FilterBarWords, FilterField, FilterOperator, FilterType, FilterValue, ListViewState, SavedView,
+    SavedViews, SavedViewsAsked, SavedViewsWords, filter_rows, matches_filter, operator_word, same_filters,
+};
 pub use frame::{
     AppBar, DesktopWindow, Rail, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine, StatusTone,
     TopBar, desktop_viewport, is_phone,
