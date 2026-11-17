@@ -67,9 +67,12 @@ manifest is `parity/metrics.json`; the web's screens are shot into `parity/metri
   off), what fired (`Cell::Clock`, its clock and how long ago in the short words), the rule dialog
   with its live chart against the threshold, Clear resolved, and the Alerts section of Settings
   (evaluating, the toasts, how long fired alerts are kept).
+- The top bar's Search, or Command-K, opens the web's palette: the rail's places, every dashboard's
+  panels (a stat tile brought into view, any other opened in its window), the actions (New
+  dashboard, Add panel, Refresh now, pausing the refresh, New alert rule), the look, and resetting
+  the demo.
 - Open: Download CSV saves without a dialog asking where (a native save dialog needs a crate such
   as `rfd`); a stat tile in the preview keeps its own height where the web's stands 224.
 - Open: the Services overview's request chart labels its axis every 90 seconds on the web where a
   fresh count of ECharts' `interval: 'auto'` gives 80, and the heatmap labels its axis more
   sparsely than the web's.
-- Then the search palette (the top bar's Search and its commands).

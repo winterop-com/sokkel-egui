@@ -8,6 +8,7 @@ pub mod board;
 pub mod dashboards;
 pub mod editor;
 pub mod model;
+pub mod palette;
 pub mod panel_data;
 pub mod panels;
 pub mod query;

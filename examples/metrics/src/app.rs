@@ -112,6 +112,8 @@ pub struct MetricsApp {
     /// The rules, what they fired, and where each stands.
     pub alerting: crate::alerting::Alerting,
     pub alerts: crate::alerts::AlertsPage,
+    /// The search palette while it is open: what is typed and the command lit.
+    pub palette: Option<(String, usize)>,
     /// The panels being arranged: a draft Done keeps and Cancel throws away.
     pub edit: DashboardEdit<Panel>,
     /// How many panels and copies have been made, for their ids.
@@ -160,6 +162,7 @@ impl MetricsApp {
             resetting: false,
             alerting: crate::alerting::Alerting::seeded(DEMO_NOW),
             alerts: Default::default(),
+            palette: None,
             edit: DashboardEdit::default(),
             made: 0,
             said: Vec::new(),
@@ -250,6 +253,7 @@ impl MetricsApp {
         let utc = if self.prefs.zone == Zone::Utc { " UTC" } else { "" };
         let note = format!("Scraped {}{utc}, {mode}", clock_of(self.at + self.offset()));
         let mut account = None;
+        let mut searched = sokkel_egui::palette_shortcut(ui.ctx());
         shell.show_window(ui, |part, ui| match part {
             ShellPart::Rail => {
                 ui.add(Rail::new("Metrics", &groups, &mut place).mark(TIDEVANN_MARK));
@@ -258,7 +262,7 @@ impl MetricsApp {
                 account = AccountMenu::new("ada").scheme(self.appearance.scheme).show(ui);
             }
             ShellPart::Top => {
-                TopBar::new(&trail).show(ui, |_| {});
+                searched |= TopBar::new(&trail).search("Search", "⌘K").show(ui, |_| {}).search;
             }
             ShellPart::Page if self.editor.is_some() => Page::show(ui, |ui| self.editor_page(ui)),
             ShellPart::Page if self.place == DASHBOARDS => Page::show(ui, |ui| self.dashboards_page(ui)),
@@ -274,16 +278,17 @@ impl MetricsApp {
             }
         });
         // the rail's press moves the place, leaving the editor; what the page did to it stands otherwise
-        if place == SETTINGS {
-            self.settings = Some("dashboards".into());
-        } else if place != was {
-            self.place = place;
-            self.editor = None;
+        if place != was {
+            self.go(&place);
+        }
+        if searched {
+            self.palette = Some((String::new(), 0));
         }
         self.panel_dialogs(&ui.ctx().clone());
         self.editor_dialogs(&ui.ctx().clone());
         self.settings_dialog(&ui.ctx().clone());
         self.alerts_dialogs(&ui.ctx().clone());
+        self.search_palette(&ui.ctx().clone(), &groups);
         self.board_dialogs(&ui.ctx().clone());
         match account {
             Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
