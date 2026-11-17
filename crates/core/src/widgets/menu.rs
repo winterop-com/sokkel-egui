@@ -131,7 +131,7 @@ impl MenuItem {
     }
 }
 
-fn popover_frame(t: &Tokens) -> Frame {
+pub(crate) fn popover_frame(t: &Tokens) -> Frame {
     super::popup_frame(t).inner_margin(Margin::same(4))
 }
 
@@ -139,12 +139,19 @@ fn popover_frame(t: &Tokens) -> Frame {
 /// How a row of actions is drawn: a dropdown menu's (a control tall, 6 in) or the palette's (34
 /// tall, 8 in); both a finger tall on a phone, and lit in the accent, as every list of choices is.
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum RowLook {
+pub(crate) enum RowLook {
     Menu,
     Palette,
 }
 
-fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: bool, look: RowLook) -> (Response, bool) {
+pub(crate) fn action_row(
+    ui: &mut Ui,
+    t: &Tokens,
+    id: Id,
+    item: &MenuItem,
+    highlighted: bool,
+    look: RowLook,
+) -> (Response, bool) {
     let MenuItem::Action {
         label,
         icon,

@@ -1,0 +1,17 @@
+[package]
+name = "records"
+description = "sokkel-ui's records example, one to one in egui: forms filled in sections, responses and receipts, households and their visits, places on a map, and the metadata's health."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-egui.workspace = true
+eframe.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+time = { version = "0.3", features = ["local-offset"] }
+
+[dev-dependencies]
+egui_kittest.workspace = true

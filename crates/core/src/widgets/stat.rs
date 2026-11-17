@@ -20,6 +20,8 @@ pub struct Stat {
     dot: Option<Color32>,
     trend: Option<(Vec<f64>, Color32)>,
     emphasis: bool,
+    large: bool,
+    min_height: f32,
 }
 
 impl Stat {
@@ -33,6 +35,8 @@ impl Stat {
             dot: None,
             trend: None,
             emphasis: false,
+            large: false,
+            min_height: 0.0,
         }
     }
 
@@ -45,6 +49,12 @@ impl Stat {
     /// A small line under the number: its last values, in `ink` (a `Sparkline`).
     pub fn trend(mut self, values: impl IntoIterator<Item = f64>, ink: Color32) -> Self {
         self.trend = Some((values.into_iter().collect(), ink));
+        self
+    }
+
+    /// The number at the hero statistic's size, as the web's `size="lg"`.
+    pub fn large(mut self, large: bool) -> Self {
+        self.large = large;
         self
     }
 
@@ -71,11 +81,12 @@ impl Stat {
             (inner - lead).max(1.0),
             TextRole::Label.font(&t),
         );
-        let value = lay(
-            TextRole::Statistic.rich(&t, &self.value),
-            TextRole::Statistic,
-            TextWrapMode::Truncate,
-        );
+        let role = if self.large {
+            TextRole::StatisticHero
+        } else {
+            TextRole::Statistic
+        };
+        let value = lay(role.rich(&t, &self.value), role, TextWrapMode::Truncate);
         let unit = self
             .unit
             .as_ref()
@@ -91,7 +102,7 @@ impl Stat {
             + note.as_ref().map_or(0.0, |n| 4.0 + n.size().y)
             + self.trend.as_ref().map_or(0.0, |_| 8.0 + SPARK.y)
             + 16.0;
-        let (rect, response) = ui.allocate_exact_size(vec2(width, height), Sense::click());
+        let (rect, response) = ui.allocate_exact_size(vec2(width, height.max(self.min_height)), Sense::click());
         response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.label));
         let painter = ui.painter();
         let radius = t.radius("surface");
@@ -340,5 +351,46 @@ impl KpiRow {
             egui::StrokeKind::Inside,
         );
         response
+    }
+}
+
+/// Stat tiles in columns, every tile of a row as tall as its tallest, as the web's grid of
+/// `Stat` tiles stretches them; answers with the tile pressed.
+pub struct StatTiles {
+    id: egui::Id,
+    columns: crate::Columns,
+}
+
+impl StatTiles {
+    /// `count` columns, each at least `min` wide, `gap` apart.
+    pub fn new(id: impl egui::AsIdSalt, count: usize, min: f32, gap: f32) -> Self {
+        Self {
+            id: egui::Id::unique(id),
+            columns: crate::Columns::new(count).min(min).gap(gap),
+        }
+    }
+
+    pub fn show(self, ui: &mut Ui, tiles: Vec<Stat>) -> Option<usize> {
+        let tallest: f32 = ui.data(|d| d.get_temp(self.id)).unwrap_or(0.0);
+        let mut measured = 0.0_f32;
+        let mut pressed = None;
+        let count = tiles.len();
+        let mut tiles: Vec<Option<Stat>> = tiles.into_iter().map(Some).collect();
+        self.columns.show(ui, count, |ui, index, width| {
+            if let Some(mut tile) = tiles[index].take() {
+                tile.min_height = tallest;
+                let response = tile.tile(ui, width);
+                measured = measured.max(response.rect.height());
+                if response.clicked() {
+                    pressed = Some(index);
+                }
+            }
+        });
+        // a tile taller than the row was: the next frame stretches every tile to it
+        if measured > tallest + 0.5 {
+            ui.data_mut(|d| d.insert_temp(self.id, measured));
+            ui.ctx().request_repaint();
+        }
+        pressed
     }
 }

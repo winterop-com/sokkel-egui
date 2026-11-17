@@ -1,0 +1,212 @@
+{
+    "example": "examples/records/web/src",
+    "ported": {
+        "commit": "8eb137fa",
+        "files": {
+            "App.tsx": "0d34980fd17b4b58f9887a672ad649a233e900ce",
+            "app.css": "f723f9329c2a6bda689969d9b2c24194bce95da0",
+            "data/api.ts": "52340513fcd7022c4a8861d87b6a358fe00b8a44",
+            "data/backend.ts": "81572e6b3f6946738851fce5d092e2f0dab60556",
+            "data/forms.ts": "a3fa0e5b33125ec921d4dbbfb169d612efb93543",
+            "data/geo.ts": "3ac73170cbc6b73cae9a4b4445246e1a1ecd5d03",
+            "data/health.ts": "84ea46839ce617dd904ce98496d0743f2f515345",
+            "main.tsx": "d17c21458a756bfee33554c6ec42c9b66d2f42c0",
+            "pages/FormFill.tsx": "7dd5143b34fcf86844de1ebe7c0eaa60c5e25f22",
+            "pages/FormLayout.tsx": "3de4c348e6ea22528e636b167b22e70e784e5d0e",
+            "pages/Forms.tsx": "fcf8a65045b34696f8e71e763035a635ba5d8136",
+            "pages/Health.tsx": "14d4e8f9ba7631c582192e54571f24c736032b70",
+            "pages/Household.tsx": "88ae15a33928972fc5e0bcce0926f61185035ec9",
+            "pages/Households.tsx": "b58eaaeac0ec1ca359207036542512017baf9c68",
+            "pages/Overview.tsx": "7c226c95758cbabfe310000745748fb9582b1112",
+            "pages/Places.tsx": "0140d2e6242f094fe0f48bccc587b4423946e100",
+            "pages/Playground.tsx": "6a5f96a0e5efde2e591089bf5ebd65c568b42e57",
+            "pages/Receipt.tsx": "69c7490baa65b5a206b13d98fd677e25e8dc554c",
+            "pages/Responses.tsx": "41de0424d910323fb8a5354557d2f3a5e9aabb46",
+            "pages/Server.tsx": "abdffa6f3daa9ca42236a832fa769deaa7c5e0f5",
+            "themes.ts": "1a16306de81da16b7e25220b18735d9c6d6db845",
+            "ui.tsx": "77781b195784c9bd3207063fb0ccd644c6356442"
+        }
+    },
+    "parts": {
+        "@winterop-com/sokkel-ui-maps/BoundaryLayer": null,
+        "@winterop-com/sokkel-ui-maps/MapLegend": "sokkel-egui-maps MapLegend",
+        "@winterop-com/sokkel-ui-maps/MapView": "sokkel-egui-maps MapView (markers chosen by pressing them)",
+        "@winterop-com/sokkel-ui-maps/PointLayer": "sokkel-egui-maps Marker (points alone)",
+        "@winterop-com/sokkel-ui-maps/geometry": "MapView::frame (bounds as [west, south, east, north])",
+        "@winterop-com/sokkel-ui-maps/scale": "sokkel-egui-maps MapLegend rows (the categories and their counts)",
+        "@winterop-com/sokkel-ui/AccountMenu": "AccountMenu",
+        "@winterop-com/sokkel-ui/ApiLink": null,
+        "@winterop-com/sokkel-ui/ApiPlayground": null,
+        "@winterop-com/sokkel-ui/Banner": "Banner",
+        "@winterop-com/sokkel-ui/BarList": "BarList",
+        "@winterop-com/sokkel-ui/CommandPalette": "CommandPalette",
+        "@winterop-com/sokkel-ui/ComputedField": null,
+        "@winterop-com/sokkel-ui/DataTable": "DataTable",
+        "@winterop-com/sokkel-ui/DateField": null,
+        "@winterop-com/sokkel-ui/DescriptionList": "DescriptionList",
+        "@winterop-com/sokkel-ui/DetailSheet": null,
+        "@winterop-com/sokkel-ui/DialogShell": "ConfirmDialog, Dialog",
+        "@winterop-com/sokkel-ui/Dot": "Cell::Marked (a row name after its dot)",
+        "@winterop-com/sokkel-ui/ErrorBoundary": null,
+        "@winterop-com/sokkel-ui/Field": "field (a label and a hint over a control)",
+        "@winterop-com/sokkel-ui/FilterChip": null,
+        "@winterop-com/sokkel-ui/FormBar": "form_bar",
+        "@winterop-com/sokkel-ui/Inspector": null,
+        "@winterop-com/sokkel-ui/IssueMark": "DateTimeFieldResponse::issue (the web takes only the Issue type, for the fields' issues)",
+        "@winterop-com/sokkel-ui/ItemCard": null,
+        "@winterop-com/sokkel-ui/Layout": "egui layout",
+        "@winterop-com/sokkel-ui/NotFound": null,
+        "@winterop-com/sokkel-ui/NumberField": "NumberField",
+        "@winterop-com/sokkel-ui/PageHeader": "PageHeader",
+        "@winterop-com/sokkel-ui/PageState": "PageState",
+        "@winterop-com/sokkel-ui/PeriodPicker": null,
+        "@winterop-com/sokkel-ui/Rail": "Rail",
+        "@winterop-com/sokkel-ui/RepeatedGroup": null,
+        "@winterop-com/sokkel-ui/SearchField": "SearchField",
+        "@winterop-com/sokkel-ui/Section": "Section",
+        "@winterop-com/sokkel-ui/Segmented": "Segmented",
+        "@winterop-com/sokkel-ui/ServerMenu": null,
+        "@winterop-com/sokkel-ui/SettingsDialog": "SettingsDialog",
+        "@winterop-com/sokkel-ui/Shell": "Shell",
+        "@winterop-com/sokkel-ui/ShortcutsDialog": null,
+        "@winterop-com/sokkel-ui/Sortable": null,
+        "@winterop-com/sokkel-ui/SourceSheet": null,
+        "@winterop-com/sokkel-ui/Stat": "Stat, KpiRow, sparkline",
+        "@winterop-com/sokkel-ui/StatusChip": "Chip with ChipTone::Status",
+        "@winterop-com/sokkel-ui/StatusLine": "StatusLine",
+        "@winterop-com/sokkel-ui/StatusProvider": "none needed: the app maps its states to tokens itself (live::Health::color, state_tone)",
+        "@winterop-com/sokkel-ui/SubNav": null,
+        "@winterop-com/sokkel-ui/TagChips": "Cell::Tags",
+        "@winterop-com/sokkel-ui/TextField": "TextField",
+        "@winterop-com/sokkel-ui/TextLink": null,
+        "@winterop-com/sokkel-ui/ThemePicker": "theme_settings, ThemeWords",
+        "@winterop-com/sokkel-ui/TimeField": null,
+        "@winterop-com/sokkel-ui/Timeline": "Timeline",
+        "@winterop-com/sokkel-ui/Toolbar": "toolbar",
+        "@winterop-com/sokkel-ui/TopBar": "TopBar",
+        "@winterop-com/sokkel-ui/Tree": null,
+        "@winterop-com/sokkel-ui/TreeSelect": null,
+        "@winterop-com/sokkel-ui/Unfoldable": null,
+        "@winterop-com/sokkel-ui/YesNoField": null,
+        "@winterop-com/sokkel-ui/hooks/use-overlay-route": "app state (egui has no URL)",
+        "@winterop-com/sokkel-ui/hooks/use-repeated": null,
+        "@winterop-com/sokkel-ui/hooks/use-stored": null,
+        "@winterop-com/sokkel-ui/lib/appearance": "Appearance, Motion, swatch",
+        "@winterop-com/sokkel-ui/lib/commands": "CommandGroup, place_commands, appearance_commands",
+        "@winterop-com/sokkel-ui/lib/kind": null,
+        "@winterop-com/sokkel-ui/lib/periods": null,
+        "@winterop-com/sokkel-ui/lib/reorder": "DataTable::reorder (TableOutput::reordered)",
+        "@winterop-com/sokkel-ui/lib/search": null,
+        "@winterop-com/sokkel-ui/lib/status": "ChipTone::Status and the status-* tokens (no StatusMap yet)",
+        "@winterop-com/sokkel-ui/primitives/badge": null,
+        "@winterop-com/sokkel-ui/primitives/button": "Button",
+        "@winterop-com/sokkel-ui/primitives/dropdown-menu": "DropdownMenu, MenuItem",
+        "@winterop-com/sokkel-ui/primitives/input": "Input",
+        "@winterop-com/sokkel-ui/primitives/native-select": null,
+        "@winterop-com/sokkel-ui/primitives/switch": "Switch",
+        "@winterop-com/sokkel-ui/primitives/toast": "Toast, Toaster",
+        "@winterop-com/sokkel-ui/primitives/toggle": null,
+        "@winterop-com/sokkel-ui/primitives/tooltip": "tooltip",
+        "@winterop-com/sokkel-ui/table-editing": "Column::editable, Editor, TableOutput::edited (table_edit), Calendar"
+    },
+    "screens": [
+        {
+            "name": "records_overview",
+            "route": "",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "records_forms",
+            "route": "forms",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "records_form",
+            "route": "forms/FRM-MONTH",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "records_form_site",
+            "route": "forms/FRM-SITE",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "records_form_layout",
+            "route": "forms/FRM-MONTH/layout",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "records_responses",
+            "route": "responses",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "records_households",
+            "route": "people",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "records_household",
+            "route": "people/household-1",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "records_places",
+            "route": "places",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "records_server",
+            "route": "server",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "records_health",
+            "route": "health",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "records_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "8eb137fa7f8b96e427ab621f7225ab1f72831495"
+}

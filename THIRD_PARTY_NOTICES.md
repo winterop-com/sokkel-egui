@@ -10,3 +10,5 @@
 - The basemap previews in `crates/maps/assets/previews/`, as sokkel-ui-maps ships them: the light
   and dark street maps from OpenFreeMap (© OpenMapTiles, © OpenStreetMap contributors, under the
   Open Database License), and the satellite from NASA's Blue Marble (public domain).
+- The regions and sites in `examples/records/data/` (`regions.json`, `places.json`), carried as
+  sokkel-ui's examples ship them in `examples/shared/geo/`.

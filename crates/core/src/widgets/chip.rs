@@ -15,6 +15,9 @@ pub enum ChipTone {
     /// A status token's wash and ink: `Status("waiting")` draws `status-waiting` behind
     /// `status-waiting-ink`, as sokkel-ui's `StatusChip` colors a state.
     Status(&'static str),
+    /// A categorical kind token, as sokkel-ui's `KIND_CHIP`: `Kind("teal")` draws `kind-teal` at
+    /// 12% behind `kind-teal-ink`, edged in `kind-teal` at 30%.
+    Kind(&'static str),
 }
 
 /// A short label in a line of text or a table cell, 20 tall: the tone's color at 15% behind its ink.
@@ -79,8 +82,15 @@ fn colors(t: &Tokens, tone: ChipTone, selected: bool) -> (Color32, Color32, Colo
         ChipTone::Warning => ("warning", 0.15, 0.3, "warning-ink"),
         ChipTone::Info => ("info", 0.15, 0.3, "info-ink"),
         ChipTone::Outline => ("faint", 0.0, 0.25, "foreground"),
-        ChipTone::Status(_) => ("", 0.15, 0.3, ""),
+        ChipTone::Status(_) | ChipTone::Kind(_) => ("", 0.15, 0.3, ""),
     };
+    if let ChipTone::Kind(key) = tone {
+        let kind = format!("kind-{key}");
+        let ink = t.color(&format!("{kind}-ink"));
+        let fill = t.color_at(&kind, if selected { 0.3 } else { 0.12 });
+        let edge = if selected { ink } else { t.color_at(&kind, 0.3) };
+        return (fill, ink, edge);
+    }
     let (ink, fill) = if let ChipTone::Status(key) = tone {
         let wash = format!("status-{key}");
         (

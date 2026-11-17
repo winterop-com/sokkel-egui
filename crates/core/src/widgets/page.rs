@@ -205,7 +205,9 @@ impl PageHeader {
                 }
                 if let Some(description) = &self.description {
                     ui.add_space(4.0);
-                    ui.set_max_width(640.0);
+                    // `max-w-prose`: 65 widths of "0" in the body's type
+                    let zero = ui.fonts_mut(|f| f.glyph_width(&TextRole::Body.font(&t), '0'));
+                    ui.set_max_width(65.0 * zero);
                     ui.label(TextRole::Body.rich(&t, description).color(t.color("muted-foreground")));
                 }
                 if !self.chips.is_empty() || self.meta.is_some() {

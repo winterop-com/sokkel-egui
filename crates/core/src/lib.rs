@@ -14,6 +14,7 @@ use egui::{
 mod day;
 mod download;
 pub mod icons;
+pub mod periods;
 pub mod text;
 pub mod tokens;
 mod widgets;

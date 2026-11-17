@@ -19,6 +19,7 @@ mod filters;
 mod frame;
 mod info;
 mod inline_edit;
+mod item_card;
 mod layout;
 mod list_row;
 mod log_view;
@@ -31,6 +32,7 @@ mod page;
 mod panel_menu;
 mod person;
 mod section;
+mod server_menu;
 mod settings;
 mod stat;
 mod stat_panel;
@@ -83,6 +85,7 @@ pub use frame::{
 };
 pub use info::info_tip;
 pub use inline_edit::{InlineEdit, InlineEditLook, InlineEditWords};
+pub use item_card::{CardFact, ItemCard, SortableGrid, SortableOutcome};
 pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
 pub use list_row::{ListRow, ListRows, RowAside, RowMark};
 pub use log_view::{LogLevel, LogLine, LogView, LogViewWords};
@@ -97,11 +100,12 @@ pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, P
 pub use panel_menu::{PanelAsked, PanelMenu, PanelWindow, PanelWords, body_drawn, panel_away, quiet_tools, windowed};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
 pub use section::{DescriptionList, PersonRow, Section, Timeline, TimelineEvent};
+pub use server_menu::{ServerMenu, ServerMenuResponse, ServerMenuWords, ServerState};
 pub use settings::{
     SettingRow, SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, ThemeWords, setting_row,
     setting_row_below, setting_row_found_by, theme_settings,
 };
-pub use stat::{KpiRow, Stat, sparkline};
+pub use stat::{KpiRow, Stat, StatTiles, sparkline};
 pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_compact, format_value, threshold_color};
 pub use switch::Switch;
 pub use table::{

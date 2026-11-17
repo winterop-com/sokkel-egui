@@ -15,6 +15,7 @@ pub struct Section<'a> {
     meta: Option<String>,
     description: Option<String>,
     flush: bool,
+    flat: bool,
     actions: Option<Tools<'a>>,
 }
 
@@ -25,8 +26,16 @@ impl<'a> Section<'a> {
             meta: None,
             description: None,
             flush: false,
+            flat: false,
             actions: None,
         }
+    }
+
+    /// A heading over a rule with the body on the page's own ground, as the web's
+    /// `variant="flat"`: the title in the section title's type, the body `section-gap` under it.
+    pub fn flat(mut self, flat: bool) -> Self {
+        self.flat = flat;
+        self
     }
 
     /// Controls at the head's end, such as a state's chip.
@@ -54,6 +63,9 @@ impl<'a> Section<'a> {
     }
 
     pub fn show<R>(self, ui: &mut Ui, body: impl FnOnce(&mut Ui) -> R) -> R {
+        if self.flat {
+            return self.show_flat(ui, body);
+        }
         let t = tokens(ui.ctx());
         let width = ui.available_width();
         let pad = t.density("panel-pad");
@@ -153,6 +165,81 @@ impl<'a> Section<'a> {
                     .inner
             })
             .inner
+    }
+}
+
+impl Section<'_> {
+    fn show_flat<R>(self, ui: &mut Ui, body: impl FnOnce(&mut Ui) -> R) -> R {
+        let t = tokens(ui.ctx());
+        let width = ui.available_width();
+        ui.vertical(|ui| {
+            ui.set_width(width);
+            ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+            let title = WidgetText::from(TextRole::SectionTitle.rich(&t, &self.title)).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                width.max(1.0),
+                TextRole::SectionTitle.font(&t),
+            );
+            let meta = self.meta.as_ref().map(|m| {
+                WidgetText::from(TextRole::Help.rich(&t, m)).into_galley(
+                    ui,
+                    Some(TextWrapMode::Truncate),
+                    width.max(1.0),
+                    TextRole::Help.font(&t),
+                )
+            });
+            let description = self.description.as_ref().map(|d| {
+                WidgetText::from(TextRole::Help.rich(&t, d)).into_galley(
+                    ui,
+                    Some(TextWrapMode::Wrap),
+                    width.max(1.0),
+                    TextRole::Help.font(&t),
+                )
+            });
+            // the head: at least panel-head tall, 8 over and under a described one, its rule under it
+            let line = title.size().y.max(20.0);
+            let block = line + description.as_ref().map_or(0.0, |d| d.size().y);
+            let height = match &description {
+                Some(_) => block + 16.0,
+                None => (block + 8.0).max(t.density("panel-head")),
+            };
+            let (head, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
+            ui.painter()
+                .hline(head.x_range(), head.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
+            let top = head.top() + (height - block) / 2.0;
+            let title_width = title.size().x;
+            ui.painter().galley(
+                pos2(head.left(), top + line / 2.0 - title.size().y / 2.0),
+                title,
+                t.color("section-head-ink"),
+            );
+            if let Some(meta) = meta {
+                ui.painter().galley(
+                    pos2(head.left() + title_width + 8.0, top + line / 2.0 - meta.size().y / 2.0),
+                    meta,
+                    t.color("muted-foreground"),
+                );
+            }
+            if let Some(description) = description {
+                ui.painter()
+                    .galley(pos2(head.left(), top + line), description, t.color("muted-foreground"));
+            }
+            if let Some(actions) = self.actions {
+                let end = Rect::from_min_max(pos2(head.left(), head.top()), pos2(head.right(), head.bottom()));
+                let mut tools = ui.new_child(
+                    egui::UiBuilder::new()
+                        .id_salt("section-actions")
+                        .max_rect(end)
+                        .layout(egui::Layout::right_to_left(egui::Align::Center)),
+                );
+                tools.spacing_mut().item_spacing.x = 4.0;
+                actions(&mut tools);
+            }
+            ui.add_space(t.density("section-gap"));
+            body(ui)
+        })
+        .inner
     }
 }
 
@@ -366,6 +453,8 @@ pub struct DescriptionList<'a> {
     items: Vec<(String, Tools<'a>)>,
     /// Each term beside its value in a column this wide, as the web's `termWidth`.
     side: Option<f32>,
+    /// Stacked pairs two to a row, 24 apart, as the web's `columns={2}`.
+    two: bool,
 }
 
 impl<'a> Default for DescriptionList<'a> {
@@ -379,6 +468,7 @@ impl<'a> DescriptionList<'a> {
         Self {
             items: Vec::new(),
             side: None,
+            two: false,
         }
     }
 
@@ -414,8 +504,44 @@ impl<'a> DescriptionList<'a> {
         self
     }
 
+    /// The stacked pairs two to a row, 24 apart, as the web's `columns={2}`.
+    pub fn columns(mut self, columns: usize) -> Self {
+        self.two = columns >= 2;
+        self
+    }
+
     pub fn show(self, ui: &mut Ui) {
         let t = tokens(ui.ctx());
+        if self.two && self.side.is_none() {
+            let width = ui.available_width();
+            let column = (width - 24.0) / 2.0;
+            let mut items = self.items.into_iter();
+            ui.vertical(|ui| {
+                ui.spacing_mut().item_spacing.y = 8.0;
+                loop {
+                    let pair: Vec<_> = items.by_ref().take(2).collect();
+                    if pair.is_empty() {
+                        break;
+                    }
+                    ui.horizontal_top(|ui| {
+                        ui.spacing_mut().item_spacing.x = 24.0;
+                        for (term, value) in pair {
+                            ui.allocate_ui_with_layout(
+                                egui::vec2(column, 0.0),
+                                egui::Layout::top_down(egui::Align::Min),
+                                |ui| {
+                                    ui.set_width(column);
+                                    ui.spacing_mut().item_spacing.y = 2.0;
+                                    ui.label(TextRole::Help.rich(&t, term).color(t.color("muted-foreground")));
+                                    value(ui);
+                                },
+                            );
+                        }
+                    });
+                }
+            });
+            return;
+        }
         if let Some(width) = self.side {
             // each row as tall as its value, the term level with the value's middle, 8 between rows
             ui.vertical(|ui| {
