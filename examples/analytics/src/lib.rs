@@ -12,6 +12,7 @@ pub mod invoices;
 pub mod metrics;
 pub mod model;
 pub mod overview;
+pub mod palette;
 pub mod panels;
 pub mod reports;
 pub mod revenue;

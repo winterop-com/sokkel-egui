@@ -312,17 +312,7 @@ impl AnalyticsApp {
         let today = Day(day_of(self.world.now) as i32);
         let rate = self.prefs.currency.rate();
         if new {
-            self.goals.editing = Some(Draft {
-                of: None,
-                name: String::new(),
-                metric: 0,
-                target: 0.0,
-                plan: 0,
-                region: 0,
-                start: Some(today),
-                due: Some(Day(today.0 + 90)),
-                tried: false,
-            });
+            self.open_new_goal();
         }
         match asked.into_inner() {
             Some((id, true)) => {
@@ -353,6 +343,22 @@ impl AnalyticsApp {
         }
         self.goal_dialog(ui.ctx(), today);
         self.goal_delete(ui.ctx());
+    }
+
+    /// The dialog for a new goal: MRR, from today, due in 90 days.
+    pub fn open_new_goal(&mut self) {
+        let today = Day(day_of(self.world.now) as i32);
+        self.goals.editing = Some(Draft {
+            of: None,
+            name: String::new(),
+            metric: 0,
+            target: 0.0,
+            plan: 0,
+            region: 0,
+            start: Some(today),
+            due: Some(Day(today.0 + 90)),
+            tried: false,
+        });
     }
 
     /// Sets a goal up, or changes one: what it counts, for which segment, the target and its days.

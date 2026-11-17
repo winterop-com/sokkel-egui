@@ -94,6 +94,8 @@ pub struct AnalyticsApp {
     pub stream: Stream,
     pub prefs: Prefs,
     pub view: View,
+    /// The search palette while it is open: what is typed and the command lit.
+    pub palette: Option<(String, usize)>,
     /// The settings over the page.
     pub settings: bool,
     /// The section the settings show.
@@ -179,6 +181,7 @@ impl AnalyticsApp {
             kept,
             world,
             rebuild_at: None,
+            palette: None,
             settings: false,
             settings_section: String::new(),
             resetting: false,
@@ -525,7 +528,10 @@ impl AnalyticsApp {
                 self.go(if place == "overview" { "" } else { &place });
             }
         }
-        let _ = searched;
+        if searched {
+            self.palette = Some((String::new(), 0));
+        }
+        self.search_palette(&ui.ctx().clone(), &groups);
         for (toast, open) in self.said.drain(..) {
             let id = toast.show(ui.ctx());
             if let Some(open) = open {

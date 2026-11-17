@@ -90,6 +90,11 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
   defaults puts back the shown section's settings alone. An inline edit in a row is as wide as its
   value, as the web's `w-full` in an `auto` column. Open: the search field's placeholder sits
   about 3 px higher than the web's.
+- The palette: the rail's places, what was saved (invoice views, funnels, reports), New funnel,
+  report and goal, the ranges, comparing and the live stream, the look and the demo's reset, as the
+  web's groups; from two letters typed, the teams whose name holds them, paying most first, each
+  with its plan and country under it (`MenuItem::detail`) and what it pays at its end, opened on
+  its page. Open: the web lists the teams' total found; egui lists the eight alone.
 - Open: a value chosen in place stands 10 further in than the values around it, where the web
   lines it up with them.
 - Open: the web map keeps clear of its legend as it frames the points; the egui map frames them
@@ -100,4 +105,3 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
 
 ## Next
 
-- The palette.

@@ -128,7 +128,7 @@ impl AnalyticsApp {
     }
 
     /// Sets the listing to a saved view's setup.
-    fn apply_view(&mut self, id: &str) {
+    pub fn apply_view(&mut self, id: &str) {
         let Some(view) = self.invoices.views.iter().find(|v| v.id == id).cloned() else {
             return;
         };
