@@ -74,7 +74,7 @@ pub fn host_name(id: &str) -> String {
 }
 
 /// The labels a series can carry, in the web's order.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Label {
     Service,
     Host,
@@ -120,7 +120,7 @@ impl SeriesLabels {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum MetricId {
     Requests,
     Errors,
@@ -134,7 +134,7 @@ pub enum MetricId {
 }
 
 /// How the series of a group combine into one value.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Aggregation {
     Sum,
     Avg,

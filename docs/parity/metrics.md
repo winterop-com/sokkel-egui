@@ -71,6 +71,11 @@ manifest is `parity/metrics.json`; the web's screens are shot into `parity/metri
   panels (a stat tile brought into view, any other opened in its window), the actions (New
   dashboard, Add panel, Refresh now, pausing the refresh, New alert rule), the look, and resetting
   the demo.
+- What the web's backend keeps in the browser's storage, the app keeps in eframe's: the
+  dashboards and their panels, the rules and what they fired, and the preferences, with the look,
+  the place shown and the source's clock, which runs on from where it stopped. A token or preset
+  the app no longer knows reads back as its default, and a place since deleted opens the first
+  dashboard (`src/kept.rs`, `tests/kept.rs`).
 - Open: Download CSV saves without a dialog asking where (a native save dialog needs a crate such
   as `rfd`); a stat tile in the preview keeps its own height where the web's stands 224.
 - Open: the Services overview's request chart labels its axis every 90 seconds on the web where a

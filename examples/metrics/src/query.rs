@@ -268,7 +268,7 @@ pub fn read_now(query: &Query, second: f64) -> Option<f64> {
 }
 
 /// How a series over the range is read as one value.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Reduce {
     Last,
     Mean,

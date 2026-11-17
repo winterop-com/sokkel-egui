@@ -10,13 +10,13 @@ use crate::query::{Query, read_now};
 use crate::source::{Aggregation, Label, MetricId, metric_of};
 
 /// Which way a rule's value crosses its threshold.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Condition {
     Above,
     Below,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Severity {
     Warning,
     Critical,
@@ -32,7 +32,7 @@ impl Severity {
 }
 
 /// An alert rule: a metric's value against a threshold, held for a while before it fires.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct AlertRule {
     pub id: String,
     pub name: String,
@@ -48,7 +48,7 @@ pub struct AlertRule {
 }
 
 /// A rule that fired: when, at what value, and when it resolved, if it has.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct AlertEvent {
     pub id: String,
     pub rule: String,
@@ -330,6 +330,32 @@ impl Alerting {
         };
         alerting.evaluate(now, true, false, 24.0 * 3600.0);
         alerting
+    }
+
+    /// Rules and events kept from an earlier run, ids counting on from `made`, evaluated at `now`
+    /// without a word: what was firing when the app closed is still open.
+    pub fn restored(
+        rules: Vec<AlertRule>,
+        events: Vec<AlertEvent>,
+        made: u32,
+        now: f64,
+        evaluate: bool,
+        keep: f64,
+    ) -> Self {
+        let mut alerting = Self {
+            rules,
+            events,
+            readings: HashMap::new(),
+            since: HashMap::new(),
+            made,
+        };
+        alerting.evaluate(now, evaluate, false, keep);
+        alerting
+    }
+
+    /// How many ids have been made, to count on from in the next run.
+    pub fn made(&self) -> u32 {
+        self.made
     }
 
     /// A fresh id for a rule or an event.

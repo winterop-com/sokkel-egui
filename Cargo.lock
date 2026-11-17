@@ -2586,6 +2586,7 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui_kittest",
+ "serde",
  "sokkel-egui",
  "sokkel-egui-charts",
  "time",

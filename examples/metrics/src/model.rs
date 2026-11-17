@@ -7,7 +7,7 @@ use crate::query::Reduce;
 use crate::source::{Aggregation, Label, MetricId};
 
 /// How a panel draws its query.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum PanelKind {
     TimeSeries,
     Stat,
@@ -31,7 +31,7 @@ pub const KINDS: [(PanelKind, &str); 8] = [
 ];
 
 /// A time series' fill under its lines.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Fill {
     None,
     Gradient,
@@ -39,7 +39,7 @@ pub enum Fill {
 }
 
 /// Where a stat tile shows its threshold color.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum ColorMode {
     Value,
     Background,
@@ -47,7 +47,7 @@ pub enum ColorMode {
 }
 
 /// One panel, every field the web's `Panel` has.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Panel {
     pub id: String,
     pub title: String,
@@ -62,9 +62,12 @@ pub struct Panel {
     pub unit: Option<String>,
     /// Decimals; the metric's own when `None`.
     pub decimals: Option<usize>,
+    #[serde(with = "crate::kept::thresholds")]
     pub thresholds: Vec<Threshold>,
     /// The color token of a single series, a tile or a dial with no thresholds.
-    pub color: &'static str,
+    #[serde(with = "crate::kept::color")]
+    pub color: crate::kept::Name,
+    #[serde(with = "crate::kept::SpanDef")]
     pub span: PanelSpan,
     pub fill: Fill,
     pub stacked: bool,
@@ -162,7 +165,7 @@ impl Panel {
 }
 
 /// A dashboard: its id, title, what it shows and its panels in order.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Dashboard {
     pub id: String,
     pub title: String,

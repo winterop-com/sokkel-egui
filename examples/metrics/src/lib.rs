@@ -7,6 +7,7 @@ pub mod app;
 pub mod board;
 pub mod dashboards;
 pub mod editor;
+pub mod kept;
 pub mod model;
 pub mod palette;
 pub mod panel_data;

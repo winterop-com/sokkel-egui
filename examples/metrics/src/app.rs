@@ -23,7 +23,7 @@ use crate::source::Variables;
 pub const DEMO_NOW: f64 = 1_794_992_405.0;
 
 /// Where the times on the axes, the logs and the alerts are read.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Zone {
     /// The computer's own zone.
     #[default]
@@ -32,10 +32,11 @@ pub enum Zone {
 }
 
 /// The app's preferences, as the web's `Preferences`.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Preferences {
     /// The range a dashboard opens on until the reader picks one, by its preset's id.
-    pub range: &'static str,
+    #[serde(with = "crate::kept::preset")]
+    pub range: crate::kept::Name,
     /// The refresh a dashboard opens on until the reader picks one, in seconds.
     pub refresh: u32,
     pub zone: Zone,
@@ -127,8 +128,12 @@ pub struct MetricsApp {
 
 impl MetricsApp {
     /// The app in its window, its times read `local_offset` seconds from UTC, the computer's zone.
-    pub fn new(_cc: &eframe::CreationContext<'_>, local_offset: f64) -> Self {
+    /// What an earlier run kept comes back, as the web's backend reads its collections again.
+    pub fn new(cc: &eframe::CreationContext<'_>, local_offset: f64) -> Self {
         let mut app = Self::on(Appearance::default());
+        if let Some(kept) = cc.storage.and_then(|s| eframe::get_value(s, crate::kept::KEY)) {
+            app.restore(kept);
+        }
         app.desktop = true;
         app.local_offset = local_offset;
         app
@@ -754,5 +759,9 @@ impl eframe::App for MetricsApp {
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE)
             .show(ui, |ui| self.show(ui));
+    }
+
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(storage, crate::kept::KEY, &self.kept());
     }
 }
