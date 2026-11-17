@@ -16,6 +16,7 @@ pub mod panels;
 pub mod reports;
 pub mod revenue;
 pub mod seed;
+pub mod settings;
 pub mod stream;
 pub mod view;
 pub mod world;

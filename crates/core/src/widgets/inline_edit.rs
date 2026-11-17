@@ -141,8 +141,13 @@ impl InlineEdit {
             } else {
                 8.0 + if title { 16.0 } else { 14.0 }
             };
+            // in a row that does not stretch its parts, as a setting's control, as wide as the
+            // value: the web's `w-full` in an `auto` column
+            let fits = title || (ui.layout().main_dir().is_horizontal() && !ui.layout().main_justify);
             let width = if title {
                 galley.size().x + pencil
+            } else if fits {
+                (galley.size().x + 2.0 * pad_x + pencil).min(ui.available_width())
             } else {
                 ui.available_width()
             };

@@ -96,6 +96,10 @@ pub struct AnalyticsApp {
     pub view: View,
     /// The settings over the page.
     pub settings: bool,
+    /// The section the settings show.
+    pub settings_section: String,
+    /// The question before the demo's data goes back.
+    pub resetting: bool,
     pub layouts: HashMap<BoardId, Vec<Placed>>,
     pub edit: DashboardEdit<Placed>,
     /// The feed's items read by their Open, beside those before `feed_seen`.
@@ -176,6 +180,8 @@ impl AnalyticsApp {
             world,
             rebuild_at: None,
             settings: false,
+            settings_section: String::new(),
+            resetting: false,
             layouts: HashMap::new(),
             edit: DashboardEdit::default(),
             read: Vec::new(),
@@ -316,6 +322,11 @@ impl AnalyticsApp {
     /// Goes to a page, unless a report has changes not saved: then it asks first, as the web's
     /// `useUnsavedChanges` holds a route.
     pub fn go(&mut self, path: &str) {
+        // the settings are a dialog over the page they were opened from, as the web's overlay route
+        if path.trim_matches('/') == "settings" {
+            self.settings = true;
+            return;
+        }
         let staying = self.view.path.join("/") == path.trim_matches('/');
         if !staying && self.report_changed() {
             self.leaving = Some(path.to_owned());
@@ -537,6 +548,7 @@ impl AnalyticsApp {
                 None => {}
             }
         }
+        self.settings_dialog(ui.ctx());
         Toaster::new().show(ui.ctx());
         match account {
             Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,

@@ -82,6 +82,14 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
   The dialog sets or changes one, its days in the new `DateField`; Delete asks first. Open: the
   web's target field starts empty and writes the currency's sign before the number, where egui's
   starts at 0 with the code after it.
+- Settings: the web's `SettingsDialog` over the page it was opened from (`go("settings")`, as the
+  web's overlay route): the workspace's name edited in place, the currency, the opening range and
+  comparing, which the view follows; the live stream's pace with the note of how many changes are
+  held (`SettingRow::note`, as the web's `SettingRow` note); the notes in the corner; the look; and
+  Reset demo data, which asks first and puts everything back as the demo started. Reset to
+  defaults puts back the shown section's settings alone. An inline edit in a row is as wide as its
+  value, as the web's `w-full` in an `auto` column. Open: the search field's placeholder sits
+  about 3 px higher than the web's.
 - Open: a value chosen in place stands 10 further in than the values around it, where the web
   lines it up with them.
 - Open: the web map keeps clear of its legend as it frames the points; the egui map frames them
@@ -92,4 +100,4 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
 
 ## Next
 
-- Settings and the palette.
+- The palette.

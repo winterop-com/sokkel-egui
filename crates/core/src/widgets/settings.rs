@@ -472,7 +472,7 @@ pub fn setting_row_found_by(
     keywords: &[&str],
     control: impl FnOnce(&mut Ui),
 ) {
-    setting_row_laid(ui, title, description, keywords, false, control);
+    setting_row_laid(ui, title, description, keywords, false, None, control);
 }
 
 /// A setting whose control stands under its words, 12 down at its own width, as sokkel-ui's
@@ -484,7 +484,59 @@ pub fn setting_row_below(
     keywords: &[&str],
     control: impl FnOnce(&mut Ui),
 ) {
-    setting_row_laid(ui, title, description, keywords, true, control);
+    setting_row_laid(ui, title, description, keywords, true, None, control);
+}
+
+/// One setting with all of sokkel-ui's `SettingRow` options: the words the search also finds it
+/// by, the control under the words, and a note across the row under both, for what the setting
+/// needs or changes elsewhere.
+pub struct SettingRow<'a> {
+    title: &'a str,
+    description: &'a str,
+    keywords: &'a [&'a str],
+    below: bool,
+    note: Option<String>,
+}
+
+impl<'a> SettingRow<'a> {
+    pub fn new(title: &'a str, description: &'a str) -> Self {
+        Self {
+            title,
+            description,
+            keywords: &[],
+            below: false,
+            note: None,
+        }
+    }
+
+    pub fn keywords(mut self, keywords: &'a [&'a str]) -> Self {
+        self.keywords = keywords;
+        self
+    }
+
+    /// The control under the words, as the web's `layout="below"`.
+    pub fn below(mut self) -> Self {
+        self.below = true;
+        self
+    }
+
+    /// Small muted words on a `muted` ground under the row, 8 down, as wide as they need.
+    pub fn note(mut self, note: impl Into<String>) -> Self {
+        self.note = Some(note.into());
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui, control: impl FnOnce(&mut Ui)) {
+        setting_row_laid(
+            ui,
+            self.title,
+            self.description,
+            self.keywords,
+            self.below,
+            self.note.as_deref(),
+            control,
+        );
+    }
 }
 
 fn setting_row_laid(
@@ -493,6 +545,7 @@ fn setting_row_laid(
     description: &str,
     keywords: &[&str],
     below: bool,
+    note: Option<&str>,
     control: impl FnOnce(&mut Ui),
 ) {
     let t = tokens(ui.ctx());
@@ -525,12 +578,44 @@ fn setting_row_laid(
         state.shown += 1;
         ui.ctx().data_mut(|d| d.insert_temp(rows_state_id(), state));
     }
+    let note_of = |ui: &mut Ui| {
+        if let Some(note) = note {
+            ui.add_space(8.0);
+            Frame::new()
+                .fill(t.color("muted"))
+                .corner_radius(t.radius("control"))
+                .inner_margin(Margin::symmetric(10, 6))
+                .show(ui, |ui| {
+                    ui.add(egui::Label::new(TextRole::Help.rich(&t, note).color(t.color("muted-foreground"))).wrap());
+                });
+        }
+    };
     Frame::new().inner_margin(Margin::symmetric(0, 16)).show(ui, |ui| {
         ui.set_width(ui.available_width());
+        ui.vertical(|ui| {
+            setting_row_body(ui, &t, title, description, below, control);
+            note_of(ui);
+        });
+    });
+    // outside the dialog, the rule under the row, a line of its own
+    if ruled_after {
+        rule(ui);
+    }
+}
+
+fn setting_row_body(
+    ui: &mut Ui,
+    t: &crate::Tokens,
+    title: &str,
+    description: &str,
+    below: bool,
+    control: impl FnOnce(&mut Ui),
+) {
+    {
         if below {
             ui.spacing_mut().item_spacing.y = 2.0;
-            ui.label(TextRole::Action.rich(&t, title).color(t.color("popover-foreground")));
-            ui.add(egui::Label::new(TextRole::Body.rich(&t, description).color(t.color("muted-foreground"))).wrap());
+            ui.label(TextRole::Action.rich(t, title).color(t.color("popover-foreground")));
+            ui.add(egui::Label::new(TextRole::Body.rich(t, description).color(t.color("muted-foreground"))).wrap());
             ui.add_space(10.0);
             // one line, as tall as the control
             ui.horizontal(control);
@@ -539,8 +624,8 @@ fn setting_row_laid(
         // narrower than 512, the control under the words, 12 down, a select across the row
         if ui.available_width() < 512.0 {
             ui.spacing_mut().item_spacing.y = 2.0;
-            ui.label(TextRole::Action.rich(&t, title).color(t.color("popover-foreground")));
-            ui.add(egui::Label::new(TextRole::Body.rich(&t, description).color(t.color("muted-foreground"))).wrap());
+            ui.label(TextRole::Action.rich(t, title).color(t.color("popover-foreground")));
+            ui.add(egui::Label::new(TextRole::Body.rich(t, description).color(t.color("muted-foreground"))).wrap());
             ui.add_space(10.0);
             ui.with_layout(
                 Layout::left_to_right(Align::Min)
@@ -556,16 +641,10 @@ fn setting_row_laid(
             ui.add_space(32.0);
             ui.with_layout(Layout::top_down(Align::Min), |ui| {
                 ui.spacing_mut().item_spacing.y = 2.0;
-                ui.label(TextRole::Action.rich(&t, title).color(t.color("popover-foreground")));
-                ui.add(
-                    egui::Label::new(TextRole::Body.rich(&t, description).color(t.color("muted-foreground"))).wrap(),
-                );
+                ui.label(TextRole::Action.rich(t, title).color(t.color("popover-foreground")));
+                ui.add(egui::Label::new(TextRole::Body.rich(t, description).color(t.color("muted-foreground"))).wrap());
             });
         });
-    });
-    // outside the dialog, the rule under the row, a line of its own
-    if ruled_after {
-        rule(ui);
     }
 }
 

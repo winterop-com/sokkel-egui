@@ -38,6 +38,7 @@ fn every_screen() {
         ("analytics_reports", "reports", 900.0),
         ("analytics_report", "reports/monthly-board", 1100.0),
         ("analytics_goals", "goals", 900.0),
+        ("analytics_settings", "settings", 900.0),
     ] {
         let mut harness = render(path, height);
         results.add(harness.try_snapshot(name));
