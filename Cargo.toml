@@ -15,7 +15,7 @@ sokkel-egui-maps = { path = "crates/maps" }
 sokkel-egui-graph = { path = "crates/graph" }
 egui = "0.37.0"
 egui_extras = { version = "0.37.0", default-features = false, features = ["svg"] }
-lucide-icons = "0.575"
+lucide-icons = "1.73"
 walkers = { version = "0.65", features = ["mvt"] }
 eframe = { version = "0.37.0", features = ["persistence"] }
 egui_kittest = { version = "0.37.0", features = ["eframe", "snapshot", "wgpu"] }
