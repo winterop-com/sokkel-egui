@@ -55,6 +55,8 @@ pub struct RecordsApp {
     probed_at: i64,
     answered: Option<bool>,
     pub foot: Foot,
+    /// Each table's sort, widths and the row opened, by the table's name.
+    pub tables: std::collections::HashMap<String, sokkel_egui::TableState>,
     started: i64,
     started_at: Option<f64>,
     elapsed: i64,
@@ -91,6 +93,7 @@ impl RecordsApp {
             probed_at: now - PROBE,
             answered: Some(true),
             foot: Foot::default(),
+            tables: Default::default(),
             started: now,
             started_at: None,
             elapsed: 0,
@@ -265,6 +268,7 @@ impl RecordsApp {
             }
             ShellPart::Page => match (known.is_some(), first.as_str()) {
                 (true, "") => Page::scroll(ui, |ui| self.overview(ui)),
+                (true, "forms") if self.path.len() == 1 => Page::scroll(ui, |ui| self.forms_page(ui)),
                 _ => Page::scroll(ui, |ui| {
                     sokkel_egui::Empty::new("Not found")
                         .description("No page has this address.")

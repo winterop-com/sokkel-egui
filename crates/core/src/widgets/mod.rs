@@ -1,6 +1,7 @@
 //! The primitives, each drawn from the tokens alone, after sokkel-ui's components of the same name.
 
 mod activity;
+mod api_link;
 mod arrange;
 mod board;
 mod button;
@@ -49,6 +50,7 @@ mod variables;
 mod week;
 
 pub use activity::{ActivityItem, ActivityList, ActivityResponse, ActivityTone, ActivityWords, BarList, BarListItem};
+pub use api_link::{ApiLink, ApiLinkWords};
 pub use arrange::{
     ALL_SPANS, ArrangeItem, DashboardArrange, DashboardArrangeResponse, DashboardArrangeWords, DashboardEdit,
     DashboardEditActions, DashboardEditOutcome, DashboardEditWords, DashboardLayoutItem, DashboardWidget,

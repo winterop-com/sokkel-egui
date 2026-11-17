@@ -6,6 +6,7 @@ pub mod app;
 pub mod backend;
 pub mod days;
 pub mod forms;
+pub mod forms_page;
 pub mod geo;
 pub mod overview;
 pub mod ui;

@@ -137,6 +137,12 @@ pub enum Cell {
     Muted(String),
     /// Text in a token's ink, such as `critical-ink` for a fall: a change written in its tone.
     Toned(String, &'static str),
+    /// A name at medium weight over a line of small muted words, as a `Stack` of a `font-medium`
+    /// name and a `text-help` line; the rows want `row_height` to hold both.
+    Lines {
+        title: String,
+        detail: String,
+    },
     /// An id or a code, in the mono face.
     Mono(String),
     /// A state as a chip.
@@ -212,6 +218,7 @@ impl Cell {
             | Cell::Mono(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
+            Cell::Lines { title, .. } => title.clone(),
             Cell::Number { text, .. } | Cell::Marked { text, .. } | Cell::Swatch { text, .. } => text.clone(),
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
             Cell::Tags(tags) => tags.join(" "),
@@ -231,6 +238,7 @@ impl Cell {
             | Cell::Mono(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
+            Cell::Lines { title, .. } => title.clone(),
             Cell::Check(on) | Cell::Switch { on, .. } => u8::from(*on).to_string(),
             Cell::Button { .. } => String::new(),
             Cell::Clock { at, .. } => format!("{:024.3}", at + 1e18),
@@ -388,6 +396,8 @@ pub struct DataTable<'a> {
     state: &'a mut TableState,
     selectable: bool,
     variant: TableVariant,
+    row_height: Option<f32>,
+    chevron: bool,
     height: f32,
     words: TableWords,
     reorder: bool,
@@ -435,6 +445,8 @@ impl<'a> DataTable<'a> {
             selectable: false,
             variant: TableVariant::Table,
             height: 360.0,
+            row_height: None,
+            chevron: false,
             words: TableWords::default(),
             reorder: false,
             actions: None,
@@ -462,6 +474,19 @@ impl<'a> DataTable<'a> {
 
     pub fn variant(mut self, variant: TableVariant) -> Self {
         self.variant = variant;
+        self
+    }
+
+    /// A chevron at the end of every row, saying a press on it leaves the list for the row's
+    /// page: an end column 32 wide, as the web's `chevron`.
+    pub fn chevron(mut self, chevron: bool) -> Self {
+        self.chevron = chevron;
+        self
+    }
+
+    /// Every row this tall, for cells of two lines (`Cell::Lines`); the density's row by default.
+    pub fn row_height(mut self, height: f32) -> Self {
+        self.row_height = Some(height);
         self
     }
 
@@ -1370,7 +1395,7 @@ impl<'a> DataTable<'a> {
         if self.state.widths.len() != self.columns.len() {
             self.state.widths = self.columns.iter().map(|c| c.width).collect();
         }
-        let row_height = t.density("row");
+        let row_height = self.row_height.unwrap_or(t.density("row"));
         let head_height = match self.variant {
             TableVariant::Table => row_height,
             TableVariant::List => t.density("panel-head"),
@@ -1500,7 +1525,8 @@ impl<'a> DataTable<'a> {
                         Stroke::new(1.0, t.color_or("table-head-line", t.color("border"))),
                     );
                     let upper = t.word("table-head-transform") == Some("uppercase");
-                    let places = self.layout(head.left() + pad + select_width, head.right() - pad);
+                    let end = if self.chevron { 32.0 } else { 0.0 };
+                    let places = self.layout(head.left() + pad + select_width, head.right() - pad - end);
                     if self.selectable {
                         let all = !self.rows.is_empty() && self.state.selected.len() == self.rows.len();
                         let some = !self.state.selected.is_empty() && !all;
@@ -1750,7 +1776,17 @@ impl<'a> DataTable<'a> {
                                 out.edited = edited;
                             }
                         }
-                        let places = self.layout(rect.left() + pad + select_width, rect.right() - pad);
+                        let end = if self.chevron { 32.0 } else { 0.0 };
+                        if self.chevron && !stacked {
+                            icons::paint(
+                                ui.painter(),
+                                pos2(rect.right() - pad - 16.0, rect.center().y),
+                                Icon::ChevronRight,
+                                16.0,
+                                t.color("faint"),
+                            );
+                        }
+                        let places = self.layout(rect.left() + pad + select_width, rect.right() - pad - end);
                         for (c, column) in self.columns.iter().enumerate().filter(|_| !stacked) {
                             if self.state.hidden.contains(&c) {
                                 continue;
@@ -2154,6 +2190,23 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
         ),
         Cell::Muted(label) => text(ui, TextRole::Body.rich(t, label), t.color("muted-foreground")),
         Cell::Toned(label, ink) => text(ui, TextRole::Body.rich(t, label), t.color(ink)),
+        Cell::Lines { title, detail } => {
+            let lay = |ui: &mut Ui, rich: egui::RichText, role: TextRole| {
+                WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), room.max(1.0), role.font(t))
+            };
+            let top_line = lay(
+                ui,
+                TextRole::Body.rich(t, title).variation("wght", 500.0),
+                TextRole::Body,
+            );
+            let under = lay(ui, TextRole::Help.rich(t, detail), TextRole::Help);
+            let y = rect.center().y - (top_line.size().y + under.size().y) / 2.0;
+            let height = top_line.size().y;
+            ui.painter()
+                .galley(pos2(rect.left(), y), top_line, t.color("foreground"));
+            ui.painter()
+                .galley(pos2(rect.left(), y + height), under, t.color("muted-foreground"));
+        }
         Cell::Mono(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
             text(ui, rich, t.color("foreground"));
@@ -2359,6 +2412,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Relative { .. } => text(ui, TextRole::Help.rich(t, cell.draft()), quiet, at.x, room),
         Cell::Struck(label) => text(ui, TextRole::Help.rich(t, label).strikethrough(), quiet, at.x, room),
         Cell::Muted(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
+        Cell::Lines { title, .. } => text(ui, TextRole::Help.rich(t, title), quiet, at.x, room),
         Cell::Toned(label, ink) => text(ui, TextRole::Help.rich(t, label), t.color(ink), at.x, room),
         Cell::Mono(label) | Cell::Marked { text: label, .. } => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));

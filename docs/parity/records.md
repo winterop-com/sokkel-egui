@@ -25,4 +25,9 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   person's order, dragged into a new one (`SortableGrid`), and the server's facts in two columns
   (`DescriptionList::columns`). Flat sections (`Section::flat`) and kind chips (`ChipTone::Kind`)
   are new in the library too; a page header's description now wraps at the web's `max-w-prose`.
+- Forms: the periodic reports and single events as cards with their kind, questions and period,
+  and the program as a list of its forms, each a name over what it records (`Cell::Lines` in rows
+  of `row_height`) and a chevron at the row's end (`DataTable::chevron`); the request behind the
+  page as the web's `ApiLink` (new in the library: the method in its ink, the path, and a copy
+  button).
 - Open: the Playground waits for the code editor's spec, as `ApiPlayground` is built on it.
