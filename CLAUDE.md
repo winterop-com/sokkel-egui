@@ -65,4 +65,5 @@ its canvas alone (`Storybook::show_story`), so adding a story changes no other p
 `storybook_frame.png` shows the sidebar. A new story's first picture is recorded by
 `make snapshots` and looked at before it is kept. Commit each finished piece of work
 locally on main (the owner asked for one commit per iteration), staging named paths, conventional
-commits, no attribution lines. Never push: there is no remote.
+commits, no attribution lines. The remote is github.com/winterop-com/sokkel-egui (public, under
+`LICENSE`); push only when the owner asks.
