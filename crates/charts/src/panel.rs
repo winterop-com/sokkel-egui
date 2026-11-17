@@ -670,6 +670,11 @@ impl<'a> BarGauge<'a> {
 #[must_use = "draw it with `show`"]
 pub struct HeatmapPanel {
     title: String,
+    subtitle: Option<String>,
+    info: Option<String>,
+    empty: bool,
+    words: PanelWords,
+    height: f32,
     x: Vec<String>,
     y: Vec<String>,
     cells: Vec<(usize, usize, f64)>,
@@ -687,6 +692,11 @@ impl HeatmapPanel {
     ) -> Self {
         Self {
             title: title.into(),
+            subtitle: None,
+            info: None,
+            empty: false,
+            words: PanelWords::default(),
+            height: 192.0,
             x: x.into_iter().map(Into::into).collect(),
             y: y.into_iter().map(Into::into).collect(),
             cells: cells.into_iter().collect(),
@@ -694,6 +704,28 @@ impl HeatmapPanel {
             unit: String::new(),
             decimals: None,
         }
+    }
+
+    pub fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
+        self.subtitle = Some(subtitle.into());
+        self
+    }
+
+    /// What the panel shows, behind the Info mark beside its title.
+    pub fn info(mut self, info: impl Into<String>) -> Self {
+        self.info = Some(info.into());
+        self
+    }
+
+    pub fn empty(mut self, empty: bool) -> Self {
+        self.empty = empty;
+        self
+    }
+
+    /// The body's height, 192 when not given.
+    pub fn height(mut self, height: f32) -> Self {
+        self.height = height;
+        self
     }
 
     /// The scale's tokens: one to shade toward from the card, or several to step through.
@@ -751,9 +783,15 @@ impl HeatmapPanel {
             let one = format!("{v:.1}");
             format!("{}{}", one.trim_end_matches('0').trim_end_matches('.'), self.unit)
         };
-        chart_frame(ui, Head::new(&self.title), |ui| {
+        let head = Head {
+            subtitle: self.subtitle.as_deref(),
+            info: self.info.as_deref(),
+            empty: self.empty.then_some(self.words.empty.as_str()),
+            ..Head::new(&self.title)
+        };
+        chart_frame(ui, head, |ui| {
             let width = ui.available_width();
-            let height = fill_height(ui, 192.0);
+            let height = fill_height(ui, self.height);
             let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
             let painter = ui.painter();
             let label_width = self
@@ -1114,6 +1152,353 @@ impl FunnelPanel {
                 let writing = crate::Writing {
                     format: format.clone(),
                     ..Default::default()
+                };
+                crate::tooltip(response.clone(), t.clone(), name, rows, &writing);
+            }
+        });
+    }
+}
+
+/// A dashboard panel of a ring of slices, each category's share of the whole, as sokkel-ui's
+/// `ChartPanel` of the `donut` kind: the ring from 58% to 82% of the radius, the slices 1 degree
+/// apart and edged in the card, from the top clockwise, the total written in its middle over its
+/// word, and a legend under it. On a 256 tall body, as the web's `h-64`.
+#[must_use = "draw it with `show`"]
+pub struct DonutPanel {
+    title: String,
+    subtitle: Option<String>,
+    info: Option<String>,
+    empty: bool,
+    words: PanelWords,
+    slices: Vec<(String, f64, &'static str)>,
+    total: Option<String>,
+    format: Option<crate::Format>,
+    height: f32,
+}
+
+impl DonutPanel {
+    /// Each slice's name, value and color token.
+    pub fn new(title: impl Into<String>, slices: impl IntoIterator<Item = (String, f64, &'static str)>) -> Self {
+        Self {
+            title: title.into(),
+            subtitle: None,
+            info: None,
+            empty: false,
+            words: PanelWords::default(),
+            slices: slices.into_iter().collect(),
+            total: None,
+            format: None,
+            height: 256.0,
+        }
+    }
+
+    pub fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
+        self.subtitle = Some(subtitle.into());
+        self
+    }
+
+    pub fn info(mut self, info: impl Into<String>) -> Self {
+        self.info = Some(info.into());
+        self
+    }
+
+    pub fn empty(mut self, empty: bool) -> Self {
+        self.empty = empty;
+        self
+    }
+
+    /// The total written in the ring's middle, over this word.
+    pub fn total(mut self, word: impl Into<String>) -> Self {
+        self.total = Some(word.into());
+        self
+    }
+
+    pub fn format(mut self, format: impl Fn(f64) -> String + Send + Sync + 'static) -> Self {
+        self.format = Some(std::sync::Arc::new(format));
+        self
+    }
+
+    pub fn words(mut self, words: PanelWords) -> Self {
+        self.words = words;
+        self
+    }
+
+    pub fn height(mut self, height: f32) -> Self {
+        self.height = height;
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui) {
+        let head = Head {
+            subtitle: self.subtitle.as_deref(),
+            info: self.info.as_deref(),
+            empty: self.empty.then_some(self.words.empty.as_str()),
+            ..Head::new(&self.title)
+        };
+        let (slices, total_word, format, height) = (&self.slices, &self.total, self.format.clone(), self.height);
+        chart_frame(ui, head, |ui| {
+            let height = fill_height(ui, height);
+            let t = tokens(ui.ctx());
+            let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
+            let center = rect.center();
+            let radius = rect.width().min(rect.height()) / 2.0;
+            let (inner, outer) = (radius * 0.58, radius * 0.82);
+            let total: f64 = slices.iter().map(|s| s.1.max(0.0)).sum();
+            let written = |v: f64| match &format {
+                Some(f) => f(v),
+                None => sokkel_egui::format_value(v, None),
+            };
+            let painter = ui.painter();
+            let card = t.color("card");
+            let pad = 1f32.to_radians();
+            let mut start = -std::f32::consts::FRAC_PI_2;
+            let pointer = response.hover_pos();
+            let mut hovered = None;
+            for (index, (_, value, token)) in slices.iter().enumerate() {
+                if total <= 0.0 || *value <= 0.0 {
+                    continue;
+                }
+                let sweep = (*value / total) as f32 * std::f32::consts::TAU;
+                let (from, to) = (start + pad / 2.0, start + sweep - pad / 2.0);
+                start += sweep;
+                if to <= from {
+                    continue;
+                }
+                let steps = ((to - from) / 0.03).ceil().max(2.0) as usize;
+                let at = |r: f32, a: f32| pos2(center.x + r * a.cos(), center.y + r * a.sin());
+                let mut points: Vec<egui::Pos2> = (0..=steps)
+                    .map(|i| at(outer, from + (to - from) * i as f32 / steps as f32))
+                    .collect();
+                points.extend(
+                    (0..=steps)
+                        .rev()
+                        .map(|i| at(inner, from + (to - from) * i as f32 / steps as f32)),
+                );
+                let color = t.color(token);
+                let mut mesh = egui::Mesh::default();
+                for i in 0..=steps {
+                    let a = from + (to - from) * i as f32 / steps as f32;
+                    mesh.colored_vertex(at(outer, a), color);
+                    mesh.colored_vertex(at(inner, a), color);
+                }
+                for i in 0..steps as u32 {
+                    let k = i * 2;
+                    mesh.add_triangle(k, k + 1, k + 2);
+                    mesh.add_triangle(k + 1, k + 3, k + 2);
+                }
+                painter.add(egui::Shape::mesh(mesh));
+                painter.add(egui::Shape::closed_line(points, Stroke::new(2.0, card)));
+                if let Some(p) = pointer {
+                    let d = p.distance(center);
+                    let mut angle = (p.y - center.y).atan2(p.x - center.x);
+                    if angle < -std::f32::consts::FRAC_PI_2 {
+                        angle += std::f32::consts::TAU;
+                    }
+                    if d >= inner && d <= outer && angle >= from && angle <= to {
+                        hovered = Some((index, color));
+                    }
+                }
+            }
+            if let Some(word) = total_word {
+                let figure = WidgetText::from(
+                    TextRole::Statistic
+                        .rich(&t, written(total))
+                        .size(t.length("chart-stat-size"))
+                        .variation("wght", 600.0),
+                )
+                .into_galley(
+                    ui,
+                    Some(TextWrapMode::Extend),
+                    f32::INFINITY,
+                    TextRole::Statistic.font(&t),
+                );
+                let below = WidgetText::from(TextRole::Help.rich(&t, word)).into_galley(
+                    ui,
+                    Some(TextWrapMode::Extend),
+                    f32::INFINITY,
+                    TextRole::Help.font(&t),
+                );
+                let tall = figure.size().y + 2.0 + below.size().y;
+                let top = center.y - tall / 2.0;
+                let (fw, bw) = (figure.size().x, below.size().x);
+                painter.galley(pos2(center.x - fw / 2.0, top), figure, t.color("foreground"));
+                painter.galley(
+                    pos2(center.x - bw / 2.0, top + tall - below.size().y),
+                    below,
+                    t.color("muted-foreground"),
+                );
+            }
+            if let Some((index, color)) = hovered {
+                let (name, value, _) = &slices[index];
+                let share = if total == 0.0 { 0.0 } else { value / total * 100.0 };
+                let writing = crate::Writing {
+                    format: Some(std::sync::Arc::new({
+                        let format = format.clone();
+                        move |v: f64| {
+                            let text = match &format {
+                                Some(f) => f(v),
+                                None => sokkel_egui::format_value(v, None),
+                            };
+                            format!("{text} ({share:.1}%)")
+                        }
+                    })),
+                    ..Default::default()
+                };
+                crate::tooltip(
+                    response.clone(),
+                    t.clone(),
+                    "",
+                    vec![(color, name.clone(), Some(*value))],
+                    &writing,
+                );
+            }
+            let under = ui.min_rect().bottom();
+            ui.add_space(4.0);
+            let items: Vec<(&str, Color32)> = slices.iter().map(|(n, _, k)| (n.as_str(), t.color(k))).collect();
+            legend_of(ui, &items);
+            drawn_under(ui, under);
+        });
+    }
+}
+
+/// A dashboard panel of a running total, as sokkel-ui's `ChartPanel` of the `waterfall` kind: each
+/// step a bar rising or falling from where the one before ended, joined by a dotted line, and the
+/// total's bar at the end; rises in `good`, falls in `critical` and the total in `chart-2`. On a
+/// 256 tall body, as the web's `h-64`.
+#[must_use = "draw it with `show`"]
+pub struct WaterfallPanel {
+    title: String,
+    subtitle: Option<String>,
+    info: Option<String>,
+    empty: bool,
+    words: PanelWords,
+    steps: Vec<(String, f64)>,
+    total: String,
+    format: Option<crate::Format>,
+    height: f32,
+}
+
+impl WaterfallPanel {
+    pub fn new(title: impl Into<String>, steps: impl IntoIterator<Item = (String, f64)>) -> Self {
+        Self {
+            title: title.into(),
+            subtitle: None,
+            info: None,
+            empty: false,
+            words: PanelWords::default(),
+            steps: steps.into_iter().collect(),
+            total: "Total".into(),
+            format: None,
+            height: 256.0,
+        }
+    }
+
+    pub fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
+        self.subtitle = Some(subtitle.into());
+        self
+    }
+
+    pub fn info(mut self, info: impl Into<String>) -> Self {
+        self.info = Some(info.into());
+        self
+    }
+
+    pub fn empty(mut self, empty: bool) -> Self {
+        self.empty = empty;
+        self
+    }
+
+    /// The total's bar's name, `Total` when not given.
+    pub fn total(mut self, word: impl Into<String>) -> Self {
+        self.total = word.into();
+        self
+    }
+
+    pub fn format(mut self, format: impl Fn(f64) -> String + Send + Sync + 'static) -> Self {
+        self.format = Some(std::sync::Arc::new(format));
+        self
+    }
+
+    pub fn words(mut self, words: PanelWords) -> Self {
+        self.words = words;
+        self
+    }
+
+    pub fn height(mut self, height: f32) -> Self {
+        self.height = height;
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui) {
+        let head = Head {
+            subtitle: self.subtitle.as_deref(),
+            info: self.info.as_deref(),
+            empty: self.empty.then_some(self.words.empty.as_str()),
+            ..Head::new(&self.title)
+        };
+        let (steps, total_word, format, height) = (&self.steps, &self.total, self.format.clone(), self.height);
+        chart_frame(ui, head, |ui| {
+            let height = fill_height(ui, height);
+            let t = tokens(ui.ctx());
+            let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
+            // each bar from where the one before ended, then the total from 0
+            let mut bars: Vec<(String, f64, f64, f64)> = Vec::new();
+            let mut level = 0.0;
+            for (name, change) in steps {
+                bars.push((name.clone(), level, level + change, *change));
+                level += change;
+            }
+            bars.push((total_word.clone(), 0.0, level, level));
+            let names: Vec<String> = bars.iter().map(|b| b.0.clone()).collect();
+            let max = bars.iter().map(|b| b.1.max(b.2)).fold(0.0, f64::max);
+            let writing = crate::Writing {
+                format: format.clone(),
+                ..Default::default()
+            };
+            let axes = crate::Axes {
+                writing: writing.clone(),
+                ..Default::default()
+            };
+            let frame = crate::Frame::draw(ui, rect, &t, &names, max, &axes);
+            let band = frame.band(names.len());
+            let width = (band * 0.62).min(40.0);
+            let painter = ui.painter();
+            let last = bars.len() - 1;
+            let hovered = frame.hovered(&response, names.len());
+            for (index, (_, from, to, change)) in bars.iter().enumerate() {
+                let x = frame.x(index);
+                let top = frame.y(from.max(*to));
+                let bottom = frame.y(from.min(*to));
+                let token = if index == last {
+                    "chart-2"
+                } else if *change >= 0.0 {
+                    "good"
+                } else {
+                    "critical"
+                };
+                let bar =
+                    egui::Rect::from_min_max(pos2(x - width / 2.0, top), pos2(x + width / 2.0, bottom.max(top + 1.0)));
+                painter.rect_filled(bar, egui::CornerRadius::same(2), t.color(token));
+                if index < last {
+                    let y = frame.y(*to);
+                    painter.extend(egui::Shape::dashed_line(
+                        &[pos2(x + width / 2.0, y), pos2(x + band - width / 2.0, y)],
+                        Stroke::new(1.0, t.color("muted-foreground")),
+                        2.0,
+                        2.0,
+                    ));
+                }
+            }
+            if let Some(i) = hovered {
+                let (name, _, to, change) = &bars[i];
+                let rows = if i == last {
+                    vec![(t.color("chart-2"), total_word.clone(), Some(*to))]
+                } else {
+                    let token = if *change >= 0.0 { "good" } else { "critical" };
+                    vec![
+                        (t.color(token), "Change".to_owned(), Some(*change)),
+                        (t.color("muted-foreground"), total_word.clone(), Some(*to)),
+                    ]
                 };
                 crate::tooltip(response.clone(), t.clone(), name, rows, &writing);
             }

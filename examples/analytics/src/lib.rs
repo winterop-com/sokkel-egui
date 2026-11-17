@@ -7,6 +7,7 @@ pub mod metrics;
 pub mod model;
 pub mod overview;
 pub mod panels;
+pub mod revenue;
 pub mod seed;
 pub mod stream;
 pub mod view;

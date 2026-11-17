@@ -423,6 +423,7 @@ impl AnalyticsApp {
                     .search;
             }
             ShellPart::Page if page == "overview" => Page::scroll(ui, |ui| self.overview(ui)),
+            ShellPart::Page if page == "revenue" => Page::scroll(ui, |ui| self.revenue(ui)),
             ShellPart::Page => {}
             ShellPart::Foot => {
                 ui.add(

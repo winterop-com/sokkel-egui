@@ -7,7 +7,7 @@ use sokkel_egui::{
     ActivityItem, ActivityList, ActivityTone, ActivityWords, Button, ButtonSize, ButtonVariant, Cell, ChipTone, Column,
     DashboardPanel, DataTable, Icon, IconButton, PanelSpan, StatPanel, TableVariant,
 };
-use sokkel_egui_charts::{BarPanel, FunnelPanel, Series, TimeSeriesPanel};
+use sokkel_egui_charts::{BarPanel, DonutPanel, FunnelPanel, HeatmapPanel, Series, TimeSeriesPanel, WaterfallPanel};
 
 use crate::app::AnalyticsApp;
 use crate::metrics::{Figures, Kpis, SIGNUP_FUNNEL, TopCustomer};
@@ -167,7 +167,9 @@ impl AnalyticsApp {
             WidgetId::Customers => self.customers_panel(ui),
             WidgetId::Regions => self.regions_panel(ui),
             WidgetId::Countries => self.countries_panel(ui),
-            WidgetId::Plans | WidgetId::Movements | WidgetId::Cohorts => {}
+            WidgetId::Plans => self.plans_panel(ui),
+            WidgetId::Movements => self.movements_panel(ui),
+            WidgetId::Cohorts => self.cohorts_panel(ui),
             kpi => self.kpi_panel(ui, kpi),
         }
     }
@@ -640,6 +642,85 @@ impl AnalyticsApp {
                     }
                 }
             });
+    }
+
+    /// Paid revenue over the range, by plan, as a donut.
+    pub fn plans_panel(&mut self, ui: &mut Ui) {
+        let segment = self.segment();
+        let (span, _) = self.spans();
+        let figures = Figures::new(&self.world);
+        let slices: Vec<(String, f64, &'static str)> = [Plan::Team, Plan::Business]
+            .iter()
+            .map(|plan| {
+                let of = crate::metrics::Segment {
+                    plan: Some(*plan),
+                    ..segment
+                };
+                (
+                    plan.name().to_owned(),
+                    figures.revenue(of, span.from, span.to) as f64,
+                    plan.color(),
+                )
+            })
+            .collect();
+        let empty = slices.iter().all(|s| s.1 == 0.0);
+        let money = self.money();
+        DonutPanel::new("Revenue by plan", slices)
+            .subtitle(range_name(&self.view.range).to_lowercase())
+            .total("revenue")
+            .format(move |v| money.short(v))
+            .empty(empty)
+            .show(ui);
+    }
+
+    /// Where MRR went over the range: what new teams added, what teams paying more and less
+    /// changed, what teams leaving took, and the net change.
+    pub fn movements_panel(&mut self, ui: &mut Ui) {
+        let segment = self.segment();
+        let (span, _) = self.spans();
+        let figures = Figures::new(&self.world);
+        let flow = figures.flows(segment, span.from, span.to);
+        let start = figures.levels(segment, &[span.from]).mrr[0] as f64;
+        let steps = vec![
+            ("New".to_owned(), flow.new_mrr as f64),
+            ("Expansion".to_owned(), flow.expansion as f64),
+            ("Contraction".to_owned(), -(flow.contraction as f64)),
+            ("Churn".to_owned(), -(flow.churn_mrr as f64)),
+        ];
+        let net: f64 = steps.iter().map(|s| s.1).sum();
+        let money = self.money();
+        WaterfallPanel::new("MRR movements", steps)
+            .subtitle(format!("{} to {}", money.short(start), money.short(start + net)))
+            .info("What teams starting to pay added to MRR over the range, what teams paying more or less changed, what teams leaving took, and the net change.")
+            .total("Net")
+            .format(move |v| money.short(v))
+            .empty(segment.plan == Some(Plan::Free))
+            .show(ui);
+    }
+
+    /// Retention by cohort: the share of each month's new paying teams still paying each month after.
+    pub fn cohorts_panel(&mut self, ui: &mut Ui) {
+        let segment = self.segment();
+        let (span, _) = self.spans();
+        let grid = Figures::new(&self.world).cohorts(segment, span.last);
+        let cells: Vec<(usize, usize, f64)> = grid
+            .cells
+            .iter()
+            .filter_map(|cell| {
+                let x = grid.months.iter().position(|m| *m == cell.month)?;
+                let y = grid.order.iter().position(|c| *c == cell.cohort)?;
+                Some((x, y, cell.retained))
+            })
+            .collect();
+        let empty = cells.is_empty();
+        HeatmapPanel::new("Retention by cohort", grid.months.clone(), grid.order.clone(), cells)
+            .subtitle("paying teams, by the month they first paid")
+            .info("Each row is the teams that first paid in a month; each cell the share of them still paying that many months later.")
+            .scale(["chart-2"])
+            .unit("%")
+            .height(320.0)
+            .empty(empty)
+            .show(ui);
     }
 
     /// Paid revenue by region, beside the period before.

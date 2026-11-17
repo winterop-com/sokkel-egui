@@ -39,12 +39,19 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
   legend's stepped ramp from Less to More (`MapLegend::ramp`), a country's popup with its change
   and share, and the map framed on the points with the web's 24 of margin, framed again while the
   grid settles its width.
+- Revenue's breakdowns, its own arranged board under Breakdowns and Invoices: MRR, ARR (MRR times
+  twelve), paying teams, ARPA, revenue and refunded, revenue over time, revenue by plan as a donut
+  with the total in its middle (`DonutPanel`), the MRR movements as a running total from new to net
+  (`WaterfallPanel`), revenue by region and retention by cohort (`HeatmapPanel` with a subtitle,
+  info and height). Their figures are the web's: $6.9M, 1,656, $349, $5,664 over 17 invoices,
+  $548K to $577.2K.
 - Open: the web map keeps clear of its legend as it frames the points; the egui map frames them
   without it, so it centers a little higher.
-- Open: the web example's styles never emit `min-h-28`, so its stat tiles stand at their content's
-  94 rather than the library's 112, which the egui tile keeps (a question for sokkel-ui).
+- Open: the web's arranged dashboard drew its stat tiles at their content's 94 rather than the
+  library's 112, which the egui tile keeps; sokkel-ui fixed it on main, so the note goes once the
+  web is shot again past that fix.
 
 ## Next
 
-- Revenue (breakdowns and invoices with saved views), Customers and a customer, Funnels,
+- Revenue's invoices (the filter bar and saved views), Customers and a customer, Funnels,
   Reports, Goals, Settings and the palette.

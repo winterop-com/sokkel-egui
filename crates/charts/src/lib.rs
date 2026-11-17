@@ -14,7 +14,8 @@ use std::sync::Arc;
 
 mod panel;
 pub use panel::{
-    BarGauge, BarPanel, FunnelPanel, GaugePanel, HeatmapPanel, LegendStat, LegendWords, PanelWords, TimeSeriesPanel,
+    BarGauge, BarPanel, DonutPanel, FunnelPanel, GaugePanel, HeatmapPanel, LegendStat, LegendWords, PanelWords,
+    TimeSeriesPanel, WaterfallPanel,
 };
 
 use sokkel_egui::{TextRole, Tokens, tokens};
