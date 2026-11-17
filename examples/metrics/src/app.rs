@@ -5,9 +5,9 @@
 use eframe::egui::{self, Ui};
 use sokkel_egui::{
     AccountAction, AccountMenu, Appearance, Cell, Column, DashboardArrange, DashboardEdit, DashboardPanel, DataTable,
-    DesktopWindow, Icon, LogLevel, LogLine, LogView, Page, PageHeader, Rail, RailEntry, RailGroup, RefreshControl,
-    Shell, ShellPart, StatColorMode, StatPanel, StatusLine, StatusTone, TableState, TimeRangePicker, Toast, TopBar,
-    format_value, install,
+    DesktopWindow, Icon, LogLevel, LogLine, LogView, Page, PageHeader, PanelMenu, Rail, RailEntry, RailGroup,
+    RefreshControl, Shell, ShellPart, StatColorMode, StatPanel, StatusLine, StatusTone, TableState, TimeRangePicker,
+    Toast, TopBar, format_value, install,
 };
 use sokkel_egui_charts::{
     BarGauge, BarPanel, Fill as ChartFill, GaugePanel, HeatmapPanel, LegendStat, Series, TimeSeriesPanel,
@@ -46,7 +46,9 @@ pub struct MetricsApp {
     /// When the window last took a scrape, and last refreshed, on its own clock.
     last_scrape: Option<f64>,
     last_view: Option<f64>,
-    tables: std::collections::HashMap<String, TableState>,
+    pub tables: std::collections::HashMap<String, TableState>,
+    /// A panel open in its window, inspected, or asked to be deleted.
+    pub panels: crate::panels::PanelDialogs,
     /// The panels being arranged: a draft Done keeps and Cancel throws away.
     pub edit: DashboardEdit<Panel>,
     /// How many panels and copies have been made, for their ids.
@@ -82,6 +84,7 @@ impl MetricsApp {
             last_scrape: None,
             last_view: None,
             tables: Default::default(),
+            panels: Default::default(),
             edit: DashboardEdit::default(),
             made: 0,
             said: Vec::new(),
@@ -170,6 +173,7 @@ impl MetricsApp {
         if place != was {
             self.place = place;
         }
+        self.panel_dialogs(&ui.ctx().clone());
         self.board_dialogs(&ui.ctx().clone());
         if let Some(AccountAction::Scheme(scheme)) = account {
             self.appearance.scheme = scheme;
@@ -206,15 +210,27 @@ impl MetricsApp {
         }
         let label = |p: &Panel| p.title.clone();
         let tables = &mut self.tables;
+        let viewing = self.panels.viewing.clone();
+        let mut asked = None;
         let arranged = DashboardArrange::new(("board", &board.id), layout, &label)
             .arranging(editing)
             .dense(true)
             .palette(&palette)
             .show(ui, |ui, panel| {
                 if let Some(state) = tables.get_mut(&panel.id) {
-                    draw_panel(ui, panel, &variables, &range, at, state);
+                    let (items, _) = crate::panels::panel_menu(panel);
+                    let said = PanelMenu::new(items)
+                        .expandable(panel.kind != crate::model::PanelKind::Stat)
+                        .expanded(viewing.as_ref() == Some(&panel.id))
+                        .show(ui, |ui| draw_panel(ui, panel, &variables, &range, at, state));
+                    if let Some(said) = said {
+                        asked = Some((panel.clone(), said));
+                    }
                 }
             });
+        if let Some((panel, said)) = asked {
+            self.panel_asked(&panel, said);
+        }
         if let Some((id, at)) = arranged.added
             && let Some(mut made) = crate::model::widget_catalog().into_iter().find(|p| p.id == id)
         {
@@ -343,7 +359,14 @@ impl MetricsApp {
 }
 
 /// One panel, read from the source and drawn by its kind, as the web's `PanelView`.
-fn draw_panel(ui: &mut Ui, panel: &Panel, variables: &Variables, range: &Range, at: f64, table: &mut TableState) {
+pub(crate) fn draw_panel(
+    ui: &mut Ui,
+    panel: &Panel,
+    variables: &Variables,
+    range: &Range,
+    at: f64,
+    table: &mut TableState,
+) {
     let data = panel_data(panel, variables, range, at);
     let thresholds = &panel.thresholds;
     let unit = data.unit.trim().to_owned();
@@ -463,7 +486,13 @@ fn draw_panel(ui: &mut Ui, panel: &Panel, variables: &Variables, range: &Range, 
                 })
                 .collect();
             DashboardPanel::new(&panel.title).flush(true).show(ui, |ui| {
-                ui.set_height(224.0);
+                // h-56, or all its window has, as the web's `Sized`
+                let height = if sokkel_egui::windowed(ui) {
+                    ui.available_height()
+                } else {
+                    224.0
+                };
+                ui.set_height(height);
                 // by Last, the highest first, until the reader sorts it otherwise
                 if table.sort.is_none() {
                     table.sort = Some((1, false));
@@ -496,7 +525,11 @@ fn draw_panel(ui: &mut Ui, panel: &Panel, variables: &Variables, range: &Range, 
                 LogView::new(("panel-logs", &panel.id), &lines)
                     .follow(true)
                     .framed(false)
-                    .height(256.0)
+                    .height(if sokkel_egui::windowed(ui) {
+                        ui.available_height()
+                    } else {
+                        256.0
+                    })
                     .show(ui);
             });
         }

@@ -246,6 +246,8 @@ pub struct TableState {
     pending: Option<(usize, usize)>,
     /// The head's column the keys stand on, reached by Up from the first row, where they sort.
     head: Option<usize>,
+    /// The columns the reader hid from the bar's Columns menu, by their index.
+    pub hidden: BTreeSet<usize>,
 }
 
 impl TableState {
@@ -284,6 +286,8 @@ pub struct TableWords {
     pub empty: String,
     /// The bar's sort button while the rows stand in their own order.
     pub sort: String,
+    /// The bar's menu of the columns to show, and its button's label.
+    pub columns: String,
     pub edit: EditWords,
 }
 
@@ -298,6 +302,7 @@ impl Default for TableWords {
             row: "{count} row".into(),
             empty: "Nothing to show".into(),
             sort: "Sort".into(),
+            columns: "Columns".into(),
             edit: EditWords::default(),
         }
     }
@@ -749,9 +754,10 @@ impl<'a> DataTable<'a> {
     }
 
     /// The bar over the rows: the search, 256 wide, then at the end the rows' count in the code
-    /// face and the sort, a ghost button naming the column it sorts by, its menu the columns that
-    /// sort; 8 over and under a control, 12 across, a rule under it.
-    fn draw_bar(&mut self, ui: &mut Ui, t: &crate::Tokens) {
+    /// face and, over columns, the Columns menu that hides every column but the first; over
+    /// stacked rows the sort, a ghost button naming the column it sorts by, its menu the columns
+    /// that sort. 8 over and under a control, 12 across, a rule under it.
+    fn draw_bar(&mut self, ui: &mut Ui, t: &crate::Tokens, stacked: bool) {
         // a control tall with its search, a small control without
         let control = super::finger_tall(
             ui.ctx(),
@@ -777,7 +783,56 @@ impl<'a> DataTable<'a> {
                 .layout(egui::Layout::right_to_left(egui::Align::Center)),
         );
         child.spacing_mut().item_spacing.x = 16.0;
-        let sortable: Vec<usize> = (0..self.columns.len()).filter(|c| self.columns[*c].sortable).collect();
+        if !stacked && self.columns.len() > 1 {
+            let trigger = child.add(super::IconButton::new(Icon::Columns3, &self.words.columns));
+            egui::Popup::menu(&trigger)
+                .id(self.id.with("columns"))
+                .align(egui::RectAlign::BOTTOM_END)
+                .frame(super::popup_frame(t).inner_margin(egui::Margin::same(4)))
+                .gap(4.0)
+                .width(256.0)
+                .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+                .show(|ui| {
+                    ui.set_width(248.0);
+                    ui.spacing_mut().item_spacing.y = 0.0;
+                    ui.add_space(4.0);
+                    ui.horizontal(|ui| {
+                        ui.add_space(6.0);
+                        ui.label(
+                            TextRole::Help
+                                .rich(t, &self.words.columns)
+                                .variation("wght", 500.0)
+                                .color(t.color("muted-foreground")),
+                        );
+                    });
+                    ui.add_space(4.0);
+                    for c in 1..self.columns.len() {
+                        let place = ui.allocate_space(vec2(248.0, 32.0)).1;
+                        if ui.rect_contains_pointer(place) {
+                            ui.painter().rect_filled(place, t.radius("control"), t.color("hover"));
+                        }
+                        let mut shown = !self.state.hidden.contains(&c);
+                        let mut row = ui.new_child(
+                            egui::UiBuilder::new()
+                                .max_rect(place.shrink2(vec2(6.0, 0.0)))
+                                .layout(egui::Layout::left_to_right(egui::Align::Center)),
+                        );
+                        if row
+                            .add(super::Checkbox::new(&mut shown, &self.columns[c].title))
+                            .changed()
+                        {
+                            if shown {
+                                self.state.hidden.remove(&c);
+                            } else {
+                                self.state.hidden.insert(c);
+                            }
+                        }
+                    }
+                });
+        }
+        let sortable: Vec<usize> = (0..self.columns.len())
+            .filter(|c| self.columns[*c].sortable && stacked)
+            .collect();
         if let Some(&first) = sortable.first() {
             // the column it sorts by, or "Sort" while the rows stand in their own order
             let (column, ascending) = self.state.sort.unwrap_or((first, true));
@@ -1116,13 +1171,21 @@ impl<'a> DataTable<'a> {
     /// Each column's start and width within a row from `left` to `right`.
     fn layout(&self, left: f32, right: f32) -> Vec<(f32, f32)> {
         let lead = if self.reorder { GRIP } else { 0.0 };
+        let hidden = |i: usize| self.state.hidden.contains(&i);
         let widths: Vec<f32> = self
             .columns
             .iter()
             .enumerate()
-            .map(|(i, _)| self.state.widths[i] + if i == 0 { lead } else { 0.0 })
+            .map(|(i, _)| {
+                if hidden(i) {
+                    0.0
+                } else {
+                    self.state.widths[i] + if i == 0 { lead } else { 0.0 }
+                }
+            })
             .collect();
-        let gaps = GAP * self.columns.len().saturating_sub(1) as f32;
+        let shown = (0..self.columns.len()).filter(|i| !hidden(*i)).count();
+        let gaps = GAP * shown.saturating_sub(1) as f32;
         let tail = if self.actions.is_some() { ACTIONS + GAP } else { 0.0 };
         // a table that fits its room (the web's `minWidth="auto"`: one that stacks rather than
         // scrolls) shrinks its columns in proportion where they run past it, none under 56
@@ -1136,9 +1199,11 @@ impl<'a> DataTable<'a> {
         };
         // the filling columns share the room as `minmax(width, <share>fr)` tracks: one whose share
         // falls under its width keeps its width, and the rest share again what is left
-        let mut fills: Vec<usize> = (0..self.columns.len()).filter(|i| self.columns[*i].fill).collect();
+        let mut fills: Vec<usize> = (0..self.columns.len())
+            .filter(|i| self.columns[*i].fill && !hidden(*i))
+            .collect();
         if fills.is_empty() {
-            fills.extend(self.columns.len().checked_sub(1));
+            fills.extend((0..self.columns.len()).rev().find(|i| !hidden(*i)));
         }
         let share = |i: usize| self.columns.get(i).map_or(1.0, |c| c.share);
         let mut widths = widths;
@@ -1171,10 +1236,13 @@ impl<'a> DataTable<'a> {
         let mut x = left;
         widths
             .iter()
-            .map(|w| {
+            .enumerate()
+            .map(|(i, w)| {
                 let w = *w;
                 let place = (x, w);
-                x += w + GAP;
+                if !hidden(i) {
+                    x += w + GAP;
+                }
                 place
             })
             .collect()
@@ -1276,7 +1344,7 @@ impl<'a> DataTable<'a> {
                 }
                 ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
                 if self.bar {
-                    self.draw_bar(ui, &t);
+                    self.draw_bar(ui, &t, stacked);
                 }
                 // a table with no rows given its own words says them alone, without its heads
                 if self.rows.is_empty()
@@ -1326,6 +1394,9 @@ impl<'a> DataTable<'a> {
                     }
                     let last = self.columns.len().saturating_sub(1);
                     for (index, column) in self.columns.iter().enumerate() {
+                        if self.state.hidden.contains(&index) {
+                            continue;
+                        }
                         let (x, w) = places[index];
                         let cell = Rect::from_min_size(pos2(x, head.top()), vec2(w, head.height()));
                         let hit = ui.interact(
@@ -1368,23 +1439,24 @@ impl<'a> DataTable<'a> {
                         );
                         // a head over a row's grip stands after it
                         let lead = if index == 0 && self.reorder { GRIP + 6.0 } else { 0.0 };
+                        // the arrow 4 after the name, or before it in a column read from its end,
+                        // as the web's head turns its row round there
+                        let text_w = galley.size().x;
                         let text_x = if column.numeric {
-                            cell.right() - galley.size().x - if sorted.is_some() { 16.0 } else { 0.0 }
+                            cell.right() - text_w
                         } else {
                             cell.left() + lead
                         };
-                        let text_w = galley.size().x;
                         ui.painter()
                             .galley(pos2(text_x, cell.center().y - galley.size().y / 2.0), galley, ink);
                         if let Some((_, ascending)) = sorted {
                             let arrow = if ascending { Icon::ArrowUp } else { Icon::ArrowDown };
-                            icons::paint(
-                                ui.painter(),
-                                pos2(text_x + text_w + 10.0, cell.center().y),
-                                arrow,
-                                14.0,
-                                ink,
-                            );
+                            let center = if column.numeric {
+                                text_x - 4.0 - 7.0
+                            } else {
+                                text_x + text_w + 4.0 + 7.0
+                            };
+                            icons::paint(ui.painter(), pos2(center, cell.center().y), arrow, 14.0, ink);
                         }
                         // the resize handle in the gap after the column
                         if index != last {
@@ -1543,6 +1615,9 @@ impl<'a> DataTable<'a> {
                         }
                         let places = self.layout(rect.left() + pad + select_width, rect.right() - pad);
                         for (c, column) in self.columns.iter().enumerate().filter(|_| !stacked) {
+                            if self.state.hidden.contains(&c) {
+                                continue;
+                            }
                             let (x, w) = places[c];
                             let mut cell = Rect::from_min_size(pos2(x, rect.top()), vec2(w, rect.height()));
                             if c == 0 && self.reorder {

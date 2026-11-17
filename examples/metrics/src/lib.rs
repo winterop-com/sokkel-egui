@@ -5,6 +5,7 @@ pub mod app;
 pub mod board;
 pub mod model;
 pub mod panel_data;
+pub mod panels;
 pub mod query;
 pub mod source;
 

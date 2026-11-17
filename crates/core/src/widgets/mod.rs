@@ -25,6 +25,7 @@ mod menu;
 mod meta_line;
 mod overlay;
 mod page;
+mod panel_menu;
 mod person;
 mod section;
 mod settings;
@@ -77,6 +78,7 @@ pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutc
 pub use meta_line::MetaLine;
 pub use overlay::{ConfirmAnswer, ConfirmDialog, Dialog, Select, tooltip, tooltip_shown};
 pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
+pub use panel_menu::{PanelAsked, PanelMenu, PanelWindow, PanelWords, body_drawn, panel_away, quiet_tools, windowed};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
 pub use section::{DescriptionList, PersonRow, Section, Timeline, TimelineEvent};
 pub use settings::{

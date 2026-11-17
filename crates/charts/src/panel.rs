@@ -235,7 +235,9 @@ impl TimeSeriesPanel {
         let (chart, height, legend_on, names, table) = (self.chart, self.height, self.legend, self.series, self.table);
         chart_frame(ui, &self.title, self.subtitle.as_deref(), |ui| {
             let writing = chart.writing.clone();
+            let height = fill_height(ui, height);
             ui.add(chart.height(height));
+            let under = ui.min_rect().bottom();
             if let (true, Some((stats, words))) = (legend_on && !names.is_empty(), &table) {
                 ui.add_space(4.0);
                 let t = tokens(ui.ctx());
@@ -255,14 +257,38 @@ impl TimeSeriesPanel {
                     .collect();
                 legend_of(ui, &items);
             }
+            drawn_under(ui, under);
         });
     }
+}
+
+/// A chart's height: `height`, or in its panel's window all the window has less what was drawn
+/// under the chart the last time (its legend).
+fn fill_height(ui: &Ui, height: f32) -> f32 {
+    if !sokkel_egui::windowed(ui) {
+        return height;
+    }
+    let under = ui
+        .data(|d| d.get_temp::<f32>(ui.id().with("under-chart")))
+        .unwrap_or(0.0);
+    (ui.available_height() - under).max(height)
+}
+
+/// Keeps how much was drawn under a chart since `top`, for [`fill_height`].
+fn drawn_under(ui: &Ui, top: f32) {
+    let under = ui.min_rect().bottom() - top;
+    ui.data_mut(|d| d.insert_temp(ui.id().with("under-chart"), under));
 }
 
 /// A chart's frame, as sokkel-ui's `ChartFrame`: a card with the plain border, its title and
 /// subtitle in a 32 tall head with an arrangement's tools at its end, the body 8 in and under. In
 /// a `DashboardGrid` it stretches to its row.
 fn chart_frame(ui: &mut Ui, title: &str, subtitle: Option<&str>, body: impl FnOnce(&mut Ui)) {
+    // in its window the chart alone fills what the window has
+    if sokkel_egui::windowed(ui) {
+        body(ui);
+        return;
+    }
     let t = tokens(ui.ctx());
     let width = ui.available_width();
     let stretch = cell_height(ui).unwrap_or(0.0);
@@ -276,7 +302,22 @@ fn chart_frame(ui: &mut Ui, title: &str, subtitle: Option<&str>, body: impl FnOn
             ui.set_width(width - 2.0);
             ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
             // the head: 32 tall, 12 in, the title and subtitle 6 apart
-            let inner = width - 2.0 - 18.0;
+            let (head, _) = ui.allocate_exact_size(vec2(width - 2.0, 32.0), Sense::hover());
+            // the tools at the head's end first, shown while the pointer is over the frame, so
+            // the title gives way to them
+            let over = ui
+                .data(|d| d.get_temp::<egui::Rect>(cell.with("frame-rect")))
+                .is_some_and(|rect| ui.rect_contains_pointer(rect));
+            sokkel_egui::quiet_tools(ui, cell, !over);
+            let mut tools = ui.new_child(
+                egui::UiBuilder::new()
+                    .id_salt("chart-panel-tools")
+                    .max_rect(head.shrink2(vec2(6.0, 0.0)))
+                    .layout(egui::Layout::right_to_left(egui::Align::Center)),
+            );
+            sokkel_egui::panel_tools(&mut tools, cell);
+            let taken = tools.min_rect().width();
+            let inner = width - 2.0 - 18.0 - if taken > 1.0 { taken + 4.0 } else { 0.0 };
             let title = WidgetText::from(TextRole::Help.rich(&t, title).variation("wght", 500.0)).into_galley(
                 ui,
                 Some(TextWrapMode::Truncate),
@@ -291,7 +332,6 @@ fn chart_frame(ui: &mut Ui, title: &str, subtitle: Option<&str>, body: impl FnOn
                     TextRole::Help.font(&t),
                 )
             });
-            let (head, _) = ui.allocate_exact_size(vec2(width - 2.0, 32.0), Sense::hover());
             let top = head.center().y - title.size().y / 2.0;
             let title_width = title.size().x;
             ui.painter()
@@ -300,14 +340,6 @@ fn chart_frame(ui: &mut Ui, title: &str, subtitle: Option<&str>, body: impl FnOn
                 ui.painter()
                     .galley(pos2(head.left() + 12.0 + title_width + 6.0, top), subtitle, ink);
             }
-            // an arrangement's tools at the head's end
-            let mut tools = ui.new_child(
-                egui::UiBuilder::new()
-                    .id_salt("chart-panel-tools")
-                    .max_rect(head.shrink2(vec2(6.0, 0.0)))
-                    .layout(egui::Layout::right_to_left(egui::Align::Center)),
-            );
-            sokkel_egui::panel_tools(&mut tools, cell);
             egui::Frame::new()
                 .inner_margin(egui::Margin {
                     left: 8,
@@ -317,9 +349,15 @@ fn chart_frame(ui: &mut Ui, title: &str, subtitle: Option<&str>, body: impl FnOn
                 })
                 .show(ui, |ui| {
                     ui.set_width(ui.available_width());
-                    body(ui);
+                    if !sokkel_egui::panel_away(ui, cell) {
+                        let top = ui.cursor().top();
+                        body(ui);
+                        sokkel_egui::body_drawn(ui, cell, ui.min_rect().bottom() - top);
+                    }
                 });
             let used = ui.min_rect().height() + 2.0;
+            let frame = ui.min_rect().expand(1.0);
+            ui.data_mut(|d| d.insert_temp(cell.with("frame-rect"), frame));
             report_natural_height(ui, cell, used);
             if stretch > used {
                 ui.add_space(stretch - used);
@@ -392,7 +430,8 @@ impl<'a> GaugePanel<'a> {
         let steps = self.thresholds.iter().map(|s| (s.value, t.color(s.color))).collect();
         let gauge = Gauge::new(self.value, self.min, self.max, tone, written).steps(steps);
         chart_frame(ui, &self.title, None, |ui| {
-            ui.add(gauge);
+            let height = fill_height(ui, 128.0);
+            ui.add(gauge.height(height));
         });
     }
 }
@@ -616,7 +655,8 @@ impl HeatmapPanel {
         };
         chart_frame(ui, &self.title, None, |ui| {
             let width = ui.available_width();
-            let (rect, _) = ui.allocate_exact_size(vec2(width, 192.0), Sense::hover());
+            let height = fill_height(ui, 192.0);
+            let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
             let painter = ui.painter();
             let label_width = self
                 .y
@@ -759,7 +799,9 @@ impl BarPanel {
     pub fn show(self, ui: &mut Ui) {
         let (chart, names, legend_on) = (self.chart, self.series, self.legend);
         chart_frame(ui, &self.title, self.subtitle.as_deref(), |ui| {
-            ui.add(chart);
+            let height = fill_height(ui, 192.0);
+            ui.add(chart.height(height));
+            let under = ui.min_rect().bottom();
             if legend_on && names.len() > 1 {
                 ui.add_space(4.0);
                 let t = tokens(ui.ctx());
@@ -770,6 +812,7 @@ impl BarPanel {
                     .collect();
                 legend_of(ui, &items);
             }
+            drawn_under(ui, under);
         });
     }
 }

@@ -230,6 +230,10 @@ impl<'a> DashboardPanel<'a> {
     }
 
     pub fn show<R>(self, ui: &mut Ui, body: impl FnOnce(&mut Ui) -> R) -> R {
+        // in its window the content alone fills what the window has
+        if super::windowed(ui) {
+            return body(ui);
+        }
         let t = tokens(ui.ctx());
         let width = ui.available_width();
         let stretch = cell_height(ui).unwrap_or(0.0);
@@ -276,7 +280,8 @@ impl<'a> DashboardPanel<'a> {
                         .galley(pos2(x + title_width + 8.0, baseline - sub_base), subtitle, ink);
                 }
                 let arranged = ui.data(|d| d.get_temp::<super::arrange::ArrangeMark>(cell)).is_some();
-                if self.actions.is_some() || arranged {
+                let own = super::panel_menu::has_head_tools(ui, cell);
+                if self.actions.is_some() || arranged || own {
                     let end = egui::Rect::from_min_max(
                         pos2(head.left() + 12.0, head.top()),
                         pos2(head.right() - 12.0, head.bottom() - 1.0),
@@ -289,7 +294,7 @@ impl<'a> DashboardPanel<'a> {
                     );
                     tools.spacing_mut().item_spacing.x = 8.0;
                     // an arrangement's tools at the very end, then the panel's own actions
-                    if arranged {
+                    if arranged || own {
                         tools.scope(|ui| super::panel_tools(ui, cell));
                     }
                     if let Some(actions) = self.actions {
@@ -319,7 +324,7 @@ impl<'a> DashboardPanel<'a> {
                     .show(ui, |ui| {
                         ui.set_width(ui.available_width());
                         ui.data_mut(|d| d.insert_temp(ui.id(), BodyRoom { room, took: 0.0 }));
-                        let out = body(ui);
+                        let out = super::panel_menu::body_or_away(ui, cell, body);
                         let took = ui.data(|d| d.get_temp::<BodyRoom>(ui.id())).map_or(0.0, |r| r.took);
                         (out, took)
                     })

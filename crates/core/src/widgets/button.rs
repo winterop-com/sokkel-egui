@@ -269,6 +269,7 @@ impl Widget for Button {
 pub struct IconButton {
     icon: crate::Icon,
     label: String,
+    glyph: Option<f32>,
     xs: bool,
     md: bool,
     outline: bool,
@@ -280,11 +281,18 @@ impl IconButton {
         Self {
             icon,
             label: label.into(),
+            glyph: None,
             xs: false,
             md: false,
             outline: false,
             destructive: false,
         }
+    }
+
+    /// The icon at `size` rather than the size's own (12 at `xs`, else 16), as a `size-3.5` icon.
+    pub fn glyph(mut self, size: f32) -> Self {
+        self.glyph = Some(size);
+        self
     }
 
     /// The smallest size, `icon-xs`: `control-xs` square, the icon 12, its corners at most 10.
@@ -361,7 +369,7 @@ impl egui::Widget for IconButton {
             _ if self.outline => t.color("foreground"),
             _ => t.color("muted-foreground"),
         };
-        let glyph = if self.xs { 12.0 } else { 16.0 };
+        let glyph = self.glyph.unwrap_or(if self.xs { 12.0 } else { 16.0 });
         crate::icons::paint(ui.painter(), rect.center(), self.icon, glyph, ink);
         super::focus_ring(ui.painter(), &t, rect, radius, &response);
         let label = self.label;

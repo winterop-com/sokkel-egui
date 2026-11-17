@@ -181,11 +181,19 @@ enum ToolPress {
     Grab,
 }
 
-/// Draws an arranged panel's tools (a grip, configure, a size menu, remove) at the end of a
-/// panel's head, as sokkel-ui's `PanelTools`; nothing outside an arrangement. `cell` is the id of
+/// Draws a panel's tools at the end of its head: an arranged panel's (a grip, configure, a size
+/// menu, remove), as sokkel-ui's `PanelTools`, and a [`super::PanelMenu`]'s expand and menu. `cell` is the id of
 /// the `Ui` the panel was given. The library's panels call it themselves; a head of an app's own
 /// calls it in its end.
 pub fn panel_tools(ui: &mut Ui, cell: Id) {
+    // right to left: an arrangement's tools at the very end, then the panel's menu and expand
+    if ui.data(|d| d.get_temp::<ArrangeTools>(cell)).is_some() {
+        ui.scope(|ui| arrange_tools(ui, cell));
+    }
+    super::panel_menu::head_tools(ui, cell);
+}
+
+fn arrange_tools(ui: &mut Ui, cell: Id) {
     let Some(tools) = ui.data(|d| d.get_temp::<ArrangeTools>(cell)) else {
         return;
     };
@@ -645,7 +653,7 @@ fn palette_chip(ui: &mut Ui, widget: &DashboardWidget, add: &str) -> egui::Respo
 }
 
 /// A rectangle's edge drawn dashed, as `outline-dashed` and `border-dashed` draw it.
-fn dashed_rect(painter: &egui::Painter, rect: Rect, stroke: Stroke) {
+pub(crate) fn dashed_rect(painter: &egui::Painter, rect: Rect, stroke: Stroke) {
     let r = rect.shrink(0.5);
     let corners = [
         r.left_top(),

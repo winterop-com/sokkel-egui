@@ -32,10 +32,20 @@ manifest is `parity/metrics.json`; the web's screens are shot into `parity/metri
   dashboard, Delete dashboard) and Edit, which arranges the panels in the web's dense grid with the
   palette of the catalog's panels, in a draft Done keeps and Cancel throws away
   (`DashboardEditActions`, `DashboardArrange`).
+- Each panel has the web's tools in its head (`PanelMenu`): a menu of View (but on a stat tile),
+  Inspect data, Duplicate and Delete, and an expand button that opens the panel in its window over
+  the page (`PanelWindow`), the panel saying "Shown in a window." in its place. A chart's tools
+  show while the pointer is over it, as the web's `ChartFrame` shows them; a table's and a stat
+  tile's always. Inspect data lists the panel's steps, newest first, or its log lines, and Download
+  CSV writes the web's CSV into the reader's Downloads, numbering a second one as a browser does.
+  Deleting asks first unless the board is being arranged, where Cancel brings the panel back.
+- A table's sort arrow stands before the name of a column read from its end, and its bar holds the
+  web's Columns menu (every column but the first can be hidden); the sort menu is for stacked rows.
 - Left out: Share. The web's builds a link to the view in its URL, which a window has none of.
+- Open: Download CSV saves without a dialog asking where (a native save dialog needs a crate such
+  as `rfd`); the panel menu's Edit waits for the panel editor.
 - Open: the Services overview's request chart labels its axis every 90 seconds on the web where a
   fresh count of ECharts' `interval: 'auto'` gives 80, and the heatmap labels its axis more
   sparsely than the web's.
-- Still to come: Add panel with the panel editor, each panel's expand and menu (View, Inspect data,
-  Edit, Duplicate, Delete), a sort arrow before its column's name.
+- Still to come: Add panel with the panel editor, and Edit in each panel's menu.
 - Then Dashboards, the editor, Alerts and Settings, each in the rail once it works.
