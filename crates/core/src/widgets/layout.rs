@@ -120,11 +120,19 @@ pub enum AsideWidth {
 /// apart, from 768 of room; one under the other below it.
 pub struct Split {
     aside: AsideWidth,
+    start: bool,
 }
 
 impl Split {
     pub fn new(aside: AsideWidth) -> Self {
-        Self { aside }
+        Self { aside, start: false }
+    }
+
+    /// The aside at the start, before the main part, as the web's `side="start"`: a list to pick
+    /// from beside what is picked. Stacked, it still comes first.
+    pub fn start(mut self, start: bool) -> Self {
+        self.start = start;
+        self
     }
 
     pub fn show(self, ui: &mut Ui, main: impl FnOnce(&mut Ui), aside: impl FnOnce(&mut Ui)) {
@@ -138,8 +146,13 @@ impl Split {
         if room < 768.0 {
             ui.vertical(|ui| {
                 ui.spacing_mut().item_spacing.y = gap;
-                main(ui);
-                aside(ui);
+                if self.start {
+                    aside(ui);
+                    main(ui);
+                } else {
+                    main(ui);
+                    aside(ui);
+                }
             });
             return;
         }
@@ -147,14 +160,26 @@ impl Split {
             ui.spacing_mut().item_spacing.x = gap;
             // each side lays its parts one under another, as wide as it is given
             let down = egui::Layout::top_down(egui::Align::Min);
-            ui.allocate_ui_with_layout(vec2(room - side - gap, f32::INFINITY), down, |ui| {
-                ui.set_width(room - side - gap);
+            let wide = room - side - gap;
+            let mut aside = Some(aside);
+            if self.start
+                && let Some(aside) = aside.take()
+            {
+                ui.allocate_ui_with_layout(vec2(side, f32::INFINITY), down, |ui| {
+                    ui.set_width(side);
+                    aside(ui);
+                });
+            }
+            ui.allocate_ui_with_layout(vec2(wide, f32::INFINITY), down, |ui| {
+                ui.set_width(wide);
                 main(ui);
             });
-            ui.allocate_ui_with_layout(vec2(side, f32::INFINITY), down, |ui| {
-                ui.set_width(side);
-                aside(ui);
-            });
+            if let Some(aside) = aside.take() {
+                ui.allocate_ui_with_layout(vec2(side, f32::INFINITY), down, |ui| {
+                    ui.set_width(side);
+                    aside(ui);
+                });
+            }
         });
     }
 }

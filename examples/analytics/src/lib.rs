@@ -5,6 +5,7 @@ pub mod app;
 pub mod customer;
 pub mod customers;
 pub mod days;
+pub mod funnels;
 pub mod invoices;
 pub mod metrics;
 pub mod model;

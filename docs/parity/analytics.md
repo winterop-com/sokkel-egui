@@ -66,6 +66,11 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
   page at a time (`DataTable::paging`) with charging again, marking paid and refunding; and its plan
   history. The plan dialog moves it to a plan and seats, saying what it will pay; cancelling asks
   first. Its figures are the web's: $2,790, 93 seats, $13.7K, 4 months, six invoices.
+- Funnels: the saved funnels beside the one opened (`Split::start`), its name, its steps in order
+  (dragged by their grips, each taken out with its own button, `Cell::Button`; visiting the site
+  kept first), the steps left to add and the window; Save says why it cannot, and Delete asks
+  first. Under it the preview and each step's share of the one before, of the first and of the
+  period before. New starts a funnel of its own.
 - Open: a value chosen in place stands 10 further in than the values around it, where the web
   lines it up with them.
 - Open: the web map keeps clear of its legend as it frames the points; the egui map frames them
@@ -76,5 +81,4 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
 
 ## Next
 
-- Funnels,
-  Reports, Goals, Settings and the palette.
+- Reports, Goals, Settings and the palette.

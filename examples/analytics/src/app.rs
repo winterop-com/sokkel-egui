@@ -103,6 +103,8 @@ pub struct AnalyticsApp {
     pub tables: HashMap<String, TableState>,
     /// The key figures of a segment and span, counted once per world.
     kpis: HashMap<KpiKey, Kpis>,
+    /// The saved funnels and the one being built.
+    pub funnels: crate::funnels::FunnelsPage,
     /// A customer's page: its dialog and questions.
     pub customer: crate::customer::CustomerPage,
     /// The customers page's filters and search.
@@ -176,6 +178,7 @@ impl AnalyticsApp {
             invoices: Default::default(),
             customers: Default::default(),
             customer: Default::default(),
+            funnels: crate::funnels::FunnelsPage::new(now),
             map: sokkel_egui_maps::MapView::new(30.0, 10.0, 1.0).framed(false),
             map_framed: false,
             opens: HashMap::new(),
@@ -449,6 +452,7 @@ impl AnalyticsApp {
                 let id = self.view.path[1].clone();
                 Page::scroll(ui, |ui| self.customer_page(ui, &id))
             }
+            ShellPart::Page if page == "funnels" => Page::scroll(ui, |ui| self.funnels_page(ui)),
             ShellPart::Page => {}
             ShellPart::Foot => {
                 ui.add(

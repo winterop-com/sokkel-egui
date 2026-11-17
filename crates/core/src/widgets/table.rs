@@ -143,6 +143,12 @@ pub enum Cell {
     Chip(String, ChipTone),
     /// A check box whose press the table reports as `toggled`.
     Check(bool),
+    /// A small ghost icon button named `label`, at the cell's end, whose press the table reports as
+    /// `pressed`, as a row's Take out.
+    Button {
+        icon: Icon,
+        label: String,
+    },
     /// A switch named `label` for a screen reader, whose press the table reports as `switched`, as a
     /// rule's On column.
     Switch {
@@ -211,7 +217,7 @@ impl Cell {
             Cell::Tags(tags) => tags.join(" "),
             Cell::Relative { at, now } => super::relative_time(at - now),
             Cell::Clock { clock, .. } => clock.clone(),
-            Cell::Check(_) | Cell::Switch { .. } | Cell::Trend(..) | Cell::Empty => String::new(),
+            Cell::Check(_) | Cell::Switch { .. } | Cell::Button { .. } | Cell::Trend(..) | Cell::Empty => String::new(),
         }
     }
 
@@ -226,6 +232,7 @@ impl Cell {
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
             Cell::Check(on) | Cell::Switch { on, .. } => u8::from(*on).to_string(),
+            Cell::Button { .. } => String::new(),
             Cell::Clock { at, .. } => format!("{:024.3}", at + 1e18),
             Cell::Due { date, .. } => date.map_or("9999".into(), |d| d.to_string()),
             Cell::Tags(tags) => tags.join(" "),
@@ -341,6 +348,8 @@ pub struct TableOutput {
     pub toggled: Option<usize>,
     /// A row's switch was pressed.
     pub switched: Option<usize>,
+    /// A cell's button was pressed: its row and column.
+    pub pressed: Option<(usize, usize)>,
     /// A row's action was chosen: the row and the action's index in its menu.
     pub action: Option<(usize, usize)>,
     /// A row was dragged by its grip from one place in the order shown to another.
@@ -1395,6 +1404,7 @@ impl<'a> DataTable<'a> {
             response: ui.response(),
             toggled: None,
             switched: None,
+            pressed: None,
             action: None,
             reordered: None,
             edited: None,
@@ -1805,7 +1815,9 @@ impl<'a> DataTable<'a> {
                                 self.id.with(("cell", index, c)),
                             ) {
                                 let _ = toggled;
-                                if matches!(self.rows[index][c], Cell::Switch { .. }) {
+                                if matches!(self.rows[index][c], Cell::Button { .. }) {
+                                    out.pressed = Some((index, c));
+                                } else if matches!(self.rows[index][c], Cell::Switch { .. }) {
                                     out.switched = Some(index);
                                 } else {
                                     out.toggled = Some(index);
@@ -2182,6 +2194,16 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
                 t.color("foreground"),
             );
         }
+        Cell::Button { icon, label } => {
+            let mut child = ui.new_child(
+                egui::UiBuilder::new()
+                    .max_rect(rect)
+                    .layout(egui::Layout::right_to_left(egui::Align::Center)),
+            );
+            if child.add(super::IconButton::new(*icon, label.clone()).xs()).clicked() {
+                return Some(true);
+            }
+        }
         Cell::Switch { on, label } => {
             let mut switched = *on;
             let place = Rect::from_min_size(rect.min, vec2(rect.width(), rect.height()));
@@ -2344,7 +2366,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
             at.x,
             room,
         ),
-        Cell::Check(_) | Cell::Switch { .. } | Cell::Trend(..) | Cell::Empty => 0.0,
+        Cell::Check(_) | Cell::Switch { .. } | Cell::Button { .. } | Cell::Trend(..) | Cell::Empty => 0.0,
     }
 }
 
