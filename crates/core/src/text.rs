@@ -11,6 +11,8 @@ pub enum TextRole {
     DetailTitle,
     SectionTitle,
     Head,
+    /// A table's column head, one step above the body cells it heads, as `text-column-head`.
+    ColumnHead,
     Body,
     Action,
     Label,
@@ -31,11 +33,12 @@ pub enum TextRole {
 impl TextRole {
     /// Every role, from the page's title down, as sokkel-ui's typography table lists them; the
     /// graph's own two roles are left to the graph.
-    pub const ALL: [TextRole; 15] = [
+    pub const ALL: [TextRole; 16] = [
         Self::PageTitle,
         Self::DetailTitle,
         Self::SectionTitle,
         Self::Head,
+        Self::ColumnHead,
         Self::Body,
         Self::Action,
         Self::Label,
@@ -56,6 +59,7 @@ impl TextRole {
             Self::DetailTitle => "detail-title",
             Self::SectionTitle => "section-title",
             Self::Head => "head",
+            Self::ColumnHead => "column-head",
             Self::Body => "body",
             Self::Action => "action",
             Self::Label => "label",

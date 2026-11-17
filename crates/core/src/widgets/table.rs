@@ -1587,11 +1587,11 @@ impl<'a> DataTable<'a> {
                         } else {
                             column.title.clone()
                         };
-                        let galley = WidgetText::from(TextRole::Head.rich(&t, title)).into_galley(
+                        let galley = WidgetText::from(TextRole::ColumnHead.rich(&t, title)).into_galley(
                             ui,
                             Some(TextWrapMode::Truncate),
                             w - 16.0,
-                            TextRole::Head.font(&t),
+                            TextRole::ColumnHead.font(&t),
                         );
                         // a head over a row's grip stands after it
                         let lead = if index == 0 && self.reorder { GRIP + 6.0 } else { 0.0 };

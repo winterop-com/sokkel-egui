@@ -201,8 +201,13 @@ impl<'a> EntryGrid<'a> {
                             14.0,
                             t.color("muted-foreground"),
                         );
-                        let title = WidgetText::from(TextRole::Body.rich(&t, name).variation("wght", 500.0))
-                            .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Body.font(&t));
+                        // a group's head in the column head's type, as the web's group rows
+                        let title = WidgetText::from(TextRole::ColumnHead.rich(&t, name)).into_galley(
+                            ui,
+                            Some(TextWrapMode::Extend),
+                            f32::INFINITY,
+                            TextRole::ColumnHead.font(&t),
+                        );
                         let x = head.left() + pad + 24.0;
                         let title_width = title.size().x;
                         ui.painter().galley(
