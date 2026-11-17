@@ -127,7 +127,8 @@ pub use text_field::{Input, TextField};
 pub use time::{relative_time, relative_time_short};
 pub use toast::{Toast, ToastKind, Toaster, ToasterWords, close_toast, toast_acted, toasts};
 pub use tree::{
-    Tree, TreeNode, TreeResponse, TreeRow, TreeWords, tree_ancestors, tree_matches, tree_node, visible_rows,
+    CanMove, Tree, TreeNode, TreeResponse, TreeRow, TreeWords, move_tree_node, tree_ancestors, tree_matches, tree_node,
+    visible_rows,
 };
 pub use tree_select::{TreeSelect, TreeSelectWords};
 pub use uptime::{UptimeBar, UptimeBarWords, UptimeDay, format_uptime, overall_uptime, uptime_color};

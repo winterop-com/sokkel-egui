@@ -44,4 +44,8 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   as fields named by their band and cut where the columns do not fit (`EntryGrid`, new in the
   library; a banded table of number inputs where they do). An input is now 32 tall with its edge,
   as the web's, in every app.
+- A form's Layout: its sections and questions in a tree dragged into the order every fill follows
+  and kept on the server (`Tree::movable`, `Tree::choosing`, `move_tree_node`, new in the
+  library), Reset back to the form's own order, and the refusal for a grid of counts. Open: the
+  web also moves the focused row with Alt and the arrows.
 - Open: the Playground waits for the code editor's spec, as `ApiPlayground` is built on it.

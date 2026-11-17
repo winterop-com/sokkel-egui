@@ -168,11 +168,51 @@ impl Default for TreeWords {
     }
 }
 
-/// What a tree did this frame: the node chosen, if one was.
+/// What a tree did this frame: the node chosen, if one was, and a node moved by dragging.
 #[derive(Clone, Debug, Default)]
 pub struct TreeResponse {
     pub chosen: Option<String>,
+    /// A node dropped in a new place: its id, the branch it goes into (`None` for the top level),
+    /// and its place among that branch's nodes once it has left its old one.
+    pub moved: Option<(String, Option<String>, usize)>,
 }
+
+/// A copy of `nodes` with `id` taken from its place and put into `into` (the top level for
+/// `None`) at `index`, as sokkel-ui's `moveTreeNode`.
+pub fn move_tree_node(nodes: &[TreeNode], id: &str, into: Option<&str>, index: usize) -> Vec<TreeNode> {
+    fn take(list: &mut Vec<TreeNode>, id: &str) -> Option<TreeNode> {
+        if let Some(at) = list.iter().position(|n| n.id == id) {
+            return Some(list.remove(at));
+        }
+        list.iter_mut().find_map(|n| take(&mut n.children, id))
+    }
+    fn find<'a>(list: &'a mut [TreeNode], id: &str) -> Option<&'a mut TreeNode> {
+        for node in list {
+            if node.id == id {
+                return Some(node);
+            }
+            if let Some(found) = find(&mut node.children, id) {
+                return Some(found);
+            }
+        }
+        None
+    }
+    let mut out = nodes.to_vec();
+    let Some(node) = take(&mut out, id) else { return out };
+    let list = match into {
+        None => &mut out,
+        Some(parent) => match find(&mut out, parent) {
+            Some(parent) => &mut parent.children,
+            None => return nodes.to_vec(),
+        },
+    };
+    let at = index.min(list.len());
+    list.insert(at, node);
+    out
+}
+
+/// Whether a node may go into a branch (`None` for the top level).
+pub type CanMove<'a> = &'a dyn Fn(&str, Option<&str>) -> bool;
 
 /// A tree of nodes, one chosen at a time. A branch opens from its chevron, from Right on it, or by
 /// choosing it; Left shuts it or goes to its parent; Up, Down, Home and End walk the rows. With a
@@ -184,6 +224,8 @@ pub struct Tree<'a> {
     open: &'a mut HashSet<String>,
     query: &'a str,
     words: TreeWords,
+    movable: Option<CanMove<'a>>,
+    choosing: bool,
 }
 
 impl<'a> Tree<'a> {
@@ -200,7 +242,22 @@ impl<'a> Tree<'a> {
             open,
             query: "",
             words: TreeWords::default(),
+            movable: None,
+            choosing: true,
         }
+    }
+
+    /// Rows dragged to another place, where `can_move` lets them go; the drop comes back as the
+    /// response's `moved`, for the caller to keep.
+    pub fn movable(mut self, can_move: CanMove<'a>) -> Self {
+        self.movable = Some(can_move);
+        self
+    }
+
+    /// Rows that are not chosen, as the web's `selection="none"`: a press opens a branch.
+    pub fn choosing(mut self, choosing: bool) -> Self {
+        self.choosing = choosing;
+        self
     }
 
     /// Keep the rows whose label holds these words, and those above them.
@@ -239,10 +296,22 @@ impl<'a> Tree<'a> {
         let mut any_focus = None;
         let spacing = ui.spacing().item_spacing.y;
         ui.spacing_mut().item_spacing.y = 0.0;
+        let drag_id = self.id.with("dragging");
+        let mut dragging: Option<String> = ui.data(|d| d.get_temp(drag_id));
+        let mut rects: Vec<egui::Rect> = Vec::with_capacity(rows.len());
         for (index, row) in rows.iter().enumerate() {
             let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
+            rects.push(rect);
             let id = self.id.with(&row.node.id);
-            let hit = ui.interact(rect, id, Sense::click());
+            let sense = if self.movable.is_some() {
+                Sense::click_and_drag()
+            } else {
+                Sense::click()
+            };
+            let hit = ui.interact(rect, id, sense);
+            if hit.drag_started() && self.movable.is_some() {
+                dragging = Some(row.node.id.clone());
+            }
             let branch = row.node.is_branch();
             let expanded = branch && (matches.is_some() || self.open.contains(&row.node.id));
             let chosen = self.selected.as_deref() == Some(row.node.id.as_str());
@@ -321,14 +390,96 @@ impl<'a> Tree<'a> {
             ui.painter()
                 .galley(pos2(x, center - galley.size().y / 2.0), galley, ink);
             if hit.clicked() {
-                *self.selected = Some(row.node.id.clone());
-                response.chosen = Some(row.node.id.clone());
-                if branch && !expanded && matches.is_none() {
+                if self.choosing {
+                    *self.selected = Some(row.node.id.clone());
+                    response.chosen = Some(row.node.id.clone());
+                    if branch && !expanded && matches.is_none() {
+                        toggles.push(row.node.id.clone());
+                    }
+                } else if branch && matches.is_none() {
                     toggles.push(row.node.id.clone());
                 }
                 hit.request_focus();
             }
         }
+        // a row dragged: where it would land, drawn as a line, and kept on release
+        if let (Some(from), Some(can_move)) = (dragging.clone(), self.movable) {
+            let pointer = ui.input(|i| i.pointer.interact_pos());
+            let target = pointer.and_then(|p| {
+                let at = rects.iter().position(|r| r.contains(p))?;
+                Some((at, p.y > rects[at].center().y))
+            });
+            let landing = target.and_then(|(at, below)| {
+                let dragged = rows.iter().find(|r| r.node.id == from)?;
+                let onto = &rows[at];
+                if onto.node.id == from {
+                    return None;
+                }
+                let siblings = |parent: Option<&str>| -> Vec<&TreeNode> {
+                    match parent {
+                        None => self.nodes.iter().collect(),
+                        Some(p) => tree_node(self.nodes, p)
+                            .map(|n| n.children.iter().collect())
+                            .unwrap_or_default(),
+                    }
+                };
+                // a top-level node goes among the top level, by the top-level row it is dropped on
+                let (into, place, line) = if dragged.level == 1 {
+                    let mut top = at;
+                    while rows[top].level > 1 {
+                        top -= 1;
+                    }
+                    let list = siblings(None);
+                    let pos = list.iter().position(|n| n.id == rows[top].node.id)?;
+                    let after =
+                        below && onto.level == 1 && !(onto.node.is_branch() && self.open.contains(&onto.node.id));
+                    let place = if after || onto.level > 1 { pos + 1 } else { pos };
+                    (None, place, if after { rects[at].bottom() } else { rects[top].top() })
+                } else if onto.node.is_branch() && onto.level < dragged.level {
+                    (Some(onto.node.id.clone()), 0, rects[at].bottom())
+                } else {
+                    let parent = onto.parent?;
+                    let list = siblings(Some(parent));
+                    let pos = list.iter().position(|n| n.id == onto.node.id)?;
+                    let place = if below { pos + 1 } else { pos };
+                    (
+                        Some(parent.to_owned()),
+                        place,
+                        if below { rects[at].bottom() } else { rects[at].top() },
+                    )
+                };
+                if !can_move(&from, into.as_deref()) {
+                    return None;
+                }
+                // its place once it has left its old one in the same list
+                let old = siblings(into.as_deref()).iter().position(|n| n.id == from);
+                let place = match old {
+                    Some(old) if old < place => place - 1,
+                    _ => place,
+                };
+                Some((into, place, line, onto.level.min(dragged.level)))
+            });
+            if let Some((_, _, line, level)) = &landing {
+                let left = rects[0].left() + (*level as f32 - 1.0) * 16.0 + 4.0;
+                ui.painter().hline(
+                    left..=rects[0].right(),
+                    *line,
+                    egui::Stroke::new(2.0, t.color("primary")),
+                );
+            }
+            if ui.input(|i| i.pointer.any_released()) {
+                if let Some((into, place, _, _)) = landing {
+                    response.moved = Some((from, into, place));
+                }
+                dragging = None;
+            }
+        }
+        ui.data_mut(|d| match &dragging {
+            Some(id) => {
+                d.insert_temp(drag_id, id.clone());
+            }
+            None => d.remove::<String>(drag_id),
+        });
         // the keys walk the row with the focus
         if let Some(index) = any_focus {
             let row = &rows[index];
@@ -374,5 +525,30 @@ impl<'a> Tree<'a> {
             }
         }
         response
+    }
+}
+
+#[cfg(test)]
+mod moving {
+    use super::{TreeNode, move_tree_node};
+
+    #[test]
+    fn a_node_moves_into_another_branch_and_within_its_own() {
+        let nodes = vec![
+            TreeNode::new("a", "A").children(vec![TreeNode::new("a1", "A1"), TreeNode::new("a2", "A2")]),
+            TreeNode::new("b", "B").children(vec![TreeNode::new("b1", "B1")]),
+        ];
+        let moved = move_tree_node(&nodes, "a2", Some("b"), 0);
+        assert_eq!(
+            moved[1].children.iter().map(|n| n.id.as_str()).collect::<Vec<_>>(),
+            ["a2", "b1"]
+        );
+        let moved = move_tree_node(&nodes, "a1", Some("a"), 1);
+        assert_eq!(
+            moved[0].children.iter().map(|n| n.id.as_str()).collect::<Vec<_>>(),
+            ["a2", "a1"]
+        );
+        let moved = move_tree_node(&nodes, "b", None, 0);
+        assert_eq!(moved.iter().map(|n| n.id.as_str()).collect::<Vec<_>>(), ["b", "a"]);
     }
 }

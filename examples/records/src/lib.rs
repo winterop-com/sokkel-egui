@@ -7,6 +7,7 @@ pub mod backend;
 pub mod count_grid;
 pub mod days;
 pub mod form_fill;
+pub mod form_layout;
 pub mod forms;
 pub mod forms_page;
 pub mod geo;

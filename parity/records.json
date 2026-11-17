@@ -151,6 +151,14 @@
             }
         },
         {
+            "name": "records_form_layout_site",
+            "route": "forms/FRM-SITE/layout",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
             "name": "records_responses",
             "route": "responses",
             "viewport": {

@@ -275,6 +275,10 @@ impl RecordsApp {
             ShellPart::Page => match (known.is_some(), first.as_str()) {
                 (true, "") => Page::scroll(ui, |ui| self.overview(ui)),
                 (true, "forms") if self.path.len() == 1 => Page::scroll(ui, |ui| self.forms_page(ui)),
+                (true, "forms") if self.path.get(2).is_some_and(|p| p == "layout") => {
+                    let form = self.path[1].clone();
+                    Page::scroll(ui, |ui| self.form_layout(ui, &form));
+                }
                 (true, "forms") if self.path.get(2).is_none_or(|p| p == "for") => {
                     let form = self.path[1].clone();
                     let household = (self.path.get(2).map(String::as_str) == Some("for"))
