@@ -77,6 +77,11 @@ impl TextRole {
         FontId::new(tokens.text(self.key()).size, FontFamily::Proportional)
     }
 
+    /// The height of one line in this role.
+    pub fn line_height(self, tokens: &Tokens) -> f32 {
+        tokens.text(self.key()).line_height
+    }
+
     /// `text` in this role: its size, line height, tracking, and its weight on the variable face's
     /// `wght` axis, since egui's fonts have no weight of their own.
     pub fn rich(self, tokens: &Tokens, text: impl Into<String>) -> RichText {

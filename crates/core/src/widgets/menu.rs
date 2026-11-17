@@ -25,6 +25,9 @@ pub enum MenuItem {
         id: Option<String>,
         /// A word at the row's end, muted, such as "in use".
         hint: Option<String>,
+        /// A second line under the label in the palette, muted, as the web's `detail`; the row two
+        /// lines tall.
+        detail: Option<String>,
         /// Other words a palette's search finds it by.
         keywords: Vec<String>,
     },
@@ -44,6 +47,7 @@ impl MenuItem {
             tint: None,
             id: None,
             hint: None,
+            detail: None,
             keywords: Vec::new(),
         }
     }
@@ -52,6 +56,14 @@ impl MenuItem {
     pub fn id(mut self, command: impl Into<String>) -> Self {
         if let MenuItem::Action { id, .. } = &mut self {
             *id = Some(command.into());
+        }
+        self
+    }
+
+    /// A muted second line under the label in the palette, which its search also finds it by.
+    pub fn detail(mut self, line: impl Into<String>) -> Self {
+        if let MenuItem::Action { detail, .. } = &mut self {
+            *detail = Some(line.into());
         }
         self
     }
@@ -141,6 +153,7 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
         disabled,
         tint,
         hint,
+        detail,
         ..
     } = item
     else {
@@ -151,6 +164,14 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
         RowLook::Palette if super::is_phone(ui.ctx()) => (t.length("spacing-finger"), 8.0),
         RowLook::Palette => (34.0, 8.0),
     };
+    // a palette row with a detail is two lines tall: the detail's line more
+    let detail = detail.as_ref().filter(|_| look == RowLook::Palette);
+    let height = height
+        + if detail.is_some() {
+            TextRole::Help.line_height(t)
+        } else {
+            0.0
+        };
     let (row, hit) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
     let sense = if *disabled { Sense::hover() } else { Sense::click() };
     let hit = ui.interact(row, id, sense).union(hit);
@@ -221,8 +242,28 @@ fn action_row(ui: &mut Ui, t: &Tokens, id: Id, item: &MenuItem, highlighted: boo
         room,
         TextRole::Body.font(t),
     );
-    ui.painter()
-        .galley(pos2(x, row.center().y - galley.size().y / 2.0), galley, ink);
+    match detail {
+        None => ui
+            .painter()
+            .galley(pos2(x, row.center().y - galley.size().y / 2.0), galley, ink),
+        Some(detail) => {
+            let under = WidgetText::from(TextRole::Help.rich(t, detail)).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                room,
+                TextRole::Help.font(t),
+            );
+            let top = row.center().y - (galley.size().y + under.size().y) / 2.0;
+            let label_height = galley.size().y;
+            ui.painter().galley(pos2(x, top), galley, ink);
+            let quiet = if accent_ink {
+                t.color("accent-foreground")
+            } else {
+                t.color("muted-foreground")
+            };
+            ui.painter().galley(pos2(x, top + label_height), under, quiet);
+        }
+    }
     if let Some(keys) = keys {
         let at = pos2(row.right() - 8.0 - keys.size().x, row.center().y - keys.size().y / 2.0);
         let quiet = if accent_ink {
@@ -549,9 +590,14 @@ impl<'a> CommandPalette<'a> {
             .flat_map(|(g, group)| {
                 let needle = needle.clone();
                 group.items.iter().enumerate().filter_map(move |(i, item)| match item {
-                    MenuItem::Action { label, keywords, .. }
-                        if label.to_lowercase().contains(&needle)
-                            || keywords.iter().any(|k| k.to_lowercase().contains(&needle)) =>
+                    MenuItem::Action {
+                        label,
+                        keywords,
+                        detail,
+                        ..
+                    } if label.to_lowercase().contains(&needle)
+                        || keywords.iter().any(|k| k.to_lowercase().contains(&needle))
+                        || detail.as_ref().is_some_and(|d| d.to_lowercase().contains(&needle)) =>
                     {
                         Some((g, i))
                     }
@@ -650,7 +696,9 @@ impl<'a> CommandPalette<'a> {
                         .max_rect(text)
                         .layout(egui::Layout::left_to_right(egui::Align::Center)),
                 );
+                // centered in the floor egui 0.37 sets a text edit's height to
                 let edit = TextEdit::singleline(self.query)
+                    .align(egui::Align2::LEFT_CENTER)
                     .frame(Frame::NONE)
                     .margin(Margin::ZERO)
                     .font(TextRole::Body.font(&t))

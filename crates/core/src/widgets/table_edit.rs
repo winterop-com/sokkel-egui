@@ -153,7 +153,9 @@ fn bare_field(
             .layout(Layout::left_to_right(Align::Center)),
     );
     let response = child.add(
+        // centered in the floor egui 0.37 sets a text edit's height to
         TextEdit::singleline(draft)
+            .align(egui::Align2::LEFT_CENTER)
             .id(id)
             .font(TextRole::Body.font(t))
             .text_color(t.color("foreground"))

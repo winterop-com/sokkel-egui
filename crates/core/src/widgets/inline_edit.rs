@@ -291,7 +291,9 @@ impl InlineEdit {
         let editor_id = self.id.with("editor");
         let before = open.draft.clone();
         let response = child.add(
+            // centered in the floor egui 0.37 sets a text edit's height to
             TextEdit::singleline(&mut open.draft)
+                .align(egui::Align2::LEFT_CENTER)
                 .id(editor_id)
                 .font(font)
                 .text_color(ink)

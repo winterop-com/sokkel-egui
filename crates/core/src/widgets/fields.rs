@@ -120,7 +120,9 @@ fn icon_field(ui: &mut Ui, rect: Rect, text: &mut String, icon: Icon, placeholde
             .max_rect(inner)
             .layout(Layout::left_to_right(Align::Center)),
     );
+    // centered in the floor egui 0.37 sets a text edit's height to
     let edit = TextEdit::singleline(text)
+        .align(egui::Align2::LEFT_CENTER)
         .id(id)
         .font(body.font(&t))
         .text_color(t.color("foreground"))
