@@ -39,6 +39,12 @@ pub struct Preferences {
     /// The refresh a dashboard opens on until the reader picks one, in seconds.
     pub refresh: u32,
     pub zone: Zone,
+    /// Whether the rules are evaluated at all.
+    pub evaluate: bool,
+    /// Whether a rule that fires says so in a toast.
+    pub notify: bool,
+    /// How long fired alerts are kept, in seconds.
+    pub keep: f64,
 }
 
 impl Default for Preferences {
@@ -47,12 +53,18 @@ impl Default for Preferences {
             range: "15m",
             refresh: 5,
             zone: Zone::Local,
+            evaluate: true,
+            notify: true,
+            keep: 24.0 * 3600.0,
         }
     }
 }
 
 /// The place of the Dashboards page, beside the dashboards' own ids.
 pub const DASHBOARDS: &str = "dashboards";
+
+/// The place of the Alerts page.
+pub const ALERTS: &str = "alerts";
 
 /// The place of the settings, opened over the page shown.
 pub const SETTINGS: &str = "settings";
@@ -97,6 +109,9 @@ pub struct MetricsApp {
     /// The settings over the page, open on the section named.
     pub settings: Option<String>,
     pub(crate) resetting: bool,
+    /// The rules, what they fired, and where each stands.
+    pub alerting: crate::alerting::Alerting,
+    pub alerts: crate::alerts::AlertsPage,
     /// The panels being arranged: a draft Done keeps and Cancel throws away.
     pub edit: DashboardEdit<Panel>,
     /// How many panels and copies have been made, for their ids.
@@ -143,6 +158,8 @@ impl MetricsApp {
             refresh_chosen: false,
             settings: None,
             resetting: false,
+            alerting: crate::alerting::Alerting::seeded(DEMO_NOW),
+            alerts: Default::default(),
             edit: DashboardEdit::default(),
             made: 0,
             said: Vec::new(),
@@ -160,6 +177,8 @@ impl MetricsApp {
                 Some(last) if now - last >= 1.0 => {
                     self.at += (now - last).floor();
                     self.last_scrape = Some(now);
+                    // every rule is read at each scrape
+                    self.evaluate_rules();
                 }
                 None => self.last_scrape = Some(now),
                 _ => {}
@@ -178,8 +197,19 @@ impl MetricsApp {
             }
             ui.ctx().request_repaint_after(std::time::Duration::from_secs(1));
         }
+        let firing = self.alerting.firing();
         let groups = vec![
-            RailGroup::new(None, [RailEntry::new(DASHBOARDS, "Dashboards", Icon::LayoutGrid)]),
+            RailGroup::new(
+                None,
+                [RailEntry::new(DASHBOARDS, "Dashboards", Icon::LayoutGrid), {
+                    let alerts = RailEntry::new(ALERTS, "Alerts", Icon::Bell);
+                    if firing > 0 {
+                        alerts.count(firing as u32)
+                    } else {
+                        alerts
+                    }
+                }],
+            ),
             RailGroup::new(
                 Some("Dashboards"),
                 self.dashboards
@@ -198,6 +228,8 @@ impl MetricsApp {
         };
         let title = if self.place == DASHBOARDS {
             "Dashboards".to_owned()
+        } else if self.place == ALERTS {
+            "Alerts".to_owned()
         } else {
             self.dashboards
                 .iter()
@@ -230,12 +262,13 @@ impl MetricsApp {
             }
             ShellPart::Page if self.editor.is_some() => Page::show(ui, |ui| self.editor_page(ui)),
             ShellPart::Page if self.place == DASHBOARDS => Page::show(ui, |ui| self.dashboards_page(ui)),
+            ShellPart::Page if self.place == ALERTS => Page::show(ui, |ui| self.alerts_page(ui)),
             ShellPart::Page => Page::scroll(ui, |ui| self.board_page(ui)),
             ShellPart::Foot => {
                 ui.add(
                     StatusLine::new(note.clone())
                         .tone(if self.live { StatusTone::Live } else { StatusTone::Quiet })
-                        .item("firing", 0)
+                        .item("firing", firing)
                         .item("source", "1s"),
                 );
             }
@@ -250,6 +283,7 @@ impl MetricsApp {
         self.panel_dialogs(&ui.ctx().clone());
         self.editor_dialogs(&ui.ctx().clone());
         self.settings_dialog(&ui.ctx().clone());
+        self.alerts_dialogs(&ui.ctx().clone());
         self.board_dialogs(&ui.ctx().clone());
         match account {
             Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,

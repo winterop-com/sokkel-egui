@@ -244,7 +244,8 @@ impl Widget for Input<'_> {
             });
         prepared.frame.stroke = Stroke::new(1.0, edge);
         if room > 0.0 {
-            prepared.content_ui.add_space(room);
+            // the unit's room at the end, the frame as wide as without it
+            prepared.content_ui.set_min_width(width - 20.0);
         }
         let outer = prepared.end(ui);
         if let Some(suffix) = suffix {

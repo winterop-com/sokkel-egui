@@ -60,9 +60,16 @@ manifest is `parity/metrics.json`; the web's screens are shot into `parity/metri
   while the reader has not picked their own range or refresh, as a link naming none follows the
   web's preferences. The zone is the computer's ("This computer" for the web's "This browser"),
   read as the app starts, or UTC, which the foot strip then names.
+- Alerts, in the rail with the count firing: the web's five rules, read every second at the newest
+  scrape (146 ms, 0.42%, 49, 75% and 332 req/s at 09:00:05, as the web's), and the 69 alerts they
+  fired in the six hours before; a rule fires once it has crossed its threshold for its time,
+  saying so in a toast, and resolves once back. The rules' list (a `Cell::Switch` turns one on or
+  off), what fired (`Cell::Clock`, its clock and how long ago in the short words), the rule dialog
+  with its live chart against the threshold, Clear resolved, and the Alerts section of Settings
+  (evaluating, the toasts, how long fired alerts are kept).
 - Open: Download CSV saves without a dialog asking where (a native save dialog needs a crate such
   as `rfd`); a stat tile in the preview keeps its own height where the web's stands 224.
 - Open: the Services overview's request chart labels its axis every 90 seconds on the web where a
   fresh count of ECharts' `interval: 'auto'` gives 80, and the heatmap labels its axis more
   sparsely than the web's.
-- Then Alerts, with its section in Settings, and the search palette.
+- Then the search palette (the top bar's Search and its commands).

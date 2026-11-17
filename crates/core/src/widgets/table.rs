@@ -141,6 +141,19 @@ pub enum Cell {
     Chip(String, ChipTone),
     /// A check box whose press the table reports as `toggled`.
     Check(bool),
+    /// A switch named `label` for a screen reader, whose press the table reports as `switched`, as a
+    /// rule's On column.
+    Switch {
+        on: bool,
+        label: String,
+    },
+    /// A moment as its clock in the code face, then 8 on how long ago it was in the short words
+    /// (`3 hr. ago`), muted, sorted by the moment; `at` and `now` in milliseconds of one clock.
+    Clock {
+        clock: String,
+        at: f64,
+        now: f64,
+    },
     /// A person: their avatar and their name.
     Person(String),
     /// A due date, toned by where it falls against `now`; a done task's is quiet.
@@ -194,7 +207,8 @@ impl Cell {
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
             Cell::Tags(tags) => tags.join(" "),
             Cell::Relative { at, now } => super::relative_time(at - now),
-            Cell::Check(_) | Cell::Trend(..) | Cell::Empty => String::new(),
+            Cell::Clock { clock, .. } => clock.clone(),
+            Cell::Check(_) | Cell::Switch { .. } | Cell::Trend(..) | Cell::Empty => String::new(),
         }
     }
 
@@ -207,7 +221,8 @@ impl Cell {
             | Cell::Mono(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
-            Cell::Check(on) => u8::from(*on).to_string(),
+            Cell::Check(on) | Cell::Switch { on, .. } => u8::from(*on).to_string(),
+            Cell::Clock { at, .. } => format!("{:024.3}", at + 1e18),
             Cell::Due { date, .. } => date.map_or("9999".into(), |d| d.to_string()),
             Cell::Tags(tags) => tags.join(" "),
             Cell::Relative { at, .. } => format!("{:024.3}", at + 1e18),
@@ -317,6 +332,8 @@ pub struct TableOutput {
     pub response: Response,
     /// A row's check box was pressed.
     pub toggled: Option<usize>,
+    /// A row's switch was pressed.
+    pub switched: Option<usize>,
     /// A row's action was chosen: the row and the action's index in its menu.
     pub action: Option<(usize, usize)>,
     /// A row was dragged by its grip from one place in the order shown to another.
@@ -1301,6 +1318,7 @@ impl<'a> DataTable<'a> {
         let mut out = TableOutput {
             response: ui.response(),
             toggled: None,
+            switched: None,
             action: None,
             reordered: None,
             edited: None,
@@ -1710,7 +1728,11 @@ impl<'a> DataTable<'a> {
                                 self.id.with(("cell", index, c)),
                             ) {
                                 let _ = toggled;
-                                out.toggled = Some(index);
+                                if matches!(self.rows[index][c], Cell::Switch { .. }) {
+                                    out.switched = Some(index);
+                                } else {
+                                    out.toggled = Some(index);
+                                }
                             }
                         }
                         if let Some(actions) = &self.actions {
@@ -1998,6 +2020,40 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
                 t.color("foreground"),
             );
         }
+        Cell::Switch { on, label } => {
+            let mut switched = *on;
+            let place = Rect::from_min_size(rect.min, vec2(rect.width(), rect.height()));
+            let mut child = ui.new_child(
+                egui::UiBuilder::new()
+                    .max_rect(place)
+                    .layout(egui::Layout::left_to_right(egui::Align::Center)),
+            );
+            if child.add(super::Switch::new(&mut switched, label)).changed() {
+                return Some(switched);
+            }
+        }
+        Cell::Clock { clock, at, now } => {
+            let mono = egui::RichText::new(clock).font(egui::FontId::monospace(TextRole::Help.font(t).size));
+            let galley =
+                WidgetText::from(mono).into_galley(ui, Some(TextWrapMode::Truncate), room, TextRole::Body.font(t));
+            let width = galley.size().x;
+            ui.painter().galley(
+                pos2(rect.left(), rect.center().y - galley.size().y / 2.0),
+                galley,
+                t.color("foreground"),
+            );
+            let ago = WidgetText::from(TextRole::Body.rich(t, super::relative_time_short(at - now))).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                (room - width - 8.0).max(1.0),
+                TextRole::Body.font(t),
+            );
+            ui.painter().galley(
+                pos2(rect.left() + width + 8.0, rect.center().y - ago.size().y / 2.0),
+                ago,
+                t.color("muted-foreground"),
+            );
+        }
         Cell::Check(on) => {
             let mut checked = *on;
             let place = Rect::from_min_size(pos2(rect.left(), rect.center().y - 8.0), vec2(16.0, 16.0));
@@ -2118,7 +2174,14 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
                 room - 20.0,
             )
         }
-        Cell::Check(_) | Cell::Trend(..) | Cell::Empty => 0.0,
+        Cell::Clock { clock, at: moment, now } => text(
+            ui,
+            TextRole::Help.rich(t, format!("{clock} {}", super::relative_time_short(moment - now))),
+            quiet,
+            at.x,
+            room,
+        ),
+        Cell::Check(_) | Cell::Switch { .. } | Cell::Trend(..) | Cell::Empty => 0.0,
     }
 }
 

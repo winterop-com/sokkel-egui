@@ -4,13 +4,20 @@
 use eframe::egui;
 use sokkel_egui::{
     Appearance, Button, ButtonSize, ButtonVariant, ConfirmAnswer, ConfirmDialog, Icon, Segmented, Select,
-    SettingsDialog, SettingsSection, ThemeWords, setting_row, setting_row_found_by, theme_settings,
+    SettingsDialog, SettingsSection, Switch, ThemeWords, setting_row, setting_row_found_by, theme_settings,
 };
 
 use crate::MetricsApp;
 use crate::app::{Preferences, Zone};
 use crate::model::seed_dashboards;
 use crate::query::{INTERVALS, PRESETS, Range};
+
+/// How long fired alerts are kept, as the web's `KEEPS`.
+const KEEPS: [(f64, &str); 3] = [
+    (3600.0, "An hour"),
+    (24.0 * 3600.0, "A day"),
+    (7.0 * 24.0 * 3600.0, "A week"),
+];
 
 impl MetricsApp {
     /// The settings over the page while they are open, and the question before the demo's data
@@ -19,6 +26,7 @@ impl MetricsApp {
         if let Some(mut active) = self.settings.take() {
             let sections = [
                 SettingsSection::new("dashboards", "Dashboards", Icon::LayoutDashboard).group("Preferences"),
+                SettingsSection::new("alerts", "Alerts", Icon::Bell).group("Preferences"),
                 SettingsSection::new("appearance", "Appearance", Icon::Palette).group("Preferences"),
                 SettingsSection::new("data", "Data", Icon::Database)
                     .group("This demo")
@@ -75,12 +83,43 @@ impl MetricsApp {
                             },
                         );
                     }
-                    "appearance" => theme_settings(ui, appearance, true, &ThemeWords::default()),
+                    "alerts" => {
+                    setting_row(
+                        ui,
+                        "Evaluate rules",
+                        "Read every rule against the source each second. Off, nothing fires and what fires now resolves.",
+                        |ui| {
+                            ui.add(Switch::new(&mut prefs.evaluate, "Evaluate rules"));
+                        },
+                    );
+                    setting_row_found_by(
+                        ui,
+                        "Say when a rule fires",
+                        "A note in the corner when a rule fires and when it resolves.",
+                        &["toast", "notification"],
+                        |ui| {
+                            ui.add(Switch::new(&mut prefs.notify, "Say when a rule fires"));
+                        },
+                    );
+                    setting_row_found_by(
+                        ui,
+                        "Keep fired alerts",
+                        "Resolved alerts older than this leave the list.",
+                        &["history"],
+                        |ui| {
+                            let mut at = KEEPS.iter().position(|(s, _)| *s == prefs.keep).unwrap_or(1);
+                            if ui.add(Segmented::new(&mut at, KEEPS.iter().map(|(_, l)| *l))).changed() {
+                                prefs.keep = KEEPS[at].0;
+                            }
+                        },
+                    );
+                }
+                "appearance" => theme_settings(ui, appearance, true, &ThemeWords::default()),
                     _ => {
                         setting_row(
                             ui,
                             "Reset demo data",
-                            "Puts the dashboards and these preferences back as they first were.",
+                            "Puts the dashboards, the rules, what fired and these preferences back as they first were.",
                             |ui| {
                                 let reset = Button::new("Reset")
                                     .size(ButtonSize::Sm)
@@ -100,11 +139,20 @@ impl MetricsApp {
                         self.prefs.refresh = defaults.refresh;
                         self.prefs.zone = defaults.zone;
                     }
+                    "alerts" => {
+                        let defaults = Preferences::default();
+                        self.prefs.evaluate = defaults.evaluate;
+                        self.prefs.notify = defaults.notify;
+                        self.prefs.keep = defaults.keep;
+                    }
                     "appearance" => self.appearance = Appearance::default(),
                     _ => {}
                 }
             }
             self.follow_preferences(&before);
+            if self.prefs.evaluate != before.evaluate || self.prefs.keep != before.keep {
+                self.evaluate_rules();
+            }
             if reset_data {
                 self.resetting = true;
             }
@@ -114,7 +162,9 @@ impl MetricsApp {
         }
         if self.resetting {
             let question = ConfirmDialog::new("reset-demo", "Reset the demo data?", "Reset")
-                .detail("Every dashboard goes back to how the demo started. This cannot be undone.")
+                .detail(
+                    "Every dashboard, rule and fired alert goes back to how the demo started. This cannot be undone.",
+                )
                 .destructive(true);
             match question.show(ctx) {
                 Some(ConfirmAnswer::Confirm) => {
@@ -145,6 +195,7 @@ impl MetricsApp {
     /// The dashboards and the preferences as the demo started, on its first dashboard.
     fn reset_demo(&mut self) {
         self.dashboards = seed_dashboards();
+        self.alerting = crate::alerting::Alerting::seeded(self.at);
         self.prefs = Preferences::default();
         self.edit.cancel();
         self.editor = None;

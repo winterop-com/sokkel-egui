@@ -45,6 +45,30 @@ pub fn relative_time(distance: f64) -> String {
     "now".into()
 }
 
+/// A time said as `relative_time` says it, in the short words of Intl's `short` style in English:
+/// "3 hr. ago", "45 min. ago", "in 2 days", "yesterday".
+pub fn relative_time_short(distance: f64) -> String {
+    let long = relative_time(distance);
+    let words = [
+        (" minutes", " min."),
+        (" minute", " min."),
+        (" hours", " hr."),
+        (" hour", " hr."),
+        (" weeks", " wk."),
+        (" week", " wk."),
+        (" months", " mo."),
+        (" month", " mo."),
+        (" years", " yr."),
+        (" year", " yr."),
+    ];
+    for (word, short) in words {
+        if long.contains(word) {
+            return long.replace(word, short);
+        }
+    }
+    long
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
