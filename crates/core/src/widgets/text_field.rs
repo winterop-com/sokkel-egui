@@ -227,13 +227,21 @@ impl Widget for Input<'_> {
             .inner_margin(if self.multiline {
                 Margin::symmetric(10, 8)
             } else {
-                Margin::symmetric(10, ((height - body.font(&t).size * 1.4) / 2.0).max(0.0) as i8)
+                // what is left of the control's height around one line of the text as egui lays it
+                Margin::symmetric(
+                    10,
+                    ((height - ui.fonts_mut(|f| f.row_height(&body.font(&t)))) / 2.0)
+                        .floor()
+                        .max(0.0) as i8,
+                )
             });
         let mut prepared = frame.begin(ui);
         if self.multiline {
             // at least 112 tall with its edge, as the web's `min-h-28`, growing with its text
             prepared.content_ui.set_min_height(112.0 - 16.0 - 2.0);
         }
+        // the line alone sets the field's height, not egui's least height for something to press
+        prepared.content_ui.spacing_mut().interact_size.y = 0.0;
         let mut response = prepared.content_ui.add_enabled(self.enabled, edit);
         if let Some(name) = self.name.as_ref().or(self.placeholder.as_ref()) {
             response = response.accessible_name(name);

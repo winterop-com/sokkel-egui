@@ -351,26 +351,14 @@ impl MetricsApp {
                     );
                 if answer == Some(true) {
                     let name = file_name(&panel.title);
-                    // where a browser would put the download: the reader's Downloads
-                    let folder = std::env::var_os("HOME")
-                        .map(|home| std::path::PathBuf::from(home).join("Downloads"))
-                        .filter(|path| path.is_dir())
-                        .unwrap_or_else(std::env::temp_dir);
-                    // a name no file there has yet, as a browser numbers a second download
-                    let stem = name.trim_end_matches(".csv").to_owned();
-                    let mut path = folder.join(&name);
-                    let mut n = 1;
-                    while path.exists() {
-                        n += 1;
-                        path = folder.join(format!("{stem} ({n}).csv"));
-                    }
-                    let name = path
-                        .file_name()
-                        .map_or(name.clone(), |f| f.to_string_lossy().into_owned());
-                    match std::fs::write(&path, &inspected.csv) {
-                        Ok(()) => self
-                            .said
-                            .push(Toast::success(format!("{name} saved in {}", folder.display()))),
+                    match sokkel_egui::download(&name, &inspected.csv) {
+                        Ok(path) => {
+                            let saved = path
+                                .file_name()
+                                .map_or(name.clone(), |f| f.to_string_lossy().into_owned());
+                            let folder = path.parent().map(|p| p.display().to_string()).unwrap_or_default();
+                            self.said.push(Toast::success(format!("{saved} saved in {folder}")));
+                        }
                         Err(error) => self
                             .said
                             .push(Toast::new(format!("{name} could not be saved: {error}")).kind(ToastKind::Error)),

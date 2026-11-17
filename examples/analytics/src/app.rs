@@ -103,6 +103,10 @@ pub struct AnalyticsApp {
     pub tables: HashMap<String, TableState>,
     /// The key figures of a segment and span, counted once per world.
     kpis: HashMap<KpiKey, Kpis>,
+    /// A page asked for while a report has changes not saved, held until the question is answered.
+    pub leaving: Option<String>,
+    /// The saved reports and the one being composed.
+    pub reports: crate::reports::ReportsPage,
     /// The saved funnels and the one being built.
     pub funnels: crate::funnels::FunnelsPage,
     /// A customer's page: its dialog and questions.
@@ -179,6 +183,8 @@ impl AnalyticsApp {
             customers: Default::default(),
             customer: Default::default(),
             funnels: crate::funnels::FunnelsPage::new(now),
+            reports: crate::reports::ReportsPage::new(now),
+            leaving: None,
             map: sokkel_egui_maps::MapView::new(30.0, 10.0, 1.0).framed(false),
             map_framed: false,
             opens: HashMap::new(),
@@ -304,10 +310,38 @@ impl AnalyticsApp {
         self.view.path.first().map_or("overview", String::as_str)
     }
 
+    /// Goes to a page, unless a report has changes not saved: then it asks first, as the web's
+    /// `useUnsavedChanges` holds a route.
     pub fn go(&mut self, path: &str) {
+        let staying = self.view.path.join("/") == path.trim_matches('/');
+        if !staying && self.report_changed() {
+            self.leaving = Some(path.to_owned());
+            return;
+        }
+        self.go_now(path);
+    }
+
+    fn go_now(&mut self, path: &str) {
         self.view.path = path.split('/').filter(|p| !p.is_empty()).map(str::to_owned).collect();
         if self.edit.editing() {
             self.edit.cancel();
+        }
+    }
+
+    /// Whether the report open has changes not saved: a saved one changed, or a new one named.
+    pub fn report_changed(&self) -> bool {
+        if self.page() != "reports" {
+            return false;
+        }
+        let Some(draft) = &self.reports.draft else { return false };
+        match &draft.of {
+            None => !draft.name.trim().is_empty(),
+            Some(id) => self
+                .reports
+                .saved
+                .iter()
+                .find(|r| r.id == *id)
+                .is_some_and(|r| r.name != draft.name.trim() || r.panels != draft.panels),
         }
     }
 
@@ -453,6 +487,7 @@ impl AnalyticsApp {
                 Page::scroll(ui, |ui| self.customer_page(ui, &id))
             }
             ShellPart::Page if page == "funnels" => Page::scroll(ui, |ui| self.funnels_page(ui)),
+            ShellPart::Page if page == "reports" => Page::scroll(ui, |ui| self.reports_page(ui)),
             ShellPart::Page => {}
             ShellPart::Foot => {
                 ui.add(
@@ -485,6 +520,17 @@ impl AnalyticsApp {
         for id in sokkel_egui::toast_acted(ui.ctx()) {
             if let Some(open) = self.opens.remove(&id) {
                 self.view.path = open.split('/').map(str::to_owned).collect();
+            }
+        }
+        if let Some(path) = self.leaving.clone() {
+            match sokkel_egui::unsaved_changes(ui.ctx(), "leave-report", &sokkel_egui::UnsavedChangesWords::leave()) {
+                Some(true) => {
+                    self.leaving = None;
+                    self.reports.draft = None;
+                    self.go_now(&path);
+                }
+                Some(false) => self.leaving = None,
+                None => {}
             }
         }
         Toaster::new().show(ui.ctx());

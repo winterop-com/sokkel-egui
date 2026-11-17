@@ -12,12 +12,14 @@ use egui::{
 };
 
 mod day;
+mod download;
 pub mod icons;
 pub mod text;
 pub mod tokens;
 mod widgets;
 
 pub use day::Day;
+pub use download::download;
 pub use icons::Icon;
 pub use text::TextRole;
 pub use tokens::{

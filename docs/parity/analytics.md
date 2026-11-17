@@ -71,6 +71,11 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
   kept first), the steps left to add and the window; Save says why it cannot, and Delete asks
   first. Under it the preview and each step's share of the one before, of the first and of the
   period before. New starts a funnel of its own.
+- Reports: the saved reports beside the one composed, its panels in order (dragged, taken out, the
+  ones left to add), Save that says why it cannot, Delete that asks first, and the preview of its
+  panels as the dashboards draw them; Export CSV writes the web's file to the Downloads folder
+  (`sokkel_egui::download`, as the web's `lib/download`, which metrics now uses too). Leaving a
+  report with changes not saved asks first, as the web's `useUnsavedChanges` holds a route.
 - Open: a value chosen in place stands 10 further in than the values around it, where the web
   lines it up with them.
 - Open: the web map keeps clear of its legend as it frames the points; the egui map frames them
@@ -81,4 +86,4 @@ manifest is `parity/analytics.json`; the web's screens are shot into `parity/ana
 
 ## Next
 
-- Reports, Goals, Settings and the palette.
+- Goals, Settings and the palette.

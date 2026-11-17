@@ -2,6 +2,7 @@
 //! simulated history of teams, their plans and the invoices those bill.
 
 pub mod app;
+pub mod csv;
 pub mod customer;
 pub mod customers;
 pub mod days;
@@ -11,6 +12,7 @@ pub mod metrics;
 pub mod model;
 pub mod overview;
 pub mod panels;
+pub mod reports;
 pub mod revenue;
 pub mod seed;
 pub mod stream;
