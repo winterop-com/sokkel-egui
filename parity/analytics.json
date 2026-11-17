@@ -1,0 +1,193 @@
+{
+    "example": "examples/analytics/web/src",
+    "ported": {
+        "commit": "e1777df2",
+        "files": {
+            "Analytics.tsx": "671e81a43398705fcdcca308657ae4a803d7a5b5",
+            "App.tsx": "8799dba4f2c842a50f0ff48af68a52c216e041cf",
+            "app.css": "7863eb23f4dded094c0bdf076ae94a3adc86fedc",
+            "arrange.tsx": "c5aad104057aa20fa2d04eeede112de1108b14dd",
+            "backend.ts": "8e47fe51a2e4e38377c5510dd93996fb3fa2db49",
+            "collections.ts": "ff98318f0212def9c2f81014ef7004cc007707ff",
+            "csv.ts": "a8eb626c39c8e9d3b3aa2cdd6a19d4ec8d5f792a",
+            "main.tsx": "aa7fb736606680a33b9a1c060caad65c74ae09e9",
+            "metrics.ts": "1be84f8a455bec6e62f8a85510061d2fca166619",
+            "model.ts": "536a20e944b0b70add16e93e6b0f1115742ed372",
+            "order.tsx": "edbcfb185f50461a8973aec82fd3047337b526e8",
+            "pages/Customer.tsx": "a55d4ab1f4dd54cca4bba62ed4e6ee402c60cba8",
+            "pages/Customers.tsx": "9fb555d069f619bb62c06415eebfcfda3e123e7e",
+            "pages/Funnels.tsx": "dfad0ebba5912dcee2cdd6144ce48c1b253e1c42",
+            "pages/Goals.tsx": "d67b076ee6c4a13ffaad5fb04d2312ebf55a6e39",
+            "pages/Overview.tsx": "0887a2aece0a84fc89cde7f9361f14a609e8a52d",
+            "pages/Reports.tsx": "146ce7b69038041399a08d390eae1dfedce5bb07",
+            "pages/Revenue.tsx": "b8d9a06377258013be7184d87ec39c9c1bc8cf58",
+            "pages/Settings.tsx": "42156b2334ea028a2c1c2d5f37255ba2d87b6106",
+            "panels.tsx": "1572c79434957dc3d6a179b8837ff2aa24307d19",
+            "parts.tsx": "a385ebf3bf02b36d403972a237627a9c00953b59",
+            "seed.ts": "d9276e333ad8b8f7be3fbbc580785d4434decb2a",
+            "state.tsx": "384c526edff265ddf74127a662a05b3af953ac39",
+            "themes.ts": "5f98ff7e6680d7dd2807416aff0c7de32b2852b1",
+            "view.ts": "8eff7b9acea86ced9683a162aa0491ff06c5c46f",
+            "world.ts": "a77a53e6c2053a2d68215c44e497a8d313e2d0bb"
+        }
+    },
+    "parts": {
+        "@winterop-com/sokkel-ui-charts/dashboard/BarPanel": "sokkel-egui-charts BarPanel",
+        "@winterop-com/sokkel-ui-charts/dashboard/ChartPanel": null,
+        "@winterop-com/sokkel-ui-charts/dashboard/TimeSeriesPanel": "sokkel-egui-charts TimeSeriesPanel",
+        "@winterop-com/sokkel-ui-charts/dashboard/series": "sokkel-egui-charts Series, series_color",
+        "@winterop-com/sokkel-ui-maps/MapLegend": "sokkel-egui-maps MapLegend",
+        "@winterop-com/sokkel-ui-maps/MapPopup": "sokkel-egui-maps MapPopup, MapPopupRow",
+        "@winterop-com/sokkel-ui-maps/MapView": "sokkel-egui-maps MapView (markers chosen by pressing them)",
+        "@winterop-com/sokkel-ui-maps/PointLayer": "sokkel-egui-maps Marker (points alone)",
+        "@winterop-com/sokkel-ui-maps/scale": "sokkel-egui-maps MapLegend rows (the categories and their counts)",
+        "@winterop-com/sokkel-ui/AccountMenu": "AccountMenu",
+        "@winterop-com/sokkel-ui/ActivityList": "ActivityList",
+        "@winterop-com/sokkel-ui/CommandPalette": "CommandPalette",
+        "@winterop-com/sokkel-ui/DataTable": "DataTable",
+        "@winterop-com/sokkel-ui/DateField": null,
+        "@winterop-com/sokkel-ui/DescriptionList": "DescriptionList",
+        "@winterop-com/sokkel-ui/DialogShell": "ConfirmDialog, Dialog",
+        "@winterop-com/sokkel-ui/ErrorBoundary": null,
+        "@winterop-com/sokkel-ui/Field": "field (a label and a hint over a control)",
+        "@winterop-com/sokkel-ui/FilterBar": null,
+        "@winterop-com/sokkel-ui/IconButton": "IconButton",
+        "@winterop-com/sokkel-ui/InlineEdit": "InlineEdit (a line of text; PageHeader::edit_title)",
+        "@winterop-com/sokkel-ui/Layout": "egui layout",
+        "@winterop-com/sokkel-ui/NotFound": null,
+        "@winterop-com/sokkel-ui/NumberField": "NumberField",
+        "@winterop-com/sokkel-ui/PageHeader": "PageHeader",
+        "@winterop-com/sokkel-ui/PageState": "PageState",
+        "@winterop-com/sokkel-ui/PersonAvatar": "PersonAvatar, Cell::Person",
+        "@winterop-com/sokkel-ui/Rail": "Rail",
+        "@winterop-com/sokkel-ui/RelativeTime": "relative_time, Cell::Relative",
+        "@winterop-com/sokkel-ui/SavedViews": null,
+        "@winterop-com/sokkel-ui/SearchField": "SearchField",
+        "@winterop-com/sokkel-ui/Section": "Section",
+        "@winterop-com/sokkel-ui/Segmented": "Segmented",
+        "@winterop-com/sokkel-ui/SettingsDialog": "SettingsDialog",
+        "@winterop-com/sokkel-ui/Shell": "Shell",
+        "@winterop-com/sokkel-ui/StatusChip": "Chip with ChipTone::Status",
+        "@winterop-com/sokkel-ui/StatusLine": "StatusLine",
+        "@winterop-com/sokkel-ui/StatusProvider": "none needed: the app maps its states to tokens itself (live::Health::color, state_tone)",
+        "@winterop-com/sokkel-ui/TextField": "TextField",
+        "@winterop-com/sokkel-ui/ThemePicker": "theme_settings, ThemeWords",
+        "@winterop-com/sokkel-ui/Timeline": "Timeline",
+        "@winterop-com/sokkel-ui/TopBar": "TopBar",
+        "@winterop-com/sokkel-ui/UnsavedChanges": "unsaved_changes, UnsavedChangesWords",
+        "@winterop-com/sokkel-ui/dashboard/DashboardArrange": "DashboardArrange (drag by the grip, arrow keys, size menu, remove, palette)",
+        "@winterop-com/sokkel-ui/dashboard/DashboardEdit": "DashboardEdit and DashboardEditActions",
+        "@winterop-com/sokkel-ui/dashboard/DashboardGrid": "DashboardGrid, DashboardPanel, KpiRow, PanelMenu",
+        "@winterop-com/sokkel-ui/dashboard/StatPanel": "StatPanel",
+        "@winterop-com/sokkel-ui/dashboard/TimeRange": "TimeRangePicker (presets and a custom span on RangeCalendar), RefreshControl",
+        "@winterop-com/sokkel-ui/dashboard/VariablesBar": "variable_select (each variable a chip; Select::small, Select::bare)",
+        "@winterop-com/sokkel-ui/hooks/use-overlay-route": "app state (egui has no URL)",
+        "@winterop-com/sokkel-ui/lib/appearance": "Appearance, Motion, swatch",
+        "@winterop-com/sokkel-ui/lib/commands": "CommandGroup, place_commands, appearance_commands",
+        "@winterop-com/sokkel-ui/lib/download": null,
+        "@winterop-com/sokkel-ui/lib/filters": null,
+        "@winterop-com/sokkel-ui/lib/list-views": null,
+        "@winterop-com/sokkel-ui/lib/reorder": "DataTable::reorder (TableOutput::reordered)",
+        "@winterop-com/sokkel-ui/lib/status": "ChipTone::Status and the status-* tokens (no StatusMap yet)",
+        "@winterop-com/sokkel-ui/primitives/button": "Button",
+        "@winterop-com/sokkel-ui/primitives/dropdown-menu": "DropdownMenu",
+        "@winterop-com/sokkel-ui/primitives/empty": "Empty (DataTable::empty draws it without the heads)",
+        "@winterop-com/sokkel-ui/primitives/native-select": null,
+        "@winterop-com/sokkel-ui/primitives/switch": "Switch",
+        "@winterop-com/sokkel-ui/primitives/toast": "Toast, Toaster",
+        "@winterop-com/sokkel-ui/primitives/tooltip": "tooltip"
+    },
+    "screens": [
+        {
+            "name": "analytics_overview",
+            "route": "",
+            "viewport": {
+                "width": 1440,
+                "height": 1100
+            }
+        },
+        {
+            "name": "analytics_revenue",
+            "route": "revenue",
+            "viewport": {
+                "width": 1440,
+                "height": 1100
+            }
+        },
+        {
+            "name": "analytics_invoices",
+            "route": "revenue/invoices",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "analytics_customers",
+            "route": "customers",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "analytics_customer",
+            "route": "customers/t20606-12",
+            "viewport": {
+                "width": 1440,
+                "height": 1100
+            }
+        },
+        {
+            "name": "analytics_funnels",
+            "route": "funnels",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "analytics_funnel",
+            "route": "funnels/signup-to-paid",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "analytics_reports",
+            "route": "reports",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "analytics_report",
+            "route": "reports/monthly-board",
+            "viewport": {
+                "width": 1440,
+                "height": 1100
+            }
+        },
+        {
+            "name": "analytics_goals",
+            "route": "goals",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "analytics_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "live": true,
+    "shot": "e1777df27a4cff06695bb4f4f7ba3a99b34e3208"
+}
