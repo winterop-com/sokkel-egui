@@ -157,6 +157,11 @@ pub enum Cell {
         code: String,
         strong: bool,
     },
+    /// A name, then 8 on its code small and muted in the mono face, on one line.
+    NameThenCode {
+        name: String,
+        code: String,
+    },
     /// A chip, then 8 on a note in the muted ink, as a last run's state and when it was.
     ChipNote {
         label: String,
@@ -250,7 +255,7 @@ impl Cell {
             | Cell::Person(text) => text.clone(),
             Cell::Lines { title, .. } => title.clone(),
             Cell::CodeLines { code, .. } => code.clone(),
-            Cell::NamedCode { name, .. } => name.clone(),
+            Cell::NamedCode { name, .. } | Cell::NameThenCode { name, .. } => name.clone(),
             Cell::ChipNote { label, note, .. } => format!("{label} {note}"),
             Cell::Number { text, .. } | Cell::Marked { text, .. } | Cell::Swatch { text, .. } => text.clone(),
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
@@ -275,7 +280,7 @@ impl Cell {
             | Cell::Person(text) => text.clone(),
             Cell::Lines { title, .. } => title.clone(),
             Cell::CodeLines { code, .. } => code.clone(),
-            Cell::NamedCode { name, .. } => name.clone(),
+            Cell::NamedCode { name, .. } | Cell::NameThenCode { name, .. } => name.clone(),
             Cell::ChipNote { label, note, .. } => format!("{label} {note}"),
             Cell::Check(on) | Cell::Switch { on, .. } => u8::from(*on).to_string(),
             Cell::Button { .. } => String::new(),
@@ -974,15 +979,21 @@ impl<'a> DataTable<'a> {
     /// stacked rows the sort, a ghost button naming the column it sorts by, its menu the columns
     /// that sort. 8 over and under a control, 12 across, a rule under it.
     fn draw_bar(&mut self, ui: &mut Ui, t: &crate::Tokens, stacked: bool) {
-        // a control tall with its search, a small control without
+        // a control tall with its search or its toolbar, a small control without
+        let toolbar = self.toolbar.take();
+        let searched = self.search.is_some();
         let control = super::finger_tall(
             ui.ctx(),
             t,
-            t.density(if self.search.is_some() { "control" } else { "control-sm" }),
+            t.density(if searched || toolbar.is_some() {
+                "control"
+            } else {
+                "control-sm"
+            }),
         );
-        // the toolbar's line under the search, as tall as a control, 8 under it
-        let toolbar = self.toolbar.take();
-        let line = if toolbar.is_some() {
+        // the toolbar's line under the search, as tall as a control, 8 under it; with no search
+        // the toolbar stands in the search's place
+        let line = if toolbar.is_some() && searched {
             t.density("control") + 8.0
         } else {
             0.0
@@ -992,9 +1003,13 @@ impl<'a> DataTable<'a> {
             Sense::hover(),
         );
         if let Some(toolbar) = toolbar {
+            let below = if searched { control + 8.0 } else { 0.0 };
             let place = Rect::from_min_size(
-                pos2(bar.left() + 12.0, bar.top() + 8.0 + control + 8.0),
-                vec2(bar.width() - 24.0, t.density("control")),
+                pos2(bar.left() + 12.0, bar.top() + 8.0 + below),
+                vec2(
+                    bar.width() - 24.0 - if searched { 0.0 } else { 160.0 },
+                    t.density("control"),
+                ),
             );
             let mut child = ui.new_child(
                 egui::UiBuilder::new()
@@ -2506,6 +2521,26 @@ fn paint_cell(
                 .galley(pos2(rect.left(), y + height), small, t.color("muted-foreground"));
         }
         Cell::Code(label) => text(ui, code_rich(t, label, TextRole::Body), t.color("foreground")),
+        Cell::NameThenCode { name, code } => {
+            let mut job = egui::text::LayoutJob::default();
+            TextRole::Body.rich(t, name).color(t.color("foreground")).append_to(
+                &mut job,
+                ui.style(),
+                egui::FontSelection::Default,
+                egui::Align::BOTTOM,
+            );
+            egui::RichText::new(format!("  {code}"))
+                .font(egui::FontId::monospace(TextRole::Help.font(t).size))
+                .color(t.color("muted-foreground"))
+                .append_to(&mut job, ui.style(), egui::FontSelection::Default, egui::Align::BOTTOM);
+            job.wrap = egui::text::TextWrapping::truncate_at_width(room);
+            let galley = ui.fonts_mut(|f| f.layout_job(job));
+            ui.painter().galley(
+                pos2(rect.left(), rect.center().y - galley.size().y / 2.0),
+                galley,
+                t.color("foreground"),
+            );
+        }
         Cell::ChipNote { label, tone, note } => {
             let width = super::chip::paint_at(ui, rect.left(), rect.center().y, label, *tone);
             let galley = WidgetText::from(TextRole::Body.rich(t, note)).into_galley(
@@ -2763,7 +2798,9 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Chip(label, tone) => super::chip::paint_at(ui, at.x, at.y, label, *tone),
         Cell::Tags(tags) => paint_tags(ui, tags, at, room, false),
         Cell::OutlineTags(tags) => paint_tags(ui, tags, at, room, true),
-        Cell::NamedCode { name: label, .. } => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
+        Cell::NamedCode { name: label, .. } | Cell::NameThenCode { name: label, .. } => {
+            text(ui, TextRole::Help.rich(t, label), quiet, at.x, room)
+        }
         Cell::ChipNote { label, tone, .. } => super::chip::paint_at(ui, at.x, at.y, label, *tone),
         Cell::CodeLines { code: label, .. } | Cell::Code(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));

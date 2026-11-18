@@ -30,6 +30,12 @@ screens are shot into `parity/runs/web/` by `bun scripts/parity.ts web runs`.
   project, each row's menu (Open, Run now, Pause or Resume, Delete after asking), and New: a job
   made from a starter with its code in the code face (`Input::mono`, new in the library), its
   project, owner, steps and schedule. Open: the web's line over two days is 16 tall.
-- Open: the overview, a run's page, a job's page, the schedules, the settings, the
+- Schedules: the fires ahead over 24 hours, 3 days or a week, the scheduler's banner while it
+  is off, the runs and the fires on a `RunTimeline` (new in the library, after sokkel-design's
+  `run-timeline` spec: the legend, the ruler on the clock, a lane per job, the chosen lane's
+  upcoming runs dragged sideways as one, snapped, and its schedule moved), the jobs not on a
+  schedule, and the fires by day (a name and its code on one line, `Cell::NameThenCode`, new),
+  filtered by job. A table's toolbar with no search stands in the search's place, as the web's.
+- Open: the overview, a run's page, a job's page, the settings, the
   palette and the sign-in page; the bulk actions on the selected runs; a table narrower than its
   least width scrolls sideways on the web and is cut short here; the log's wrapping.

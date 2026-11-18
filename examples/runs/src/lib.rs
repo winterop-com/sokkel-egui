@@ -11,6 +11,7 @@ pub mod parts;
 pub mod run_panel;
 pub mod runs_page;
 pub mod schedule;
+pub mod schedules_page;
 pub mod seed;
 pub mod timeline;
 

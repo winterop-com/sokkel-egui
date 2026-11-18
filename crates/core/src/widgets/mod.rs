@@ -37,6 +37,7 @@ mod panel_menu;
 mod panes;
 mod person;
 mod problem;
+mod run_timeline;
 mod section;
 mod server_menu;
 mod settings;
@@ -116,6 +117,9 @@ pub use panel_menu::{PanelAsked, PanelMenu, PanelWindow, PanelWords, body_drawn,
 pub use panes::{Inspector, InspectorWords, SidePanel, SubNav, group_label, inspector_section, panel_section};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
 pub use problem::{Problem, ProblemTone, ProblemWords};
+pub use run_timeline::{
+    RunTimeline, RunTimelineResponse, RunTimelineWords, TimelineLane, TimelineRun, format_shift, timeline_ticks,
+};
 pub use section::{DescriptionList, PersonRow, Section, Timeline, TimelineEvent};
 pub use server_menu::{ServerMenu, ServerMenuResponse, ServerMenuWords, ServerState};
 pub use settings::{

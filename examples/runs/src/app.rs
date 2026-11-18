@@ -46,6 +46,8 @@ pub struct RunsApp {
     pub runs_view: crate::runs_page::RunsView,
     /// The jobs page's search and project, and the new job's form.
     pub jobs_view: crate::jobs_page::JobsView,
+    /// The schedules page's span, jobs and chosen lane.
+    pub schedules_view: crate::schedules_page::SchedulesView,
     /// The job asked to be deleted, while the question stands.
     pub deleting: Option<String>,
     /// Each table's sort, widths and the row opened, by the table's name.
@@ -91,6 +93,7 @@ impl RunsApp {
             cancelling: Vec::new(),
             runs_view: Default::default(),
             jobs_view: Default::default(),
+            schedules_view: Default::default(),
             deleting: None,
             tables: Default::default(),
             started: now,
@@ -426,6 +429,7 @@ impl RunsApp {
             ShellPart::Page => match (page.as_str(), &second) {
                 ("runs", None) => Page::show(ui, |ui| self.runs_page(ui, &runs)),
                 ("jobs", None) => Page::show(ui, |ui| self.jobs_page(ui, &runs)),
+                ("schedules", None) => Page::show(ui, |ui| self.schedules_page(ui)),
                 _ => Page::scroll(ui, |ui| {
                     sokkel_egui::Empty::new("Nothing at this address")
                         .description(format!("The console has no page at #/{}.", self.path.join("/")))
