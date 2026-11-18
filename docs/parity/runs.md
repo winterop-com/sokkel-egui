@@ -18,8 +18,9 @@ screens are shot into `parity/runs/web/` by `bun scripts/parity.ts web runs`.
   row's menu (Open, Open page, Retry, Copy run ID, Cancel run, the cancel asked first), and Run a
   job with the jobs in the code face (`MenuItem::code`, new in the library). A run's step is in
   the code face, muted (`Cell::MutedCode`, new). A selectable table's check column is now the
-  web's 40, and a row's menu stands at the row's very end, as the web's end column: every table
-  with row menus moved 12 to its end, as the web's.
+  web's 40, and a row's menu stands pinned at the row's very end, as the web's end column of a
+  table with a least width (runs, invoices, responses); a table that fits its room, as the web's
+  `minWidth="auto"` (`DataTable::fits`, new in the library), keeps the row's padding after it.
 - A run beside the page: Details (its buttons, a failure or a skip as a `Problem`, its facts, its
   inputs and outputs as a `JsonTree`, both new in the library), its Steps as a timeline, and its
   Log.

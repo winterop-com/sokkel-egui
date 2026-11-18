@@ -250,6 +250,7 @@ impl MetricsApp {
             .collect();
         let enabled: Vec<bool> = self.alerting.rules.iter().map(|r| r.enabled).collect();
         let out = DataTable::new("alert-rules", &columns, &rows, &mut self.alerts.rules_table)
+            .fits(true)
             .variant(TableVariant::List)
             .stretch(true)
             .footer(false)
@@ -363,6 +364,7 @@ impl MetricsApp {
             })
             .collect();
         DataTable::new("alerts-fired", &columns, &rows, &mut self.alerts.fired_table)
+            .fits(true)
             .variant(TableVariant::List)
             .stretch(true)
             .footer(false)

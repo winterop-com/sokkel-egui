@@ -882,6 +882,7 @@ impl StatusApp {
             .collect();
         let on_call = self.on_call.clone();
         let output = DataTable::new("incidents", &columns, &rows, &mut self.incidents_table)
+            .fits(true)
             .keys(keys.clone())
             .search(&mut self.incident_search)
             .stack_layout(StackLayout::Labeled)
@@ -1277,6 +1278,7 @@ impl StatusApp {
             .collect();
         let keys: Vec<&str> = self.service_order.iter().map(|i| SERVICES[*i].id).collect();
         let output = DataTable::new("services", &columns, &rows, &mut self.services_table)
+            .fits(true)
             .keys(keys)
             .bar(true)
             .reorder(true)
@@ -1716,6 +1718,7 @@ impl StatusApp {
                                     .show(ui, |_| {});
                             } else {
                                 DataTable::new("open-incidents", &columns, &rows, table)
+                                    .fits(true)
                                     .keys(keys.clone())
                                     .stack_layout(StackLayout::Labeled)
                                     .footer(false)
@@ -1966,6 +1969,7 @@ impl StatusApp {
                 },
                 |ui| {
                     let output = DataTable::new("sites", &columns, &rows, table)
+                        .fits(true)
                         .keys(keys)
                         .bar(true)
                         .stack_layout(StackLayout::Labeled)
@@ -2217,6 +2221,7 @@ impl StatusApp {
                             Column::new("When", 120.0).stack(StackPlace::Secondary),
                         ];
                         let output = DataTable::new("deploys", &columns, &deploy_rows, deploys_table)
+                            .fits(true)
                             .keys(deploy_keys_r.to_vec())
                             .variant(TableVariant::List)
                             .stack_layout(StackLayout::Labeled)
@@ -2260,6 +2265,7 @@ impl StatusApp {
                             Column::new("When", 192.0).stack(StackPlace::Secondary),
                         ];
                         let output = DataTable::new("windows", &columns, &window_rows, windows_table)
+                            .fits(true)
                             .keys(window_keys_r.to_vec())
                             .variant(TableVariant::List)
                             .stack_layout(StackLayout::Labeled)
@@ -2434,6 +2440,7 @@ impl StatusApp {
             .collect();
         let keys: Vec<String> = self.shifts.iter().map(|s| s.id.clone()).collect();
         let output = DataTable::new("rotation", &columns, &rows, &mut self.rotation_table)
+            .fits(true)
             .keys(keys)
             .variant(TableVariant::List)
             .stack_layout(StackLayout::Labeled)

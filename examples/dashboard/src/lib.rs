@@ -632,6 +632,7 @@ impl DashboardApp {
         };
         ui.add_space(sokkel_egui::tokens(ui.ctx()).density("page-gap"));
         let output = DataTable::new("dashboards", &columns, &rows, &mut self.list)
+            .fits(true)
             .variant(TableVariant::List)
             .keys(boards.iter().map(|b| b.id.clone()))
             .reorder(true)

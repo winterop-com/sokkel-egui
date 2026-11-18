@@ -336,6 +336,7 @@ impl MetricsApp {
                         ctx,
                         |ui| {
                             DataTable::new(("inspect", &panel.id), &inspected.columns, &inspected.rows, state)
+                                .fits(true)
                                 .height(384.0)
                                 .footer(false)
                                 .show(ui);

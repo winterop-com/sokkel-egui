@@ -268,6 +268,7 @@ impl StatusApp {
                             Column::new("Since", 128.0).stack(StackPlace::Secondary),
                         ];
                         let output = DataTable::new("subscribers", &columns, &subscriber_rows, subscribers)
+                            .fits(true)
                             .variant(TableVariant::List)
                             .stack_layout(StackLayout::Labeled)
                             .actions(|_| vec![MenuItem::action("Remove").icon(Icon::Trash2).destructive()])

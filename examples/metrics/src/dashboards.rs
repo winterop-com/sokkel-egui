@@ -47,6 +47,7 @@ impl MetricsApp {
             .collect();
         let state = &mut self.list;
         let out = DataTable::new("dashboards", &columns, &rows, state)
+            .fits(true)
             .variant(TableVariant::List)
             .reorder(true)
             .stretch(true)

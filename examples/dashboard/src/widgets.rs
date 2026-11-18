@@ -304,6 +304,7 @@ pub fn draw(
                     .collect();
                 let table = state.tables.entry(widget.id.clone()).or_default();
                 DataTable::new(("runs", &widget.id), &columns, &rows, table)
+                    .fits(true)
                     .variant(TableVariant::List)
                     .stack_layout(StackLayout::Labeled)
                     .stack_below(360.0)

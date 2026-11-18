@@ -296,6 +296,7 @@ impl AnalyticsApp {
                         }
                         let statuses: Vec<InvoiceStatus> = invoices.iter().map(|i| i.status).collect();
                         let out = DataTable::new(("customer-invoices", count), columns, cells, state)
+                            .fits(true)
                             .variant(TableVariant::List)
                             .framed(false)
                             .bar(false)

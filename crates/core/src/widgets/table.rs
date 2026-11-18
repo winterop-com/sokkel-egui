@@ -463,6 +463,7 @@ pub struct DataTable<'a> {
     auto: bool,
     detail: Option<RowDetail<'a>>,
     groups: Option<Vec<String>>,
+    fits: bool,
 }
 
 /// What a row opens into under it, drawn for its index in the rows given.
@@ -517,6 +518,7 @@ impl<'a> DataTable<'a> {
             auto: false,
             detail: None,
             groups: None,
+            fits: false,
         }
     }
 
@@ -539,6 +541,13 @@ impl<'a> DataTable<'a> {
     }
 
     /// Every row this tall, for cells of two lines (`Cell::Lines`); the density's row by default.
+    /// A table that fits its room, as the web's `minWidth="auto"`: its row menu keeps the row's
+    /// padding after it rather than standing pinned at the row's very end.
+    pub fn fits(mut self, fits: bool) -> Self {
+        self.fits = fits;
+        self
+    }
+
     /// Rows as tall as their cells' words wrapped onto lines, 8 over and under them and never
     /// under a row's height, as the web's `rowHeight="auto"`.
     pub fn auto_rows(mut self) -> Self {
@@ -1407,9 +1416,10 @@ impl<'a> DataTable<'a> {
     }
 
     /// The room after a row's last column: none where the actions' column stands at the row's very
-    /// end, as the web's end column, else the row's own padding.
+    /// end, pinned there as the web's end column of a table with a least width, else the row's own
+    /// padding.
     fn end_pad(&self, pad: f32) -> f32 {
-        if self.actions.is_some() { 0.0 } else { pad }
+        if self.actions.is_some() && !self.fits { 0.0 } else { pad }
     }
 
     /// Each column's start and width within a row from `left` to `right`.
@@ -2120,7 +2130,7 @@ impl<'a> DataTable<'a> {
                         }
                         if let Some(actions) = &self.actions {
                             let place = Rect::from_min_size(
-                                pos2(rect.right() - ACTIONS, rect.top()),
+                                pos2(rect.right() - self.end_pad(pad) - ACTIONS, rect.top()),
                                 vec2(ACTIONS, rect.height()),
                             );
                             // stacked, the menu stands at the row's end on the title's line, a 24 box

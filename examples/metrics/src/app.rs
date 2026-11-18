@@ -692,6 +692,7 @@ pub(crate) fn draw_panel_as(ui: &mut Ui, panel: &Panel, view: &View, table: &mut
                     table.sort = Some((1, false));
                 }
                 DataTable::new(("panel-table", &panel.id), &columns, &cells, table)
+                    .fits(true)
                     .framed(false)
                     .bar(true)
                     .stack_below(400.0)

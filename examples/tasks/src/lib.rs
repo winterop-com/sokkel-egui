@@ -405,6 +405,7 @@ impl TasksApp {
             .collect();
         let done: Vec<bool> = shown.iter().map(Task::done).collect();
         let output = DataTable::new(("tasks", &self.list), &columns, &rows, &mut self.table)
+            .fits(true)
             .variant(TableVariant::List)
             .reorder(self.prefs.order == Order::Mine)
             .actions(|row| {
