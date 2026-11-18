@@ -48,6 +48,7 @@ mod panes;
 mod person;
 mod problem;
 mod run_timeline;
+mod schema_form;
 mod search;
 mod search_results;
 mod section;
@@ -148,6 +149,11 @@ pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAva
 pub use problem::{Problem, ProblemTone, ProblemWords};
 pub use run_timeline::{
     RunTimeline, RunTimelineResponse, RunTimelineWords, TimelineLane, TimelineRun, format_shift, timeline_ticks,
+};
+pub use schema_form::{
+    IssueSaid, IssueTone, MapEntry, MapRow, SchemaForm, SchemaFormResponse, SchemaFormWords, SchemaIssue,
+    SchemaIssueKind, SchemaPath, ServerIssue, ShownIssue, blank_item, initial_value, object_of, pointer, read_scalar,
+    repeated_keys, rows_of, say_issue, scalar_union, schema_issues, unset_choice, without_deferred,
 };
 pub use search::{Search, SearchPreview, SearchResponse, SearchWords};
 pub use search_results::{
