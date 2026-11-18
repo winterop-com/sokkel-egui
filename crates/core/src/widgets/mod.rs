@@ -9,6 +9,7 @@ mod calendar;
 mod chip;
 mod chip_bar;
 mod choice;
+mod clip_timeline;
 mod code_editor;
 mod commands;
 mod consequences;
@@ -37,9 +38,12 @@ mod layout;
 mod list_row;
 mod log_view;
 mod markdown;
+mod media_controls;
+mod media_slider;
 mod menu;
 mod meta_line;
 mod mini_month;
+mod not_found;
 mod number_field;
 mod overlay;
 mod page;
@@ -58,6 +62,7 @@ mod settings;
 mod sheet;
 mod sign_in;
 mod sign_in_art;
+mod slider_field;
 mod stat;
 mod stat_panel;
 mod switch;
@@ -71,6 +76,7 @@ mod tree;
 mod tree_select;
 mod uptime;
 mod variables;
+mod waveform;
 mod week;
 mod windowed_pane;
 
@@ -88,6 +94,11 @@ pub use chip::{Chip, ChipTone, TagChips};
 pub use chip_bar::ChipBar;
 pub use choice::{
     Checkbox, Choice, ChoiceList, Segmented, SegmentedVariant, SwatchGroup, Tabs, TabsVariant, checkbox_list,
+};
+pub use clip_timeline::{
+    CLIP_TIMELINE_FIT_PPS, CLIP_TIMELINE_FIT_ROOM, CLIP_TIMELINE_ZOOM_MAX, CLIP_TIMELINE_ZOOM_MIN, ClipChange,
+    ClipDrop, ClipTimeline, ClipTimelineResponse, ClipTimelineWords, ClipTrackKind, DragData, KindColor, TimelineClip,
+    TimelineTrack, TrackChange, clip_fit_zoom, clip_tick_step, format_timecode, place_clip, snap_time, zoom_step,
 };
 pub use code_editor::{
     ActiveLine, CodeCompletion, CodeEditor, CodeEditorResponse, CodeEditorWords, CodeLanguage, CodeMark, CodeProblem,
@@ -135,9 +146,16 @@ pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
 pub use list_row::{ListRow, ListRows, RowAside, RowMark};
 pub use log_view::{LogLevel, LogLine, LogView, LogViewWords};
 pub use markdown::{Markdown, MarkdownResponse, MarkdownScale, MarkdownWords, heading_id};
+pub use media_controls::{
+    LiveMark, MEDIA_RATES, PlayButton, PlayWords, Position, PositionResponse, RateMenu, SEEK_LARGE_STEP, SEEK_STEP,
+    TransportButton, TransportGlyph, TransportSize, VolumeControl, VolumeResponse, VolumeWords, format_rate,
+    format_remaining, format_time, paint_pause, paint_play, paint_skip, volume_icon,
+};
+pub use media_slider::{MediaRange, MediaSlider, MediaSliderResponse, MediaTone};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use meta_line::MetaLine;
 pub use mini_month::{MiniMonth, MiniMonthResponse, MiniMonthWords};
+pub use not_found::{NotFound, NotFoundWords};
 pub use number_field::{NumberField, NumberFieldWords, read_number, write_number};
 pub use overlay::{
     ConfirmAnswer, ConfirmDialog, Dialog, DialogShell, Select, ShellAnswer, UnsavedChangesWords, tooltip,
@@ -171,6 +189,7 @@ pub use settings::{
 pub use sheet::{DetailSheet, DetailSheetWords};
 pub use sign_in::{SignIn, SignInFact, SignInValues, SignInWords};
 pub use sign_in_art::{FlowEdge, FlowLines, FlowNode, FlowNodes, LevelBars, flow_graph, level_heights, seeded};
+pub use slider_field::{Slider, SliderField};
 pub use stat::{KpiRow, Stat, StatTiles, sparkline};
 pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_compact, format_value, threshold_color};
 pub use switch::Switch;
@@ -188,6 +207,7 @@ pub use tree::{
 };
 pub use tree_select::{TreeSelect, TreeSelectWords};
 pub use uptime::{UptimeBar, UptimeBarWords, UptimeDay, format_uptime, overall_uptime, uptime_color};
+pub use waveform::{AudioScrubber, AudioScrubberResponse, Waveform, static_levels};
 pub use week::{CalendarEvent, PlacedEvent, WeekGrid, WeekGridResponse, layout_day};
 pub use windowed_pane::{WindowedAside, WindowedPane, WindowedPaneWhere, WindowedPaneWords, windowed_pane_button};
 

@@ -922,6 +922,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
 
 [[package]]
+name = "cut"
+version = "0.1.0"
+dependencies = [
+ "eframe",
+ "egui_kittest",
+ "serde",
+ "serde_json",
+ "sokkel-egui",
+ "tidevann-shared",
+]
+
+[[package]]
 name = "dashboard"
 version = "0.1.0"
 dependencies = [
@@ -4600,6 +4612,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sokkel-egui-media"
+version = "0.1.0"
+dependencies = [
+ "egui",
+ "egui_kittest",
+ "sokkel-egui",
+]
+
+[[package]]
 name = "spirv"
 version = "0.4.0+sdk-1.4.341.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4850,6 +4871,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.10",
+]
+
+[[package]]
+name = "tidevann-shared"
+version = "0.1.0"
+dependencies = [
+ "egui",
+ "egui_kittest",
+ "sokkel-egui",
 ]
 
 [[package]]
