@@ -137,9 +137,9 @@ pub(crate) fn paint_at(ui: &Ui, left: f32, center_y: f32, text: &str, tone: Chip
     rect.width()
 }
 
-/// Paint a tag (sokkel-ui's `TagChips`): a neutral chip in the code face at the help's size, its
+/// Paint a tag (sokkel-ui's `TagChips`): a chip in `tone` in the code face at the help's size, its
 /// start at `left` on the line through `center_y`; returns its width.
-pub(crate) fn paint_tag_at(ui: &Ui, left: f32, center_y: f32, text: &str) -> f32 {
+pub(crate) fn paint_tag_at(ui: &Ui, left: f32, center_y: f32, text: &str, tone: ChipTone) -> f32 {
     let t = tokens(ui.ctx());
     let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
     let galley = WidgetText::from(egui::RichText::new(text).font(mono.clone())).into_galley(
@@ -149,7 +149,7 @@ pub(crate) fn paint_tag_at(ui: &Ui, left: f32, center_y: f32, text: &str) -> f32
         mono,
     );
     let rect = egui::Rect::from_min_size(pos2(left, center_y - 10.0), vec2(galley.size().x + 12.0, 20.0));
-    paint(ui.painter(), &t, rect, galley, ChipTone::Neutral, false);
+    paint(ui.painter(), &t, rect, galley, tone, false);
     rect.width()
 }
 
@@ -181,7 +181,7 @@ impl egui::Widget for TagChips<'_> {
                     + 12.0;
                 let (rect, response) = ui.allocate_exact_size(vec2(width, 20.0), egui::Sense::hover());
                 response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, tag));
-                paint_tag_at(ui, rect.left(), rect.center().y, tag);
+                paint_tag_at(ui, rect.left(), rect.center().y, tag, ChipTone::Neutral);
             }
         })
         .response

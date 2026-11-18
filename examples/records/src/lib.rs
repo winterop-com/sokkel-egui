@@ -15,6 +15,7 @@ pub mod households;
 pub mod overview;
 pub mod places_page;
 pub mod responses;
+pub mod server_page;
 pub mod ui;
 
 pub use app::RecordsApp;

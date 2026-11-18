@@ -72,4 +72,10 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   place's facts in an `Inspector` (new in the library): its code to copy, its path, the forms
   reported there, and what was recorded there. Open: the web folds the map's legend into a
   button.
+- Server: what the server is, its kinds of record and its declared operations, in lists whose rows
+  grow to their wrapped words (`DataTable::auto_rows`) and open into the search parameters a kind
+  reads (`DataTable::detail`, the row's chevron and a press opening it, its state's `expanded`),
+  with codes in cells at the body's size (`Cell::Code`, `Cell::CodeLines`), outline tags
+  (`Cell::OutlineTags`) and terms in the code face (`DescriptionList::mono_terms`), all new in the
+  library. Its web screen predates the column heads of contract 0.30.1, so the heads differ.
 - Open: the Playground waits for the code editor's spec, as `ApiPlayground` is built on it.

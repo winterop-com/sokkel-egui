@@ -147,6 +147,14 @@ pub enum Cell {
     },
     /// An id or a code, in the mono face.
     Mono(String),
+    /// A code in the mono face at the body's size, as a `font-mono` cell in a `text-sm` row.
+    Code(String),
+    /// A code in the mono face at the body's size over a line of small muted words, as a kind's
+    /// name over what it holds.
+    CodeLines {
+        code: String,
+        detail: String,
+    },
     /// A state as a chip.
     Chip(String, ChipTone),
     /// A check box whose press the table reports as `toggled`.
@@ -180,6 +188,8 @@ pub enum Cell {
     },
     /// Tags as chips in the code face, 4 apart, after sokkel-ui's `TagChips`.
     Tags(Vec<String>),
+    /// Tags as outline chips in the code face, as `TagChips` with `variant="outline"`.
+    OutlineTags(Vec<String>),
     /// An instant said against `now` in words ("48 minutes ago"), sorted by the instant; both in
     /// milliseconds of one clock.
     Relative {
@@ -218,12 +228,14 @@ impl Cell {
             | Cell::Muted(text)
             | Cell::Toned(text, _)
             | Cell::Mono(text)
+            | Cell::Code(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
             Cell::Lines { title, .. } => title.clone(),
+            Cell::CodeLines { code, .. } => code.clone(),
             Cell::Number { text, .. } | Cell::Marked { text, .. } | Cell::Swatch { text, .. } => text.clone(),
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
-            Cell::Tags(tags) => tags.join(" "),
+            Cell::Tags(tags) | Cell::OutlineTags(tags) => tags.join(" "),
             Cell::Relative { at, now } => super::relative_time(at - now),
             Cell::Clock { clock, .. } => clock.clone(),
             Cell::Check(_) | Cell::Switch { .. } | Cell::Button { .. } | Cell::Trend(..) | Cell::Empty => String::new(),
@@ -238,14 +250,16 @@ impl Cell {
             | Cell::Muted(text)
             | Cell::Toned(text, _)
             | Cell::Mono(text)
+            | Cell::Code(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
             Cell::Lines { title, .. } => title.clone(),
+            Cell::CodeLines { code, .. } => code.clone(),
             Cell::Check(on) | Cell::Switch { on, .. } => u8::from(*on).to_string(),
             Cell::Button { .. } => String::new(),
             Cell::Clock { at, .. } => format!("{:024.3}", at + 1e18),
             Cell::Due { date, .. } => date.map_or("9999".into(), |d| d.to_string()),
-            Cell::Tags(tags) => tags.join(" "),
+            Cell::Tags(tags) | Cell::OutlineTags(tags) => tags.join(" "),
             Cell::Relative { at, .. } => format!("{:024.3}", at + 1e18),
             Cell::Trend(values, _) => format!("{:024.3}", values.last().copied().unwrap_or(0.0) + 1e18),
             // lifted by 1e12 so a negative figure still sorts as a word, small enough that an f64
@@ -273,6 +287,8 @@ pub struct TableState {
     pub selected: BTreeSet<usize>,
     /// The row opened for its detail, by its index in the rows given.
     pub opened: Option<usize>,
+    /// The rows opened into their own detail under them (a table with `detail`), by their index.
+    pub expanded: BTreeSet<usize>,
     /// The active cell of an editing table, by its row's index and its column's.
     pub active: Option<(usize, usize)>,
     /// The active cell's row by its key, so it follows that row when the rows move.
@@ -331,6 +347,9 @@ pub struct TableWords {
     pub sort: String,
     /// The bar's menu of the columns to show, and its button's label.
     pub columns: String,
+    /// A row's control that opens its detail, and closes it.
+    pub expand: String,
+    pub collapse: String,
     pub edit: EditWords,
 }
 
@@ -346,6 +365,8 @@ impl Default for TableWords {
             empty: "Nothing to show".into(),
             sort: "Sort".into(),
             columns: "Columns".into(),
+            expand: "Expand".into(),
+            collapse: "Collapse".into(),
             edit: EditWords::default(),
         }
     }
@@ -419,7 +440,12 @@ pub struct DataTable<'a> {
     toolbar: Option<Toolbar<'a>>,
     foot: Option<String>,
     paging: Option<Vec<usize>>,
+    auto: bool,
+    detail: Option<RowDetail<'a>>,
 }
+
+/// What a row opens into under it, drawn for its index in the rows given.
+pub type RowDetail<'a> = Box<dyn Fn(usize, &mut Ui) + 'a>;
 
 /// What a table's toolbar line draws.
 type Toolbar<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
@@ -467,6 +493,8 @@ impl<'a> DataTable<'a> {
             paging: None,
             search: None,
             bar: false,
+            auto: false,
+            detail: None,
         }
     }
 
@@ -489,6 +517,21 @@ impl<'a> DataTable<'a> {
     }
 
     /// Every row this tall, for cells of two lines (`Cell::Lines`); the density's row by default.
+    /// Rows as tall as their cells' words wrapped onto lines, 8 over and under them and never
+    /// under a row's height, as the web's `rowHeight="auto"`.
+    pub fn auto_rows(mut self) -> Self {
+        self.auto = true;
+        self
+    }
+
+    /// Each row opens into `detail`, drawn under it across the table's width from where its first
+    /// cell starts, as the web's `detail`: a chevron before the first cell opens and closes it, and
+    /// so does a press on the row. The open rows are the state's `expanded`.
+    pub fn detail(mut self, detail: impl Fn(usize, &mut Ui) + 'a) -> Self {
+        self.detail = Some(Box::new(detail));
+        self
+    }
+
     pub fn row_height(mut self, height: f32) -> Self {
         self.row_height = Some(height);
         self
@@ -746,7 +789,7 @@ impl<'a> DataTable<'a> {
         for (c, column) in self.columns.iter().enumerate() {
             if column.stack == StackPlace::Lead {
                 let place = Rect::from_min_size(pos2(x, line.top()), vec2(16.0, line.height()));
-                if paint_cell(ui, t, &row[c], place, false, self.id.with(("cell", index, c))).is_some() {
+                if paint_cell(ui, t, &row[c], place, false, self.id.with(("cell", index, c)), false).is_some() {
                     toggled = true;
                 }
                 x += 16.0 + 8.0;
@@ -773,7 +816,7 @@ impl<'a> DataTable<'a> {
                     edited = self.run_editor(ui, editor, field, editor_id(c), editing);
                 }
                 (edit, _) => {
-                    paint_cell(ui, t, &row[c], place, false, self.id.with(("cell", index, c)));
+                    paint_cell(ui, t, &row[c], place, false, self.id.with(("cell", index, c)), false);
                     if edit.is_some() {
                         // named by what it says, as the web's title button is
                         let hit = ui.interact(place, self.id.with(("edit", index, c)), Sense::click());
@@ -1056,7 +1099,10 @@ impl<'a> DataTable<'a> {
             })
             .fold(0.0, f32::max)
             .min(192.0);
-        let said = |cell: &Cell| !matches!(cell, Cell::Empty) && !matches!(cell, Cell::Tags(tags) if tags.is_empty());
+        let said = |cell: &Cell| {
+            !matches!(cell, Cell::Empty)
+                && !matches!(cell, Cell::Tags(tags) | Cell::OutlineTags(tags) if tags.is_empty())
+        };
         egui::ScrollArea::vertical()
             .id_salt(self.id.with("cards"))
             .auto_shrink([false, true])
@@ -1689,9 +1735,47 @@ impl<'a> DataTable<'a> {
                     let position = order.iter().position(|r| *r == o.row)?;
                     (extra > 0.0).then_some((position, extra))
                 });
+                // rows that grow to their words or open into a detail are each as tall as they
+                // measure, every one drawn; the details' heights are last frame's
+                let free = !stacked && (self.auto || self.detail.is_some());
+                let lead = if self.detail.is_some() { 24.0 } else { 0.0 };
+                let heights: Vec<f32> = if free && self.auto {
+                    let end = if self.chevron { 32.0 } else { 0.0 };
+                    let left = ui.cursor().left();
+                    let places = self.layout(left + pad + select_width, left + ui.available_width() - pad - end);
+                    (0..self.rows.len())
+                        .map(|index| {
+                            let content = self
+                                .columns
+                                .iter()
+                                .enumerate()
+                                .filter(|(c, _)| !self.state.hidden.contains(c))
+                                .map(|(c, _)| {
+                                    let room = places[c].1 - if c == 0 { lead } else { 0.0 };
+                                    cell_height(ui, &t, &self.rows[index][c], room.max(1.0))
+                                })
+                                .fold(0.0, f32::max);
+                            (content + 16.0 + 1.0).max(row_height)
+                        })
+                        .collect()
+                } else {
+                    vec![row_height; self.rows.len()]
+                };
+                let own = self.id;
+                let detail_id = move |index: usize| own.with(("detail", index));
+                let detail_height = |ui: &Ui, index: usize| -> f32 {
+                    if self.detail.is_some() && self.state.expanded.contains(&index) {
+                        ui.ctx().data(|d| d.get_temp::<f32>(detail_id(index))).unwrap_or(0.0)
+                    } else {
+                        0.0
+                    }
+                };
+                let whole: f32 = order.iter().map(|i| heights[*i] + detail_height(ui, *i)).sum();
                 let tall = if self.stretch {
                     // what is left under the bar and the head, less the foot and the frame's edge
                     (limit - ui.cursor().top() - foot_room - 1.0).max(row_height)
+                } else if free {
+                    self.height.min(whole + 1.0)
                 } else {
                     // never taller than its rows: a height without bound shows them all
                     self.height.min(order.len() as f32 * row_height + 1.0)
@@ -1708,8 +1792,13 @@ impl<'a> DataTable<'a> {
                 let mut body = |ui: &mut Ui, range: std::ops::Range<usize>| {
                     for position in range {
                         let index = order[position];
-                        let height = row_height + grown(self.state, index);
+                        let height = if free {
+                            heights[index]
+                        } else {
+                            row_height + grown(self.state, index)
+                        };
                         let (rect, row) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
+                        let expanded = self.detail.is_some() && self.state.expanded.contains(&index);
                         row_rects.push(rect);
                         // a screen reader reads and presses the row by its cells' words, as a row reads
                         row.widget_info(|| {
@@ -1721,7 +1810,12 @@ impl<'a> DataTable<'a> {
                                 .join(", ");
                             egui::WidgetInfo::labeled(egui::Role::Button, true, name)
                         });
-                        if row.clicked() {
+                        if row.clicked() && self.detail.is_some() {
+                            // a press opens the row's detail or closes it
+                            if !self.state.expanded.remove(&index) {
+                                self.state.expanded.insert(index);
+                            }
+                        } else if row.clicked() {
                             self.state.opened = if self.state.opened == Some(index) {
                                 None
                             } else {
@@ -1755,8 +1849,9 @@ impl<'a> DataTable<'a> {
                         {
                             ui.painter().rect_filled(rect, CornerRadius::ZERO, t.color("hover"));
                         }
-                        // a list's last row leaves its rule to the frame, as the web's `border-b-0`
-                        if !(self.variant == TableVariant::List && position + 1 == count) {
+                        // a list's last row leaves its rule to the frame, as the web's `border-b-0`; a
+                        // row and its open detail read as one, with no line between them
+                        if !expanded && !(self.variant == TableVariant::List && position + 1 == count) {
                             ui.painter().hline(
                                 rect.x_range(),
                                 rect.bottom() - 0.5,
@@ -1813,6 +1908,39 @@ impl<'a> DataTable<'a> {
                             }
                             let (x, w) = places[c];
                             let mut cell = Rect::from_min_size(pos2(x, rect.top()), vec2(w, rect.height()));
+                            if c == 0 && self.detail.is_some() {
+                                // the control that opens the row's detail, 20 square and 4 before the cell
+                                let control = Rect::from_min_size(pos2(x, rect.center().y - 10.0), vec2(20.0, 20.0));
+                                let hit = ui.interact(control, self.id.with(("expand", index)), Sense::click());
+                                let words = if expanded {
+                                    &self.words.collapse
+                                } else {
+                                    &self.words.expand
+                                };
+                                hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, words));
+                                if hit.hovered() {
+                                    ui.painter().rect_filled(control, t.radius("sm"), t.color("accent"));
+                                }
+                                icons::paint(
+                                    ui.painter(),
+                                    control.center(),
+                                    if expanded {
+                                        Icon::ChevronDown
+                                    } else {
+                                        Icon::ChevronRight
+                                    },
+                                    14.0,
+                                    t.color(if hit.hovered() {
+                                        "foreground"
+                                    } else {
+                                        "muted-foreground"
+                                    }),
+                                );
+                                if hit.clicked() && !self.state.expanded.remove(&index) {
+                                    self.state.expanded.insert(index);
+                                }
+                                cell.min.x += lead;
+                            }
                             if c == 0 && self.reorder {
                                 // the grip: drag it to move the row
                                 let grip = Rect::from_min_size(pos2(x - 4.0, rect.top()), vec2(GRIP, rect.height()));
@@ -1864,6 +1992,7 @@ impl<'a> DataTable<'a> {
                                                 cell,
                                                 column.numeric,
                                                 self.id.with(("cell", index, c)),
+                                                self.auto,
                                             );
                                         }
                                     }
@@ -1891,6 +2020,7 @@ impl<'a> DataTable<'a> {
                                 cell,
                                 column.numeric,
                                 self.id.with(("cell", index, c)),
+                                self.auto,
                             ) {
                                 let _ = toggled;
                                 if matches!(self.rows[index][c], Cell::Button { .. }) {
@@ -1931,6 +2061,36 @@ impl<'a> DataTable<'a> {
                                 out.action = Some((index, chosen));
                             }
                         }
+                        if let Some(detail) = self.detail.as_ref().filter(|_| expanded) {
+                            // the open detail, from where the row's first cell starts, 12 over and
+                            // under it and 12 from the end, on the row's own ground
+                            let ground = if position % 2 == 1 { zebra } else { t.color("card") };
+                            let behind = ui.painter().add(egui::Shape::Noop);
+                            let margin = egui::Margin {
+                                left: (select_width + lead + pad) as i8,
+                                right: 12,
+                                top: 12,
+                                bottom: 12,
+                            };
+                            let drawn = egui::Frame::new()
+                                .inner_margin(margin)
+                                .show(ui, |ui| {
+                                    ui.set_width(ui.available_width());
+                                    detail(index, ui);
+                                })
+                                .response
+                                .rect;
+                            ui.painter()
+                                .set(behind, egui::Shape::rect_filled(drawn, CornerRadius::ZERO, ground));
+                            if !(self.variant == TableVariant::List && position + 1 == count) {
+                                ui.painter().hline(
+                                    drawn.x_range(),
+                                    drawn.bottom() - 0.5,
+                                    Stroke::new(1.0, t.color("border")),
+                                );
+                            }
+                            ui.ctx().data_mut(|d| d.insert_temp(detail_id(index), drawn.height()));
+                        }
                     }
                 };
                 match taller {
@@ -1961,6 +2121,9 @@ impl<'a> DataTable<'a> {
                                 body(ui, first..last);
                             });
                         });
+                    }
+                    None if free => {
+                        area.show(ui, |ui| body(ui, 0..count));
                     }
                     None => {
                         area.show_rows(ui, row_height, count, body);
@@ -2179,10 +2342,25 @@ impl<'a> DataTable<'a> {
 }
 
 /// Draw one cell's content in `rect`; true when its check box was pressed.
-fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: bool, id: Id) -> Option<bool> {
+/// Draw `cell` in `rect`, its words on one line cut short, or when `wrap` broken onto as many lines
+/// as they take (a table whose rows grow to hold them).
+fn paint_cell(
+    ui: &mut Ui,
+    t: &crate::Tokens,
+    cell: &Cell,
+    rect: Rect,
+    numeric: bool,
+    id: Id,
+    wrap: bool,
+) -> Option<bool> {
     let room = rect.width().max(1.0);
+    let mode = if wrap {
+        TextWrapMode::Wrap
+    } else {
+        TextWrapMode::Truncate
+    };
     let text = |ui: &mut Ui, rich: egui::RichText, ink: egui::Color32| {
-        let galley = WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), room, TextRole::Body.font(t));
+        let galley = WidgetText::from(rich).into_galley(ui, Some(mode), room, TextRole::Body.font(t));
         let x = if numeric {
             rect.right() - galley.size().x
         } else {
@@ -2210,9 +2388,22 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
         ),
         Cell::Muted(label) => text(ui, TextRole::Body.rich(t, label), t.color("muted-foreground")),
         Cell::Toned(label, ink) => text(ui, TextRole::Body.rich(t, label), t.color(ink)),
+        Cell::CodeLines { code, detail } => {
+            let lay = |ui: &mut Ui, rich: egui::RichText, role: TextRole| {
+                WidgetText::from(rich).into_galley(ui, Some(mode), room, role.font(t))
+            };
+            let name = lay(ui, code_rich(t, code, TextRole::Body), TextRole::Body);
+            let small = lay(ui, TextRole::Help.rich(t, detail), TextRole::Help);
+            let y = rect.center().y - (name.size().y + small.size().y) / 2.0;
+            let height = name.size().y;
+            ui.painter().galley(pos2(rect.left(), y), name, t.color("foreground"));
+            ui.painter()
+                .galley(pos2(rect.left(), y + height), small, t.color("muted-foreground"));
+        }
+        Cell::Code(label) => text(ui, code_rich(t, label, TextRole::Body), t.color("foreground")),
         Cell::Lines { title, detail, over } => {
             let lay = |ui: &mut Ui, rich: egui::RichText, role: TextRole| {
-                WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), room.max(1.0), role.font(t))
+                WidgetText::from(rich).into_galley(ui, Some(mode), room.max(1.0), role.font(t))
             };
             let name = lay(
                 ui,
@@ -2230,10 +2421,7 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
             ui.painter().galley(pos2(rect.left(), y), first, first_ink);
             ui.painter().galley(pos2(rect.left(), y + height), second, second_ink);
         }
-        Cell::Mono(label) => {
-            let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
-            text(ui, rich, t.color("foreground"));
-        }
+        Cell::Mono(label) => text(ui, code_rich(t, label, TextRole::Help), t.color("foreground")),
         Cell::Marked { text: label, dot } => {
             // a 10 dot, 8 before the code, as the web's `Dot` and `gap-2`
             let lead = if let Some(color) = dot {
@@ -2344,7 +2532,10 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
             let _ = id;
         }
         Cell::Tags(tags) => {
-            paint_tags(ui, tags, pos2(rect.left(), rect.center().y), rect.width());
+            paint_tags(ui, tags, pos2(rect.left(), rect.center().y), rect.width(), false);
+        }
+        Cell::OutlineTags(tags) => {
+            paint_tags(ui, tags, pos2(rect.left(), rect.center().y), rect.width(), true);
         }
         Cell::Relative { .. } => text(ui, TextRole::Body.rich(t, cell.draft()), t.color("muted-foreground")),
         Cell::Trend(values, ink) => {
@@ -2364,8 +2555,9 @@ fn paint_cell(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, rect: Rect, numeric: 
 fn line_value(ui: &Ui, t: &crate::Tokens, cell: &Cell, place: Rect) {
     let middle = place.center().y;
     match cell {
-        Cell::Tags(tags) => {
-            paint_tags(ui, tags, pos2(place.left(), middle), place.width());
+        Cell::Tags(tags) | Cell::OutlineTags(tags) => {
+            let outline = matches!(cell, Cell::OutlineTags(_));
+            paint_tags(ui, tags, pos2(place.left(), middle), place.width(), outline);
         }
         Cell::Chip(label, tone) => {
             super::chip::paint_at(ui, place.left(), middle, label, *tone);
@@ -2401,12 +2593,13 @@ fn line_value(ui: &Ui, t: &crate::Tokens, cell: &Cell, place: Rect) {
     }
 }
 
-/// Tags as neutral chips in the code face, 4 apart, from `at` on the line's middle, as many as fit
-/// in `room`: the width they took.
-fn paint_tags(ui: &Ui, tags: &[String], at: egui::Pos2, room: f32) -> f32 {
+/// Tags as neutral chips in the code face (outline chips when `outline`), 4 apart, from `at` on
+/// the line's middle, as many as fit in `room`: the width they took.
+fn paint_tags(ui: &Ui, tags: &[String], at: egui::Pos2, room: f32, outline: bool) -> f32 {
+    let tone = if outline { ChipTone::Outline } else { ChipTone::Neutral };
     let mut x = at.x;
     for tag in tags {
-        let width = super::chip::paint_tag_at(ui, x, at.y, tag);
+        let width = super::chip::paint_tag_at(ui, x, at.y, tag, tone);
         if x + width > at.x + room {
             break;
         }
@@ -2431,7 +2624,12 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
             text(ui, TextRole::Help.rich(t, label), quiet, at.x, room)
         }
         Cell::Chip(label, tone) => super::chip::paint_at(ui, at.x, at.y, label, *tone),
-        Cell::Tags(tags) => paint_tags(ui, tags, at, room),
+        Cell::Tags(tags) => paint_tags(ui, tags, at, room, false),
+        Cell::OutlineTags(tags) => paint_tags(ui, tags, at, room, true),
+        Cell::CodeLines { code: label, .. } | Cell::Code(label) => {
+            let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
+            text(ui, rich, quiet, at.x, room)
+        }
         Cell::Relative { .. } => text(ui, TextRole::Help.rich(t, cell.draft()), quiet, at.x, room),
         Cell::Struck(label) => text(ui, TextRole::Help.rich(t, label).strikethrough(), quiet, at.x, room),
         Cell::Muted(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
@@ -2465,6 +2663,42 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
             room,
         ),
         Cell::Check(_) | Cell::Switch { .. } | Cell::Button { .. } | Cell::Trend(..) | Cell::Empty => 0.0,
+    }
+}
+
+/// A code in the mono face at `role`'s size, on lines as tall as a cell's words.
+fn code_rich(t: &crate::Tokens, text: &str, role: TextRole) -> egui::RichText {
+    egui::RichText::new(text)
+        .font(egui::FontId::monospace(role.font(t).size))
+        .line_height(Some(TextRole::Body.line_height(t)))
+}
+
+/// How tall `cell` stands with its words wrapped onto lines `room` wide, for a row that grows to
+/// hold them; a cell of a fixed height says 20.
+fn cell_height(ui: &Ui, t: &crate::Tokens, cell: &Cell, room: f32) -> f32 {
+    let lay = |rich: egui::RichText, role: TextRole| {
+        WidgetText::from(rich)
+            .into_galley(ui, Some(TextWrapMode::Wrap), room, role.font(t))
+            .size()
+            .y
+    };
+    match cell {
+        Cell::Text(label)
+        | Cell::Strong(label)
+        | Cell::Struck(label)
+        | Cell::Muted(label)
+        | Cell::Toned(label, _)
+        | Cell::Number { text: label, .. } => lay(TextRole::Body.rich(t, label), TextRole::Body),
+        Cell::Mono(label) => lay(code_rich(t, label, TextRole::Help), TextRole::Body),
+        Cell::Code(label) => lay(code_rich(t, label, TextRole::Body), TextRole::Body),
+        Cell::Lines { title, detail, .. } => {
+            lay(TextRole::Body.rich(t, title), TextRole::Body) + lay(TextRole::Help.rich(t, detail), TextRole::Help)
+        }
+        Cell::CodeLines { code, detail } => {
+            lay(code_rich(t, code, TextRole::Body), TextRole::Body)
+                + lay(TextRole::Help.rich(t, detail), TextRole::Help)
+        }
+        _ => 20.0,
     }
 }
 

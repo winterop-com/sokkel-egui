@@ -292,6 +292,7 @@ impl RecordsApp {
                     let given = (self.path.len() > 1).then(|| self.path[1..].join("/"));
                     self.places_page(ui, given.as_deref());
                 }
+                (true, "server") => Page::scroll(ui, |ui| self.server_page(ui)),
                 (true, "people") if self.path.len() == 1 => Page::show(ui, |ui| self.households_page(ui)),
                 (true, "people") => {
                     let id = self.path[1].clone();

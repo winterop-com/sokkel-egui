@@ -41,6 +41,7 @@ fn every_screen() {
         ("records_households", "people"),
         ("records_places", "places"),
         ("records_places_region", "places/bong"),
+        ("records_server", "server"),
     ];
     for &(name, path) in screens {
         let mut harness = render(path);
@@ -54,4 +55,14 @@ fn every_screen() {
         let mut harness = render_at(path, 1500.0);
         results.add(harness.try_snapshot(name));
     }
+    // a kind opened into the search parameters it reads
+    let mut harness = render_at("server", 1300.0);
+    use egui_kittest::kittest::Queryable;
+    harness
+        .get_all_by_label("Expand")
+        .nth(1)
+        .expect("a kind's expand")
+        .click();
+    harness.run_steps(4);
+    results.add(harness.try_snapshot("records_server_open"));
 }

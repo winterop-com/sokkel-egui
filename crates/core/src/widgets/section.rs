@@ -455,6 +455,8 @@ pub struct DescriptionList<'a> {
     side: Option<f32>,
     /// Stacked pairs two to a row, 24 apart, as the web's `columns={2}`.
     two: bool,
+    /// The terms in the mono face, as terms that are names in code.
+    mono: bool,
 }
 
 impl<'a> Default for DescriptionList<'a> {
@@ -469,6 +471,7 @@ impl<'a> DescriptionList<'a> {
             items: Vec::new(),
             side: None,
             two: false,
+            mono: false,
         }
     }
 
@@ -501,6 +504,13 @@ impl<'a> DescriptionList<'a> {
     /// A pair whose value is drawn by `value`, such as a select or a switch.
     pub fn item(mut self, term: impl Into<String>, value: impl FnOnce(&mut Ui) + 'a) -> Self {
         self.items.push((term.into(), Box::new(value)));
+        self
+    }
+
+    /// The terms in the mono face at their small size, as terms that are names in code (a
+    /// parameter's name, a field's key).
+    pub fn mono_terms(mut self) -> Self {
+        self.mono = true;
         self
     }
 
@@ -553,11 +563,16 @@ impl<'a> DescriptionList<'a> {
                         ui.spacing_mut().item_spacing.x = 0.0;
                         let (cell, _) = ui.allocate_exact_size(egui::vec2(width, 0.0), egui::Sense::hover());
                         let drawn = ui.scope(|ui| value(ui)).response.rect;
+                        let face = if self.mono {
+                            egui::FontId::monospace(TextRole::Help.font(&t).size)
+                        } else {
+                            TextRole::Help.font(&t)
+                        };
                         ui.painter().text(
                             egui::pos2(cell.left(), drawn.center().y),
                             egui::Align2::LEFT_CENTER,
                             term,
-                            TextRole::Help.font(&t),
+                            face,
                             t.color("muted-foreground"),
                         );
                     });
