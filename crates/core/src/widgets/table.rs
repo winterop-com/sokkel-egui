@@ -147,6 +147,9 @@ pub enum Cell {
     },
     /// An id or a code, in the mono face.
     Mono(String),
+    /// A code in the mono face in the muted ink, as a quieter code beside the row's own (a run's
+    /// step).
+    MutedCode(String),
     /// A name at medium weight over its id small and muted in the mono face, as an object named
     /// over its code.
     NamedCode {
@@ -234,6 +237,7 @@ impl Cell {
             | Cell::Muted(text)
             | Cell::Toned(text, _)
             | Cell::Mono(text)
+            | Cell::MutedCode(text)
             | Cell::Code(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
@@ -257,6 +261,7 @@ impl Cell {
             | Cell::Muted(text)
             | Cell::Toned(text, _)
             | Cell::Mono(text)
+            | Cell::MutedCode(text)
             | Cell::Code(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
@@ -1401,6 +1406,12 @@ impl<'a> DataTable<'a> {
         order
     }
 
+    /// The room after a row's last column: none where the actions' column stands at the row's very
+    /// end, as the web's end column, else the row's own padding.
+    fn end_pad(&self, pad: f32) -> f32 {
+        if self.actions.is_some() { 0.0 } else { pad }
+    }
+
     /// Each column's start and width within a row from `left` to `right`.
     fn layout(&self, left: f32, right: f32) -> Vec<(f32, f32)> {
         let lead = if self.reorder { GRIP } else { 0.0 };
@@ -1501,7 +1512,8 @@ impl<'a> DataTable<'a> {
             TableVariant::Table => 12.0,
             TableVariant::List => t.density("panel-pad"),
         };
-        let select_width = if self.selectable { 28.0 } else { 0.0 };
+        // the web's `CHECK`, 2.5rem, the box 12 in from its start
+        let select_width = if self.selectable { 28.0 + 12.0 } else { 0.0 };
         let stacked = self.stacks(ui.available_width(), pad, select_width);
         // a stacked row: 8 over and under a 24 title line and a 20 line of facts, and its rule
         let row_height = if stacked {
@@ -1623,7 +1635,7 @@ impl<'a> DataTable<'a> {
                     );
                     let upper = t.word("table-head-transform") == Some("uppercase");
                     let end = if self.chevron { 32.0 } else { 0.0 };
-                    let places = self.layout(head.left() + pad + select_width, head.right() - pad - end);
+                    let places = self.layout(head.left() + pad + select_width, head.right() - self.end_pad(pad) - end);
                     if self.selectable {
                         let all = !self.rows.is_empty() && self.state.selected.len() == self.rows.len();
                         let some = !self.state.selected.is_empty() && !all;
@@ -1781,7 +1793,10 @@ impl<'a> DataTable<'a> {
                 let heights: Vec<f32> = if free && self.auto {
                     let end = if self.chevron { 32.0 } else { 0.0 };
                     let left = ui.cursor().left();
-                    let places = self.layout(left + pad + select_width, left + ui.available_width() - pad - end);
+                    let places = self.layout(
+                        left + pad + select_width,
+                        left + ui.available_width() - self.end_pad(pad) - end,
+                    );
                     (0..self.rows.len())
                         .map(|index| {
                             let content = self
@@ -1971,7 +1986,8 @@ impl<'a> DataTable<'a> {
                                 t.color("faint"),
                             );
                         }
-                        let places = self.layout(rect.left() + pad + select_width, rect.right() - pad - end);
+                        let places =
+                            self.layout(rect.left() + pad + select_width, rect.right() - self.end_pad(pad) - end);
                         for (c, column) in self.columns.iter().enumerate().filter(|_| !stacked) {
                             if self.state.hidden.contains(&c) {
                                 continue;
@@ -2104,7 +2120,7 @@ impl<'a> DataTable<'a> {
                         }
                         if let Some(actions) = &self.actions {
                             let place = Rect::from_min_size(
-                                pos2(rect.right() - pad - ACTIONS, rect.top()),
+                                pos2(rect.right() - ACTIONS, rect.top()),
                                 vec2(ACTIONS, rect.height()),
                             );
                             // stacked, the menu stands at the row's end on the title's line, a 24 box
@@ -2508,6 +2524,7 @@ fn paint_cell(
             ui.painter().galley(pos2(rect.left(), y + height), second, second_ink);
         }
         Cell::Mono(label) => text(ui, code_rich(t, label, TextRole::Help), t.color("foreground")),
+        Cell::MutedCode(label) => text(ui, code_rich(t, label, TextRole::Help), t.color("muted-foreground")),
         Cell::Marked { text: label, dot } => {
             // a 10 dot, 8 before the code, as the web's `Dot` and `gap-2`
             let lead = if let Some(color) = dot {
@@ -2722,7 +2739,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Muted(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
         Cell::Lines { title, .. } => text(ui, TextRole::Help.rich(t, title), quiet, at.x, room),
         Cell::Toned(label, ink) => text(ui, TextRole::Help.rich(t, label), t.color(ink), at.x, room),
-        Cell::Mono(label) | Cell::Marked { text: label, .. } => {
+        Cell::Mono(label) | Cell::MutedCode(label) | Cell::Marked { text: label, .. } => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
             text(ui, rich, quiet, at.x, room)
         }
@@ -2848,7 +2865,7 @@ fn cell_height(ui: &Ui, t: &crate::Tokens, cell: &Cell, room: f32) -> f32 {
         | Cell::Muted(label)
         | Cell::Toned(label, _)
         | Cell::Number { text: label, .. } => lay(TextRole::Body.rich(t, label), TextRole::Body),
-        Cell::Mono(label) => lay(code_rich(t, label, TextRole::Help), TextRole::Body),
+        Cell::Mono(label) | Cell::MutedCode(label) => lay(code_rich(t, label, TextRole::Help), TextRole::Body),
         Cell::Code(label) => lay(code_rich(t, label, TextRole::Body), TextRole::Body),
         Cell::Lines { title, detail, .. } => {
             lay(TextRole::Body.rich(t, title), TextRole::Body) + lay(TextRole::Help.rich(t, detail), TextRole::Help)

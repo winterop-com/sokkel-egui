@@ -230,3 +230,130 @@ pub fn inspector_section(ui: &mut Ui, title: &str, body: impl FnOnce(&mut Ui)) {
         body(ui);
     });
 }
+
+/// A side panel's content, after sokkel-ui's `SidePanel`, filling the shell's panel column: its
+/// head as tall as the top bar with a rule under it, holding its tabs (or the one tab's title), 48
+/// clear at its end for the shell's toggle; under it the chosen tab's content, scrolling.
+pub struct SidePanel<'a> {
+    id: egui::Id,
+    tabs: &'a [&'a str],
+    active: &'a mut usize,
+}
+
+impl<'a> SidePanel<'a> {
+    pub fn new(id: impl egui::AsIdSalt, tabs: &'a [&'a str], active: &'a mut usize) -> Self {
+        Self {
+            id: egui::Id::unique(id),
+            tabs,
+            active,
+        }
+    }
+
+    /// Draws the panel, `content` asked for the chosen tab by its index.
+    pub fn show(self, ui: &mut Ui, content: impl FnOnce(usize, &mut Ui)) {
+        let t = tokens(ui.ctx());
+        let room = ui.available_rect_before_wrap();
+        let top = t.length("spacing-shell-top");
+        let head = Rect::from_min_size(room.min, vec2(room.width(), top));
+        ui.allocate_rect(head, Sense::hover());
+        ui.painter().hline(
+            head.x_range(),
+            head.bottom() - 0.5,
+            Stroke::new(1.0, t.color("border-strong")),
+        );
+        if self.tabs.len() == 1 {
+            let galley = WidgetText::from(TextRole::Body.rich(&t, self.tabs[0]).variation("wght", 500.0)).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                head.width() - 64.0,
+                TextRole::Body.font(&t),
+            );
+            ui.painter().galley(
+                pos2(head.left() + 14.0, head.center().y - galley.size().y / 2.0),
+                galley,
+                t.color("foreground"),
+            );
+        } else {
+            let mut x = head.left() + 8.0;
+            for (index, label) in self.tabs.iter().enumerate() {
+                let on = *self.active == index;
+                let rich = if on {
+                    TextRole::Body.rich(&t, *label).variation("wght", 500.0)
+                } else {
+                    TextRole::Body.rich(&t, *label)
+                };
+                let galley = WidgetText::from(rich).into_galley(
+                    ui,
+                    Some(TextWrapMode::Extend),
+                    f32::INFINITY,
+                    TextRole::Body.font(&t),
+                );
+                let tab = Rect::from_min_size(pos2(x, head.center().y - 14.0), vec2(galley.size().x + 20.0, 28.0));
+                let hit = ui.interact(tab, self.id.with(("tab", index)), Sense::click());
+                hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Tab, true, on, *label));
+                let ink = if on || hit.hovered() {
+                    t.color("foreground")
+                } else {
+                    t.color("muted-foreground")
+                };
+                if on {
+                    ui.painter().rect_filled(tab, t.radius("md"), t.color("secondary"));
+                } else if hit.hovered() {
+                    ui.painter().rect_filled(tab, t.radius("md"), t.color("hover"));
+                }
+                ui.painter().galley(
+                    pos2(tab.left() + 10.0, tab.center().y - galley.size().y / 2.0),
+                    galley,
+                    ink,
+                );
+                if hit.clicked() {
+                    *self.active = index;
+                }
+                x = tab.right() + 4.0;
+            }
+        }
+        let active = (*self.active).min(self.tabs.len().saturating_sub(1));
+        egui::ScrollArea::vertical()
+            .id_salt(self.id.with(("body", active)))
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                ui.set_width(room.width());
+                ui.spacing_mut().item_spacing.y = 0.0;
+                content(active, ui);
+            });
+    }
+}
+
+/// A titled block inside a side panel, after sokkel-ui's `PanelSection`: a quiet capital heading
+/// over its content, 8 apart, 16 in and 12 over and under, a rule under it.
+pub fn panel_section(ui: &mut Ui, title: &str, body: impl FnOnce(&mut Ui)) {
+    let t = tokens(ui.ctx());
+    let drawn = egui::Frame::new()
+        .inner_margin(egui::Margin::symmetric(16, 12))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.spacing_mut().item_spacing.y = 8.0;
+            group_label(ui, title);
+            body(ui);
+        })
+        .response
+        .rect;
+    ui.painter().hline(
+        drawn.x_range(),
+        drawn.bottom() - 0.5,
+        Stroke::new(1.0, t.color("border")),
+    );
+}
+
+/// A quiet capital heading, after sokkel-ui's `GroupLabel`: the small words at medium weight in
+/// capitals, tracked a little, in the faint ink.
+pub fn group_label(ui: &mut Ui, title: &str) {
+    let t = tokens(ui.ctx());
+    let spec = t.text("help");
+    let rich = TextRole::Help
+        .rich(&t, title.to_uppercase())
+        .variation("wght", 500.0)
+        .extra_letter_spacing(spec.size * 0.025)
+        .color(t.color("faint"));
+    ui.add(egui::Label::new(rich).truncate());
+}

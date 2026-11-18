@@ -23,6 +23,7 @@ mod frame;
 mod info;
 mod inline_edit;
 mod item_card;
+mod json_tree;
 mod layout;
 mod list_row;
 mod log_view;
@@ -35,6 +36,7 @@ mod page;
 mod panel_menu;
 mod panes;
 mod person;
+mod problem;
 mod section;
 mod server_menu;
 mod settings;
@@ -98,6 +100,7 @@ pub use frame::{
 pub use info::info_tip;
 pub use inline_edit::{InlineEdit, InlineEditLook, InlineEditWords};
 pub use item_card::{CardFact, ItemCard, SortableGrid, SortableOutcome};
+pub use json_tree::{JsonTree, JsonTreeWords};
 pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
 pub use list_row::{ListRow, ListRows, RowAside, RowMark};
 pub use log_view::{LogLevel, LogLine, LogView, LogViewWords};
@@ -110,8 +113,9 @@ pub use overlay::{
 };
 pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
 pub use panel_menu::{PanelAsked, PanelMenu, PanelWindow, PanelWords, body_drawn, panel_away, quiet_tools, windowed};
-pub use panes::{Inspector, InspectorWords, SubNav, inspector_section};
+pub use panes::{Inspector, InspectorWords, SidePanel, SubNav, group_label, inspector_section, panel_section};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
+pub use problem::{Problem, ProblemTone, ProblemWords};
 pub use section::{DescriptionList, PersonRow, Section, Timeline, TimelineEvent};
 pub use server_menu::{ServerMenu, ServerMenuResponse, ServerMenuWords, ServerState};
 pub use settings::{

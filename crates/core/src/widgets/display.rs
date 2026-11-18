@@ -523,6 +523,7 @@ pub struct Unfoldable<'a> {
     aside: Option<super::section::Tools<'a>>,
     dot: Option<egui::Color32>,
     forced: bool,
+    quiet: bool,
 }
 
 impl<'a> Unfoldable<'a> {
@@ -534,7 +535,15 @@ impl<'a> Unfoldable<'a> {
             aside: None,
             dot: None,
             forced: false,
+            quiet: false,
         }
+    }
+
+    /// The heading small, muted and at the body's weight, as a fold for details under a part
+    /// (a problem's technical details).
+    pub fn quiet(mut self, quiet: bool) -> Self {
+        self.quiet = quiet;
+        self
     }
 
     /// A dot of 10 in `color` before the heading, 8 apart, as a heading led by sokkel-ui's `Dot`.
@@ -603,17 +612,22 @@ impl<'a> Unfoldable<'a> {
                     .circle_filled(pos2(start + 5.0, face.center().y), 5.0, color);
                 start += 10.0 + 8.0;
             }
-            let galley = WidgetText::from(TextRole::Body.rich(&t, &self.heading).variation("wght", 500.0)).into_galley(
+            let (heading, ink) = if self.quiet {
+                (TextRole::Help.rich(&t, &self.heading), t.color("muted-foreground"))
+            } else {
+                (
+                    TextRole::Body.rich(&t, &self.heading).variation("wght", 500.0),
+                    t.color("foreground"),
+                )
+            };
+            let galley = WidgetText::from(heading).into_galley(
                 ui,
                 Some(TextWrapMode::Truncate),
                 (face.right() - start - 4.0).max(1.0),
                 TextRole::Body.font(&t),
             );
-            ui.painter().galley(
-                pos2(start, face.center().y - galley.size().y / 2.0),
-                galley,
-                t.color("foreground"),
-            );
+            ui.painter()
+                .galley(pos2(start, face.center().y - galley.size().y / 2.0), galley, ink);
             super::focus_ring_inset(ui.painter(), &t, face, t.radius("md"), &hit);
             if hit.clicked() {
                 chosen = !chosen;

@@ -946,6 +946,9 @@ pub struct ShellWords {
     pub menu: String,
     /// What closes the drawer: its scrim and the rail head's control in it.
     pub close: String,
+    /// The toggle in an open side panel's corner, and its edge's drag.
+    pub hide_panel: String,
+    pub resize_panel: String,
 }
 
 impl Default for ShellWords {
@@ -953,6 +956,8 @@ impl Default for ShellWords {
         Self {
             menu: "Open the navigation".into(),
             close: "Close the navigation".into(),
+            hide_panel: "Hide the panel".into(),
+            resize_panel: "Resize the side panel".into(),
         }
     }
 }
@@ -1014,6 +1019,7 @@ pub struct Shell<'a> {
     desktop: Option<DesktopWindow>,
     words: ShellWords,
     banner: Option<ShellBanner<'a>>,
+    panel: Option<(&'a mut bool, ShellBanner<'a>)>,
 }
 
 /// What a shell's banner line draws.
@@ -1033,7 +1039,84 @@ impl<'a> Shell<'a> {
             desktop: None,
             words: ShellWords::default(),
             banner: None,
+            panel: None,
         }
+    }
+
+    /// A side panel as the frame's right column while `open`, after the web's `Shell` `panel`: the
+    /// window's height down to the status line, its head level with the top bar (a `SidePanel`
+    /// fills it), 352 wide at first and dragged wider or narrower by its start edge, with the
+    /// toggle that hides it in its head's corner, which sets `open` false.
+    pub fn panel(mut self, open: &'a mut bool, panel: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.panel = Some((open, Box::new(panel)));
+        self
+    }
+
+    /// Draws the open side panel at the end of `column` and answers with what is left of it.
+    fn place_panel(&mut self, ui: &mut Ui, column: Rect) -> Rect {
+        let Some((open, panel)) = self.panel.take() else {
+            return column;
+        };
+        if !*open {
+            return column;
+        }
+        let t = tokens(ui.ctx());
+        let size_id = egui::Id::unique("sokkel-shell-panel-size");
+        let width: f32 = ui
+            .ctx()
+            .data(|d| d.get_temp(size_id))
+            .unwrap_or(352.0_f32)
+            .clamp(280.0, (column.width() - 320.0).max(280.0));
+        let area = Rect::from_min_max(pos2(column.right() - width, column.top()), column.max);
+        ui.painter().rect_filled(area, CornerRadius::ZERO, t.color("sidebar"));
+        ui.scope_builder(
+            UiBuilder::new().max_rect(area).layout(Layout::top_down(Align::Min)),
+            |ui| {
+                ui.set_clip_rect(area.intersect(ui.clip_rect()));
+                panel(ui);
+            },
+        );
+        ui.painter().vline(
+            area.left() + 0.5,
+            area.y_range(),
+            Stroke::new(1.0, t.color("border-strong")),
+        );
+        // the toggle that hides it, in its head's corner
+        let top = t.length("spacing-shell-top");
+        let toggle = Rect::from_center_size(pos2(area.right() - 24.0, area.top() + top / 2.0), vec2(28.0, 28.0));
+        let hit = ui.interact(toggle, size_id.with("toggle"), Sense::click());
+        hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.hide_panel));
+        if hit.hovered() {
+            ui.painter().rect_filled(toggle, t.radius("md"), t.color("hover"));
+        }
+        icons::paint(
+            ui.painter(),
+            toggle.center(),
+            Icon::PanelRightClose,
+            16.0,
+            t.color("muted-foreground"),
+        );
+        if hit.clicked() {
+            *open = false;
+        }
+        // its start edge drags it wider or narrower; a double press puts it back
+        let edge = Rect::from_min_max(
+            pos2(area.left() - 4.0, area.top()),
+            pos2(area.left() + 4.0, area.bottom()),
+        );
+        let grip = ui.interact(edge, size_id.with("edge"), Sense::click_and_drag());
+        grip.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Slider, true, &self.words.resize_panel));
+        if grip.hovered() || grip.dragged() {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
+        }
+        if grip.dragged() {
+            let next = (width - grip.drag_delta().x).max(280.0);
+            ui.ctx().data_mut(|d| d.insert_temp(size_id, next));
+        }
+        if grip.double_clicked() {
+            ui.ctx().data_mut(|d| d.remove::<f32>(size_id));
+        }
+        Rect::from_min_max(column.min, pos2(area.left(), column.bottom()))
     }
 
     /// A line across the page's column between the top bar and the page, such as a `Banner` saying
@@ -1136,11 +1219,11 @@ impl<'a> Shell<'a> {
             pos2(rect.left(), rect.bottom() - foot),
             pos2(rect.left() + rail_width, rect.bottom()),
         );
-        let top_bar = Rect::from_min_max(pos2(rail.right(), rect.top()), pos2(rect.right(), rect.top() + top));
-        let page = Rect::from_min_max(
-            pos2(rail.right(), top_bar.bottom()),
-            pos2(rect.right(), rect.bottom() - foot),
-        );
+        // the content's column, less the side panel at its end while it is open
+        let column = Rect::from_min_max(pos2(rail.right(), rect.top()), pos2(rect.right(), rect.bottom() - foot));
+        let column = self.place_panel(ui, column);
+        let top_bar = Rect::from_min_max(column.min, pos2(column.right(), rect.top() + top));
+        let page = Rect::from_min_max(pos2(column.left(), top_bar.bottom()), column.max);
         ui.painter()
             .rect_filled(page, CornerRadius::ZERO, t.color("background"));
         let page = self.place_banner(ui, page);

@@ -30,6 +30,8 @@ pub enum MenuItem {
         detail: Option<String>,
         /// Other words a palette's search finds it by.
         keywords: Vec<String>,
+        /// The label in the code face, as an id or a code is named.
+        code: bool,
     },
     /// A label over the items after it.
     Label(String),
@@ -49,10 +51,19 @@ impl MenuItem {
             hint: None,
             detail: None,
             keywords: Vec::new(),
+            code: false,
         }
     }
 
     /// The id the app knows the command by.
+    /// The label in the code face, as an id or a code is named.
+    pub fn code(mut self, on: bool) -> Self {
+        if let MenuItem::Action { code, .. } = &mut self {
+            *code = on;
+        }
+        self
+    }
+
     pub fn id(mut self, command: impl Into<String>) -> Self {
         if let MenuItem::Action { id, .. } = &mut self {
             *id = Some(command.into());
@@ -161,6 +172,7 @@ pub(crate) fn action_row(
         tint,
         hint,
         detail,
+        code,
         ..
     } = item
     else {
@@ -243,12 +255,12 @@ pub(crate) fn action_row(
             })
         });
     let room = row.right() - 8.0 - x - keys.as_ref().map_or(0.0, |k| k.size().x + 16.0);
-    let galley = WidgetText::from(TextRole::Body.rich(t, label)).into_galley(
-        ui,
-        Some(TextWrapMode::Truncate),
-        room,
-        TextRole::Body.font(t),
-    );
+    let words = if *code {
+        egui::RichText::new(label.as_str()).font(egui::FontId::monospace(TextRole::Body.font(t).size))
+    } else {
+        TextRole::Body.rich(t, label)
+    };
+    let galley = WidgetText::from(words).into_galley(ui, Some(TextWrapMode::Truncate), room, TextRole::Body.font(t));
     match detail {
         None => ui
             .painter()

@@ -3,12 +3,13 @@
 
 use egui_kittest::{Harness, kittest::Queryable};
 use runs::RunsApp;
+use runs::app::DEMO_START;
 use sokkel_egui::Appearance;
 
 fn render(setup: impl FnOnce(&mut RunsApp)) -> Harness<'static, RunsApp> {
-    let mut app = RunsApp::with(Appearance::default());
+    let mut app = RunsApp::at(DEMO_START, Appearance::default());
     setup(&mut app);
-    let mut harness = Harness::builder().with_size([1280.0, 800.0]).build_ui_state(
+    let mut harness = Harness::builder().with_size([1440.0, 900.0]).build_ui_state(
         |ui, app: &mut RunsApp| {
             eframe::egui::CentralPanel::default()
                 .frame(eframe::egui::Frame::NONE)
