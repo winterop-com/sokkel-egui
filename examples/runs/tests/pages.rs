@@ -38,4 +38,10 @@ fn every_screen() {
     harness.get_by_label("Log").click();
     harness.run_steps(4);
     results.add(harness.try_snapshot("runs_run_panel_log"));
+
+    let mut harness = render("jobs");
+    results.add(harness.try_snapshot("runs_jobs"));
+    harness.get_by_label("New").click();
+    harness.run_steps(4);
+    results.add(harness.try_snapshot("runs_new_job"));
 }

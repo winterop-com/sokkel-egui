@@ -24,6 +24,12 @@ screens are shot into `parity/runs/web/` by `bun scripts/parity.ts web runs`.
 - A run beside the page: Details (its buttons, a failure or a skip as a `Problem`, its facts, its
   inputs and outputs as a `JsonTree`, both new in the library), its Steps as a timeline, and its
   Log.
-- Open: the overview, a run's page, the jobs and a job's page, the schedules, the settings, the
+- Jobs: every job with its schedule (or paused), its next run, its last run as a chip and when
+  (`Cell::ChipNote`, new in the library), its runs over two days as a line and its success, each
+  named over its code (`Cell::NamedCode` at the body's weight), searched and filtered by
+  project, each row's menu (Open, Run now, Pause or Resume, Delete after asking), and New: a job
+  made from a starter with its code in the code face (`Input::mono`, new in the library), its
+  project, owner, steps and schedule. Open: the web's line over two days is 16 tall.
+- Open: the overview, a run's page, a job's page, the schedules, the settings, the
   palette and the sign-in page; the bulk actions on the selected runs; a table narrower than its
   least width scrolls sideways on the web and is cut short here; the log's wrapping.

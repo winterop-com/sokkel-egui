@@ -125,6 +125,7 @@ impl RecordsApp {
                             Cell::NamedCode {
                                 name: f.object.clone(),
                                 code: f.object_id.clone(),
+                                strong: true,
                             },
                             Cell::Mono(f.field.into()),
                             Cell::Text(f.problem.clone()),

@@ -114,6 +114,8 @@ pub struct Input<'a> {
     name: Option<String>,
     /// Shown, never typed in, on the muted ground, as a worked-out value's `readOnly` input.
     read_only: bool,
+    /// The text in the code face, as a code is typed.
+    mono: bool,
 }
 
 impl<'a> Input<'a> {
@@ -128,7 +130,14 @@ impl<'a> Input<'a> {
             multiline: false,
             suffix: None,
             name: None,
+            mono: false,
         }
+    }
+
+    /// The text in the code face, as a code is typed (`mono`).
+    pub fn mono(mut self, mono: bool) -> Self {
+        self.mono = mono;
+        self
     }
 
     /// What a screen reader calls the input, where no label beside it says, as the web's
@@ -212,8 +221,13 @@ impl Widget for Input<'_> {
             )
         });
         let room = suffix.as_ref().map_or(0.0, |g| g.size().x + 8.0);
+        let face = if self.mono {
+            egui::FontId::monospace(body.font(&t).size)
+        } else {
+            body.font(&t)
+        };
         let mut edit = edit
-            .font(body.font(&t))
+            .font(face)
             .text_color(ink)
             .frame(Frame::NONE)
             .desired_width(width - 20.0 - room)

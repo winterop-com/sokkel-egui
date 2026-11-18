@@ -44,6 +44,10 @@ pub struct RunsApp {
     pub cancelling: Vec<String>,
     /// The runs page's search, filters, sort and chosen view.
     pub runs_view: crate::runs_page::RunsView,
+    /// The jobs page's search and project, and the new job's form.
+    pub jobs_view: crate::jobs_page::JobsView,
+    /// The job asked to be deleted, while the question stands.
+    pub deleting: Option<String>,
     /// Each table's sort, widths and the row opened, by the table's name.
     pub tables: std::collections::HashMap<String, sokkel_egui::TableState>,
     started: i64,
@@ -86,6 +90,8 @@ impl RunsApp {
             panel_tab: 0,
             cancelling: Vec::new(),
             runs_view: Default::default(),
+            jobs_view: Default::default(),
+            deleting: None,
             tables: Default::default(),
             started: now,
             started_at: None,
@@ -219,6 +225,45 @@ impl RunsApp {
         })
         .description(ids.join(", "))
         .show(ctx);
+    }
+
+    /// Pauses a job's schedule or resumes it, saying so.
+    pub fn toggle_pause(&mut self, ctx: &egui::Context, id: &str) {
+        let Some(job) = self.backend.save_job(id, |job| job.paused = !job.paused) else {
+            return;
+        };
+        let (title, detail) = if job.paused {
+            (
+                format!("{} paused", job.name),
+                "Its schedule starts no runs until it is resumed.",
+            )
+        } else {
+            (format!("{} resumed", job.name), "Its schedule runs again.")
+        };
+        Toast::new(title).description(detail).show(ctx);
+    }
+
+    fn delete_question(&mut self, ctx: &egui::Context) {
+        let Some(id) = self.deleting.clone() else {
+            return;
+        };
+        let asked = ConfirmDialog::new("delete-job", format!("Delete {id}?"), "Delete job")
+            .detail("Its runs going now are cancelled and its schedule stops. Its past runs stay in the history.")
+            .destructive(true)
+            .show(ctx);
+        match asked {
+            Some(ConfirmAnswer::Confirm) => {
+                self.deleting = None;
+                let name = self.backend.job(&id).map_or(id.clone(), |job| job.name.clone());
+                self.backend.delete_job(&id, self.me(), self.now());
+                Toast::new(format!("{name} deleted"))
+                    .description(format!("{id} and its schedule are gone."))
+                    .show(ctx);
+                self.go("jobs");
+            }
+            Some(_) => self.deleting = None,
+            None => {}
+        }
     }
 
     /// Moves the clock and the engine on, saying what the person wants to hear of.
@@ -380,6 +425,7 @@ impl RunsApp {
             }
             ShellPart::Page => match (page.as_str(), &second) {
                 ("runs", None) => Page::show(ui, |ui| self.runs_page(ui, &runs)),
+                ("jobs", None) => Page::show(ui, |ui| self.jobs_page(ui, &runs)),
                 _ => Page::scroll(ui, |ui| {
                     sokkel_egui::Empty::new("Nothing at this address")
                         .description(format!("The console has no page at #/{}.", self.path.join("/")))
@@ -414,6 +460,8 @@ impl RunsApp {
             self.palette = Some((String::new(), 0));
         }
         self.cancel_question(&ctx);
+        self.delete_question(&ctx);
+        self.new_job_dialog(&ctx);
         Toaster::new().show(&ctx);
     }
 

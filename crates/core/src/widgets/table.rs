@@ -150,11 +150,18 @@ pub enum Cell {
     /// A code in the mono face in the muted ink, as a quieter code beside the row's own (a run's
     /// step).
     MutedCode(String),
-    /// A name at medium weight over its id small and muted in the mono face, as an object named
-    /// over its code.
+    /// A name over its id small and muted in the mono face, as an object named over its code; the
+    /// name at medium weight when `strong`.
     NamedCode {
         name: String,
         code: String,
+        strong: bool,
+    },
+    /// A chip, then 8 on a note in the muted ink, as a last run's state and when it was.
+    ChipNote {
+        label: String,
+        tone: ChipTone,
+        note: String,
     },
     /// A code in the mono face at the body's size, as a `font-mono` cell in a `text-sm` row.
     Code(String),
@@ -244,6 +251,7 @@ impl Cell {
             Cell::Lines { title, .. } => title.clone(),
             Cell::CodeLines { code, .. } => code.clone(),
             Cell::NamedCode { name, .. } => name.clone(),
+            Cell::ChipNote { label, note, .. } => format!("{label} {note}"),
             Cell::Number { text, .. } | Cell::Marked { text, .. } | Cell::Swatch { text, .. } => text.clone(),
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
             Cell::Tags(tags) | Cell::OutlineTags(tags) => tags.join(" "),
@@ -268,6 +276,7 @@ impl Cell {
             Cell::Lines { title, .. } => title.clone(),
             Cell::CodeLines { code, .. } => code.clone(),
             Cell::NamedCode { name, .. } => name.clone(),
+            Cell::ChipNote { label, note, .. } => format!("{label} {note}"),
             Cell::Check(on) | Cell::Switch { on, .. } => u8::from(*on).to_string(),
             Cell::Button { .. } => String::new(),
             Cell::Clock { at, .. } => format!("{:024.3}", at + 1e18),
@@ -2497,13 +2506,28 @@ fn paint_cell(
                 .galley(pos2(rect.left(), y + height), small, t.color("muted-foreground"));
         }
         Cell::Code(label) => text(ui, code_rich(t, label, TextRole::Body), t.color("foreground")),
-        Cell::NamedCode { name, code } => {
+        Cell::ChipNote { label, tone, note } => {
+            let width = super::chip::paint_at(ui, rect.left(), rect.center().y, label, *tone);
+            let galley = WidgetText::from(TextRole::Body.rich(t, note)).into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                (room - width - 8.0).max(1.0),
+                TextRole::Body.font(t),
+            );
+            ui.painter().galley(
+                pos2(rect.left() + width + 8.0, rect.center().y - galley.size().y / 2.0),
+                galley,
+                t.color("muted-foreground"),
+            );
+        }
+        Cell::NamedCode { name, code, strong } => {
             let lay = |ui: &mut Ui, rich: egui::RichText, role: TextRole| {
                 WidgetText::from(rich).into_galley(ui, Some(mode), room, role.font(t))
             };
+            let weight = if *strong { 500.0 } else { 400.0 };
             let first = lay(
                 ui,
-                TextRole::Body.rich(t, name).variation("wght", 500.0),
+                TextRole::Body.rich(t, name).variation("wght", weight),
                 TextRole::Body,
             );
             let second = lay(ui, code_rich(t, code, TextRole::Help), TextRole::Help);
@@ -2740,6 +2764,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Tags(tags) => paint_tags(ui, tags, at, room, false),
         Cell::OutlineTags(tags) => paint_tags(ui, tags, at, room, true),
         Cell::NamedCode { name: label, .. } => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
+        Cell::ChipNote { label, tone, .. } => super::chip::paint_at(ui, at.x, at.y, label, *tone),
         Cell::CodeLines { code: label, .. } | Cell::Code(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
             text(ui, rich, quiet, at.x, room)
@@ -2880,9 +2905,8 @@ fn cell_height(ui: &Ui, t: &crate::Tokens, cell: &Cell, room: f32) -> f32 {
         Cell::Lines { title, detail, .. } => {
             lay(TextRole::Body.rich(t, title), TextRole::Body) + lay(TextRole::Help.rich(t, detail), TextRole::Help)
         }
-        Cell::NamedCode { name, code } => {
-            lay(TextRole::Body.rich(t, name).variation("wght", 500.0), TextRole::Body)
-                + lay(code_rich(t, code, TextRole::Help), TextRole::Help)
+        Cell::NamedCode { name, code, .. } => {
+            lay(TextRole::Body.rich(t, name), TextRole::Body) + lay(code_rich(t, code, TextRole::Help), TextRole::Help)
         }
         Cell::CodeLines { code, detail } => {
             lay(code_rich(t, code, TextRole::Body), TextRole::Body)

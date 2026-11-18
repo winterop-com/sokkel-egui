@@ -3,8 +3,10 @@
 
 pub mod app;
 pub mod backend;
+pub mod jobs_page;
 pub mod logs;
 pub mod model;
+pub mod new_job;
 pub mod parts;
 pub mod run_panel;
 pub mod runs_page;
