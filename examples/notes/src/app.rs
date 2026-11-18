@@ -56,6 +56,9 @@ pub struct NotesApp {
     /// The graph shows the notes around the open one, and the names linked to with no note yet.
     pub graph_around: bool,
     pub graph_missing: bool,
+    /// The question asked in a dialog, and the dialog's fields.
+    pub asking: Option<crate::backend::Asking>,
+    pub dialog: crate::dialogs::DialogState,
     /// The tab shown in the panel beside a note.
     pub panel_tab: usize,
     started: i64,
@@ -94,6 +97,8 @@ impl NotesApp {
             quick: String::new(),
             tables: Default::default(),
             panel_tab: 0,
+            asking: None,
+            dialog: Default::default(),
             graph_around: false,
             graph_missing: true,
             template_draft: None,
@@ -398,29 +403,24 @@ impl NotesApp {
             }
         }
         if let Some((id, index)) = tree_action {
-            match (id.strip_prefix("folder:"), index) {
-                // New note in the folder
-                (Some(folder), 0) => {
-                    let made = self.backend.new_note(Some(folder), now);
-                    self.open_note(&made.id);
-                }
-                // Open
-                (None, 0) => self.open_note(&id),
-                _ => {}
+            match id.strip_prefix("folder:") {
+                Some(folder) => self.folder_action(folder, index),
+                None => self.note_action(&id, index),
             }
         }
         if new_note || new_from_top {
-            let made = self
-                .backend
-                .new_note(note.as_ref().and_then(|n| n.folder.as_deref()), now);
-            self.open_note(&made.id);
+            let folder = note.as_ref().and_then(|n| n.folder.clone());
+            self.new_note_in(folder.as_deref());
+        }
+        if new_folder {
+            self.ask(crate::backend::Asking::NewFolder { parent: None });
         }
         match account {
             Some(AccountAction::Settings) => self.go("settings"),
             Some(AccountAction::Appearance) => self.settings = Some("appearance".into()),
             None => {}
         }
-        let _ = new_folder;
+        self.dialogs(&ctx);
         self.settings_dialog(&ctx);
         Toaster::new().show(&ctx);
     }

@@ -51,9 +51,16 @@ shot into `parity/notes/web/` by `bun scripts/parity.ts web notes`.
   (`NetworkGraph`, new in the graph add-on, its force layout d3-force's to the bit), the notes
   with no link shown or not, an option that cannot be chosen yet (`Segmented::disabled`, new in
   the library) and the legend (`Dot`, new in the library); a dot opens its note.
+- The questions asked in a dialog: a new folder's name, a note's or a folder's new name (the
+  backend's refusal said under the field), where a note or a folder moves (a folder picked from
+  the vault's), deleting a note or a folder with what goes with it (`ConsequenceList` and
+  `ConfirmDialog::show_with`, new in the library), and making a note a link names; from the tree's
+  menus, the listings' row menus, the folder's buttons and a note's More. New note makes a note and
+  asks its name, as the web's. A dialog with a confirm that waits on a reason is `DialogShell`, new
+  in the library.
 
 ## Open
-- The dialogs that rename, move and delete, and New folder; the palette and the switcher.
+- The palette and the switcher, and the top bar's search with its results under it.
 - QuickAdd says nothing yet when a title is already in the vault (the web's `validate`).
 - The web's note editor draws in the sans face at c95b8911; that is a sokkel-ui bug (its lean
   stylesheet dropped `--font-mono`), so the egui editor keeps the mono face.

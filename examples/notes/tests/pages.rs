@@ -40,3 +40,40 @@ fn every_screen() {
         results.add(harness.try_snapshot(name));
     }
 }
+
+#[test]
+fn every_dialog() {
+    use notes::backend::Asking;
+    let mut results = SnapshotResults::new();
+    let asks = [
+        (
+            "notes_dialog_rename",
+            "note/welcome",
+            Asking::RenameNote { id: "welcome".into() },
+        ),
+        (
+            "notes_dialog_move",
+            "note/welcome",
+            Asking::MoveNote { id: "welcome".into() },
+        ),
+        (
+            "notes_dialog_delete_folder",
+            "folder/runbooks",
+            Asking::DeleteFolder { id: "runbooks".into() },
+        ),
+        (
+            "notes_dialog_make",
+            "note/welcome",
+            Asking::Create {
+                title: "Export retention".into(),
+                folder: None,
+            },
+        ),
+    ];
+    for (name, path, asking) in asks {
+        let mut harness = render(path);
+        harness.state_mut().ask(asking);
+        harness.run_steps(4);
+        results.add(harness.try_snapshot(name));
+    }
+}

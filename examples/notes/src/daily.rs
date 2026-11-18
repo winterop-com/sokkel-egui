@@ -166,10 +166,10 @@ impl NotesApp {
         if let Some(id) = opened.and_then(|row| keys.get(row)) {
             self.open_note(&id.clone());
         }
-        if let Some((row, 0)) = action
+        if let Some((row, index)) = action
             && let Some(id) = keys.get(row).cloned()
         {
-            self.open_note(&id);
+            self.note_action(&id, index);
         }
     }
 

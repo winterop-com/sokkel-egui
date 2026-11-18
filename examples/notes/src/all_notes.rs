@@ -8,7 +8,7 @@ use sokkel_egui::{
 };
 
 use crate::app::NotesApp;
-use crate::backend::NewNote;
+use crate::backend::{Asking, NewNote};
 use crate::model::{Note, Order};
 use crate::vault::{Vault, folder_and_below, notes_in_order};
 
@@ -102,6 +102,7 @@ impl NotesApp {
             header = header.description(path);
         }
         let mut new_folder = false;
+        let (mut delete, mut moving, mut rename) = (false, false, false);
         header.show(ui, |ui| {
             new_folder = ui
                 .add(
@@ -112,9 +113,9 @@ impl NotesApp {
                 )
                 .clicked();
             if folder.is_some() {
-                ui.add(IconButton::new(Icon::Trash2, "Delete folder"));
-                ui.add(IconButton::new(Icon::FolderInput, "Move folder"));
-                ui.add(IconButton::new(Icon::Pencil, "Rename folder"));
+                delete = ui.add(IconButton::new(Icon::Trash2, "Delete folder")).clicked();
+                moving = ui.add(IconButton::new(Icon::FolderInput, "Move folder")).clicked();
+                rename = ui.add(IconButton::new(Icon::Pencil, "Rename folder")).clicked();
             }
         });
         let placeholder = if folder.is_none() {
@@ -161,11 +162,25 @@ impl NotesApp {
         if let Some(id) = opened.and_then(|row| keys.get(row)) {
             self.open_note(&id.clone());
         }
-        if let Some((row, 0)) = out.action
+        if let Some((row, index)) = out.action
             && let Some(id) = keys.get(row).cloned()
         {
-            self.open_note(&id);
+            self.note_action(&id, index);
         }
-        let _ = new_folder;
+        let parent = folder.map(str::to_owned);
+        if new_folder {
+            self.ask(Asking::NewFolder { parent: parent.clone() });
+        }
+        if let Some(id) = parent {
+            if rename {
+                self.ask(Asking::RenameFolder { id: id.clone() });
+            }
+            if moving {
+                self.ask(Asking::MoveFolder { id: id.clone() });
+            }
+            if delete {
+                self.ask(Asking::DeleteFolder { id });
+            }
+        }
     }
 }

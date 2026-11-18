@@ -608,6 +608,81 @@ pub enum ConfirmAnswer {
     StopWaiting,
 }
 
+/// A dialog with Cancel and its confirm, as sokkel-ui's `DialogShell` with `confirm`: the confirm
+/// shut with `why` (said while it is pointed at) until it can go, at the footer's end with Cancel
+/// before it.
+pub struct DialogShell {
+    dialog: Dialog,
+    confirm: String,
+    cancel: String,
+    why: Option<String>,
+    destructive: bool,
+}
+
+impl DialogShell {
+    pub fn new(id: impl egui::AsIdSalt, title: impl Into<String>, confirm: impl Into<String>) -> Self {
+        Self {
+            dialog: Dialog::new(id, title),
+            confirm: confirm.into(),
+            cancel: "Cancel".into(),
+            why: None,
+            destructive: false,
+        }
+    }
+
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.dialog = self.dialog.description(description);
+        self
+    }
+
+    /// The box's width, as `Dialog::width`: 384 for the web's `sm`.
+    pub fn width(mut self, width: f32) -> Self {
+        self.dialog = self.dialog.width(width);
+        self
+    }
+
+    /// Why the confirm cannot go yet; none lets it go.
+    pub fn why(mut self, why: Option<impl Into<String>>) -> Self {
+        self.why = why.map(Into::into);
+        self
+    }
+
+    pub fn destructive(mut self, destructive: bool) -> Self {
+        self.destructive = destructive;
+        self
+    }
+
+    pub fn cancel(mut self, cancel: impl Into<String>) -> Self {
+        self.cancel = cancel.into();
+        self
+    }
+
+    /// Show it: true for the confirm, false for Cancel, Escape or the shade, none while it stays.
+    pub fn show(self, ctx: &Context, body: impl FnOnce(&mut Ui)) -> Option<bool> {
+        let mut answer = None;
+        let (confirm, cancel, why, destructive) = (self.confirm, self.cancel, self.why, self.destructive);
+        let closed = self.dialog.show(ctx, body, |ui: &mut Ui| {
+            let mut go = super::Button::new(&confirm);
+            if destructive {
+                go = go.variant(super::ButtonVariant::Destructive);
+            }
+            if let Some(why) = &why {
+                go = go.reason(why);
+            }
+            if ui.add(go).clicked() && why.is_none() {
+                answer = Some(true);
+            }
+            if ui
+                .add(super::Button::new(&cancel).variant(super::ButtonVariant::Ghost))
+                .clicked()
+            {
+                answer = Some(false);
+            }
+        });
+        answer.or(closed.then_some(false))
+    }
+}
+
 /// A question with one answer to confirm, after sokkel-ui's `ConfirmDialog`: the title is the
 /// question ("Reset the demo data?"), a line under it says what the answer does, and the footer
 /// holds Cancel and the answer, drawn destructive when it is one. While the answer is busy the
@@ -678,6 +753,16 @@ impl ConfirmDialog {
 
     /// Show the question; `Some` once it is answered.
     pub fn show(self, ctx: &Context) -> Option<ConfirmAnswer> {
+        self.ask(ctx, None::<fn(&mut Ui)>)
+    }
+
+    /// The question with something under its detail, before the verb, such as a
+    /// `ConsequenceList` of what goes with the thing deleted.
+    pub fn show_with(self, ctx: &Context, body: impl FnOnce(&mut Ui)) -> Option<ConfirmAnswer> {
+        self.ask(ctx, Some(body))
+    }
+
+    fn ask(self, ctx: &Context, body: Option<impl FnOnce(&mut Ui)>) -> Option<ConfirmAnswer> {
         let mut answer = None;
         let busy = self.busy.is_some();
         // how long the answer has been busy, on the context's clock, to release the dialog after a wait
@@ -705,7 +790,7 @@ impl ConfirmDialog {
         if let Some(detail) = &self.detail {
             dialog = dialog.description(detail.clone());
         }
-        let closed = dialog.draw(ctx, None::<fn(&mut Ui)>, |ui| {
+        let closed = dialog.draw(ctx, body, |ui| {
             let variant = if self.destructive {
                 ButtonVariant::Destructive
             } else {

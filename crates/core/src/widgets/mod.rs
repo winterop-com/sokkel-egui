@@ -11,6 +11,7 @@ mod chip_bar;
 mod choice;
 mod code_editor;
 mod commands;
+mod consequences;
 mod contents;
 mod dashboard;
 mod datetime;
@@ -88,6 +89,7 @@ pub use code_editor::{
     CodeSize, CodeVariant, LARGE_DOCUMENT, MarkTone,
 };
 pub use commands::{AppearanceCommandWords, appearance_commands, place_commands, place_of, run_appearance_command};
+pub use consequences::{Consequence, ConsequenceList, ConsequenceListWords};
 pub use contents::{ContentsEntry, TableOfContents, TableOfContentsWords};
 pub use dashboard::{
     DashboardGrid, DashboardPanel, GridCells, PanelSpan, body_room, cell_height, report_natural_height, took_room,
@@ -131,7 +133,8 @@ pub use meta_line::MetaLine;
 pub use mini_month::{MiniMonth, MiniMonthResponse, MiniMonthWords};
 pub use number_field::{NumberField, NumberFieldWords, read_number, write_number};
 pub use overlay::{
-    ConfirmAnswer, ConfirmDialog, Dialog, Select, UnsavedChangesWords, tooltip, tooltip_shown, unsaved_changes,
+    ConfirmAnswer, ConfirmDialog, Dialog, DialogShell, Select, UnsavedChangesWords, tooltip, tooltip_shown,
+    unsaved_changes,
 };
 pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
 pub use pane_header::{PaneHeader, PaneHeaderVariant, PaneTitle, section_title_weight};

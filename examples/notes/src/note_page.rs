@@ -9,7 +9,7 @@ use sokkel_egui::{
 };
 
 use crate::app::NotesApp;
-use crate::backend::{Follow, NewNote, TabClosed};
+use crate::backend::{Asking, Follow, TabClosed};
 use crate::model::{FontSize, View, bad_title};
 
 /// The views the switch offers, in its order.
@@ -215,12 +215,15 @@ impl NotesApp {
             self.open_note(&open);
         }
         if new_note {
-            let made = self.backend.new_note(note.folder.as_deref(), now);
-            self.open_note(&made.id);
+            self.new_note_in(note.folder.as_deref());
         }
         let mut close = tabs_out.closed;
-        if more == Some(2) {
-            close = Some(id.to_owned());
+        match more {
+            Some(0) => self.ask(Asking::RenameNote { id: id.to_owned() }),
+            Some(1) => self.ask(Asking::MoveNote { id: id.to_owned() }),
+            Some(2) => close = Some(id.to_owned()),
+            Some(4) => self.ask(Asking::DeleteNote { id: id.to_owned() }),
+            _ => {}
         }
         if let Some(closing) = close
             && let TabClosed::Active { next } = self.backend.close_tab(&closing, now)
@@ -232,23 +235,11 @@ impl NotesApp {
         }
     }
 
-    /// Follows a link's name: to its note, or makes the note it names and opens it.
+    /// Follows a link's name: to its note, or asks to make the note it names.
     pub fn follow(&mut self, target: &str, from: Option<&str>) {
-        let now = self.now();
         match self.backend.follow(target, from) {
             Follow::Open { id } => self.open_note(&id),
-            Follow::Create { title, folder } => {
-                let made = self.backend.create_note(
-                    NewNote {
-                        title: Some(title),
-                        folder,
-                        body: None,
-                        day: None,
-                    },
-                    now,
-                );
-                self.open_note(&made.id);
-            }
+            Follow::Create { title, folder } => self.ask(Asking::Create { title, folder }),
         }
     }
 }
