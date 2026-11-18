@@ -1,0 +1,845 @@
+{
+ "steps": [
+  {
+   "name": "create in runbooks",
+   "answer": "notes-mwlw4ors-1",
+   "error": null,
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "create untitled",
+   "answer": "notes-mwlw4pjk-2",
+   "error": null,
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "create untitled again",
+   "answer": "notes-mwlw4qbc-3",
+   "error": null,
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "rename nightly-export",
+   "answer": 4,
+   "error": null,
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "rename retry",
+   "answer": 5,
+   "error": null,
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "rename same",
+   "answer": 0,
+   "error": null,
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "rename empty",
+   "answer": null,
+   "error": "A note needs a name.",
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "rename bar",
+   "answer": null,
+   "error": "A name cannot hold [ ] | or #, which links read.",
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "rename taken",
+   "answer": null,
+   "error": "A note named LINUS is already in the vault.",
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "rename gone",
+   "answer": null,
+   "error": "That note is gone.",
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "move ideas",
+   "answer": null,
+   "error": null,
+   "toasts": [
+    {
+     "title": "Moved to Projects",
+     "description": "Ideas"
+    }
+   ],
+   "hash": "#/notes"
+  },
+  {
+   "name": "move to top",
+   "answer": null,
+   "error": null,
+   "toasts": [
+    {
+     "title": "Moved to the top of the vault",
+     "description": "api"
+    }
+   ],
+   "hash": "#/notes"
+  },
+  {
+   "name": "edit",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "inspect and flush one",
+   "answer": {
+    "drafts": [
+     "ideas",
+     "welcome"
+    ],
+    "backlinks": [
+     "sync-inventory",
+     "quarter-review",
+     "grace",
+     "ideas"
+    ],
+    "mentions": [
+     "ideas"
+    ]
+   },
+   "error": null,
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "flush all",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "open today",
+   "answer": null,
+   "error": null,
+   "toasts": [
+    {
+     "title": "Daily note for 2026-11-18",
+     "description": "Made from the template."
+    }
+   ],
+   "hash": "#/note/notes-mwlw50cg-4"
+  },
+  {
+   "name": "open yesterday",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "folder",
+   "answer": "folders-mwlw51w0-5",
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "folder again",
+   "answer": "folders-mwlw52ns-6",
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "folder blank",
+   "answer": "folders-mwlw53fk-7",
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "rename folder",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "rename folder blank",
+   "answer": null,
+   "error": "A folder needs a name.",
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "rename folder taken",
+   "answer": null,
+   "error": "A folder named jobs is already there.",
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "move folder",
+   "answer": null,
+   "error": null,
+   "toasts": [
+    {
+     "title": "Moved to the top of the vault",
+     "description": "Services"
+    }
+   ],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "move folder inside",
+   "answer": null,
+   "error": "A folder cannot go inside itself.",
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "place note first",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "place note across",
+   "answer": null,
+   "error": null,
+   "toasts": [
+    {
+     "title": "Moved to Jobs",
+     "description": "harbor"
+    }
+   ],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "place note far",
+   "answer": null,
+   "error": null,
+   "toasts": [
+    {
+     "title": "Moved to Jobs",
+     "description": "worker"
+    }
+   ],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "place folder",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "place folder inside",
+   "answer": null,
+   "error": "A folder cannot go inside itself.",
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "order by name",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "place by name",
+   "answer": null,
+   "error": null,
+   "toasts": [
+    {
+     "title": "Moved to Meetings",
+     "description": "ada"
+    }
+   ],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "place by name same",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "place folder by name",
+   "answer": null,
+   "error": null,
+   "toasts": [
+    {
+     "title": "Moved to Jobs",
+     "description": "People"
+    }
+   ],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "order manual",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "show harbor",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "show retry",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "view",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/daily-2026-11-17"
+  },
+  {
+   "name": "close active",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/nightly-export"
+  },
+  {
+   "name": "close other",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/harbor"
+  },
+  {
+   "name": "delete note",
+   "answer": null,
+   "error": null,
+   "toasts": [
+    {
+     "title": "Note deleted",
+     "description": "Reading list"
+    }
+   ],
+   "hash": "#/note/harbor"
+  },
+  {
+   "name": "delete harbor",
+   "answer": null,
+   "error": null,
+   "toasts": [
+    {
+     "title": "Note deleted",
+     "description": "harbor"
+    }
+   ],
+   "hash": "#/notes"
+  },
+  {
+   "name": "daily folder",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/notes"
+  },
+  {
+   "name": "delete folder",
+   "answer": null,
+   "error": null,
+   "toasts": [
+    {
+     "title": "Note deleted",
+     "description": "Incident review: sync-inventory"
+    },
+    {
+     "title": "Note deleted",
+     "description": "Planning the digest"
+    },
+    {
+     "title": "Note deleted",
+     "description": "Quarter review"
+    },
+    {
+     "title": "Note deleted",
+     "description": "Weekly sync with grace"
+    },
+    {
+     "title": "Note deleted",
+     "description": "ada"
+    },
+    {
+     "title": "Folder deleted",
+     "description": "Meetings and 5 notes in it"
+    }
+   ],
+   "hash": "#/notes"
+  },
+  {
+   "name": "follow known",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/juniper"
+  },
+  {
+   "name": "follow unknown",
+   "answer": null,
+   "error": null,
+   "toasts": [],
+   "hash": "#/note/juniper"
+  }
+ ],
+ "asking": {
+  "kind": "create",
+  "title": "Fresh note",
+  "folder": "projects"
+ },
+ "heading": "Steps",
+ "prefs": {
+  "id": "me",
+  "fontSize": "md",
+  "wrap": true,
+  "lineNumbers": false,
+  "defaultView": "both",
+  "views": {},
+  "tabs": [],
+  "active": null,
+  "recent": [
+   "retry",
+   "nightly-export"
+  ],
+  "panel": true,
+  "dailyFolder": null,
+  "template": "# {{date}}\n\n## Plan\n\n- [ ]\n\n## Log\n\n## Notes\n\n#journal\n",
+  "orphans": true,
+  "order": "manual"
+ },
+ "drafts": {},
+ "folders": [
+  {
+   "name": "New folder",
+   "parent": "projects",
+   "rank": 1,
+   "id": "folders-mwlw53fk-7"
+  },
+  {
+   "name": "archive 2",
+   "parent": null,
+   "rank": 8,
+   "id": "folders-mwlw52ns-6"
+  },
+  {
+   "name": "Archive",
+   "parent": null,
+   "rank": 7,
+   "id": "folders-mwlw51w0-5"
+  },
+  {
+   "id": "daily",
+   "name": "Daily",
+   "parent": null,
+   "rank": 1
+  },
+  {
+   "id": "jobs",
+   "name": "Jobs",
+   "parent": null,
+   "rank": 2
+  },
+  {
+   "id": "people",
+   "name": "People",
+   "parent": "jobs",
+   "rank": 0
+  },
+  {
+   "id": "projects",
+   "name": "Projects",
+   "parent": null,
+   "rank": 4
+  },
+  {
+   "id": "runbooks",
+   "name": "Runbooks",
+   "parent": null,
+   "rank": 5
+  },
+  {
+   "id": "templates",
+   "name": "Stencils",
+   "parent": null,
+   "rank": 6
+  },
+  {
+   "id": "services",
+   "name": "Services",
+   "parent": null,
+   "rank": 9
+  }
+ ],
+ "notes": [
+  {
+   "title": "2026-11-18",
+   "folder": "daily",
+   "rank": -1,
+   "body": "# 2026-11-18\n\n## Plan\n\n- [ ]\n\n## Log\n\n## Notes\n\n#journal\n",
+   "created": 1794992416000,
+   "updated": 1794992416000,
+   "day": "2026-11-18",
+   "id": "notes-mwlw50cg-4"
+  },
+  {
+   "title": "Untitled 2",
+   "folder": null,
+   "rank": 37,
+   "body": "# Untitled 2\n\n",
+   "created": 1794992403000,
+   "updated": 1794992403000,
+   "id": "notes-mwlw4qbc-3"
+  },
+  {
+   "title": "Untitled",
+   "folder": null,
+   "rank": 36,
+   "body": "# Untitled\n\n",
+   "created": 1794992402000,
+   "updated": 1794992402000,
+   "id": "notes-mwlw4pjk-2"
+  },
+  {
+   "title": "Deploy checklist",
+   "folder": "runbooks",
+   "rank": 32,
+   "body": "# Deploy checklist\n\n",
+   "created": 1794992401000,
+   "updated": 1794992401000,
+   "id": "notes-mwlw4ors-1"
+  },
+  {
+   "id": "daily-2026-11-17",
+   "title": "2026-11-17",
+   "folder": "daily",
+   "body": "# 2026-11-17\n\n## Plan\n\n- [x] Read the failed nightly-export from last night\n- [ ] Ask linus about the validate step\n\n## Log\n\n- nightly-export failed on upload at 02:14; retried at 08:30 and it went through. Followed [[Retry a failed run]].\n- Talked to grace about sync-inventory; see [[Weekly sync with grace]].\n\n#journal\n",
+   "created": 1794906000000,
+   "updated": 1794992405000,
+   "day": "2026-11-17",
+   "rank": 0
+  },
+  {
+   "id": "daily-2026-11-16",
+   "title": "2026-11-16",
+   "folder": "daily",
+   "body": "# 2026-11-16\n\n## Log\n\n- Rotated the api keys with grace. It took twenty minutes; the runbook was right.\n- sync-inventory ran clean all day.\n\n#journal\n",
+   "created": 1794819600000,
+   "updated": 1794848400000,
+   "day": "2026-11-16",
+   "rank": 1
+  },
+  {
+   "id": "daily-2026-11-15",
+   "title": "2026-11-15",
+   "folder": "daily",
+   "body": "# 2026-11-15\n\n## Log\n\n- Quiet day. Read up on how the scheduler orders runs.\n- Drafted the digest wording with margaret: [[Planning the digest]].\n\n#journal\n",
+   "created": 1794733200000,
+   "updated": 1794762000000,
+   "day": "2026-11-15",
+   "rank": 2
+  },
+  {
+   "id": "daily-2026-11-12",
+   "title": "2026-11-12",
+   "folder": "daily",
+   "body": "# 2026-11-12\n\n## Log\n\n- rebuild-index held the lock for an hour after the deploy; restarted the scheduler as the\n  runbook says.\n- Added a line to [[Scheduler is stuck]].\n\n#journal #on-call\n",
+   "created": 1794474000000,
+   "updated": 1794502800000,
+   "day": "2026-11-12",
+   "rank": 3
+  },
+  {
+   "id": "daily-2026-11-11",
+   "title": "2026-11-11",
+   "folder": "daily",
+   "body": "# 2026-11-11\n\n## Log\n\n- On call. Two failed runs of sync-inventory, both on fetch.\n- import-orders rejected 12 rows without an order id.\n\n#journal #on-call\n",
+   "created": 1794387600000,
+   "updated": 1794416400000,
+   "day": "2026-11-11",
+   "rank": 4
+  },
+  {
+   "id": "daily-2026-11-09",
+   "title": "2026-11-09",
+   "folder": "daily",
+   "body": "# 2026-11-09\n\n## Log\n\n- Quarter review prep: collected the slowest steps of each job for [[Quarter review]].\n\n#journal\n",
+   "created": 1794214800000,
+   "updated": 1794243600000,
+   "day": "2026-11-09",
+   "rank": 5
+  },
+  {
+   "id": "daily-2026-11-05",
+   "title": "2026-11-05",
+   "folder": "daily",
+   "body": "# 2026-11-05\n\n## Log\n\n- First day keeping a journal in the vault. Started [[Start here]].\n\n#journal\n",
+   "created": 1793869200000,
+   "updated": 1793898000000,
+   "day": "2026-11-05",
+   "rank": 6
+  },
+  {
+   "id": "import-orders",
+   "title": "import-orders",
+   "folder": "jobs",
+   "body": "# import-orders\n\nImports the day's orders for [[juniper]] from the shops' files.\n\nThe validate step was added after rows without an order id reached nightly-export.\n\nOwner: [[linus]]. #job\n",
+   "created": 1792004400000,
+   "updated": 1794596400000,
+   "rank": 0
+  },
+  {
+   "id": "nightly-export",
+   "title": "nightly-export-v2",
+   "folder": "jobs",
+   "body": "# nightly-export-v2\n\nRuns every night at 02:00 on the [[worker]] for [[larkspur]].\n\n## Steps\n\nfetch, transform, validate, upload, notify.\n\n## Owner\n\n[[ada]]. The digest that [[send-digest]] mails on Mondays reads its output.\n\n## Known failures\n\n- validate rejects orders without an `order_id`; fixed upstream in [[import-orders]].\n- upload times out when the bucket is busy; a retry works.\n\n#job\n",
+   "created": 1792292400000,
+   "updated": 1794992404000,
+   "rank": 1
+  },
+  {
+   "id": "rebuild-index",
+   "title": "rebuild-index",
+   "folder": "jobs",
+   "body": "# rebuild-index\n\nRebuilds the search index of [[juniper]] every Sunday. Takes about forty minutes and holds the\nscheduler's lock while it runs.\n\nOwner: [[linus]]. Speeding it up is on the list for the [[Quarter review]]. #job\n",
+   "created": 1791860400000,
+   "updated": 1794452400000,
+   "rank": 3
+  },
+  {
+   "id": "send-digest",
+   "title": "send-digest",
+   "folder": "jobs",
+   "body": "# send-digest\n\nMails each project's owner a summary of the week every Monday at 09:00, from what\n[[nightly-export-v2]] wrote.\n\nThe wording is [[margaret]]'s; drafts are in [[Planning the digest]]. #job\n",
+   "created": 1792076400000,
+   "updated": 1794992404000,
+   "rank": 4
+  },
+  {
+   "id": "sync-inventory",
+   "title": "sync-inventory",
+   "folder": "jobs",
+   "body": "# sync-inventory\n\nSyncs the inventory from the warehouses into [[harbor]] every hour.\n\nFails now and then on the fetch step when the [[api]] is slow; see\n[[Incident review: sync-inventory]].\n\nOwner: [[grace]]. #job\n",
+   "created": 1792148400000,
+   "updated": 1794740400000,
+   "rank": 5
+  },
+  {
+   "id": "grace",
+   "title": "grace",
+   "folder": "people",
+   "body": "# grace\n\nLeads [[harbor]] and owns [[sync-inventory]]. On call this week.\n\n#person\n",
+   "created": 1790204400000,
+   "updated": 1792796400000,
+   "rank": 2
+  },
+  {
+   "id": "linus",
+   "title": "linus",
+   "folder": "people",
+   "body": "# linus\n\nLeads [[juniper]]; owns [[import-orders]] and [[rebuild-index]].\n\n#person\n",
+   "created": 1790168400000,
+   "updated": 1792760400000,
+   "rank": 0
+  },
+  {
+   "id": "margaret",
+   "title": "margaret",
+   "folder": "people",
+   "body": "# margaret\n\nWrites the wording of [[send-digest]] and runs the [[Quarter review]].\n\n#person\n",
+   "created": 1790132400000,
+   "updated": 1792724400000,
+   "rank": 3
+  },
+  {
+   "id": "api",
+   "title": "api",
+   "folder": null,
+   "body": "# api\n\nAnswers on api.example.org. Every job's fetch step reads from it.\n\nKeys are rotated by [[Rotate the api keys]]. #service\n",
+   "created": 1791248400000,
+   "updated": 1793840400000,
+   "rank": 38
+  },
+  {
+   "id": "scheduler",
+   "title": "scheduler",
+   "folder": "services",
+   "body": "# scheduler\n\nStarts runs on their schedules. When it stops starting them, see [[Scheduler is stuck]].\n\n#service\n",
+   "created": 1791176400000,
+   "updated": 1793768400000,
+   "rank": 21
+  },
+  {
+   "id": "worker",
+   "title": "worker",
+   "folder": "jobs",
+   "body": "# worker\n\nRuns the jobs' steps. Four of them, each taking one step at a time.\n\n#service\n",
+   "created": 1791212400000,
+   "updated": 1793804400000,
+   "rank": 6
+  },
+  {
+   "id": "juniper",
+   "title": "juniper",
+   "folder": "projects",
+   "body": "# juniper\n\nOrders and search. Its jobs: [[import-orders]] and [[rebuild-index]].\n\nLead: [[linus]]. #project\n",
+   "created": 1791644400000,
+   "updated": 1794236400000,
+   "rank": 24
+  },
+  {
+   "id": "larkspur",
+   "title": "larkspur",
+   "folder": "projects",
+   "body": "# larkspur\n\nExports and reports. Its jobs: [[nightly-export-v2]] and [[send-digest]].\n\nLead: [[ada]]. The bucket keeps a week of exports. #project\n",
+   "created": 1791608400000,
+   "updated": 1794992404000,
+   "rank": 25
+  },
+  {
+   "id": "oncall",
+   "title": "On call",
+   "folder": "runbooks",
+   "body": "# On call\n\nThis week: [[grace]], then [[linus]].\n\nThe one on call answers failed runs within an hour in working time, starting from [[Retry a failed run]].\nA failure of nightly-export after midnight waits for the morning unless send-digest depends on it.\n\n#on-call\n",
+   "created": 1792227600000,
+   "updated": 1794992405000,
+   "rank": 26
+  },
+  {
+   "id": "restore",
+   "title": "Restore an export",
+   "folder": "runbooks",
+   "body": "# Restore an export\n\nThe larkspur bucket keeps a week of exports. To bring one back:\n\n```sh\ntidevann exports restore --project larkspur --day 2026-11-02\n```\n\nHow long exports are kept is open: see [[Export retention]]. #runbook\n",
+   "created": 1791320400000,
+   "updated": 1793912400000,
+   "rank": 27
+  },
+  {
+   "id": "retry",
+   "title": "Retry a failed run",
+   "folder": "runbooks",
+   "body": "# Retry a failed run\n\nA failed run can start again from its failed step once the cause is fixed.\n\n## Steps\n\n1. Open the run and read the failed step's log.\n2. Fix the cause: a bad row in [[import-orders]], an upload that timed out, a key that expired.\n3. Press **Run again from the failed step**. The steps before it keep their output.\n4. Watch the validate step; it fails the same way if the fix did not hold.\n\n> [!WARNING]\n> Never retry nightly-export twice at once: the second run overwrites the first one's upload.\n\nAsked about in [[Weekly sync with grace]]. #runbook #on-call\n",
+   "created": 1791968400000,
+   "updated": 1794992405000,
+   "rank": 28
+  },
+  {
+   "id": "rotate",
+   "title": "Rotate the api keys",
+   "folder": "runbooks",
+   "body": "# Rotate the api keys\n\nEvery 90 days, or at once after a key leaks.\n\n1. Make the new key on the [[api]] service.\n2. Put it in the worker's settings and restart the [[worker]].\n3. Run sync-inventory once by hand to check it.\n4. Revoke the old key.\n\ngrace did the last rotation. #runbook #security\n",
+   "created": 1790600400000,
+   "updated": 1793192400000,
+   "rank": 29
+  },
+  {
+   "id": "runbooks-index",
+   "title": "Runbooks",
+   "folder": "runbooks",
+   "body": "# Runbooks\n\nWhat to do, step by step, when something needs a person.\n\n| Runbook | When |\n| --- | --- |\n| [[Retry a failed run]] | A run failed and the cause is fixed |\n| [[Restore an export]] | An export was overwritten or lost |\n| [[Rotate the api keys]] | Every 90 days, or after a leak |\n| [[Scheduler is stuck]] | Runs stay queued past their time |\n| [[On call]] | Who answers this week, and how |\n\n#runbook\n",
+   "created": 1790996400000,
+   "updated": 1794992405000,
+   "rank": 30
+  },
+  {
+   "id": "stuck",
+   "title": "Scheduler is stuck",
+   "folder": "runbooks",
+   "body": "# Scheduler is stuck\n\nRuns stay queued past their time and nothing starts.\n\n- Check the [[scheduler]] service answers on scheduler.example.org.\n- Look for a run holding the lock: usually rebuild-index after a deploy.\n- Restart the scheduler; queued runs start in their order.\n\nHappened twice in October; see [[Incident review: sync-inventory]]. #runbook #on-call\n",
+   "created": 1791464400000,
+   "updated": 1794056400000,
+   "rank": 31
+  },
+  {
+   "id": "meeting-template",
+   "title": "Meeting template",
+   "folder": "templates",
+   "body": "# Meeting\n\nWith:\n\n## Notes\n\n## Decisions\n\n## Actions\n\n- [ ]\n\n#meeting\n",
+   "created": 1789880400000,
+   "updated": 1792472400000,
+   "rank": 32
+  },
+  {
+   "id": "ideas",
+   "title": "Ideas",
+   "folder": "projects",
+   "body": "# Ideas\n\nSee [[harbor]] and grace. #idea #new\n",
+   "created": 1792130400000,
+   "updated": 1794992414000,
+   "rank": 26
+  },
+  {
+   "id": "welcome",
+   "title": "Start here",
+   "folder": null,
+   "body": "Start here: harbor\n",
+   "created": 1790960400000,
+   "updated": 1794992414000,
+   "rank": 35
+  }
+ ],
+ "tree": [
+  "notes-mwlw50cg-4",
+  "daily-2026-11-17",
+  "daily-2026-11-16",
+  "daily-2026-11-15",
+  "daily-2026-11-12",
+  "daily-2026-11-11",
+  "daily-2026-11-09",
+  "daily-2026-11-05",
+  "linus",
+  "grace",
+  "margaret",
+  "import-orders",
+  "nightly-export",
+  "rebuild-index",
+  "send-digest",
+  "sync-inventory",
+  "worker",
+  "juniper",
+  "larkspur",
+  "ideas",
+  "oncall",
+  "restore",
+  "retry",
+  "rotate",
+  "runbooks-index",
+  "stuck",
+  "notes-mwlw4ors-1",
+  "meeting-template",
+  "scheduler",
+  "welcome",
+  "notes-mwlw4pjk-2",
+  "notes-mwlw4qbc-3",
+  "api"
+ ]
+}

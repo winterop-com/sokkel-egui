@@ -1,0 +1,7601 @@
+{
+ "notes": [
+  {
+   "id": "daily-2026-11-17",
+   "title": "2026-11-17",
+   "folder": "daily",
+   "created": 1794906000000,
+   "updated": 1794934800000,
+   "day": "2026-11-17",
+   "rank": 0,
+   "tags": [
+    "journal"
+   ],
+   "links": [
+    {
+     "target": "Retry a run",
+     "heading": null,
+     "label": null,
+     "from": 216,
+     "to": 231
+    },
+    {
+     "target": "Weekly sync with grace",
+     "heading": null,
+     "label": null,
+     "from": 277,
+     "to": 303
+    }
+   ],
+   "backlinks": [],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "2026-11-17",
+     "label": "2026-11-17",
+     "level": 1
+    },
+    {
+     "id": "plan",
+     "label": "Plan",
+     "level": 2
+    },
+    {
+     "id": "log",
+     "label": "Log",
+     "level": 2
+    }
+   ],
+   "words": 45,
+   "path": "Daily"
+  },
+  {
+   "id": "daily-2026-11-16",
+   "title": "2026-11-16",
+   "folder": "daily",
+   "created": 1794819600000,
+   "updated": 1794848400000,
+   "day": "2026-11-16",
+   "rank": 1,
+   "tags": [
+    "journal"
+   ],
+   "links": [],
+   "backlinks": [],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "2026-11-16",
+     "label": "2026-11-16",
+     "level": 1
+    },
+    {
+     "id": "log",
+     "label": "Log",
+     "level": 2
+    }
+   ],
+   "words": 22,
+   "path": "Daily"
+  },
+  {
+   "id": "daily-2026-11-15",
+   "title": "2026-11-15",
+   "folder": "daily",
+   "created": 1794733200000,
+   "updated": 1794762000000,
+   "day": "2026-11-15",
+   "rank": 2,
+   "tags": [
+    "journal"
+   ],
+   "links": [
+    {
+     "target": "Planning the digest",
+     "heading": null,
+     "label": null,
+     "from": 121,
+     "to": 144
+    }
+   ],
+   "backlinks": [],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "2026-11-15",
+     "label": "2026-11-15",
+     "level": 1
+    },
+    {
+     "id": "log",
+     "label": "Log",
+     "level": 2
+    }
+   ],
+   "words": 22,
+   "path": "Daily"
+  },
+  {
+   "id": "daily-2026-11-12",
+   "title": "2026-11-12",
+   "folder": "daily",
+   "created": 1794474000000,
+   "updated": 1794502800000,
+   "day": "2026-11-12",
+   "rank": 3,
+   "tags": [
+    "journal",
+    "on-call"
+   ],
+   "links": [
+    {
+     "target": "Scheduler is stuck",
+     "heading": null,
+     "label": null,
+     "from": 147,
+     "to": 169
+    }
+   ],
+   "backlinks": [],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "2026-11-12",
+     "label": "2026-11-12",
+     "level": 1
+    },
+    {
+     "id": "log",
+     "label": "Log",
+     "level": 2
+    }
+   ],
+   "words": 28,
+   "path": "Daily"
+  },
+  {
+   "id": "daily-2026-11-11",
+   "title": "2026-11-11",
+   "folder": "daily",
+   "created": 1794387600000,
+   "updated": 1794416400000,
+   "day": "2026-11-11",
+   "rank": 4,
+   "tags": [
+    "journal",
+    "on-call"
+   ],
+   "links": [],
+   "backlinks": [],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "2026-11-11",
+     "label": "2026-11-11",
+     "level": 1
+    },
+    {
+     "id": "log",
+     "label": "Log",
+     "level": 2
+    }
+   ],
+   "words": 22,
+   "path": "Daily"
+  },
+  {
+   "id": "daily-2026-11-09",
+   "title": "2026-11-09",
+   "folder": "daily",
+   "created": 1794214800000,
+   "updated": 1794243600000,
+   "day": "2026-11-09",
+   "rank": 5,
+   "tags": [
+    "journal"
+   ],
+   "links": [
+    {
+     "target": "Quarter review",
+     "heading": null,
+     "label": null,
+     "from": 89,
+     "to": 107
+    }
+   ],
+   "backlinks": [],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "2026-11-09",
+     "label": "2026-11-09",
+     "level": 1
+    },
+    {
+     "id": "log",
+     "label": "Log",
+     "level": 2
+    }
+   ],
+   "words": 16,
+   "path": "Daily"
+  },
+  {
+   "id": "daily-2026-11-05",
+   "title": "2026-11-05",
+   "folder": "daily",
+   "created": 1793869200000,
+   "updated": 1793898000000,
+   "day": "2026-11-05",
+   "rank": 6,
+   "tags": [
+    "journal"
+   ],
+   "links": [
+    {
+     "target": "Start here",
+     "heading": null,
+     "label": null,
+     "from": 74,
+     "to": 88
+    }
+   ],
+   "backlinks": [],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "2026-11-05",
+     "label": "2026-11-05",
+     "level": 1
+    },
+    {
+     "id": "log",
+     "label": "Log",
+     "level": 2
+    }
+   ],
+   "words": 14,
+   "path": "Daily"
+  },
+  {
+   "id": "import-orders",
+   "title": "import-orders",
+   "folder": "jobs",
+   "created": 1792004400000,
+   "updated": 1794596400000,
+   "day": null,
+   "rank": 7,
+   "tags": [
+    "job"
+   ],
+   "links": [
+    {
+     "target": "juniper",
+     "heading": null,
+     "label": null,
+     "from": 46,
+     "to": 57
+    },
+    {
+     "target": "linus",
+     "heading": null,
+     "label": null,
+     "from": 173,
+     "to": 182
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "nightly-export",
+     "link": {
+      "target": "import-orders",
+      "heading": null,
+      "label": null,
+      "from": 309,
+      "to": 326
+     },
+     "line": "- validate rejects orders without an `order_id`; fixed upstream in [[import-orders]]."
+    },
+    {
+     "from": "linus",
+     "link": {
+      "target": "import-orders",
+      "heading": null,
+      "label": null,
+      "from": 33,
+      "to": 50
+     },
+     "line": "Leads [[juniper]]; owns [[import-orders]] and [[rebuild-index]]."
+    },
+    {
+     "from": "juniper",
+     "link": {
+      "target": "import-orders",
+      "heading": null,
+      "label": null,
+      "from": 40,
+      "to": 57
+     },
+     "line": "Orders and search. Its jobs: [[import-orders]] and [[rebuild-index]]."
+    },
+    {
+     "from": "retry",
+     "link": {
+      "target": "import-orders",
+      "heading": null,
+      "label": null,
+      "from": 180,
+      "to": 197
+     },
+     "line": "…. Fix the cause: a bad row in [[import-orders]], an upload that timed out, a key that expi…"
+    },
+    {
+     "from": "welcome",
+     "link": {
+      "target": "import-orders",
+      "heading": null,
+      "label": null,
+      "from": 335,
+      "to": 352
+     },
+     "line": "and [[import-orders]]."
+    }
+   ],
+   "mentions": [
+    {
+     "from": "daily-2026-11-11",
+     "at": [
+      85,
+      98
+     ],
+     "line": "- import-orders rejected 12 rows without an order id."
+    }
+   ],
+   "outline": [
+    {
+     "id": "import-orders",
+     "label": "import-orders",
+     "level": 1
+    }
+   ],
+   "words": 27,
+   "path": "Jobs"
+  },
+  {
+   "id": "nightly-export",
+   "title": "nightly-export",
+   "folder": "jobs",
+   "created": 1792292400000,
+   "updated": 1794884400000,
+   "day": null,
+   "rank": 8,
+   "tags": [
+    "job"
+   ],
+   "links": [
+    {
+     "target": "worker",
+     "heading": null,
+     "label": null,
+     "from": 51,
+     "to": 61
+    },
+    {
+     "target": "larkspur",
+     "heading": null,
+     "label": null,
+     "from": 66,
+     "to": 78
+    },
+    {
+     "target": "ada",
+     "heading": null,
+     "label": null,
+     "from": 146,
+     "to": 153
+    },
+    {
+     "target": "send-digest",
+     "heading": null,
+     "label": null,
+     "from": 171,
+     "to": 186
+    },
+    {
+     "target": "import-orders",
+     "heading": null,
+     "label": null,
+     "from": 309,
+     "to": 326
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "send-digest",
+     "link": {
+      "target": "nightly-export",
+      "heading": null,
+      "label": null,
+      "from": 97,
+      "to": 115
+     },
+     "line": "[[nightly-export]] wrote."
+    },
+    {
+     "from": "ada",
+     "link": {
+      "target": "nightly-export",
+      "heading": null,
+      "label": null,
+      "from": 12,
+      "to": 30
+     },
+     "line": "Owns [[nightly-export]] and leads [[larkspur]]. Ask about exports and reports."
+    },
+    {
+     "from": "larkspur",
+     "link": {
+      "target": "nightly-export",
+      "heading": null,
+      "label": null,
+      "from": 43,
+      "to": 61
+     },
+     "line": "Exports and reports. Its jobs: [[nightly-export]] and [[send-digest]]."
+    },
+    {
+     "from": "welcome",
+     "link": {
+      "target": "nightly-export",
+      "heading": null,
+      "label": null,
+      "from": 254,
+      "to": 272
+     },
+     "line": "- Each job has a note: [[nightly-export]], [[sync-inventory]], [[rebuild-index]], [[send-d…"
+    }
+   ],
+   "mentions": [
+    {
+     "from": "daily-2026-11-17",
+     "at": [
+      45,
+      59
+     ],
+     "line": "- [x] Read the failed nightly-export from last night"
+    },
+    {
+     "from": "import-orders",
+     "at": [
+      149,
+      163
+     ],
+     "line": "The validate step was added after rows without an order id reached nightly-export."
+    },
+    {
+     "from": "digest-planning",
+     "at": [
+      181,
+      195
+     ],
+     "line": "- Send it at 09:00 on Mondays, after nightly-export has run."
+    },
+    {
+     "from": "weekly-sync",
+     "at": [
+      325,
+      339
+     ],
+     "line": "- Retries stay manual for nightly-export. #decision"
+    },
+    {
+     "from": "oncall",
+     "at": [
+      162,
+      176
+     ],
+     "line": "A failure of nightly-export after midnight waits for the morning unless send-digest depend…"
+    },
+    {
+     "from": "retry",
+     "at": [
+      432,
+      446
+     ],
+     "line": "> Never retry nightly-export twice at once: the second run overwrites the first one's uplo…"
+    }
+   ],
+   "outline": [
+    {
+     "id": "nightly-export",
+     "label": "nightly-export",
+     "level": 1
+    },
+    {
+     "id": "steps",
+     "label": "Steps",
+     "level": 2
+    },
+    {
+     "id": "owner",
+     "label": "Owner",
+     "level": 2
+    },
+    {
+     "id": "known-failures",
+     "label": "Known failures",
+     "level": 2
+    }
+   ],
+   "words": 53,
+   "path": "Jobs"
+  },
+  {
+   "id": "rebuild-index",
+   "title": "rebuild-index",
+   "folder": "jobs",
+   "created": 1791860400000,
+   "updated": 1794452400000,
+   "day": null,
+   "rank": 9,
+   "tags": [
+    "job"
+   ],
+   "links": [
+    {
+     "target": "juniper",
+     "heading": null,
+     "label": null,
+     "from": 46,
+     "to": 57
+    },
+    {
+     "target": "linus",
+     "heading": null,
+     "label": null,
+     "from": 152,
+     "to": 161
+    },
+    {
+     "target": "Quarter review",
+     "heading": null,
+     "label": null,
+     "from": 201,
+     "to": 219
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "quarter-review",
+     "link": {
+      "target": "rebuild-index",
+      "heading": null,
+      "label": null,
+      "from": 128,
+      "to": 145
+     },
+     "line": "- [[rebuild-index]] should finish under twenty minutes."
+    },
+    {
+     "from": "linus",
+     "link": {
+      "target": "rebuild-index",
+      "heading": null,
+      "label": null,
+      "from": 55,
+      "to": 72
+     },
+     "line": "Leads [[juniper]]; owns [[import-orders]] and [[rebuild-index]]."
+    },
+    {
+     "from": "juniper",
+     "link": {
+      "target": "rebuild-index",
+      "heading": null,
+      "label": null,
+      "from": 62,
+      "to": 79
+     },
+     "line": "Orders and search. Its jobs: [[import-orders]] and [[rebuild-index]]."
+    },
+    {
+     "from": "welcome",
+     "link": {
+      "target": "rebuild-index",
+      "heading": null,
+      "label": null,
+      "from": 294,
+      "to": 311
+     },
+     "line": "…export]], [[sync-inventory]], [[rebuild-index]], [[send-digest]]"
+    }
+   ],
+   "mentions": [
+    {
+     "from": "daily-2026-11-12",
+     "at": [
+      24,
+      37
+     ],
+     "line": "- rebuild-index held the lock for an hour after the deploy; restarted the scheduler as the"
+    },
+    {
+     "from": "stuck",
+     "at": [
+      187,
+      200
+     ],
+     "line": "- Look for a run holding the lock: usually rebuild-index after a deploy."
+    }
+   ],
+   "outline": [
+    {
+     "id": "rebuild-index",
+     "label": "rebuild-index",
+     "level": 1
+    }
+   ],
+   "words": 35,
+   "path": "Jobs"
+  },
+  {
+   "id": "send-digest",
+   "title": "send-digest",
+   "folder": "jobs",
+   "created": 1792076400000,
+   "updated": 1794668400000,
+   "day": null,
+   "rank": 10,
+   "tags": [
+    "job"
+   ],
+   "links": [
+    {
+     "target": "nightly-export",
+     "heading": null,
+     "label": null,
+     "from": 97,
+     "to": 115
+    },
+    {
+     "target": "margaret",
+     "heading": null,
+     "label": null,
+     "from": 139,
+     "to": 151
+    },
+    {
+     "target": "Planning the digest",
+     "heading": null,
+     "label": null,
+     "from": 169,
+     "to": 192
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "nightly-export",
+     "link": {
+      "target": "send-digest",
+      "heading": null,
+      "label": null,
+      "from": 171,
+      "to": 186
+     },
+     "line": "[[ada]]. The digest that [[send-digest]] mails on Mondays reads its output."
+    },
+    {
+     "from": "margaret",
+     "link": {
+      "target": "send-digest",
+      "heading": null,
+      "label": null,
+      "from": 34,
+      "to": 49
+     },
+     "line": "Writes the wording of [[send-digest]] and runs the [[Quarter review]]."
+    },
+    {
+     "from": "larkspur",
+     "link": {
+      "target": "send-digest",
+      "heading": null,
+      "label": null,
+      "from": 66,
+      "to": 81
+     },
+     "line": "Exports and reports. Its jobs: [[nightly-export]] and [[send-digest]]."
+    },
+    {
+     "from": "welcome",
+     "link": {
+      "target": "send-digest",
+      "heading": null,
+      "label": null,
+      "from": 313,
+      "to": 328
+     },
+     "line": "…ventory]], [[rebuild-index]], [[send-digest]]"
+    }
+   ],
+   "mentions": [
+    {
+     "from": "digest-planning",
+     "at": [
+      216,
+      227
+     ],
+     "line": "#meeting #send-digest"
+    },
+    {
+     "from": "oncall",
+     "at": [
+      221,
+      232
+     ],
+     "line": "…waits for the morning unless send-digest depends on it."
+    },
+    {
+     "from": "ideas",
+     "at": [
+      137,
+      148
+     ],
+     "line": "- Let send-digest say which runs were retried."
+    }
+   ],
+   "outline": [
+    {
+     "id": "send-digest",
+     "label": "send-digest",
+     "level": 1
+    }
+   ],
+   "words": 29,
+   "path": "Jobs"
+  },
+  {
+   "id": "sync-inventory",
+   "title": "sync-inventory",
+   "folder": "jobs",
+   "created": 1792148400000,
+   "updated": 1794740400000,
+   "day": null,
+   "rank": 11,
+   "tags": [
+    "job"
+   ],
+   "links": [
+    {
+     "target": "harbor",
+     "heading": null,
+     "label": null,
+     "from": 63,
+     "to": 73
+    },
+    {
+     "target": "api",
+     "heading": null,
+     "label": null,
+     "from": 133,
+     "to": 140
+    },
+    {
+     "target": "Incident review: sync-inventory",
+     "heading": null,
+     "label": null,
+     "from": 154,
+     "to": 189
+    },
+    {
+     "target": "grace",
+     "heading": null,
+     "label": null,
+     "from": 199,
+     "to": 208
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "grace",
+     "link": {
+      "target": "sync-inventory",
+      "heading": null,
+      "label": null,
+      "from": 35,
+      "to": 53
+     },
+     "line": "Leads [[harbor]] and owns [[sync-inventory]]. On call this week."
+    },
+    {
+     "from": "harbor",
+     "link": {
+      "target": "sync-inventory",
+      "heading": null,
+      "label": null,
+      "from": 43,
+      "to": 61
+     },
+     "line": "The inventory project. Its jobs: [[sync-inventory]]."
+    },
+    {
+     "from": "welcome",
+     "link": {
+      "target": "sync-inventory",
+      "heading": null,
+      "label": null,
+      "from": 274,
+      "to": 292
+     },
+     "line": "…s a note: [[nightly-export]], [[sync-inventory]], [[rebuild-index]], [[send-digest]]"
+    }
+   ],
+   "mentions": [
+    {
+     "from": "daily-2026-11-17",
+     "at": [
+      257,
+      271
+     ],
+     "line": "- Talked to grace about sync-inventory; see [[Weekly sync with grace]]."
+    },
+    {
+     "from": "daily-2026-11-16",
+     "at": [
+      106,
+      120
+     ],
+     "line": "- sync-inventory ran clean all day."
+    },
+    {
+     "from": "daily-2026-11-11",
+     "at": [
+      52,
+      66
+     ],
+     "line": "- On call. Two failed runs of sync-inventory, both on fetch."
+    },
+    {
+     "from": "incident-sync",
+     "at": [
+      19,
+      33
+     ],
+     "line": "# Incident review: sync-inventory"
+    },
+    {
+     "from": "weekly-sync",
+     "at": [
+      57,
+      71
+     ],
+     "line": "- sync-inventory failed twice on Tuesday; the api was slow. grace adds a retry to the fetc…"
+    },
+    {
+     "from": "rotate",
+     "at": [
+      183,
+      197
+     ],
+     "line": "3. Run sync-inventory once by hand to check it."
+    }
+   ],
+   "outline": [
+    {
+     "id": "sync-inventory",
+     "label": "sync-inventory",
+     "level": 1
+    }
+   ],
+   "words": 31,
+   "path": "Jobs"
+  },
+  {
+   "id": "incident-sync",
+   "title": "Incident review: sync-inventory",
+   "folder": "meetings",
+   "created": 1791896400000,
+   "updated": 1794488400000,
+   "day": null,
+   "rank": 12,
+   "tags": [
+    "incident"
+   ],
+   "links": [
+    {
+     "target": "api",
+     "heading": null,
+     "label": null,
+     "from": 127,
+     "to": 134
+    },
+    {
+     "target": "scheduler",
+     "heading": null,
+     "label": null,
+     "from": 286,
+     "to": 299
+    },
+    {
+     "target": "Postmortem template",
+     "heading": null,
+     "label": null,
+     "from": 364,
+     "to": 387
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "sync-inventory",
+     "link": {
+      "target": "Incident review: sync-inventory",
+      "heading": null,
+      "label": null,
+      "from": 154,
+      "to": 189
+     },
+     "line": "[[Incident review: sync-inventory]]."
+    },
+    {
+     "from": "stuck",
+     "link": {
+      "target": "Incident review: sync-inventory",
+      "heading": null,
+      "label": null,
+      "from": 308,
+      "to": 343
+     },
+     "line": "Happened twice in October; see [[Incident review: sync-inventory]]. #runbook #on-call"
+    }
+   ],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "incident-review-sync-inventory",
+     "label": "Incident review: sync-inventory",
+     "level": 1
+    },
+    {
+     "id": "what-happened",
+     "label": "What happened",
+     "level": 2
+    },
+    {
+     "id": "what-we-changed",
+     "label": "What we changed",
+     "level": 2
+    }
+   ],
+   "words": 60,
+   "path": "Meetings"
+  },
+  {
+   "id": "digest-planning",
+   "title": "Planning the digest",
+   "folder": "meetings",
+   "created": 1792058400000,
+   "updated": 1794650400000,
+   "day": null,
+   "rank": 13,
+   "tags": [
+    "meeting",
+    "send-digest"
+   ],
+   "links": [
+    {
+     "target": "margaret",
+     "heading": null,
+     "label": null,
+     "from": 28,
+     "to": 40
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "daily-2026-11-15",
+     "link": {
+      "target": "Planning the digest",
+      "heading": null,
+      "label": null,
+      "from": 121,
+      "to": 144
+     },
+     "line": "- Drafted the digest wording with margaret: [[Planning the digest]]."
+    },
+    {
+     "from": "send-digest",
+     "link": {
+      "target": "Planning the digest",
+      "heading": null,
+      "label": null,
+      "from": 169,
+      "to": 192
+     },
+     "line": "The wording is [[margaret]]'s; drafts are in [[Planning the digest]]. #job"
+    }
+   ],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "planning-the-digest",
+     "label": "Planning the digest",
+     "level": 1
+    }
+   ],
+   "words": 35,
+   "path": "Meetings"
+  },
+  {
+   "id": "quarter-review",
+   "title": "Quarter review",
+   "folder": "meetings",
+   "created": 1791788400000,
+   "updated": 1794380400000,
+   "day": null,
+   "rank": 14,
+   "tags": [
+    "meeting"
+   ],
+   "links": [
+    {
+     "target": "margaret",
+     "heading": null,
+     "label": null,
+     "from": 23,
+     "to": 35
+    },
+    {
+     "target": "grace",
+     "heading": null,
+     "label": null,
+     "from": 37,
+     "to": 46
+    },
+    {
+     "target": "linus",
+     "heading": null,
+     "label": null,
+     "from": 48,
+     "to": 57
+    },
+    {
+     "target": "ada",
+     "heading": null,
+     "label": null,
+     "from": 62,
+     "to": 69
+    },
+    {
+     "target": "harbor",
+     "heading": null,
+     "label": null,
+     "from": 74,
+     "to": 84
+    },
+    {
+     "target": "rebuild-index",
+     "heading": null,
+     "label": null,
+     "from": 128,
+     "to": 145
+    },
+    {
+     "target": "larkspur",
+     "heading": null,
+     "label": null,
+     "from": 184,
+     "to": 196
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "daily-2026-11-09",
+     "link": {
+      "target": "Quarter review",
+      "heading": null,
+      "label": null,
+      "from": 89,
+      "to": 107
+     },
+     "line": "- Quarter review prep: collected the slowest steps of each job for [[Quarter review]]."
+    },
+    {
+     "from": "rebuild-index",
+     "link": {
+      "target": "Quarter review",
+      "heading": null,
+      "label": null,
+      "from": 201,
+      "to": 219
+     },
+     "line": "Owner: [[linus]]. Speeding it up is on the list for the [[Quarter review]]. #job"
+    },
+    {
+     "from": "margaret",
+     "link": {
+      "target": "Quarter review",
+      "heading": null,
+      "label": null,
+      "from": 63,
+      "to": 81
+     },
+     "line": "Writes the wording of [[send-digest]] and runs the [[Quarter review]]."
+    },
+    {
+     "from": "harbor",
+     "link": {
+      "target": "Quarter review",
+      "heading": null,
+      "label": null,
+      "from": 153,
+      "to": 171
+     },
+     "line": "[[Quarter review]]. #project"
+    },
+    {
+     "from": "ideas",
+     "link": {
+      "target": "Quarter review",
+      "heading": null,
+      "label": null,
+      "from": 65,
+      "to": 83
+     },
+     "line": "- A dashboard of the slowest steps of each job, for the [[Quarter review]]."
+    }
+   ],
+   "mentions": [
+    {
+     "from": "daily-2026-11-09",
+     "at": [
+      24,
+      38
+     ],
+     "line": "- Quarter review prep: collected the slowest steps of each job for [[Quarter review]]."
+    }
+   ],
+   "outline": [
+    {
+     "id": "quarter-review",
+     "label": "Quarter review",
+     "level": 1
+    }
+   ],
+   "words": 30,
+   "path": "Meetings"
+  },
+  {
+   "id": "weekly-sync",
+   "title": "Weekly sync with grace",
+   "folder": "meetings",
+   "created": 1792306800000,
+   "updated": 1794898800000,
+   "day": null,
+   "rank": 15,
+   "tags": [
+    "decision",
+    "meeting"
+   ],
+   "links": [
+    {
+     "target": "grace",
+     "heading": null,
+     "label": null,
+     "from": 31,
+     "to": 40
+    },
+    {
+     "target": "ada",
+     "heading": null,
+     "label": null,
+     "from": 45,
+     "to": 52
+    },
+    {
+     "target": "Retry a run",
+     "heading": null,
+     "label": null,
+     "from": 155,
+     "to": 170
+    },
+    {
+     "target": "Export retention",
+     "heading": null,
+     "label": null,
+     "from": 262,
+     "to": 282
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "daily-2026-11-17",
+     "link": {
+      "target": "Weekly sync with grace",
+      "heading": null,
+      "label": null,
+      "from": 277,
+      "to": 303
+     },
+     "line": "- Talked to grace about sync-inventory; see [[Weekly sync with grace]]."
+    },
+    {
+     "from": "retry",
+     "link": {
+      "target": "Weekly sync with grace",
+      "heading": null,
+      "label": null,
+      "from": 528,
+      "to": 554
+     },
+     "line": "Asked about in [[Weekly sync with grace]]. #runbook #on-call"
+    }
+   ],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "weekly-sync-with-grace",
+     "label": "Weekly sync with grace",
+     "level": 1
+    },
+    {
+     "id": "decisions",
+     "label": "Decisions",
+     "level": 2
+    }
+   ],
+   "words": 56,
+   "path": "Meetings"
+  },
+  {
+   "id": "ada",
+   "title": "ada",
+   "folder": "people",
+   "created": 1790240400000,
+   "updated": 1792832400000,
+   "day": null,
+   "rank": 16,
+   "tags": [
+    "person"
+   ],
+   "links": [
+    {
+     "target": "nightly-export",
+     "heading": null,
+     "label": null,
+     "from": 12,
+     "to": 30
+    },
+    {
+     "target": "larkspur",
+     "heading": null,
+     "label": null,
+     "from": 41,
+     "to": 53
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "nightly-export",
+     "link": {
+      "target": "ada",
+      "heading": null,
+      "label": null,
+      "from": 146,
+      "to": 153
+     },
+     "line": "[[ada]]. The digest that [[send-digest]] mails on Mondays reads its output."
+    },
+    {
+     "from": "quarter-review",
+     "link": {
+      "target": "ada",
+      "heading": null,
+      "label": null,
+      "from": 62,
+      "to": 69
+     },
+     "line": "With [[margaret]], [[grace]], [[linus]] and [[ada]]."
+    },
+    {
+     "from": "weekly-sync",
+     "link": {
+      "target": "ada",
+      "heading": null,
+      "label": null,
+      "from": 45,
+      "to": 52
+     },
+     "line": "With [[grace]] and [[ada]]."
+    },
+    {
+     "from": "larkspur",
+     "link": {
+      "target": "ada",
+      "heading": null,
+      "label": null,
+      "from": 90,
+      "to": 97
+     },
+     "line": "Lead: [[ada]]. The bucket keeps a week of exports. #project"
+    }
+   ],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "ada",
+     "label": "ada",
+     "level": 1
+    }
+   ],
+   "words": 12,
+   "path": "People"
+  },
+  {
+   "id": "grace",
+   "title": "grace",
+   "folder": "people",
+   "created": 1790204400000,
+   "updated": 1792796400000,
+   "day": null,
+   "rank": 17,
+   "tags": [
+    "person"
+   ],
+   "links": [
+    {
+     "target": "harbor",
+     "heading": null,
+     "label": null,
+     "from": 15,
+     "to": 25
+    },
+    {
+     "target": "sync-inventory",
+     "heading": null,
+     "label": null,
+     "from": 35,
+     "to": 53
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "sync-inventory",
+     "link": {
+      "target": "grace",
+      "heading": null,
+      "label": null,
+      "from": 199,
+      "to": 208
+     },
+     "line": "Owner: [[grace]]. #job"
+    },
+    {
+     "from": "quarter-review",
+     "link": {
+      "target": "grace",
+      "heading": null,
+      "label": null,
+      "from": 37,
+      "to": 46
+     },
+     "line": "With [[margaret]], [[grace]], [[linus]] and [[ada]]."
+    },
+    {
+     "from": "weekly-sync",
+     "link": {
+      "target": "grace",
+      "heading": null,
+      "label": null,
+      "from": 31,
+      "to": 40
+     },
+     "line": "With [[grace]] and [[ada]]."
+    },
+    {
+     "from": "harbor",
+     "link": {
+      "target": "grace",
+      "heading": null,
+      "label": null,
+      "from": 70,
+      "to": 79
+     },
+     "line": "Lead: [[grace]]. Moving harbor to the new scheduler is planned for next quarter; see the"
+    },
+    {
+     "from": "oncall",
+     "link": {
+      "target": "grace",
+      "heading": null,
+      "label": null,
+      "from": 22,
+      "to": 31
+     },
+     "line": "This week: [[grace]], then [[linus]]."
+    }
+   ],
+   "mentions": [
+    {
+     "from": "daily-2026-11-17",
+     "at": [
+      245,
+      250
+     ],
+     "line": "- Talked to grace about sync-inventory; see [[Weekly sync with grace]]."
+    },
+    {
+     "from": "daily-2026-11-16",
+     "at": [
+      50,
+      55
+     ],
+     "line": "- Rotated the api keys with grace. It took twenty minutes; the runbook was right."
+    },
+    {
+     "from": "weekly-sync",
+     "at": [
+      19,
+      24
+     ],
+     "line": "# Weekly sync with grace"
+    },
+    {
+     "from": "rotate",
+     "at": [
+      248,
+      253
+     ],
+     "line": "grace did the last rotation. #runbook #security"
+    }
+   ],
+   "outline": [
+    {
+     "id": "grace",
+     "label": "grace",
+     "level": 1
+    }
+   ],
+   "words": 11,
+   "path": "People"
+  },
+  {
+   "id": "linus",
+   "title": "linus",
+   "folder": "people",
+   "created": 1790168400000,
+   "updated": 1792760400000,
+   "day": null,
+   "rank": 18,
+   "tags": [
+    "person"
+   ],
+   "links": [
+    {
+     "target": "juniper",
+     "heading": null,
+     "label": null,
+     "from": 15,
+     "to": 26
+    },
+    {
+     "target": "import-orders",
+     "heading": null,
+     "label": null,
+     "from": 33,
+     "to": 50
+    },
+    {
+     "target": "rebuild-index",
+     "heading": null,
+     "label": null,
+     "from": 55,
+     "to": 72
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "import-orders",
+     "link": {
+      "target": "linus",
+      "heading": null,
+      "label": null,
+      "from": 173,
+      "to": 182
+     },
+     "line": "Owner: [[linus]]. #job"
+    },
+    {
+     "from": "rebuild-index",
+     "link": {
+      "target": "linus",
+      "heading": null,
+      "label": null,
+      "from": 152,
+      "to": 161
+     },
+     "line": "Owner: [[linus]]. Speeding it up is on the list for the [[Quarter review]]. #job"
+    },
+    {
+     "from": "quarter-review",
+     "link": {
+      "target": "linus",
+      "heading": null,
+      "label": null,
+      "from": 48,
+      "to": 57
+     },
+     "line": "With [[margaret]], [[grace]], [[linus]] and [[ada]]."
+    },
+    {
+     "from": "juniper",
+     "link": {
+      "target": "linus",
+      "heading": null,
+      "label": null,
+      "from": 88,
+      "to": 97
+     },
+     "line": "Lead: [[linus]]. #project"
+    },
+    {
+     "from": "oncall",
+     "link": {
+      "target": "linus",
+      "heading": null,
+      "label": null,
+      "from": 38,
+      "to": 47
+     },
+     "line": "This week: [[grace]], then [[linus]]."
+    }
+   ],
+   "mentions": [
+    {
+     "from": "daily-2026-11-17",
+     "at": [
+      86,
+      91
+     ],
+     "line": "- [ ] Ask linus about the validate step"
+    }
+   ],
+   "outline": [
+    {
+     "id": "linus",
+     "label": "linus",
+     "level": 1
+    }
+   ],
+   "words": 8,
+   "path": "People"
+  },
+  {
+   "id": "margaret",
+   "title": "margaret",
+   "folder": "people",
+   "created": 1790132400000,
+   "updated": 1792724400000,
+   "day": null,
+   "rank": 19,
+   "tags": [
+    "person"
+   ],
+   "links": [
+    {
+     "target": "send-digest",
+     "heading": null,
+     "label": null,
+     "from": 34,
+     "to": 49
+    },
+    {
+     "target": "Quarter review",
+     "heading": null,
+     "label": null,
+     "from": 63,
+     "to": 81
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "send-digest",
+     "link": {
+      "target": "margaret",
+      "heading": null,
+      "label": null,
+      "from": 139,
+      "to": 151
+     },
+     "line": "The wording is [[margaret]]'s; drafts are in [[Planning the digest]]. #job"
+    },
+    {
+     "from": "digest-planning",
+     "link": {
+      "target": "margaret",
+      "heading": null,
+      "label": null,
+      "from": 28,
+      "to": 40
+     },
+     "line": "With [[margaret]]."
+    },
+    {
+     "from": "quarter-review",
+     "link": {
+      "target": "margaret",
+      "heading": null,
+      "label": null,
+      "from": 23,
+      "to": 35
+     },
+     "line": "With [[margaret]], [[grace]], [[linus]] and [[ada]]."
+    }
+   ],
+   "mentions": [
+    {
+     "from": "daily-2026-11-15",
+     "at": [
+      111,
+      119
+     ],
+     "line": "- Drafted the digest wording with margaret: [[Planning the digest]]."
+    }
+   ],
+   "outline": [
+    {
+     "id": "margaret",
+     "label": "margaret",
+     "level": 1
+    }
+   ],
+   "words": 12,
+   "path": "People"
+  },
+  {
+   "id": "api",
+   "title": "api",
+   "folder": "services",
+   "created": 1791248400000,
+   "updated": 1793840400000,
+   "day": null,
+   "rank": 20,
+   "tags": [
+    "service"
+   ],
+   "links": [
+    {
+     "target": "Rotate the api keys",
+     "heading": null,
+     "label": null,
+     "from": 94,
+     "to": 117
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "sync-inventory",
+     "link": {
+      "target": "api",
+      "heading": null,
+      "label": null,
+      "from": 133,
+      "to": 140
+     },
+     "line": "Fails now and then on the fetch step when the [[api]] is slow; see"
+    },
+    {
+     "from": "incident-sync",
+     "link": {
+      "target": "api",
+      "heading": null,
+      "label": null,
+      "from": 127,
+      "to": 134
+     },
+     "line": "The [[api]] answered slowly under load, and the fetch step gave up after 30 seconds."
+    },
+    {
+     "from": "rotate",
+     "link": {
+      "target": "api",
+      "heading": null,
+      "label": null,
+      "from": 96,
+      "to": 103
+     },
+     "line": "1. Make the new key on the [[api]] service."
+    }
+   ],
+   "mentions": [
+    {
+     "from": "daily-2026-11-16",
+     "at": [
+      36,
+      39
+     ],
+     "line": "- Rotated the api keys with grace. It took twenty minutes; the runbook was right."
+    },
+    {
+     "from": "weekly-sync",
+     "at": [
+      101,
+      104
+     ],
+     "line": "…failed twice on Tuesday; the api was slow. grace adds a retry to the fetch step."
+    },
+    {
+     "from": "rotate",
+     "at": [
+      13,
+      16
+     ],
+     "line": "# Rotate the api keys"
+    }
+   ],
+   "outline": [
+    {
+     "id": "api",
+     "label": "api",
+     "level": 1
+    }
+   ],
+   "words": 20,
+   "path": "Projects / Services"
+  },
+  {
+   "id": "scheduler",
+   "title": "scheduler",
+   "folder": "services",
+   "created": 1791176400000,
+   "updated": 1793768400000,
+   "day": null,
+   "rank": 21,
+   "tags": [
+    "service"
+   ],
+   "links": [
+    {
+     "target": "Scheduler is stuck",
+     "heading": null,
+     "label": null,
+     "from": 78,
+     "to": 100
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "incident-sync",
+     "link": {
+      "target": "scheduler",
+      "heading": null,
+      "label": null,
+      "from": 286,
+      "to": 299
+     },
+     "line": "- The [[scheduler]] no longer starts a second run while one is going."
+    },
+    {
+     "from": "stuck",
+     "link": {
+      "target": "scheduler",
+      "heading": null,
+      "label": null,
+      "from": 88,
+      "to": 101
+     },
+     "line": "- Check the [[scheduler]] service answers on scheduler.example.org."
+    }
+   ],
+   "mentions": [
+    {
+     "from": "daily-2026-11-15",
+     "at": [
+      54,
+      63
+     ],
+     "line": "- Quiet day. Read up on how the scheduler orders runs."
+    },
+    {
+     "from": "daily-2026-11-12",
+     "at": [
+      96,
+      105
+     ],
+     "line": "- rebuild-index held the lock for an hour after the deploy; restarted the scheduler as the"
+    },
+    {
+     "from": "rebuild-index",
+     "at": [
+      112,
+      121
+     ],
+     "line": "scheduler's lock while it runs."
+    },
+    {
+     "from": "quarter-review",
+     "at": [
+      102,
+      111
+     ],
+     "line": "- [[harbor]] moves to the new scheduler next quarter."
+    },
+    {
+     "from": "harbor",
+     "at": [
+      106,
+      115
+     ],
+     "line": "Lead: [[grace]]. Moving harbor to the new scheduler is planned for next quarter; see the"
+    },
+    {
+     "from": "stuck",
+     "at": [
+      2,
+      11
+     ],
+     "line": "# Scheduler is stuck"
+    },
+    {
+     "from": "reading",
+     "at": [
+      26,
+      35
+     ],
+     "line": "- How the scheduler orders queued runs."
+    }
+   ],
+   "outline": [
+    {
+     "id": "scheduler",
+     "label": "scheduler",
+     "level": 1
+    }
+   ],
+   "words": 16,
+   "path": "Projects / Services"
+  },
+  {
+   "id": "worker",
+   "title": "worker",
+   "folder": "services",
+   "created": 1791212400000,
+   "updated": 1793804400000,
+   "day": null,
+   "rank": 22,
+   "tags": [
+    "service"
+   ],
+   "links": [],
+   "backlinks": [
+    {
+     "from": "nightly-export",
+     "link": {
+      "target": "worker",
+      "heading": null,
+      "label": null,
+      "from": 51,
+      "to": 61
+     },
+     "line": "Runs every night at 02:00 on the [[worker]] for [[larkspur]]."
+    },
+    {
+     "from": "rotate",
+     "link": {
+      "target": "worker",
+      "heading": null,
+      "label": null,
+      "from": 164,
+      "to": 174
+     },
+     "line": "2. Put it in the worker's settings and restart the [[worker]]."
+    }
+   ],
+   "mentions": [
+    {
+     "from": "rotate",
+     "at": [
+      130,
+      136
+     ],
+     "line": "2. Put it in the worker's settings and restart the [[worker]]."
+    }
+   ],
+   "outline": [
+    {
+     "id": "worker",
+     "label": "worker",
+     "level": 1
+    }
+   ],
+   "words": 16,
+   "path": "Projects / Services"
+  },
+  {
+   "id": "harbor",
+   "title": "harbor",
+   "folder": "projects",
+   "created": 1791680400000,
+   "updated": 1794272400000,
+   "day": null,
+   "rank": 23,
+   "tags": [
+    "project"
+   ],
+   "links": [
+    {
+     "target": "sync-inventory",
+     "heading": null,
+     "label": null,
+     "from": 43,
+     "to": 61
+    },
+    {
+     "target": "grace",
+     "heading": null,
+     "label": null,
+     "from": 70,
+     "to": 79
+    },
+    {
+     "target": "Quarter review",
+     "heading": null,
+     "label": null,
+     "from": 153,
+     "to": 171
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "sync-inventory",
+     "link": {
+      "target": "harbor",
+      "heading": null,
+      "label": null,
+      "from": 63,
+      "to": 73
+     },
+     "line": "Syncs the inventory from the warehouses into [[harbor]] every hour."
+    },
+    {
+     "from": "quarter-review",
+     "link": {
+      "target": "harbor",
+      "heading": null,
+      "label": null,
+      "from": 74,
+      "to": 84
+     },
+     "line": "- [[harbor]] moves to the new scheduler next quarter."
+    },
+    {
+     "from": "grace",
+     "link": {
+      "target": "harbor",
+      "heading": null,
+      "label": null,
+      "from": 15,
+      "to": 25
+     },
+     "line": "Leads [[harbor]] and owns [[sync-inventory]]. On call this week."
+    },
+    {
+     "from": "welcome",
+     "link": {
+      "target": "harbor",
+      "heading": null,
+      "label": null,
+      "from": 373,
+      "to": 383
+     },
+     "line": "- The projects are [[harbor]], [[juniper]] and [[larkspur]]."
+    }
+   ],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "harbor",
+     "label": "harbor",
+     "level": 1
+    }
+   ],
+   "words": 25,
+   "path": "Projects"
+  },
+  {
+   "id": "juniper",
+   "title": "juniper",
+   "folder": "projects",
+   "created": 1791644400000,
+   "updated": 1794236400000,
+   "day": null,
+   "rank": 24,
+   "tags": [
+    "project"
+   ],
+   "links": [
+    {
+     "target": "import-orders",
+     "heading": null,
+     "label": null,
+     "from": 40,
+     "to": 57
+    },
+    {
+     "target": "rebuild-index",
+     "heading": null,
+     "label": null,
+     "from": 62,
+     "to": 79
+    },
+    {
+     "target": "linus",
+     "heading": null,
+     "label": null,
+     "from": 88,
+     "to": 97
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "import-orders",
+     "link": {
+      "target": "juniper",
+      "heading": null,
+      "label": null,
+      "from": 46,
+      "to": 57
+     },
+     "line": "Imports the day's orders for [[juniper]] from the shops' files."
+    },
+    {
+     "from": "rebuild-index",
+     "link": {
+      "target": "juniper",
+      "heading": null,
+      "label": null,
+      "from": 46,
+      "to": 57
+     },
+     "line": "Rebuilds the search index of [[juniper]] every Sunday. Takes about forty minutes and holds…"
+    },
+    {
+     "from": "linus",
+     "link": {
+      "target": "juniper",
+      "heading": null,
+      "label": null,
+      "from": 15,
+      "to": 26
+     },
+     "line": "Leads [[juniper]]; owns [[import-orders]] and [[rebuild-index]]."
+    },
+    {
+     "from": "welcome",
+     "link": {
+      "target": "juniper",
+      "heading": null,
+      "label": null,
+      "from": 385,
+      "to": 396
+     },
+     "line": "- The projects are [[harbor]], [[juniper]] and [[larkspur]]."
+    }
+   ],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "juniper",
+     "label": "juniper",
+     "level": 1
+    }
+   ],
+   "words": 12,
+   "path": "Projects"
+  },
+  {
+   "id": "larkspur",
+   "title": "larkspur",
+   "folder": "projects",
+   "created": 1791608400000,
+   "updated": 1794200400000,
+   "day": null,
+   "rank": 25,
+   "tags": [
+    "project"
+   ],
+   "links": [
+    {
+     "target": "nightly-export",
+     "heading": null,
+     "label": null,
+     "from": 43,
+     "to": 61
+    },
+    {
+     "target": "send-digest",
+     "heading": null,
+     "label": null,
+     "from": 66,
+     "to": 81
+    },
+    {
+     "target": "ada",
+     "heading": null,
+     "label": null,
+     "from": 90,
+     "to": 97
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "nightly-export",
+     "link": {
+      "target": "larkspur",
+      "heading": null,
+      "label": null,
+      "from": 66,
+      "to": 78
+     },
+     "line": "Runs every night at 02:00 on the [[worker]] for [[larkspur]]."
+    },
+    {
+     "from": "quarter-review",
+     "link": {
+      "target": "larkspur",
+      "heading": null,
+      "label": null,
+      "from": 184,
+      "to": 196
+     },
+     "line": "- [[larkspur]] asks for exports kept a month."
+    },
+    {
+     "from": "ada",
+     "link": {
+      "target": "larkspur",
+      "heading": null,
+      "label": null,
+      "from": 41,
+      "to": 53
+     },
+     "line": "Owns [[nightly-export]] and leads [[larkspur]]. Ask about exports and reports."
+    },
+    {
+     "from": "welcome",
+     "link": {
+      "target": "larkspur",
+      "heading": null,
+      "label": null,
+      "from": 401,
+      "to": 413
+     },
+     "line": "- The projects are [[harbor]], [[juniper]] and [[larkspur]]."
+    }
+   ],
+   "mentions": [
+    {
+     "from": "restore",
+     "at": [
+      25,
+      33
+     ],
+     "line": "The larkspur bucket keeps a week of exports. To bring one back:"
+    }
+   ],
+   "outline": [
+    {
+     "id": "larkspur",
+     "label": "larkspur",
+     "level": 1
+    }
+   ],
+   "words": 19,
+   "path": "Projects"
+  },
+  {
+   "id": "oncall",
+   "title": "On call",
+   "folder": "runbooks",
+   "created": 1792227600000,
+   "updated": 1794819600000,
+   "day": null,
+   "rank": 26,
+   "tags": [
+    "on-call"
+   ],
+   "links": [
+    {
+     "target": "grace",
+     "heading": null,
+     "label": null,
+     "from": 22,
+     "to": 31
+    },
+    {
+     "target": "linus",
+     "heading": null,
+     "label": null,
+     "from": 38,
+     "to": 47
+    },
+    {
+     "target": "Retry a run",
+     "heading": null,
+     "label": null,
+     "from": 132,
+     "to": 147
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "runbooks-index",
+     "link": {
+      "target": "On call",
+      "heading": null,
+      "label": null,
+      "from": 348,
+      "to": 359
+     },
+     "line": "| [[On call]] | Who answers this week, and how |"
+    }
+   ],
+   "mentions": [
+    {
+     "from": "daily-2026-11-11",
+     "at": [
+      24,
+      31
+     ],
+     "line": "- On call. Two failed runs of sync-inventory, both on fetch."
+    },
+    {
+     "from": "grace",
+     "at": [
+      55,
+      62
+     ],
+     "line": "Leads [[harbor]] and owns [[sync-inventory]]. On call this week."
+    }
+   ],
+   "outline": [
+    {
+     "id": "on-call",
+     "label": "On call",
+     "level": 1
+    }
+   ],
+   "words": 41,
+   "path": "Runbooks"
+  },
+  {
+   "id": "restore",
+   "title": "Restore an export",
+   "folder": "runbooks",
+   "created": 1791320400000,
+   "updated": 1793912400000,
+   "day": null,
+   "rank": 27,
+   "tags": [
+    "runbook"
+   ],
+   "links": [
+    {
+     "target": "Export retention",
+     "heading": null,
+     "label": null,
+     "from": 197,
+     "to": 217
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "runbooks-index",
+     "link": {
+      "target": "Restore an export",
+      "heading": null,
+      "label": null,
+      "from": 163,
+      "to": 184
+     },
+     "line": "| [[Restore an export]] | An export was overwritten or lost |"
+    }
+   ],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "restore-an-export",
+     "label": "Restore an export",
+     "level": 1
+    }
+   ],
+   "words": 34,
+   "path": "Runbooks"
+  },
+  {
+   "id": "retry",
+   "title": "Retry a run",
+   "folder": "runbooks",
+   "created": 1791968400000,
+   "updated": 1794560400000,
+   "day": null,
+   "rank": 28,
+   "tags": [
+    "runbook",
+    "on-call"
+   ],
+   "links": [
+    {
+     "target": "import-orders",
+     "heading": null,
+     "label": null,
+     "from": 180,
+     "to": 197
+    },
+    {
+     "target": "Weekly sync with grace",
+     "heading": null,
+     "label": null,
+     "from": 528,
+     "to": 554
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "daily-2026-11-17",
+     "link": {
+      "target": "Retry a run",
+      "heading": null,
+      "label": null,
+      "from": 216,
+      "to": 231
+     },
+     "line": "…and it went through. Followed [[Retry a run]]."
+    },
+    {
+     "from": "weekly-sync",
+     "link": {
+      "target": "Retry a run",
+      "heading": null,
+      "label": null,
+      "from": 155,
+      "to": 170
+     },
+     "line": "- [[Retry a run]] needs a line on what not to retry twice."
+    },
+    {
+     "from": "oncall",
+     "link": {
+      "target": "Retry a run",
+      "heading": null,
+      "label": null,
+      "from": 132,
+      "to": 147
+     },
+     "line": "…n working time, starting from [[Retry a run]]."
+    },
+    {
+     "from": "runbooks-index",
+     "link": {
+      "target": "Retry a run",
+      "heading": null,
+      "label": null,
+      "from": 105,
+      "to": 120
+     },
+     "line": "| [[Retry a run]] | A run failed and the cause is fixed |"
+    },
+    {
+     "from": "welcome",
+     "link": {
+      "target": "Retry a run",
+      "heading": null,
+      "label": null,
+      "from": 214,
+      "to": 229
+     },
+     "line": "- The [[Runbooks]] say what to do when something breaks: start with [[Retry a run]]."
+    }
+   ],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "retry-a-run",
+     "label": "Retry a run",
+     "level": 1
+    },
+    {
+     "id": "steps",
+     "label": "Steps",
+     "level": 2
+    }
+   ],
+   "words": 102,
+   "path": "Runbooks"
+  },
+  {
+   "id": "rotate",
+   "title": "Rotate the api keys",
+   "folder": "runbooks",
+   "created": 1790600400000,
+   "updated": 1793192400000,
+   "day": null,
+   "rank": 29,
+   "tags": [
+    "runbook",
+    "security"
+   ],
+   "links": [
+    {
+     "target": "api",
+     "heading": null,
+     "label": null,
+     "from": 96,
+     "to": 103
+    },
+    {
+     "target": "worker",
+     "heading": null,
+     "label": null,
+     "from": 164,
+     "to": 174
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "api",
+     "link": {
+      "target": "Rotate the api keys",
+      "heading": null,
+      "label": null,
+      "from": 94,
+      "to": 117
+     },
+     "line": "Keys are rotated by [[Rotate the api keys]]. #service"
+    },
+    {
+     "from": "runbooks-index",
+     "link": {
+      "target": "Rotate the api keys",
+      "heading": null,
+      "label": null,
+      "from": 225,
+      "to": 248
+     },
+     "line": "| [[Rotate the api keys]] | Every 90 days, or after a leak |"
+    }
+   ],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "rotate-the-api-keys",
+     "label": "Rotate the api keys",
+     "level": 1
+    }
+   ],
+   "words": 55,
+   "path": "Runbooks"
+  },
+  {
+   "id": "runbooks-index",
+   "title": "Runbooks",
+   "folder": "runbooks",
+   "created": 1790996400000,
+   "updated": 1793588400000,
+   "day": null,
+   "rank": 30,
+   "tags": [
+    "runbook"
+   ],
+   "links": [
+    {
+     "target": "Retry a run",
+     "heading": null,
+     "label": null,
+     "from": 105,
+     "to": 120
+    },
+    {
+     "target": "Restore an export",
+     "heading": null,
+     "label": null,
+     "from": 163,
+     "to": 184
+    },
+    {
+     "target": "Rotate the api keys",
+     "heading": null,
+     "label": null,
+     "from": 225,
+     "to": 248
+    },
+    {
+     "target": "Scheduler is stuck",
+     "heading": null,
+     "label": null,
+     "from": 286,
+     "to": 308
+    },
+    {
+     "target": "On call",
+     "heading": null,
+     "label": null,
+     "from": 348,
+     "to": 359
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "welcome",
+     "link": {
+      "target": "Runbooks",
+      "heading": null,
+      "label": null,
+      "from": 152,
+      "to": 164
+     },
+     "line": "- The [[Runbooks]] say what to do when something breaks: start with [[Retry a run]]."
+    }
+   ],
+   "mentions": [
+    {
+     "from": "reading",
+     "at": [
+      77,
+      85
+     ],
+     "line": "- A guide to writing runbooks people follow."
+    }
+   ],
+   "outline": [
+    {
+     "id": "runbooks",
+     "label": "Runbooks",
+     "level": 1
+    }
+   ],
+   "words": 63,
+   "path": "Runbooks"
+  },
+  {
+   "id": "stuck",
+   "title": "Scheduler is stuck",
+   "folder": "runbooks",
+   "created": 1791464400000,
+   "updated": 1794056400000,
+   "day": null,
+   "rank": 31,
+   "tags": [
+    "runbook",
+    "on-call"
+   ],
+   "links": [
+    {
+     "target": "scheduler",
+     "heading": null,
+     "label": null,
+     "from": 88,
+     "to": 101
+    },
+    {
+     "target": "Incident review: sync-inventory",
+     "heading": null,
+     "label": null,
+     "from": 308,
+     "to": 343
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "daily-2026-11-12",
+     "link": {
+      "target": "Scheduler is stuck",
+      "heading": null,
+      "label": null,
+      "from": 147,
+      "to": 169
+     },
+     "line": "- Added a line to [[Scheduler is stuck]]."
+    },
+    {
+     "from": "scheduler",
+     "link": {
+      "target": "Scheduler is stuck",
+      "heading": null,
+      "label": null,
+      "from": 78,
+      "to": 100
+     },
+     "line": "Starts runs on their schedules. When it stops starting them, see [[Scheduler is stuck]]."
+    },
+    {
+     "from": "runbooks-index",
+     "link": {
+      "target": "Scheduler is stuck",
+      "heading": null,
+      "label": null,
+      "from": 286,
+      "to": 308
+     },
+     "line": "| [[Scheduler is stuck]] | Runs stay queued past their time |"
+    }
+   ],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "scheduler-is-stuck",
+     "label": "Scheduler is stuck",
+     "level": 1
+    }
+   ],
+   "words": 50,
+   "path": "Runbooks"
+  },
+  {
+   "id": "meeting-template",
+   "title": "Meeting template",
+   "folder": "templates",
+   "created": 1789880400000,
+   "updated": 1792472400000,
+   "day": null,
+   "rank": 32,
+   "tags": [
+    "meeting"
+   ],
+   "links": [],
+   "backlinks": [],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "meeting",
+     "label": "Meeting",
+     "level": 1
+    },
+    {
+     "id": "notes",
+     "label": "Notes",
+     "level": 2
+    },
+    {
+     "id": "decisions",
+     "label": "Decisions",
+     "level": 2
+    },
+    {
+     "id": "actions",
+     "label": "Actions",
+     "level": 2
+    }
+   ],
+   "words": 6,
+   "path": "Templates"
+  },
+  {
+   "id": "ideas",
+   "title": "Ideas",
+   "folder": null,
+   "created": 1792130400000,
+   "updated": 1794722400000,
+   "day": null,
+   "rank": 33,
+   "tags": [
+    "idea"
+   ],
+   "links": [
+    {
+     "target": "Quarter review",
+     "heading": null,
+     "label": null,
+     "from": 65,
+     "to": 83
+    }
+   ],
+   "backlinks": [],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "ideas",
+     "label": "Ideas",
+     "level": 1
+    }
+   ],
+   "words": 30,
+   "path": ""
+  },
+  {
+   "id": "reading",
+   "title": "Reading list",
+   "folder": null,
+   "created": 1789520400000,
+   "updated": 1792112400000,
+   "day": null,
+   "rank": 34,
+   "tags": [
+    "idea"
+   ],
+   "links": [],
+   "backlinks": [],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "reading-list",
+     "label": "Reading list",
+     "level": 1
+    }
+   ],
+   "words": 16,
+   "path": ""
+  },
+  {
+   "id": "welcome",
+   "title": "Start here",
+   "folder": null,
+   "created": 1790960400000,
+   "updated": 1793552400000,
+   "day": null,
+   "rank": 35,
+   "tags": [
+    "welcome"
+   ],
+   "links": [
+    {
+     "target": "Runbooks",
+     "heading": null,
+     "label": null,
+     "from": 152,
+     "to": 164
+    },
+    {
+     "target": "Retry a run",
+     "heading": null,
+     "label": null,
+     "from": 214,
+     "to": 229
+    },
+    {
+     "target": "nightly-export",
+     "heading": null,
+     "label": null,
+     "from": 254,
+     "to": 272
+    },
+    {
+     "target": "sync-inventory",
+     "heading": null,
+     "label": null,
+     "from": 274,
+     "to": 292
+    },
+    {
+     "target": "rebuild-index",
+     "heading": null,
+     "label": null,
+     "from": 294,
+     "to": 311
+    },
+    {
+     "target": "send-digest",
+     "heading": null,
+     "label": null,
+     "from": 313,
+     "to": 328
+    },
+    {
+     "target": "import-orders",
+     "heading": null,
+     "label": null,
+     "from": 335,
+     "to": 352
+    },
+    {
+     "target": "harbor",
+     "heading": null,
+     "label": null,
+     "from": 373,
+     "to": 383
+    },
+    {
+     "target": "juniper",
+     "heading": null,
+     "label": null,
+     "from": 385,
+     "to": 396
+    },
+    {
+     "target": "larkspur",
+     "heading": null,
+     "label": null,
+     "from": 401,
+     "to": 413
+    }
+   ],
+   "backlinks": [
+    {
+     "from": "daily-2026-11-05",
+     "link": {
+      "target": "Start here",
+      "heading": null,
+      "label": null,
+      "from": 74,
+      "to": 88
+     },
+     "line": "- First day keeping a journal in the vault. Started [[Start here]]."
+    }
+   ],
+   "mentions": [],
+   "outline": [
+    {
+     "id": "start-here",
+     "label": "Start here",
+     "level": 1
+    }
+   ],
+   "words": 86,
+   "path": ""
+  }
+ ],
+ "folders": [
+  {
+   "id": "daily",
+   "name": "Daily",
+   "parent": null,
+   "rank": 0
+  },
+  {
+   "id": "jobs",
+   "name": "Jobs",
+   "parent": null,
+   "rank": 1
+  },
+  {
+   "id": "meetings",
+   "name": "Meetings",
+   "parent": null,
+   "rank": 2
+  },
+  {
+   "id": "people",
+   "name": "People",
+   "parent": null,
+   "rank": 3
+  },
+  {
+   "id": "projects",
+   "name": "Projects",
+   "parent": null,
+   "rank": 4
+  },
+  {
+   "id": "runbooks",
+   "name": "Runbooks",
+   "parent": null,
+   "rank": 5
+  },
+  {
+   "id": "templates",
+   "name": "Templates",
+   "parent": null,
+   "rank": 6
+  },
+  {
+   "id": "services",
+   "name": "Services",
+   "parent": "projects",
+   "rank": 0
+  }
+ ],
+ "prefs": {
+  "id": "me",
+  "fontSize": "md",
+  "wrap": true,
+  "lineNumbers": false,
+  "defaultView": "both",
+  "views": {},
+  "tabs": [
+   "retry",
+   "nightly-export"
+  ],
+  "active": "retry",
+  "recent": [
+   "retry",
+   "nightly-export",
+   "weekly-sync"
+  ],
+  "panel": true,
+  "dailyFolder": "daily",
+  "template": "# {{date}}\n\n## Plan\n\n- [ ]\n\n## Log\n\n## Notes\n\n#journal\n",
+  "orphans": true,
+  "order": "manual"
+ },
+ "tagged": [
+  [
+   "journal",
+   [
+    "daily-2026-11-17",
+    "daily-2026-11-16",
+    "daily-2026-11-15",
+    "daily-2026-11-12",
+    "daily-2026-11-11",
+    "daily-2026-11-09",
+    "daily-2026-11-05"
+   ]
+  ],
+  [
+   "on-call",
+   [
+    "daily-2026-11-12",
+    "daily-2026-11-11",
+    "oncall",
+    "retry",
+    "stuck"
+   ]
+  ],
+  [
+   "job",
+   [
+    "import-orders",
+    "nightly-export",
+    "rebuild-index",
+    "send-digest",
+    "sync-inventory"
+   ]
+  ],
+  [
+   "incident",
+   [
+    "incident-sync"
+   ]
+  ],
+  [
+   "meeting",
+   [
+    "digest-planning",
+    "quarter-review",
+    "weekly-sync",
+    "meeting-template"
+   ]
+  ],
+  [
+   "send-digest",
+   [
+    "digest-planning"
+   ]
+  ],
+  [
+   "decision",
+   [
+    "weekly-sync"
+   ]
+  ],
+  [
+   "person",
+   [
+    "ada",
+    "grace",
+    "linus",
+    "margaret"
+   ]
+  ],
+  [
+   "service",
+   [
+    "api",
+    "scheduler",
+    "worker"
+   ]
+  ],
+  [
+   "project",
+   [
+    "harbor",
+    "juniper",
+    "larkspur"
+   ]
+  ],
+  [
+   "runbook",
+   [
+    "restore",
+    "retry",
+    "rotate",
+    "runbooks-index",
+    "stuck"
+   ]
+  ],
+  [
+   "security",
+   [
+    "rotate"
+   ]
+  ],
+  [
+   "idea",
+   [
+    "ideas",
+    "reading"
+   ]
+  ],
+  [
+   "welcome",
+   [
+    "welcome"
+   ]
+  ]
+ ],
+ "order": {
+  "manual": [
+   "daily-2026-11-17",
+   "daily-2026-11-16",
+   "daily-2026-11-15",
+   "daily-2026-11-12",
+   "daily-2026-11-11",
+   "daily-2026-11-09",
+   "daily-2026-11-05",
+   "import-orders",
+   "nightly-export",
+   "rebuild-index",
+   "send-digest",
+   "sync-inventory",
+   "incident-sync",
+   "digest-planning",
+   "quarter-review",
+   "weekly-sync",
+   "ada",
+   "grace",
+   "linus",
+   "margaret",
+   "api",
+   "scheduler",
+   "worker",
+   "harbor",
+   "juniper",
+   "larkspur",
+   "oncall",
+   "restore",
+   "retry",
+   "rotate",
+   "runbooks-index",
+   "stuck",
+   "meeting-template",
+   "ideas",
+   "reading",
+   "welcome"
+  ],
+  "name": [
+   "daily-2026-11-17",
+   "daily-2026-11-16",
+   "daily-2026-11-15",
+   "daily-2026-11-12",
+   "daily-2026-11-11",
+   "daily-2026-11-09",
+   "daily-2026-11-05",
+   "import-orders",
+   "nightly-export",
+   "rebuild-index",
+   "send-digest",
+   "sync-inventory",
+   "incident-sync",
+   "digest-planning",
+   "quarter-review",
+   "weekly-sync",
+   "ada",
+   "grace",
+   "linus",
+   "margaret",
+   "api",
+   "scheduler",
+   "worker",
+   "harbor",
+   "juniper",
+   "larkspur",
+   "oncall",
+   "restore",
+   "retry",
+   "rotate",
+   "runbooks-index",
+   "stuck",
+   "meeting-template",
+   "ideas",
+   "reading",
+   "welcome"
+  ],
+  "projects": [
+   "api",
+   "scheduler",
+   "worker",
+   "harbor",
+   "juniper",
+   "larkspur"
+  ],
+  "tree": [
+   {
+    "id": "folder:daily",
+    "label": "Daily",
+    "children": [
+     {
+      "id": "daily-2026-11-17",
+      "label": "2026-11-17",
+      "children": null
+     },
+     {
+      "id": "daily-2026-11-16",
+      "label": "2026-11-16",
+      "children": null
+     },
+     {
+      "id": "daily-2026-11-15",
+      "label": "2026-11-15",
+      "children": null
+     },
+     {
+      "id": "daily-2026-11-12",
+      "label": "2026-11-12",
+      "children": null
+     },
+     {
+      "id": "daily-2026-11-11",
+      "label": "2026-11-11",
+      "children": null
+     },
+     {
+      "id": "daily-2026-11-09",
+      "label": "2026-11-09",
+      "children": null
+     },
+     {
+      "id": "daily-2026-11-05",
+      "label": "2026-11-05",
+      "children": null
+     }
+    ]
+   },
+   {
+    "id": "folder:jobs",
+    "label": "Jobs",
+    "children": [
+     {
+      "id": "import-orders",
+      "label": "import-orders",
+      "children": null
+     },
+     {
+      "id": "nightly-export",
+      "label": "nightly-export",
+      "children": null
+     },
+     {
+      "id": "rebuild-index",
+      "label": "rebuild-index",
+      "children": null
+     },
+     {
+      "id": "send-digest",
+      "label": "send-digest",
+      "children": null
+     },
+     {
+      "id": "sync-inventory",
+      "label": "sync-inventory",
+      "children": null
+     }
+    ]
+   },
+   {
+    "id": "folder:meetings",
+    "label": "Meetings",
+    "children": [
+     {
+      "id": "incident-sync",
+      "label": "Incident review: sync-inventory",
+      "children": null
+     },
+     {
+      "id": "digest-planning",
+      "label": "Planning the digest",
+      "children": null
+     },
+     {
+      "id": "quarter-review",
+      "label": "Quarter review",
+      "children": null
+     },
+     {
+      "id": "weekly-sync",
+      "label": "Weekly sync with grace",
+      "children": null
+     }
+    ]
+   },
+   {
+    "id": "folder:people",
+    "label": "People",
+    "children": [
+     {
+      "id": "ada",
+      "label": "ada",
+      "children": null
+     },
+     {
+      "id": "grace",
+      "label": "grace",
+      "children": null
+     },
+     {
+      "id": "linus",
+      "label": "linus",
+      "children": null
+     },
+     {
+      "id": "margaret",
+      "label": "margaret",
+      "children": null
+     }
+    ]
+   },
+   {
+    "id": "folder:projects",
+    "label": "Projects",
+    "children": [
+     {
+      "id": "folder:services",
+      "label": "Services",
+      "children": [
+       {
+        "id": "api",
+        "label": "api",
+        "children": null
+       },
+       {
+        "id": "scheduler",
+        "label": "scheduler",
+        "children": null
+       },
+       {
+        "id": "worker",
+        "label": "worker",
+        "children": null
+       }
+      ]
+     },
+     {
+      "id": "harbor",
+      "label": "harbor",
+      "children": null
+     },
+     {
+      "id": "juniper",
+      "label": "juniper",
+      "children": null
+     },
+     {
+      "id": "larkspur",
+      "label": "larkspur",
+      "children": null
+     }
+    ]
+   },
+   {
+    "id": "folder:runbooks",
+    "label": "Runbooks",
+    "children": [
+     {
+      "id": "oncall",
+      "label": "On call",
+      "children": null
+     },
+     {
+      "id": "restore",
+      "label": "Restore an export",
+      "children": null
+     },
+     {
+      "id": "retry",
+      "label": "Retry a run",
+      "children": null
+     },
+     {
+      "id": "rotate",
+      "label": "Rotate the api keys",
+      "children": null
+     },
+     {
+      "id": "runbooks-index",
+      "label": "Runbooks",
+      "children": null
+     },
+     {
+      "id": "stuck",
+      "label": "Scheduler is stuck",
+      "children": null
+     }
+    ]
+   },
+   {
+    "id": "folder:templates",
+    "label": "Templates",
+    "children": [
+     {
+      "id": "meeting-template",
+      "label": "Meeting template",
+      "children": null
+     }
+    ]
+   },
+   {
+    "id": "ideas",
+    "label": "Ideas",
+    "children": null
+   },
+   {
+    "id": "reading",
+    "label": "Reading list",
+    "children": null
+   },
+   {
+    "id": "welcome",
+    "label": "Start here",
+    "children": null
+   }
+  ],
+  "folderTree": [
+   {
+    "id": "~vault",
+    "label": "Vault",
+    "children": [
+     {
+      "id": "daily",
+      "label": "Daily",
+      "children": []
+     },
+     {
+      "id": "jobs",
+      "label": "Jobs",
+      "children": []
+     },
+     {
+      "id": "meetings",
+      "label": "Meetings",
+      "children": []
+     },
+     {
+      "id": "people",
+      "label": "People",
+      "children": []
+     },
+     {
+      "id": "projects",
+      "label": "Projects",
+      "children": [
+       {
+        "id": "services",
+        "label": "Services",
+        "children": []
+       }
+      ]
+     },
+     {
+      "id": "runbooks",
+      "label": "Runbooks",
+      "children": []
+     },
+     {
+      "id": "templates",
+      "label": "Templates",
+      "children": []
+     }
+    ]
+   }
+  ],
+  "below": [
+   "projects",
+   "services"
+  ]
+ },
+ "searches": [
+  {
+   "query": "retry",
+   "chosen": {},
+   "groups": [
+    {
+     "kind": "names",
+     "title": "In the name",
+     "total": null,
+     "results": [
+      {
+       "id": "retry",
+       "title": "Retry a run",
+       "detail": "# Retry a run",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "title": "In the text",
+     "total": null,
+     "results": [
+      {
+       "id": "daily-2026-11-17",
+       "title": "2026-11-17",
+       "detail": "- nightly-export failed on upload at 02:14; retried at 08:30 and it went through. Followed [[Retry a run]].",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "weekly-sync",
+       "title": "Weekly sync with grace",
+       "detail": "- sync-inventory failed twice on Tuesday; the api was slow. grace adds a retry to the fetch step.",
+       "meta": "Meetings",
+       "folder": "Meetings"
+      },
+      {
+       "id": "nightly-export",
+       "title": "nightly-export",
+       "detail": "- upload times out when the bucket is busy; a retry works.",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "oncall",
+       "title": "On call",
+       "detail": "The one on call answers failed runs within an hour in working time, starting from [[Retry a run]].",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "runbooks-index",
+       "title": "Runbooks",
+       "detail": "| [[Retry a run]] | A run failed and the cause is fixed |",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "welcome",
+       "title": "Start here",
+       "detail": "- The [[Runbooks]] say what to do when something breaks: start with [[Retry a run]].",
+       "meta": "Vault",
+       "folder": "Vault"
+      }
+     ]
+    }
+   ],
+   "facets": [
+    {
+     "id": "kind",
+     "title": "Found",
+     "values": [
+      {
+       "value": "names",
+       "label": "In the name",
+       "count": 1
+      },
+      {
+       "value": "text",
+       "label": "In the text",
+       "count": 6
+      }
+     ]
+    },
+    {
+     "id": "folder",
+     "title": "Folder",
+     "values": [
+      {
+       "value": "Runbooks",
+       "label": null,
+       "count": 3
+      },
+      {
+       "value": "Daily",
+       "label": null,
+       "count": 1
+      },
+      {
+       "value": "Jobs",
+       "label": null,
+       "count": 1
+      },
+      {
+       "value": "Meetings",
+       "label": null,
+       "count": 1
+      },
+      {
+       "value": "Vault",
+       "label": null,
+       "count": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "query": "nightly export",
+   "chosen": {},
+   "groups": [
+    {
+     "kind": "names",
+     "title": "In the name",
+     "total": null,
+     "results": [
+      {
+       "id": "nightly-export",
+       "title": "nightly-export",
+       "detail": "# nightly-export",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "title": "In the text",
+     "total": null,
+     "results": [
+      {
+       "id": "daily-2026-11-17",
+       "title": "2026-11-17",
+       "detail": "- [x] Read the failed nightly-export from last night",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "weekly-sync",
+       "title": "Weekly sync with grace",
+       "detail": "- Retries stay manual for nightly-export. #decision",
+       "meta": "Meetings",
+       "folder": "Meetings"
+      },
+      {
+       "id": "oncall",
+       "title": "On call",
+       "detail": "A failure of nightly-export after midnight waits for the morning unless send-digest depends on it.",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "send-digest",
+       "title": "send-digest",
+       "detail": "[[nightly-export]] wrote.",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "digest-planning",
+       "title": "Planning the digest",
+       "detail": "- Send it at 09:00 on Mondays, after nightly-export has run.",
+       "meta": "Meetings",
+       "folder": "Meetings"
+      },
+      {
+       "id": "import-orders",
+       "title": "import-orders",
+       "detail": "The validate step was added after rows without an order id reached nightly-export.",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "retry",
+       "title": "Retry a run",
+       "detail": "> Never retry nightly-export twice at once: the second run overwrites the first one's upload.",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "larkspur",
+       "title": "larkspur",
+       "detail": "Exports and reports. Its jobs: [[nightly-export]] and [[send-digest]].",
+       "meta": "Projects",
+       "folder": "Projects"
+      },
+      {
+       "id": "welcome",
+       "title": "Start here",
+       "detail": "- Each job has a note: [[nightly-export]], [[sync-inventory]], [[rebuild-index]], [[send-digest]]",
+       "meta": "Vault",
+       "folder": "Vault"
+      },
+      {
+       "id": "ada",
+       "title": "ada",
+       "detail": "Owns [[nightly-export]] and leads [[larkspur]]. Ask about exports and reports.",
+       "meta": "People",
+       "folder": "People"
+      }
+     ]
+    }
+   ],
+   "facets": [
+    {
+     "id": "kind",
+     "title": "Found",
+     "values": [
+      {
+       "value": "names",
+       "label": "In the name",
+       "count": 1
+      },
+      {
+       "value": "text",
+       "label": "In the text",
+       "count": 10
+      }
+     ]
+    },
+    {
+     "id": "folder",
+     "title": "Folder",
+     "values": [
+      {
+       "value": "Jobs",
+       "label": null,
+       "count": 3
+      },
+      {
+       "value": "Meetings",
+       "label": null,
+       "count": 2
+      },
+      {
+       "value": "Runbooks",
+       "label": null,
+       "count": 2
+      },
+      {
+       "value": "Daily",
+       "label": null,
+       "count": 1
+      },
+      {
+       "value": "People",
+       "label": null,
+       "count": 1
+      },
+      {
+       "value": "Projects",
+       "label": null,
+       "count": 1
+      },
+      {
+       "value": "Vault",
+       "label": null,
+       "count": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "query": "grace",
+   "chosen": {},
+   "groups": [
+    {
+     "kind": "names",
+     "title": "In the name",
+     "total": null,
+     "results": [
+      {
+       "id": "weekly-sync",
+       "title": "Weekly sync with grace",
+       "detail": "# Weekly sync with grace",
+       "meta": "Meetings",
+       "folder": "Meetings"
+      },
+      {
+       "id": "grace",
+       "title": "grace",
+       "detail": "# grace",
+       "meta": "People",
+       "folder": "People"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "title": "In the text",
+     "total": null,
+     "results": [
+      {
+       "id": "daily-2026-11-17",
+       "title": "2026-11-17",
+       "detail": "- Talked to grace about sync-inventory; see [[Weekly sync with grace]].",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "daily-2026-11-16",
+       "title": "2026-11-16",
+       "detail": "- Rotated the api keys with grace. It took twenty minutes; the runbook was right.",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "oncall",
+       "title": "On call",
+       "detail": "This week: [[grace]], then [[linus]].",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "sync-inventory",
+       "title": "sync-inventory",
+       "detail": "Owner: [[grace]]. #job",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "retry",
+       "title": "Retry a run",
+       "detail": "Asked about in [[Weekly sync with grace]]. #runbook #on-call",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "quarter-review",
+       "title": "Quarter review",
+       "detail": "With [[margaret]], [[grace]], [[linus]] and [[ada]].",
+       "meta": "Meetings",
+       "folder": "Meetings"
+      },
+      {
+       "id": "harbor",
+       "title": "harbor",
+       "detail": "Lead: [[grace]]. Moving harbor to the new scheduler is planned for next quarter; see the",
+       "meta": "Projects",
+       "folder": "Projects"
+      },
+      {
+       "id": "rotate",
+       "title": "Rotate the api keys",
+       "detail": "grace did the last rotation. #runbook #security",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      }
+     ]
+    }
+   ],
+   "facets": [
+    {
+     "id": "kind",
+     "title": "Found",
+     "values": [
+      {
+       "value": "names",
+       "label": "In the name",
+       "count": 2
+      },
+      {
+       "value": "text",
+       "label": "In the text",
+       "count": 8
+      }
+     ]
+    },
+    {
+     "id": "folder",
+     "title": "Folder",
+     "values": [
+      {
+       "value": "Runbooks",
+       "label": null,
+       "count": 3
+      },
+      {
+       "value": "Daily",
+       "label": null,
+       "count": 2
+      },
+      {
+       "value": "Meetings",
+       "label": null,
+       "count": 2
+      },
+      {
+       "value": "Jobs",
+       "label": null,
+       "count": 1
+      },
+      {
+       "value": "People",
+       "label": null,
+       "count": 1
+      },
+      {
+       "value": "Projects",
+       "label": null,
+       "count": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "query": "Scheduler STUCK",
+   "chosen": {},
+   "groups": [
+    {
+     "kind": "names",
+     "title": "In the name",
+     "total": null,
+     "results": [
+      {
+       "id": "stuck",
+       "title": "Scheduler is stuck",
+       "detail": "# Scheduler is stuck",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "title": "In the text",
+     "total": null,
+     "results": [
+      {
+       "id": "daily-2026-11-12",
+       "title": "2026-11-12",
+       "detail": "- rebuild-index held the lock for an hour after the deploy; restarted the scheduler as the",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "scheduler",
+       "title": "scheduler",
+       "detail": "# scheduler",
+       "meta": "Projects / Services",
+       "folder": "Projects / Services"
+      },
+      {
+       "id": "runbooks-index",
+       "title": "Runbooks",
+       "detail": "| [[Scheduler is stuck]] | Runs stay queued past their time |",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      }
+     ]
+    }
+   ],
+   "facets": [
+    {
+     "id": "kind",
+     "title": "Found",
+     "values": [
+      {
+       "value": "names",
+       "label": "In the name",
+       "count": 1
+      },
+      {
+       "value": "text",
+       "label": "In the text",
+       "count": 3
+      }
+     ]
+    },
+    {
+     "id": "folder",
+     "title": "Folder",
+     "values": [
+      {
+       "value": "Runbooks",
+       "label": null,
+       "count": 2
+      },
+      {
+       "value": "Daily",
+       "label": null,
+       "count": 1
+      },
+      {
+       "value": "Projects / Services",
+       "label": null,
+       "count": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "query": "on-call",
+   "chosen": {},
+   "groups": [
+    {
+     "kind": "text",
+     "title": "In the text",
+     "total": null,
+     "results": [
+      {
+       "id": "oncall",
+       "title": "On call",
+       "detail": "#on-call",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "retry",
+       "title": "Retry a run",
+       "detail": "Asked about in [[Weekly sync with grace]]. #runbook #on-call",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "daily-2026-11-12",
+       "title": "2026-11-12",
+       "detail": "#journal #on-call",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "daily-2026-11-11",
+       "title": "2026-11-11",
+       "detail": "#journal #on-call",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "stuck",
+       "title": "Scheduler is stuck",
+       "detail": "Happened twice in October; see [[Incident review: sync-inventory]]. #runbook #on-call",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      }
+     ]
+    }
+   ],
+   "facets": [
+    {
+     "id": "kind",
+     "title": "Found",
+     "values": [
+      {
+       "value": "names",
+       "label": "In the name",
+       "count": 0
+      },
+      {
+       "value": "text",
+       "label": "In the text",
+       "count": 5
+      }
+     ]
+    },
+    {
+     "id": "folder",
+     "title": "Folder",
+     "values": [
+      {
+       "value": "Runbooks",
+       "label": null,
+       "count": 3
+      },
+      {
+       "value": "Daily",
+       "label": null,
+       "count": 2
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "query": "run run",
+   "chosen": {},
+   "groups": [
+    {
+     "kind": "names",
+     "title": "In the name",
+     "total": null,
+     "results": [
+      {
+       "id": "retry",
+       "title": "Retry a run",
+       "detail": "# Retry a run",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "runbooks-index",
+       "title": "Runbooks",
+       "detail": "# Runbooks",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "title": "In the text",
+     "total": null,
+     "results": [
+      {
+       "id": "daily-2026-11-17",
+       "title": "2026-11-17",
+       "detail": "- nightly-export failed on upload at 02:14; retried at 08:30 and it went through. Followed [[Retry a run]].",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "weekly-sync",
+       "title": "Weekly sync with grace",
+       "detail": "- [[Retry a run]] needs a line on what not to retry twice.",
+       "meta": "Meetings",
+       "folder": "Meetings"
+      },
+      {
+       "id": "nightly-export",
+       "title": "nightly-export",
+       "detail": "Runs every night at 02:00 on the [[worker]] for [[larkspur]].",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "daily-2026-11-16",
+       "title": "2026-11-16",
+       "detail": "- Rotated the api keys with grace. It took twenty minutes; the runbook was right.",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "oncall",
+       "title": "On call",
+       "detail": "The one on call answers failed runs within an hour in working time, starting from [[Retry a run]].",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "daily-2026-11-15",
+       "title": "2026-11-15",
+       "detail": "- Quiet day. Read up on how the scheduler orders runs.",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "ideas",
+       "title": "Ideas",
+       "detail": "- Tag every runbook with the jobs it touches.",
+       "meta": "Vault",
+       "folder": "Vault"
+      },
+      {
+       "id": "digest-planning",
+       "title": "Planning the digest",
+       "detail": "- A project with no runs gets no mail.",
+       "meta": "Meetings",
+       "folder": "Meetings"
+      },
+      {
+       "id": "daily-2026-11-12",
+       "title": "2026-11-12",
+       "detail": "runbook says.",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "incident-sync",
+       "title": "Incident review: sync-inventory",
+       "detail": "- The [[scheduler]] no longer starts a second run while one is going.",
+       "meta": "Meetings",
+       "folder": "Meetings"
+      },
+      {
+       "id": "rebuild-index",
+       "title": "rebuild-index",
+       "detail": "scheduler's lock while it runs.",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "daily-2026-11-11",
+       "title": "2026-11-11",
+       "detail": "- On call. Two failed runs of sync-inventory, both on fetch.",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "stuck",
+       "title": "Scheduler is stuck",
+       "detail": "Runs stay queued past their time and nothing starts.",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "restore",
+       "title": "Restore an export",
+       "detail": "How long exports are kept is open: see [[Export retention]]. #runbook",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "worker",
+       "title": "worker",
+       "detail": "Runs the jobs' steps. Four of them, each taking one step at a time.",
+       "meta": "Projects / Services",
+       "folder": "Projects / Services"
+      },
+      {
+       "id": "scheduler",
+       "title": "scheduler",
+       "detail": "Starts runs on their schedules. When it stops starting them, see [[Scheduler is stuck]].",
+       "meta": "Projects / Services",
+       "folder": "Projects / Services"
+      },
+      {
+       "id": "welcome",
+       "title": "Start here",
+       "detail": "This vault holds what the team knows about Tidevann's jobs: how they run, what to do when one",
+       "meta": "Vault",
+       "folder": "Vault"
+      },
+      {
+       "id": "rotate",
+       "title": "Rotate the api keys",
+       "detail": "3. Run sync-inventory once by hand to check it.",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "margaret",
+       "title": "margaret",
+       "detail": "Writes the wording of [[send-digest]] and runs the [[Quarter review]].",
+       "meta": "People",
+       "folder": "People"
+      },
+      {
+       "id": "reading",
+       "title": "Reading list",
+       "detail": "- How the scheduler orders queued runs.",
+       "meta": "Vault",
+       "folder": "Vault"
+      }
+     ]
+    }
+   ],
+   "facets": [
+    {
+     "id": "kind",
+     "title": "Found",
+     "values": [
+      {
+       "value": "names",
+       "label": "In the name",
+       "count": 2
+      },
+      {
+       "value": "text",
+       "label": "In the text",
+       "count": 20
+      }
+     ]
+    },
+    {
+     "id": "folder",
+     "title": "Folder",
+     "values": [
+      {
+       "value": "Runbooks",
+       "label": null,
+       "count": 6
+      },
+      {
+       "value": "Daily",
+       "label": null,
+       "count": 5
+      },
+      {
+       "value": "Meetings",
+       "label": null,
+       "count": 3
+      },
+      {
+       "value": "Vault",
+       "label": null,
+       "count": 3
+      },
+      {
+       "value": "Jobs",
+       "label": null,
+       "count": 2
+      },
+      {
+       "value": "Projects / Services",
+       "label": null,
+       "count": 2
+      },
+      {
+       "value": "People",
+       "label": null,
+       "count": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "query": "xyz",
+   "chosen": {},
+   "groups": [],
+   "facets": [
+    {
+     "id": "kind",
+     "title": "Found",
+     "values": [
+      {
+       "value": "names",
+       "label": "In the name",
+       "count": 0
+      },
+      {
+       "value": "text",
+       "label": "In the text",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "id": "folder",
+     "title": "Folder",
+     "values": []
+    }
+   ]
+  },
+  {
+   "query": "2026",
+   "chosen": {},
+   "groups": [
+    {
+     "kind": "names",
+     "title": "In the name",
+     "total": null,
+     "results": [
+      {
+       "id": "daily-2026-11-17",
+       "title": "2026-11-17",
+       "detail": "# 2026-11-17",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "daily-2026-11-16",
+       "title": "2026-11-16",
+       "detail": "# 2026-11-16",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "daily-2026-11-15",
+       "title": "2026-11-15",
+       "detail": "# 2026-11-15",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "daily-2026-11-12",
+       "title": "2026-11-12",
+       "detail": "# 2026-11-12",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "daily-2026-11-11",
+       "title": "2026-11-11",
+       "detail": "# 2026-11-11",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "daily-2026-11-09",
+       "title": "2026-11-09",
+       "detail": "# 2026-11-09",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "daily-2026-11-05",
+       "title": "2026-11-05",
+       "detail": "# 2026-11-05",
+       "meta": "Daily",
+       "folder": "Daily"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "title": "In the text",
+     "total": null,
+     "results": [
+      {
+       "id": "restore",
+       "title": "Restore an export",
+       "detail": "tidevann exports restore --project larkspur --day 2026-11-02",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      }
+     ]
+    }
+   ],
+   "facets": [
+    {
+     "id": "kind",
+     "title": "Found",
+     "values": [
+      {
+       "value": "names",
+       "label": "In the name",
+       "count": 7
+      },
+      {
+       "value": "text",
+       "label": "In the text",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "id": "folder",
+     "title": "Folder",
+     "values": [
+      {
+       "value": "Daily",
+       "label": null,
+       "count": 7
+      },
+      {
+       "value": "Runbooks",
+       "label": null,
+       "count": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "query": "   ",
+   "chosen": {},
+   "groups": [],
+   "facets": []
+  },
+  {
+   "query": "the",
+   "chosen": {
+    "kind": [
+     "text"
+    ]
+   },
+   "groups": [
+    {
+     "kind": "text",
+     "title": "In the text",
+     "total": 28,
+     "results": [
+      {
+       "id": "daily-2026-11-17",
+       "title": "2026-11-17",
+       "detail": "- [x] Read the failed nightly-export from last night",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "weekly-sync",
+       "title": "Weekly sync with grace",
+       "detail": "- sync-inventory failed twice on Tuesday; the api was slow. grace adds a retry to the fetch step.",
+       "meta": "Meetings",
+       "folder": "Meetings"
+      },
+      {
+       "id": "nightly-export",
+       "title": "nightly-export",
+       "detail": "Runs every night at 02:00 on the [[worker]] for [[larkspur]].",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "daily-2026-11-16",
+       "title": "2026-11-16",
+       "detail": "- Rotated the api keys with grace. It took twenty minutes; the runbook was right.",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "oncall",
+       "title": "On call",
+       "detail": "This week: [[grace]], then [[linus]].",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "daily-2026-11-15",
+       "title": "2026-11-15",
+       "detail": "- Quiet day. Read up on how the scheduler orders runs.",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "sync-inventory",
+       "title": "sync-inventory",
+       "detail": "Syncs the inventory from the warehouses into [[harbor]] every hour.",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "ideas",
+       "title": "Ideas",
+       "detail": "- A dashboard of the slowest steps of each job, for the [[Quarter review]].",
+       "meta": "Vault",
+       "folder": "Vault"
+      },
+      {
+       "id": "send-digest",
+       "title": "send-digest",
+       "detail": "Mails each project's owner a summary of the week every Monday at 09:00, from what",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "import-orders",
+       "title": "import-orders",
+       "detail": "Imports the day's orders for [[juniper]] from the shops' files.",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "retry",
+       "title": "Retry a run",
+       "detail": "A failed run can start again from its failed step once the cause is fixed.",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "daily-2026-11-12",
+       "title": "2026-11-12",
+       "detail": "- rebuild-index held the lock for an hour after the deploy; restarted the scheduler as the",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "incident-sync",
+       "title": "Incident review: sync-inventory",
+       "detail": "The [[api]] answered slowly under load, and the fetch step gave up after 30 seconds.",
+       "meta": "Meetings",
+       "folder": "Meetings"
+      },
+      {
+       "id": "rebuild-index",
+       "title": "rebuild-index",
+       "detail": "Rebuilds the search index of [[juniper]] every Sunday. Takes about forty minutes and holds the",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "quarter-review",
+       "title": "Quarter review",
+       "detail": "- [[harbor]] moves to the new scheduler next quarter.",
+       "meta": "Meetings",
+       "folder": "Meetings"
+      },
+      {
+       "id": "harbor",
+       "title": "harbor",
+       "detail": "The inventory project. Its jobs: [[sync-inventory]].",
+       "meta": "Projects",
+       "folder": "Projects"
+      },
+      {
+       "id": "daily-2026-11-09",
+       "title": "2026-11-09",
+       "detail": "- Quarter review prep: collected the slowest steps of each job for [[Quarter review]].",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "larkspur",
+       "title": "larkspur",
+       "detail": "Lead: [[ada]]. The bucket keeps a week of exports. #project",
+       "meta": "Projects",
+       "folder": "Projects"
+      },
+      {
+       "id": "stuck",
+       "title": "Scheduler is stuck",
+       "detail": "Runs stay queued past their time and nothing starts.",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "restore",
+       "title": "Restore an export",
+       "detail": "The larkspur bucket keeps a week of exports. To bring one back:",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "daily-2026-11-05",
+       "title": "2026-11-05",
+       "detail": "- First day keeping a journal in the vault. Started [[Start here]].",
+       "meta": "Daily",
+       "folder": "Daily"
+      },
+      {
+       "id": "api",
+       "title": "api",
+       "detail": "Keys are rotated by [[Rotate the api keys]]. #service",
+       "meta": "Projects / Services",
+       "folder": "Projects / Services"
+      },
+      {
+       "id": "worker",
+       "title": "worker",
+       "detail": "Runs the jobs' steps. Four of them, each taking one step at a time.",
+       "meta": "Projects / Services",
+       "folder": "Projects / Services"
+      },
+      {
+       "id": "scheduler",
+       "title": "scheduler",
+       "detail": "Starts runs on their schedules. When it stops starting them, see [[Scheduler is stuck]].",
+       "meta": "Projects / Services",
+       "folder": "Projects / Services"
+      },
+      {
+       "id": "runbooks-index",
+       "title": "Runbooks",
+       "detail": "| [[Retry a run]] | A run failed and the cause is fixed |",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "welcome",
+       "title": "Start here",
+       "detail": "This vault holds what the team knows about Tidevann's jobs: how they run, what to do when one",
+       "meta": "Vault",
+       "folder": "Vault"
+      },
+      {
+       "id": "margaret",
+       "title": "margaret",
+       "detail": "Writes the wording of [[send-digest]] and runs the [[Quarter review]].",
+       "meta": "People",
+       "folder": "People"
+      },
+      {
+       "id": "reading",
+       "title": "Reading list",
+       "detail": "- How the scheduler orders queued runs.",
+       "meta": "Vault",
+       "folder": "Vault"
+      }
+     ]
+    }
+   ],
+   "facets": [
+    {
+     "id": "kind",
+     "title": "Found",
+     "values": [
+      {
+       "value": "names",
+       "label": "In the name",
+       "count": 2
+      },
+      {
+       "value": "text",
+       "label": "In the text",
+       "count": 28
+      }
+     ]
+    },
+    {
+     "id": "folder",
+     "title": "Folder",
+     "values": [
+      {
+       "value": "Daily",
+       "label": null,
+       "count": 6
+      },
+      {
+       "value": "Jobs",
+       "label": null,
+       "count": 5
+      },
+      {
+       "value": "Runbooks",
+       "label": null,
+       "count": 5
+      },
+      {
+       "value": "Meetings",
+       "label": null,
+       "count": 3
+      },
+      {
+       "value": "Projects / Services",
+       "label": null,
+       "count": 3
+      },
+      {
+       "value": "Vault",
+       "label": null,
+       "count": 3
+      },
+      {
+       "value": "Projects",
+       "label": null,
+       "count": 2
+      },
+      {
+       "value": "People",
+       "label": null,
+       "count": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "query": "the",
+   "chosen": {
+    "folder": [
+     "Runbooks",
+     "Jobs"
+    ]
+   },
+   "groups": [
+    {
+     "kind": "names",
+     "title": "In the name",
+     "total": 1,
+     "results": [
+      {
+       "id": "rotate",
+       "title": "Rotate the api keys",
+       "detail": "# Rotate the api keys",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "title": "In the text",
+     "total": 10,
+     "results": [
+      {
+       "id": "nightly-export",
+       "title": "nightly-export",
+       "detail": "Runs every night at 02:00 on the [[worker]] for [[larkspur]].",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "oncall",
+       "title": "On call",
+       "detail": "This week: [[grace]], then [[linus]].",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "sync-inventory",
+       "title": "sync-inventory",
+       "detail": "Syncs the inventory from the warehouses into [[harbor]] every hour.",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "send-digest",
+       "title": "send-digest",
+       "detail": "Mails each project's owner a summary of the week every Monday at 09:00, from what",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "import-orders",
+       "title": "import-orders",
+       "detail": "Imports the day's orders for [[juniper]] from the shops' files.",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "retry",
+       "title": "Retry a run",
+       "detail": "A failed run can start again from its failed step once the cause is fixed.",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "rebuild-index",
+       "title": "rebuild-index",
+       "detail": "Rebuilds the search index of [[juniper]] every Sunday. Takes about forty minutes and holds the",
+       "meta": "Jobs",
+       "folder": "Jobs"
+      },
+      {
+       "id": "stuck",
+       "title": "Scheduler is stuck",
+       "detail": "Runs stay queued past their time and nothing starts.",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "restore",
+       "title": "Restore an export",
+       "detail": "The larkspur bucket keeps a week of exports. To bring one back:",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      },
+      {
+       "id": "runbooks-index",
+       "title": "Runbooks",
+       "detail": "| [[Retry a run]] | A run failed and the cause is fixed |",
+       "meta": "Runbooks",
+       "folder": "Runbooks"
+      }
+     ]
+    }
+   ],
+   "facets": [
+    {
+     "id": "kind",
+     "title": "Found",
+     "values": [
+      {
+       "value": "names",
+       "label": "In the name",
+       "count": 1
+      },
+      {
+       "value": "text",
+       "label": "In the text",
+       "count": 10
+      }
+     ]
+    },
+    {
+     "id": "folder",
+     "title": "Folder",
+     "values": [
+      {
+       "value": "Daily",
+       "label": null,
+       "count": 6
+      },
+      {
+       "value": "Runbooks",
+       "label": null,
+       "count": 6
+      },
+      {
+       "value": "Jobs",
+       "label": null,
+       "count": 5
+      },
+      {
+       "value": "Meetings",
+       "label": null,
+       "count": 4
+      },
+      {
+       "value": "Projects / Services",
+       "label": null,
+       "count": 3
+      },
+      {
+       "value": "Vault",
+       "label": null,
+       "count": 3
+      },
+      {
+       "value": "Projects",
+       "label": null,
+       "count": 2
+      },
+      {
+       "value": "People",
+       "label": null,
+       "count": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "query": "api",
+   "chosen": {
+    "kind": [
+     "names"
+    ],
+    "folder": [
+     "Projects / Services"
+    ]
+   },
+   "groups": [
+    {
+     "kind": "names",
+     "title": "In the name",
+     "total": 1,
+     "results": [
+      {
+       "id": "api",
+       "title": "api",
+       "detail": "# api",
+       "meta": "Projects / Services",
+       "folder": "Projects / Services"
+      }
+     ]
+    }
+   ],
+   "facets": [
+    {
+     "id": "kind",
+     "title": "Found",
+     "values": [
+      {
+       "value": "names",
+       "label": "In the name",
+       "count": 1
+      },
+      {
+       "value": "text",
+       "label": "In the text",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "id": "folder",
+     "title": "Folder",
+     "values": [
+      {
+       "value": "Projects / Services",
+       "label": null,
+       "count": 1
+      },
+      {
+       "value": "Runbooks",
+       "label": null,
+       "count": 1
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "queryWords": [
+  [
+   "runs"
+  ],
+  [
+   "ab"
+  ],
+  []
+ ],
+ "queryRanges": [
+  {
+   "start": 0,
+   "end": 2
+  },
+  {
+   "start": 8,
+   "end": 11
+  },
+  {
+   "start": 13,
+   "end": 16
+  }
+ ],
+ "today": {
+  "day": "2026-11-18",
+  "yesterday": "2026-11-17",
+  "long": "Wednesday, 18 November 2026",
+  "template": "# 2026-11-18\n\n## Plan\n\n- [ ]\n\n## Log\n\n## Notes\n\n#journal\nWednesday, 18 November 2026",
+  "clock": "09:05",
+  "dateOf": "Friday, 1 January 2027",
+  "invalid": "Invalid Date"
+ },
+ "names": {
+  "free": [
+   "Untitled 3",
+   "New"
+  ],
+  "bad": [
+   "A note needs a name.",
+   "A name cannot hold [ ] | or #, which links read.",
+   "A note named Grace is already in the vault.",
+   null
+  ]
+ },
+ "words": 4,
+ "wiki": [
+  {
+   "links": [
+    {
+     "target": "Retry a run",
+     "heading": null,
+     "label": null,
+     "from": 4,
+     "to": 19
+    },
+    {
+     "target": "nightly-export",
+     "heading": "Steps",
+     "label": "the steps",
+     "from": 24,
+     "to": 58
+    }
+   ],
+   "tags": [],
+   "tagsIn": [],
+   "code": "See [[Retry a run]] and [[nightly-export#Steps|the steps]]."
+  },
+  {
+   "links": [
+    {
+     "target": "Spaced",
+     "heading": null,
+     "label": null,
+     "from": 0,
+     "to": 13
+    },
+    {
+     "target": "a",
+     "heading": null,
+     "label": null,
+     "from": 32,
+     "to": 38
+    },
+    {
+     "target": "b",
+     "heading": null,
+     "label": null,
+     "from": 39,
+     "to": 45
+    },
+    {
+     "target": "c",
+     "heading": "h",
+     "label": "w",
+     "from": 46,
+     "to": 55
+    }
+   ],
+   "tags": [],
+   "tagsIn": [],
+   "code": "[[ Spaced  ]] [[#Heading only]] [[a|]] [[b#]] [[c#h|w]]"
+  },
+  {
+   "links": [
+    {
+     "target": "nested",
+     "heading": null,
+     "label": null,
+     "from": 1,
+     "to": 11
+    },
+    {
+     "target": "ok",
+     "heading": null,
+     "label": null,
+     "from": 38,
+     "to": 44
+    }
+   ],
+   "tags": [],
+   "tagsIn": [],
+   "code": "[[[nested]]] [[one\ntwo]] [[x]y]] [[]] [[ok]]"
+  },
+  {
+   "links": [
+    {
+     "target": "x",
+     "heading": null,
+     "label": null,
+     "from": 31,
+     "to": 36
+    },
+    {
+     "target": "yes",
+     "heading": null,
+     "label": null,
+     "from": 47,
+     "to": 54
+    }
+   ],
+   "tags": [],
+   "tagsIn": [],
+   "code": "Code                  and `    [[x]]    ` then [[yes]]"
+  },
+  {
+   "links": [
+    {
+     "target": "after",
+     "heading": null,
+     "label": null,
+     "from": 19,
+     "to": 28
+    },
+    {
+     "target": "out",
+     "heading": null,
+     "label": null,
+     "from": 53,
+     "to": 60
+    }
+   ],
+   "tags": [],
+   "tagsIn": [],
+   "code": "   \n          \n   \n[[after]]\n    \n         \n   \n    \n[[out]]"
+  },
+  {
+   "links": [
+    {
+     "target": "l",
+     "heading": "nottag",
+     "label": null,
+     "from": 81,
+     "to": 94
+    }
+   ],
+   "tags": [
+    {
+     "tag": "tag",
+     "from": 0,
+     "to": 4
+    },
+    {
+     "tag": "two-words",
+     "from": 15,
+     "to": 25
+    },
+    {
+     "tag": "a1",
+     "from": 29,
+     "to": 32
+    },
+    {
+     "tag": "paren",
+     "from": 34,
+     "to": 40
+    },
+    {
+     "tag": "quote",
+     "from": 43,
+     "to": 49
+    },
+    {
+     "tag": "with/slash",
+     "from": 56,
+     "to": 67
+    },
+    {
+     "tag": "ünïcode",
+     "from": 68,
+     "to": 76
+    },
+    {
+     "tag": "_u",
+     "from": 77,
+     "to": 80
+    }
+   ],
+   "tagsIn": [
+    "tag",
+    "two-words",
+    "a1",
+    "paren",
+    "quote",
+    "with/slash",
+    "ünïcode",
+    "_u"
+   ],
+   "code": "#tag at start, #two-words #1 #a1 (#paren) \"#quote\" x#no #with/slash #ünïcode #_u [[l #nottag]]        "
+  },
+  {
+   "links": [],
+   "tags": [
+    {
+     "tag": "tag",
+     "from": 10,
+     "to": 14
+    },
+    {
+     "tag": "indented",
+     "from": 17,
+     "to": 26
+    },
+    {
+     "tag": "a",
+     "from": 27,
+     "to": 29
+    }
+   ],
+   "tagsIn": [
+    "tag",
+    "indented",
+    "a"
+   ],
+   "code": "# Heading\n#tag\n  #indented #a#b"
+  }
+ ],
+ "query": [
+  {
+   "start": 6,
+   "query": "Ret"
+  },
+  null,
+  {
+   "start": 2,
+   "query": "a"
+  }
+ ],
+ "mentions": [
+  [
+   {
+    "from": 0,
+    "to": 14
+   },
+   {
+    "from": 20,
+    "to": 34
+   }
+  ],
+  [
+   {
+    "from": 0,
+    "to": 5
+   },
+   {
+    "from": 30,
+    "to": 35
+   }
+  ],
+  []
+ ],
+ "headings": [
+  [
+   {
+    "id": "title",
+    "label": "Title",
+    "level": 1
+   },
+   {
+    "id": "steps",
+    "label": "Steps",
+    "level": 2
+   },
+   {
+    "id": "sub-bold-code",
+    "label": "Sub bold code",
+    "level": 3
+   },
+   {
+    "id": "text",
+    "label": "Text",
+    "level": 1
+   },
+   {
+    "id": "other",
+    "label": "Other",
+    "level": 2
+   },
+   {
+    "id": "steps-1",
+    "label": "Steps",
+    "level": 2
+   },
+   {
+    "id": "steps-2",
+    "label": "Steps",
+    "level": 2
+   },
+   {
+    "id": "deep-link",
+    "label": "Deep link",
+    "level": 4
+   },
+   {
+    "id": "",
+    "label": "",
+    "level": 1
+   },
+   {
+    "id": "-1",
+    "label": "#",
+    "level": 1
+   },
+   {
+    "id": "trailing",
+    "label": "trailing",
+    "level": 2
+   }
+  ]
+ ],
+ "headingsDefault": [
+  [
+   {
+    "id": "steps",
+    "label": "Steps",
+    "level": 2
+   },
+   {
+    "id": "sub-bold-code",
+    "label": "Sub bold code",
+    "level": 3
+   },
+   {
+    "id": "other",
+    "label": "Other",
+    "level": 2
+   },
+   {
+    "id": "steps-1",
+    "label": "Steps",
+    "level": 2
+   },
+   {
+    "id": "steps-2",
+    "label": "Steps",
+    "level": 2
+   },
+   {
+    "id": "trailing",
+    "label": "trailing",
+    "level": 2
+   }
+  ]
+ ],
+ "renamed": "[[New]] [[New#H|w]] [[Older]] [[New]]",
+ "around": [
+  "short line",
+  "…xxxxxxxxxxxxxxxxxxxxxxxxxxxxx word yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy…",
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb…"
+ ],
+ "collate": [
+  [
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   0,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   0,
+   1,
+   -1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   -1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   -1,
+   1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   0,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   -1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   -1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   -1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   0,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   0,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   0,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   0,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   0
+  ]
+ ],
+ "collatePlain": [
+  [
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   0,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   0,
+   1,
+   -1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   -1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   -1,
+   1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   -1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   0,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   0,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   0,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   0,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   0,
+   1,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   1,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   0,
+   -1
+  ],
+  [
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   1,
+   1,
+   1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   -1,
+   1,
+   0
+  ]
+ ],
+ "collateList": [
+  "a",
+  "A",
+  "b",
+  "B",
+  "a-b",
+  "a b",
+  "ab",
+  "a_b",
+  "a:b",
+  "a.b",
+  "item 2",
+  "item 10",
+  "Item 2",
+  "x9",
+  "x10",
+  "x09",
+  "2026-11-05",
+  "2026-11-17",
+  "10",
+  "9",
+  "Zebra",
+  "apple",
+  "#tag",
+  "(x)",
+  "",
+  "Start here",
+  "Runbooks",
+  "Vault",
+  "Projects / Services",
+  "nightly-export",
+  "Incident review: sync-inventory",
+  "api",
+  "Api"
+ ]
+}
