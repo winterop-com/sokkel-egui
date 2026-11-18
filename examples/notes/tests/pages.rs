@@ -30,6 +30,8 @@ fn every_screen() {
         ("notes_note", "note/welcome"),
         ("notes_daily", "daily"),
         ("notes_tags", "tags"),
+        ("notes_search", "search"),
+        ("notes_search_found", "search/export"),
     ] {
         let mut harness = render(path);
         results.add(harness.try_snapshot(name));

@@ -5,52 +5,14 @@
 use std::collections::{BTreeMap, HashMap};
 use std::ops::Range;
 
+use sokkel_egui::Icon;
+
 use crate::model::{is_space, locale_compare, lowercase, trim};
 use crate::vault::{Vault, line_around};
 
-/// One thing a search found.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SearchResult {
-    pub id: String,
-    pub title: String,
-    /// The line under the title: where it lives, what it is, when it last changed.
-    pub detail: Option<String>,
-    /// A quiet fact at the row's end, such as a state or a time.
-    pub meta: Option<String>,
-    /// Whether it is a daily note, drawn with a calendar where another note has a page.
-    pub daily: bool,
-    /// The result's value for each of the app's facets, such as `folder: Runbooks`.
-    pub facets: BTreeMap<String, String>,
-}
-
-/// The results of one kind, under that kind's heading.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SearchGroup {
-    /// The kind's key, the value the kind facet filters on.
-    pub kind: String,
-    /// The kind's heading.
-    pub title: String,
-    pub results: Vec<SearchResult>,
-    /// How many of this kind match in all, when more match than are listed.
-    pub total: Option<usize>,
-}
-
-/// One value of a facet with how many results carry it.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SearchFacetValue {
-    pub value: String,
-    /// What the value is called; the value itself otherwise.
-    pub label: Option<String>,
-    pub count: usize,
-}
-
-/// A facet the results page filters by: the kind, or one of the app's, such as the folder.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SearchFacet {
-    pub id: String,
-    pub title: String,
-    pub values: Vec<SearchFacetValue>,
-}
+pub use sokkel_egui::{
+    KIND_FACET, SearchChosen, SearchFacet, SearchFacetValue, SearchGroup, SearchResult, toggle_chosen,
+};
 
 /// One of the app's own facets, as `countFacets` is given it: its id, title and the labels of its
 /// values.
@@ -60,12 +22,6 @@ pub struct FacetSpec {
     pub title: String,
     pub labels: HashMap<String, String>,
 }
-
-/// The facet a results page builds from the groups themselves: one value per kind.
-pub const KIND_FACET: &str = "kind";
-
-/// The values chosen in each facet, by the facet's id; a facet with none chosen keeps every result.
-pub type SearchChosen = BTreeMap<String, Vec<String>>;
 
 /// The words of a query, lower-cased, without repeats; a word inside another is dropped.
 pub fn query_words(query: &str) -> Vec<String> {
@@ -223,19 +179,6 @@ pub fn count_facets(
     std::iter::once(kind).chain(own).collect()
 }
 
-/// The chosen values with one value of one facet turned on or off.
-pub fn toggle_chosen(chosen: &SearchChosen, facet: &str, value: &str) -> SearchChosen {
-    let mut next = chosen.clone();
-    let values = next.entry(facet.to_owned()).or_default();
-    match values.iter().position(|one| one == value) {
-        Some(at) => {
-            values.remove(at);
-        }
-        None => values.push(value.to_owned()),
-    }
-    next
-}
-
 /// What a search of the vault found: its groups narrowed by the choices, and its facets.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct VaultSearch {
@@ -277,7 +220,11 @@ pub fn search_vault(vault: &Vault, query: &str, chosen: &SearchChosen) -> VaultS
                 None => place.clone(),
             }),
             meta: Some(place.clone()),
-            daily: note.day.is_some(),
+            icon: Some(if note.day.is_some() {
+                Icon::CalendarDays
+            } else {
+                Icon::FileText
+            }),
             facets: BTreeMap::from([("folder".to_owned(), place)]),
         };
         if words.iter().all(|word| title.contains(word.as_str())) {

@@ -46,6 +46,9 @@ pub struct NotesApp {
     pub tag_query: String,
     /// A heading of the note shown to scroll to, once drawn.
     pub reveal: Option<String>,
+    /// What the search page searches for, and the facets' values chosen there.
+    pub search_query: String,
+    pub search_chosen: sokkel_egui::SearchChosen,
     /// The tab shown in the panel beside a note.
     pub panel_tab: usize,
     started: i64,
@@ -84,6 +87,8 @@ impl NotesApp {
             quick: String::new(),
             tables: Default::default(),
             panel_tab: 0,
+            search_query: String::new(),
+            search_chosen: Default::default(),
             reveal: None,
             tag_query: String::new(),
             daily_month: None,
@@ -112,6 +117,11 @@ impl NotesApp {
             .collect();
         if self.path.is_empty() {
             self.path.push("notes".into());
+        }
+        // the search page opens on the query its address names
+        if self.path[0] == "search" {
+            self.search_query = self.path.get(1).cloned().unwrap_or_default();
+            self.search_chosen = Default::default();
         }
     }
 
@@ -299,6 +309,7 @@ impl NotesApp {
                     self.note_page(ui, &id);
                 }
                 "daily" => Page::scroll(ui, |ui| self.daily(ui)),
+                "search" => Page::scroll(ui, |ui| self.search_page(ui)),
                 "tags" => {
                     let tag = second.clone();
                     Page::scroll(ui, |ui| self.tags(ui, tag.as_deref()));

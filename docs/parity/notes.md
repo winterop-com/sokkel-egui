@@ -38,10 +38,14 @@ shot into `parity/notes/web/` by `bun scripts/parity.ts web notes`.
 - Tags: every tag with how many notes carry it, filtered, the most used as bars (`BarList` takes
   a closure to write a value), and one tag's notes (`Cell::TagName`, new in the library). A list's
   chevron column keeps the column gap before it, as the web's grid.
+- Search: every note holding the words, in its name or its text, with the line each says them in,
+  narrowed by kind and folder (`SearchResults`, new in the library, with the search's shapes as
+  the web's `lib/search`: `SearchResult`, `SearchGroup`, `SearchFacet`, `SearchChosen`); the
+  address follows the query.
 
 ## Open
 
-- Graph, Search and Settings.
+- Graph and Settings.
 - The dialogs that rename, move and delete, and New folder; the palette and the switcher.
 - QuickAdd says nothing yet when a title is already in the vault (the web's `validate`).
 - The web's note editor draws in the sans face at c95b8911; that is a sokkel-ui bug (its lean

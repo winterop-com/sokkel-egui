@@ -2962,7 +2962,7 @@ fn group_head(
 }
 
 /// A count with its thousands grouped by commas, as `toLocaleString('en-US')` writes it.
-fn thousands(count: usize) -> String {
+pub(crate) fn thousands(count: usize) -> String {
     let digits = count.to_string();
     let mut out = String::new();
     for (i, digit) in digits.chars().enumerate() {
