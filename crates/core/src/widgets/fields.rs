@@ -42,6 +42,9 @@ pub fn toolbar(ui: &mut Ui, start: impl FnOnce(&mut Ui), end: impl FnOnce(&mut U
     );
 }
 
+/// Why what is typed is refused, or none to take it.
+pub type Refuse<'a> = Box<dyn Fn(&str) -> Option<String> + 'a>;
+
 /// A field that adds what is typed into it on Enter, a plus at its start: the quickest way to add a
 /// row. Returns the text added this frame, trimmed, and empties itself.
 pub struct QuickAdd<'a> {
@@ -49,6 +52,7 @@ pub struct QuickAdd<'a> {
     placeholder: String,
     width: f32,
     id: egui::Id,
+    validate: Option<Refuse<'a>>,
 }
 
 impl<'a> QuickAdd<'a> {
@@ -58,7 +62,15 @@ impl<'a> QuickAdd<'a> {
             placeholder: "Add".into(),
             width: 256.0,
             id: egui::Id::unique(id),
+            validate: None,
         }
+    }
+
+    /// Refuses what is typed with why, as the web's `validate`: the field keeps the words, its edge
+    /// turns critical and a mark at its end says why while it is pointed at; typing clears it.
+    pub fn validate(mut self, validate: impl Fn(&str) -> Option<String> + 'a) -> Self {
+        self.validate = Some(Box::new(validate));
+        self
     }
 
     pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
@@ -93,14 +105,46 @@ impl<'a> QuickAdd<'a> {
             &self.placeholder,
             Self::field_id(self.id),
         );
+        let error_id = self.id.with("refused");
+        if response.changed() {
+            ui.data_mut(|d| d.remove::<String>(error_id));
+        }
         let entered = response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
         let added = self.text.trim().to_owned();
+        let mut out = None;
         if entered && !added.is_empty() {
-            self.text.clear();
             response.request_focus();
-            return Some(added);
+            match self.validate.as_ref().and_then(|v| v(&added)) {
+                Some(refusal) => {
+                    ui.data_mut(|d| d.insert_temp(error_id, refusal));
+                }
+                None => {
+                    ui.data_mut(|d| d.remove::<String>(error_id));
+                    self.text.clear();
+                    out = Some(added);
+                }
+            }
         }
-        None
+        if let Some(refusal) = ui.data(|d| d.get_temp::<String>(error_id)) {
+            // the critical edge, and the mark at the end that says why
+            ui.painter().rect_stroke(
+                rect,
+                t.radius("control"),
+                Stroke::new(1.0, t.color("critical")),
+                egui::StrokeKind::Inside,
+            );
+            let mark = Rect::from_center_size(pos2(rect.right() - 18.0, rect.center().y), vec2(20.0, 20.0));
+            let hit = ui.interact(mark, self.id.with("mark"), Sense::hover());
+            icons::paint(
+                ui.painter(),
+                mark.center(),
+                Icon::CircleAlert,
+                16.0,
+                t.color("critical-ink"),
+            );
+            hit.on_hover_text(refusal);
+        }
+        out
     }
 }
 

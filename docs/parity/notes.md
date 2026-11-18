@@ -20,7 +20,8 @@ shot into `parity/notes/web/` by `bun scripts/parity.ts web notes`.
   pointed at, its room kept so a long name is cut short as the web's is: a folder's New note, New
   folder, Rename, Move to and Delete; a note's Open, Rename, Move to and Delete.
 - All notes and a folder: the header with the folder's buttons, the field that makes a note, and
-  the notes newest change first in a list table (`Cell::IconName`, new in the library: a note's
+  the notes newest change first in a list table (a name already in the vault refused in place,
+  `QuickAdd::validate`, new in the library) (`Cell::IconName`, new in the library: a note's
   kind as its icon, then its name), sorted, reordered by hand when the vault's order is manual,
   each row's menu.
 - A note: the open notes as tabs over it (`DocumentTabs`, with Recent and New note at the strip's
@@ -67,6 +68,5 @@ shot into `parity/notes/web/` by `bun scripts/parity.ts web notes`.
   the library: the arrows, Enter, Escape twice, and a press outside).
 
 ## Open
-- QuickAdd says nothing yet when a title is already in the vault (the web's `validate`).
 - The web's note editor draws in the sans face at c95b8911; that is a sokkel-ui bug (its lean
   stylesheet dropped `--font-mono`), so the egui editor keeps the mono face.

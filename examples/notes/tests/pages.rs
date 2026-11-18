@@ -110,3 +110,23 @@ fn the_top_search() {
     harness.run_steps(4);
     results.add(harness.try_snapshot("notes_top_search"));
 }
+
+#[test]
+fn a_name_already_taken() {
+    use egui_kittest::kittest::Queryable;
+    let mut results = SnapshotResults::new();
+    let mut harness = render("notes");
+    let input = || eframe::egui::accesskit::Role::TextInput;
+    let field = harness.query_all_by_role_and_label(input(), "New note").next().unwrap();
+    field.click();
+    harness.run_steps(1);
+    harness
+        .query_all_by_role_and_label(input(), "New note")
+        .next()
+        .unwrap()
+        .type_text("Ideas");
+    harness.run_steps(1);
+    harness.key_press(eframe::egui::Key::Enter);
+    harness.run_steps(3);
+    results.add(harness.try_snapshot("notes_quick_add_taken"));
+}

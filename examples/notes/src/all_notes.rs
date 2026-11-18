@@ -125,6 +125,11 @@ impl NotesApp {
         };
         let made = QuickAdd::new("new-note", &mut self.quick)
             .placeholder(placeholder)
+            .validate(|title| {
+                vault
+                    .resolve(title)
+                    .map(|_| format!("{} is already in the vault.", title.trim()))
+            })
             .width(ui.available_width())
             .show(ui);
         let columns = note_columns();
