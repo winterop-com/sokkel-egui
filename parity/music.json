@@ -1,0 +1,106 @@
+{
+    "example": "examples/music/web/src",
+    "ported": {
+        "commit": "c95b8911",
+        "files": {
+            "App.tsx": "21675330393958c3e375a230a21a3e2608daed26",
+            "Music.tsx": "e0f6bdcc4aa2b94bf9aa3df63522dffd7f8e92eb",
+            "app.css": "db3396c1a0afd9ad8617585356f93eead9ced45d",
+            "catalog.ts": "5be3d59f356a229eb368f4da44ebf060de09d736",
+            "data.ts": "20177fc2a5612a9ee4535e322c3002fc7cec031b",
+            "downloads.ts": "40854e89a4eaee23e7a39588a2db119f2613a86a",
+            "look.ts": "2024518c32fd4fe967f1ceb1ee9112a858f5658a",
+            "lyrics.ts": "4e19f78ea5f0945c432d6a2d8a1b2eb28a6ed4e1",
+            "main.tsx": "c1cac76f9bd94aa787e8357a3eaf9429303646f9",
+            "pages/Album.tsx": "af5b947d59a16a8c7ea8b52b9eef871c19f60eeb",
+            "pages/Albums.tsx": "724b5f3ce58ffb6cec4ad3825769b6c3108f9e4b",
+            "pages/Artist.tsx": "d91efad51228bc1b532836314a99b18868213251",
+            "pages/Artists.tsx": "f02490e4f629c89c151d8b9b93042ec415f51ec0",
+            "pages/Downloads.tsx": "619371742b803e14626af43e10ffee7a3afde214",
+            "pages/Favorites.tsx": "136367d6907c38b9dd0a707dec9014eb0503c676",
+            "pages/Playlists.tsx": "131a8601ac5ba71b2da73169e3828a5f93ed7317",
+            "pages/Radio.tsx": "83b21f259157a3c02098ad4e60c5985d14b9e9f6",
+            "pages/Results.tsx": "d6ebe5fa886c2c2dd934b184cb30aaad4766ea59",
+            "pages/Settings.tsx": "997d4de46973a95c05ae45cdf3c622f6f2ed6b6c",
+            "pages/Tracks.tsx": "d7ccd01f71770502df4333c5e72eff192fb36b68",
+            "parts/Player.tsx": "d0db0e6ffa0f5548ef3441974162a97b05852d4d",
+            "parts/QueuePanel.tsx": "07c18de7e5aa56c38e82bcb4d40c0a40566d5adc",
+            "parts/actions.tsx": "a8b749d8fed06aaa2896ab2be0f121b028b7456e",
+            "parts/dialogs.tsx": "ff1812b4fb73c6e503e585279b8d5203c34f2c81",
+            "parts/songs.tsx": "39af93c2208b6c99e868891d2dd6faca5f265416",
+            "player.ts": "26137ef8bb733ed41841e6b7f7958d74b4506717",
+            "search.tsx": "106cfea2944638d0f38e7ab095069439c80e24d3",
+            "synth.ts": "3c92b0f33cba743e7ed80eb9d5d09e3bf178da55",
+            "themes.ts": "499346635f872ac2f588fc1ea7c6e8d01b7d7d1f"
+        }
+    },
+    "parts": {},
+    "screens": [
+        {
+            "name": "music_albums",
+            "route": "albums",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "music_album",
+            "route": "albums/salt-and-cedar",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "music_artists",
+            "route": "artists",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "music_artist",
+            "route": "artists/eelgrass",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "music_tracks",
+            "route": "tracks",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "music_playlists",
+            "route": "playlists",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "music_radio",
+            "route": "radio",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "music_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "c95b8911dd02bf7925e96b62c93fc8a934d57800"
+}
