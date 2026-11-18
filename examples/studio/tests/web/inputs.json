@@ -1,0 +1,586 @@
+{
+    "now": 1794992400000,
+    "queries": [
+        "SELECT * FROM jobs",
+        "SELECT pipeline, count(*) AS runs, sum(duration_ms) AS total, min(started_at) first, max(started_at) AS last FROM runs GROUP BY pipeline ORDER BY runs DESC, pipeline",
+        "SELECT DISTINCT triggered_by FROM runs ORDER BY 1",
+        "SELECT id, upper(pipeline) AS p, length(pipeline), substr(started_at, 6, 5) AS day, date(started_at) d, replace(state, 'e', '[$&$$]') FROM runs WHERE pipeline LIKE '%export' AND id BETWEEN 4010 AND 4080 ORDER BY id LIMIT 5 OFFSET 2",
+        "SELECT r.id, s.step FROM runs r LEFT JOIN steps s ON s.run_id = r.id AND s.state = 'failed' WHERE r.id < 4012",
+        "SELECT CASE WHEN duration_ms > 5000 THEN 'slow' WHEN duration_ms IS NULL THEN 'none' ELSE 'fast' END AS speed, count(*) FROM runs GROUP BY CASE WHEN duration_ms > 5000 THEN 'slow' WHEN duration_ms IS NULL THEN 'none' ELSE 'fast' END ORDER BY 2 DESC",
+        "SELECT state, count(*) n FROM steps GROUP BY state HAVING n > 50 ORDER BY n",
+        "SELECT id, state FROM runs WHERE state IN ('failed', 'cancelled') AND NOT triggered_by = 'scheduler'",
+        "SELECT -duration_ms / 1000 AS s, duration_ms % 7, 'run ' || id, id / 0, 7 % 0 FROM runs WHERE id = 4001",
+        "SELECT round(avg(duration_ms), 2), round(avg(duration_ms) / 3, 1), abs(-3), coalesce(null, 'x'), count(distinct pipeline), sum(rows) FROM runs, steps",
+        "SELECT round(avg(duration_ms), 2), abs(-3), coalesce(null, 'x'), count(distinct pipeline) FROM runs",
+        "SELECT * FROM runs r JOIN jobs j ON j.name = r.pipeline LIMIT 2",
+        "SELECT r.* FROM runs r LIMIT 1",
+        "SELECT count(*), max(id), min(duration_ms) FROM runs WHERE 1 = 0",
+        "SELECT id, started_at FROM runs WHERE started_at > '2026-11-08' ORDER BY started_at LIMIT 3",
+        "SELECT name FROM jobs WHERE name LIKE 'NIGHTLY%' OR name LIKE '_ync-*inventory' OR name LIKE 'send_digest'",
+        "SELECT 'æøå' || name AS x, length('ø𝄞'), upper('straße'), lower('ÆØÅ') FROM jobs LIMIT 1",
+        "SELECT owner, count(*) FROM jobs GROUP BY owner ORDER BY owner",
+        "SELECT j.owner, s.kind, avg(s.rows) AS rows FROM steps s JOIN runs r ON r.id = s.run_id JOIN jobs j ON j.name = r.pipeline WHERE s.rows IS NOT NULL GROUP BY j.owner, s.kind ORDER BY j.owner, rows DESC",
+        "SELECT id, duration_ms FROM runs ORDER BY duration_ms DESC, id LIMIT 4",
+        "SELECT id FROM runs WHERE duration_ms NOT BETWEEN 1000 AND 9000 AND state != 'succeeded' ORDER BY id;",
+        "SELECT true, false, null, 1.5 + 1, '3' * 2, 'a' < 'B', 2 = '2', true = 1 FROM jobs LIMIT 1",
+        "SELECT state, max(triggered_by), min(pipeline) FROM runs GROUP BY state ORDER BY count(*) DESC",
+        "SELECT \"id\" FROM runs WHERE NOT id > 4002 /* the first three */",
+        "",
+        "SELECT",
+        "SELECT * FROM nope",
+        "SELECT state FROM runs r JOIN steps s ON s.run_id = r.id",
+        "SELECT nope FROM runs",
+        "SELECT count(*) FROM runs WHERE count(*) > 1",
+        "SELECT * FROM runs LIMIT x",
+        "SELECT 'a",
+        "SELECT * FROM runs; SELECT 1",
+        "SELECT foo(1) FROM runs",
+        "SELECT * FROM runs ORDER BY 9",
+        "SELECT x.* FROM runs",
+        "SELECT # FROM runs",
+        "SELECT id FROM runs WHERE pipeline LIKE '*x'",
+        "SELECT sum(*) FROM runs",
+        "SELECT * FROM runs a JOIN steps a ON 1",
+        "/* open",
+        "SELECT id FROM runs WHERE id NOT 5",
+        "SELECT 'ø', nope FROM runs",
+        "SELECT id FROM runs GROUP BY id HAVING nope > 1",
+        "SELECT \"id FROM runs",
+        "SELECT id FROM runs r WHERE r.nope = 1",
+        "SELECT id FROM runs WHERE x.id = 1",
+        "SELECT CASE END FROM runs",
+        "SELECT id FROM runs LEFT steps",
+        "SELECT id FROM runs ORDER BY",
+        "SELECT min(*) FROM runs",
+        "SELECT count(id, state) FROM runs",
+        "SELECT id FROM runs WHERE id IN (4000",
+        "select ID from RUNS as R where R.ID < 4002 order by 1 desc"
+    ],
+    "yaml": [
+        "a: 1\n# c   \nb: 2\n",
+        "a: |  # hc\n  x\n",
+        "a: x\n   # more indented\nb: 2\n",
+        "a: [a, {k: v}, 'q', \"d\"]\n",
+        "a: x #c\n",
+        "a: x#c\n",
+        "a: 'x'#c\n",
+        "a:\n  -   b\n",
+        "k: \"\\u00e9\\x41\\t\\\\ end \"\n",
+        "k: 'a\n\n  b  \n  c'\n",
+        "k: |2\n    x\n   y\n",
+        "k: >\n  a\n  b\n\n  c\n    more\n  d\n",
+        "- |\n  a\n- b\n",
+        "k: x:y\nz: a:b c\n",
+        "k: -1\nj: - x\n",
+        "k: 0x1F\nl: 0o17\nm: 1e3\nn: .inf\no: ~\np: True\nq: 1_000\nr: +5\ns: 1.0\nt: 1.50\nu: -0\nv: 12345678901234567890\nw: .5\nx: 5.\n",
+        "a:\n  # first\n  b: 1\n",
+        "s:\n  # first\n  - x\n",
+        "a:\n  b: 1\n\n  # c\nd: 2\n",
+        "a:\n  b: 1\n  # c\n\nd: 2\n",
+        "a:\n  b: 1\n  # c1\n# c2\nd: 2\n",
+        "a:\n  b: 1\n# x\n  c: 2\n",
+        "s:\n  - a\n\n  - b\n",
+        "a: 1\n#\nb: 2\n",
+        "# a\n# b\n\n# c\nk: 1\n",
+        "s:\n- a\n# c\n- b\n",
+        "k:\n  - a\n  -\n  - c\n",
+        "k: x\n\n",
+        "k: x\n\n\n# end\n\n",
+        "a:\n  b:\n    c: 1\n  # at b level\nd: 2\n",
+        "- - a\n  - b\n- c\n",
+        "k: plain\n  more\n\n  after blank\n",
+        "a:\n  b: 1\n  # in a\nc: 2\n",
+        "a:\n  b: 1\n# at root\nc: 2\n",
+        "s:\n  - x\n  # in s\nt: 1\n",
+        "a: # on key\n  b: 1\n",
+        "- a # c\n- b\n",
+        "a:\n  - id: x\n    k: v\n    # deep\n  - id: y\n",
+        "a: 1\n\n\nb: 2\n",
+        "a: |\n  text\n\nb: 1\n",
+        "a: >-\n  folded\n  text\n",
+        "---\na: 1\n",
+        "a:\n  b: 1\n  # trailing at end\n",
+        "key: [a, b,]\n",
+        "key: [\n  a,\n  b\n]\n",
+        "k: \"multi\n  line\"\n",
+        "k: v\nk: w\n",
+        "k: v\n\tj: w\n",
+        "k: [a\n",
+        "a: b: c\n",
+        "- a\nb: 1\n",
+        "  a: 1\n b: 2\n",
+        "a:\n  - b\n  c: 1\n",
+        "",
+        "# only comment\n",
+        "name: x\nsteps:\n",
+        "a: 1 # c\n# after\n",
+        "a: 1",
+        "a:\n  b: 1\n  c:\n",
+        "a:   x   \n",
+        "a: 'x' # c\n",
+        "a:\n- b: 1\n  c: 2\n- d\n",
+        "a: |+\n  keep\n\n\nb: 1\n",
+        "a: |-\n  strip\n\nb: 1\n",
+        "a: >\n  one\n   more\n  two\n",
+        "hello\n",
+        "a: \"it's\"\nb: 'say \"hi\"'\nc: \"both ' \\\"\"\nd: \"\"\ne: ''\n",
+        "a: \"long line with a break in the middle\\nand then the rest of it\"\n",
+        "a: 'x'\n'b c': \"d\"\n\"e\": [1, 2.5, true, null]\n",
+        "a: 1\n---\nb: 2\n",
+        "a: {b: 1, b: 2}\n",
+        "a:\n  - b\n   - c\n",
+        "a: \"\\q\"\n",
+        "a: 'never closed\n",
+        "steps:\n  - id: a\n      # odd\n    kind: b\n",
+        "x: [a, # c\n  b]\n",
+        "a: b # c\n  d\n",
+        "a: 1\n...\n"
+    ],
+    "pipelines": [
+        "name: tangled\nproject: harbor\nparams:\n  bucket: harbor-x\n  size: 3\n  flags: [a, 1, null]\nsteps:\n  - id: a\n    kind: fetch\n    needs: [a, ghost]\n    with:\n      url: https://api.example.org/${params.nope}/${params.bucket.x}/${params.}\n  - id: b\n    kind: transform\n    needs: [c]\n    with:\n      script: ${steps.c.rows} ${steps.a.rows} ${steps.b.rows} ${steps.ghost.rows} ${steps.a.bogus} ${steps.a.rows.x} ${run.date} ${run.when} ${run} ${other.x} ${ params.bucket } ${params.toString}\n  - id: c\n    kind: upload\n    needs: [b]\n  - id: a\n    kind: notify\n    retries: 2.5\n  - kind: ghost\n  - just a text\nnote: ${steps.a.rows} and \"${params.size}\"\n",
+        "name: bare\nsteps:\n  - id: one\n    kind: fetch\n    with:\n      url: \"https://x.example.org/${params.x}\"\n",
+        "name: [broken\n",
+        "- a\n- b\n",
+        "name: flowing\nsteps: [{id: a, kind: fetch, with: {url: 'https://api.example.org/'}}, {id: b, kind: upload, needs: [a]}]\n",
+        "# Tidevann's own\nname: øst\ndescription: Grüße – ${params.x}\nparams: {x: 1}\nsteps:\n  # first\n  - id: one # the only one\n    kind: notify\n    with:\n      message: \"ø ${params.x} ${params.y} ${steps.one.rows}\"\n",
+        "steps: 3\n",
+        ""
+    ],
+    "words": [
+        "fetch",
+        "transform",
+        "validate",
+        "notify",
+        "upload",
+        "bucket",
+        "since",
+        "warehouse",
+        "toString",
+        "nothing",
+        "a",
+        "b",
+        "one",
+        "x"
+    ],
+    "freeIds": [
+        [
+            [
+                "fetch"
+            ],
+            "fetch"
+        ],
+        [
+            [
+                "fetch",
+                "fetch-2",
+                "fetch-4"
+            ],
+            "fetch"
+        ],
+        [
+            [],
+            "upload"
+        ]
+    ],
+    "edits": [
+        {
+            "op": "addStep",
+            "file": "harbor-nightly-export",
+            "kind": "notify",
+            "needs": [
+                "upload"
+            ]
+        },
+        {
+            "op": "addStep",
+            "file": "harbor-nightly-export",
+            "kind": "validate",
+            "needs": [
+                "fetch"
+            ],
+            "before": "transform"
+        },
+        {
+            "op": "addStep",
+            "file": "harbor-import-orders",
+            "kind": "transform"
+        },
+        {
+            "op": "addStep",
+            "file": "harbor-import-orders",
+            "kind": "fetch",
+            "needs": [
+                "fetch",
+                "validate"
+            ]
+        },
+        {
+            "op": "addStep",
+            "file": "larkspur-send-digest",
+            "kind": "upload",
+            "needs": [
+                "transform"
+            ],
+            "before": "notify"
+        },
+        {
+            "op": "addStep",
+            "text": "name: empty\n",
+            "kind": "upload"
+        },
+        {
+            "op": "addStep",
+            "text": "",
+            "kind": "fetch"
+        },
+        {
+            "op": "addStep",
+            "text": "name: [broken\n",
+            "kind": "fetch"
+        },
+        {
+            "op": "addStep",
+            "text": "name: x\nsteps: [{id: a, kind: fetch}]\n",
+            "kind": "transform",
+            "needs": [
+                "a"
+            ]
+        },
+        {
+            "op": "removeSteps",
+            "file": "harbor-nightly-export",
+            "ids": [
+                "validate"
+            ]
+        },
+        {
+            "op": "removeSteps",
+            "file": "juniper-sync-inventory",
+            "ids": [
+                "fetch",
+                "upload"
+            ]
+        },
+        {
+            "op": "removeSteps",
+            "text": "name: x\n",
+            "ids": [
+                "a"
+            ]
+        },
+        {
+            "op": "connect",
+            "file": "larkspur-send-digest",
+            "source": "upload",
+            "target": "notify"
+        },
+        {
+            "op": "connect",
+            "file": "larkspur-send-digest",
+            "source": "fetch",
+            "target": "fetch"
+        },
+        {
+            "op": "connect",
+            "file": "harbor-nightly-export",
+            "source": "fetch",
+            "target": "fetch2"
+        },
+        {
+            "op": "connect",
+            "file": "harbor-nightly-export",
+            "source": "transform",
+            "target": "transform"
+        },
+        {
+            "op": "disconnect",
+            "file": "harbor-nightly-export",
+            "source": "fetch",
+            "target": "transform"
+        },
+        {
+            "op": "disconnect",
+            "file": "larkspur-send-digest",
+            "source": "transform",
+            "target": "notify"
+        },
+        {
+            "op": "renameStep",
+            "file": "harbor-nightly-export",
+            "from": "validate",
+            "to": "check"
+        },
+        {
+            "op": "renameStep",
+            "file": "larkspur-send-digest",
+            "from": "transform",
+            "to": "shape"
+        },
+        {
+            "op": "renameStep",
+            "text": "steps:\n  - id: a-b\n    kind: fetch\n  - id: c\n    needs: [a-b]\n    with:\n      m: \"${ steps.a-b.rows} ${steps.a-bc.rows} ${steps.a-b}\"\n",
+            "from": "a-b",
+            "to": "z"
+        },
+        {
+            "op": "stepFields",
+            "file": "harbor-nightly-export",
+            "id": "upload"
+        },
+        {
+            "op": "stepFields",
+            "file": "juniper-rebuild-index",
+            "id": "nope"
+        },
+        {
+            "op": "setStepFields",
+            "file": "harbor-nightly-export",
+            "id": "upload",
+            "fields": {
+                "retries": 3,
+                "with": {
+                    "bucket": "harbor-archive",
+                    "path": "orders/${run.date}.json",
+                    "overwrite": true
+                }
+            }
+        },
+        {
+            "op": "setStepFields",
+            "file": "harbor-nightly-export",
+            "id": "fetch",
+            "fields": {
+                "timeout": "30s",
+                "with": {
+                    "url": "https://api.example.org/v2",
+                    "format": "csv",
+                    "since": ""
+                }
+            }
+        },
+        {
+            "op": "setStepFields",
+            "file": "larkspur-send-digest",
+            "id": "notify",
+            "fields": {
+                "with": {
+                    "channel": "#larkspur",
+                    "on": [
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                    ],
+                    "message": "Today's digest has ${steps.transform.rows} new items"
+                }
+            }
+        },
+        {
+            "op": "setStepFields",
+            "file": "harbor-nightly-export",
+            "id": "validate",
+            "fields": {
+                "with": {
+                    "rules": [
+                        {
+                            "field": "email",
+                            "check": "email"
+                        }
+                    ],
+                    "on_invalid": "warn",
+                    "max_rejected": 10
+                }
+            }
+        },
+        {
+            "op": "setStepFields",
+            "file": "juniper-rebuild-index",
+            "id": "transform",
+            "fields": {}
+        },
+        {
+            "op": "setStepFields",
+            "file": "harbor-import-orders",
+            "id": "upload",
+            "fields": {
+                "with": {
+                    "bucket": "harbor-orders",
+                    "path": "incoming/${run.id}.csv"
+                },
+                "retries": 1,
+                "note": "10",
+                "labels": [
+                    "a",
+                    "b"
+                ],
+                "matrix": [
+                    [
+                        1,
+                        2
+                    ],
+                    [
+                        3
+                    ]
+                ],
+                "empty": ""
+            }
+        },
+        {
+            "op": "setStepFields",
+            "file": "juniper-sync-inventory",
+            "id": "fetch",
+            "fields": {
+                "with": {
+                    "url": "https://warehouse.example.org/${params.warehouse}/stock",
+                    "format": "ndjson",
+                    "since": "2h"
+                }
+            }
+        }
+    ],
+    "timeline": [
+        {
+            "at": 0,
+            "do": "start",
+            "file": "harbor-nightly-export"
+        },
+        {
+            "at": 0,
+            "do": "look"
+        },
+        {
+            "at": 50,
+            "do": "start",
+            "file": "juniper-sync-inventory"
+        },
+        {
+            "at": 100,
+            "do": "start",
+            "file": "juniper-rebuild-index"
+        },
+        {
+            "at": 100,
+            "do": "look"
+        },
+        {
+            "at": 150,
+            "do": "look"
+        },
+        {
+            "at": 200,
+            "do": "start",
+            "file": "larkspur-send-digest"
+        },
+        {
+            "at": 300,
+            "do": "start",
+            "file": "harbor-import-orders"
+        },
+        {
+            "at": 400,
+            "do": "start",
+            "file": "harbor-nightly-export",
+            "text": "name: nightly-export\nproject: harbor\nparams:\n  host: api.example.com\nsteps:\n  - id: fetch\n    kind: fetch\n    retries: 2\n    with:\n      url: https://${params.host}/orders\n  - id: notify\n    kind: notify\n    with:\n      channel: \"#harbor\"\n      on: [failed]\n  - id: after\n    kind: upload\n    needs: [fetch]\n    with:\n      bucket: harbor-x\n      path: p\n"
+        },
+        {
+            "at": 500,
+            "do": "start",
+            "file": "harbor-import-orders",
+            "text": "name: loop\nsteps:\n  - id: a\n    kind: fetch\n    needs: [b]\n  - id: b\n    kind: fetch\n    needs: [a]\n"
+        },
+        {
+            "at": 500,
+            "do": "look"
+        },
+        {
+            "at": 600,
+            "do": "start",
+            "file": "larkspur-send-digest",
+            "text": "name: send-digest\nsteps:\n  - id: fetch\n    kind: fetch\n    with:\n      url: https://feeds.example.org/larkspur/new\n      format: csv\n  - id: transform\n    kind: transform\n    needs: [fetch]\n    with:\n      language: sql\n      script: SELECT a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w FROM rows\n  - id: upload\n    kind: upload\n    needs: [transform]\n    with:\n      bucket: harbor-digests\n      path: digest/${run.date}-${run.id}-${run.by}-${steps.fetch.output}-${steps.transform.rows}.json\n  - id: notify\n    kind: notify\n    needs: [upload]\n    with:\n      channel: \"#larkspur\"\n      on: [failed, 3]\n      message: \"${steps.upload.output} ${steps.fetch.rows} ${run.started} ${params.none}\"\n"
+        },
+        {
+            "at": 700,
+            "do": "start",
+            "file": "harbor-import-orders",
+            "text": "name: import-orders\nsteps:\n  - id: fetch\n    kind: fetch\n    with:\n      url: https://files.example.org/orders/latest.csv\n  - id: validate\n    kind: validate\n    needs: [fetch]\n    with:\n      rules:\n        - field: id\n          check: unique\n        - field: email\n          check: email\n        - field: x\n          check: odd\n      on_invalid: skip\n  - id: strict\n    kind: validate\n    needs: [validate]\n    with:\n      rules:\n        - {field: total, check: positive}\n      max_rejected: 5\n  - id: shape\n    kind: transform\n    needs: [validate]\n    with:\n      script: error(\"no\")\n  - id: stall\n    kind: validate\n    needs: [validate]\n    with:\n      rules: [null]\n"
+        },
+        {
+            "at": 1000,
+            "do": "look"
+        },
+        {
+            "at": 1500,
+            "do": "cancel",
+            "run": 5
+        },
+        {
+            "at": 1500,
+            "do": "look"
+        },
+        {
+            "at": 2000,
+            "do": "look"
+        },
+        {
+            "at": 3000,
+            "do": "look"
+        },
+        {
+            "at": 5000,
+            "do": "look"
+        },
+        {
+            "at": 8000,
+            "do": "look"
+        },
+        {
+            "at": 9000,
+            "do": "cancel",
+            "run": 8
+        },
+        {
+            "at": 12000,
+            "do": "look"
+        },
+        {
+            "at": 20000,
+            "do": "start",
+            "file": "juniper-sync-inventory"
+        },
+        {
+            "at": 20100,
+            "do": "cancel",
+            "run": 9
+        },
+        {
+            "at": 20100,
+            "do": "look"
+        },
+        {
+            "at": 20200,
+            "do": "look"
+        },
+        {
+            "at": 20200,
+            "do": "cancel",
+            "run": 9
+        },
+        {
+            "at": 25000,
+            "do": "look"
+        },
+        {
+            "at": 40000,
+            "do": "cancel",
+            "run": 1
+        },
+        {
+            "at": 40000,
+            "do": "look"
+        }
+    ],
+    "afterRuns": [
+        "SELECT * FROM runs WHERE id > 5000",
+        "SELECT * FROM steps WHERE run_id > 5000",
+        "-- How long each step takes, slowest first\nSELECT step, count(*) AS runs, round(avg(duration_ms)) AS avg_ms, max(duration_ms) AS max_ms\nFROM steps\nWHERE duration_ms IS NOT NULL\nGROUP BY step\nORDER BY avg_ms DESC\n"
+    ]
+}

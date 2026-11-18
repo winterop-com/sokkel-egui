@@ -1,0 +1,376 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Pipeline",
+    "type": "object",
+    "required": [
+        "name",
+        "steps"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "description": "The pipeline's name, lowercase with dashes, as runs list it."
+        },
+        "description": {
+            "type": "string",
+            "description": "What the pipeline is for, in a sentence."
+        },
+        "project": {
+            "enum": [
+                "harbor",
+                "juniper",
+                "larkspur"
+            ],
+            "description": "The project whose buckets and channels it uses."
+        },
+        "schedule": {
+            "type": "string",
+            "pattern": "^\\S+( \\S+){4}$",
+            "description": "When it runs by itself: a cron line of five fields, such as \"0 2 * * *\" for 02:00 every day."
+        },
+        "params": {
+            "type": "object",
+            "description": "Values the steps read as ${params.<name>}.",
+            "additionalProperties": {
+                "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                ]
+            }
+        },
+        "steps": {
+            "type": "array",
+            "minItems": 1,
+            "description": "The steps, each after the steps it needs.",
+            "items": {
+                "$ref": "#/$defs/step"
+            }
+        }
+    },
+    "$defs": {
+        "step": {
+            "type": "object",
+            "required": [
+                "id",
+                "kind"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "The step's name in this pipeline, which needs and references use."
+                },
+                "kind": {
+                    "enum": [
+                        "fetch",
+                        "transform",
+                        "validate",
+                        "upload",
+                        "notify"
+                    ],
+                    "description": "What the step does; its kind decides what goes in with."
+                },
+                "needs": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "The steps that finish before this one starts."
+                },
+                "retries": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5,
+                    "default": 0,
+                    "description": "How many times a failed try is tried again, up to 5."
+                },
+                "timeout": {
+                    "type": "string",
+                    "pattern": "^[0-9]+(s|m|h)$",
+                    "default": "10m",
+                    "description": "How long one try may take: 30s, 10m, 1h."
+                },
+                "with": {
+                    "type": "object",
+                    "description": "The step's settings, which its kind decides."
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "kind": {
+                                "const": "fetch"
+                            }
+                        },
+                        "required": [
+                            "kind"
+                        ]
+                    },
+                    "then": {
+                        "required": [
+                            "with"
+                        ],
+                        "properties": {
+                            "with": {
+                                "$ref": "#/$defs/fetch"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "kind": {
+                                "const": "transform"
+                            }
+                        },
+                        "required": [
+                            "kind"
+                        ]
+                    },
+                    "then": {
+                        "required": [
+                            "with"
+                        ],
+                        "properties": {
+                            "with": {
+                                "$ref": "#/$defs/transform"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "kind": {
+                                "const": "validate"
+                            }
+                        },
+                        "required": [
+                            "kind"
+                        ]
+                    },
+                    "then": {
+                        "required": [
+                            "with"
+                        ],
+                        "properties": {
+                            "with": {
+                                "$ref": "#/$defs/validate"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "kind": {
+                                "const": "upload"
+                            }
+                        },
+                        "required": [
+                            "kind"
+                        ]
+                    },
+                    "then": {
+                        "required": [
+                            "with"
+                        ],
+                        "properties": {
+                            "with": {
+                                "$ref": "#/$defs/upload"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "kind": {
+                                "const": "notify"
+                            }
+                        },
+                        "required": [
+                            "kind"
+                        ]
+                    },
+                    "then": {
+                        "required": [
+                            "with"
+                        ],
+                        "properties": {
+                            "with": {
+                                "$ref": "#/$defs/notify"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "fetch": {
+            "type": "object",
+            "required": [
+                "url"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "pattern": "^https://",
+                    "description": "Where the rows are read from, over https."
+                },
+                "format": {
+                    "enum": [
+                        "csv",
+                        "json",
+                        "ndjson"
+                    ],
+                    "default": "json",
+                    "description": "How the answer is written."
+                },
+                "since": {
+                    "type": "string",
+                    "description": "Only rows changed since this long ago, such as 1d."
+                }
+            }
+        },
+        "transform": {
+            "type": "object",
+            "required": [
+                "script"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "language": {
+                    "enum": [
+                        "jq",
+                        "sql"
+                    ],
+                    "default": "jq",
+                    "description": "The language the script is written in."
+                },
+                "script": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "What makes the new rows from the rows given."
+                }
+            }
+        },
+        "validate": {
+            "type": "object",
+            "required": [
+                "rules"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "rules": {
+                    "type": "array",
+                    "minItems": 1,
+                    "description": "The checks each row passes.",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "field",
+                            "check"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "field": {
+                                "type": "string",
+                                "description": "The field the rule checks."
+                            },
+                            "check": {
+                                "enum": [
+                                    "required",
+                                    "unique",
+                                    "positive",
+                                    "email",
+                                    "date"
+                                ],
+                                "description": "What the field must be."
+                            }
+                        }
+                    }
+                },
+                "on_invalid": {
+                    "enum": [
+                        "fail",
+                        "skip",
+                        "warn"
+                    ],
+                    "default": "fail",
+                    "description": "What refused rows do: fail the run past max_rejected, be left out, or pass with a warning."
+                },
+                "max_rejected": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 0,
+                    "description": "How many refused rows fail allows before it fails."
+                }
+            }
+        },
+        "upload": {
+            "type": "object",
+            "required": [
+                "bucket",
+                "path"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "bucket": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "The bucket written to."
+                },
+                "path": {
+                    "type": "string",
+                    "description": "Where in the bucket, such as orders/${run.date}.json."
+                },
+                "overwrite": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether a file already there is replaced."
+                }
+            }
+        },
+        "notify": {
+            "type": "object",
+            "required": [
+                "channel"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "channel": {
+                    "type": "string",
+                    "pattern": "^#[a-z0-9-]+$",
+                    "description": "The channel posted to, such as #harbor."
+                },
+                "on": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                        "enum": [
+                            "succeeded",
+                            "failed",
+                            "cancelled"
+                        ]
+                    },
+                    "default": [
+                        "failed"
+                    ],
+                    "description": "The run states that post."
+                },
+                "message": {
+                    "type": "string",
+                    "description": "What is posted; references are filled in."
+                }
+            }
+        }
+    }
+}

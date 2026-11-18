@@ -1,0 +1,12 @@
+[package]
+name = "studio"
+description = "Tidevann's studio: pipelines, schemas and queries over simulated runs, on sokkel-egui's frame, its data simulated."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+url = "2.5"
