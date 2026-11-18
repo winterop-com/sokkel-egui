@@ -1,0 +1,108 @@
+{
+    "example": "examples/podcast/web/src",
+    "ported": {
+        "commit": "c95b8911",
+        "files": {
+            "App.tsx": "a1696b0ce670d9e27fcbbad2491c4955604641b5",
+            "Player.tsx": "ef333dd8cb5a4230e71aecaa586b960e2fee38aa",
+            "Podcasts.tsx": "0a6b6bbdccb16dbf88551ab4c3bd7fa7276b5e51",
+            "app.css": "78c8a0d8e4d3a28c71087d6ef845e8dda61fb577",
+            "backend.ts": "dc1d090d145a60a09cd9ab2232fe89968ba8f429",
+            "catalog.ts": "712680e339f4724e69f8d40d5c505de87d1865c1",
+            "main.tsx": "bff274d47e80698ec1db8c9f29337a2e79fa0c94",
+            "pages/Discover.tsx": "3511b6e0882349336cec000c6d3fa03ea9676668",
+            "pages/Downloads.tsx": "9d40b9fc057c1dafe235db846e8ca8a8071d78b8",
+            "pages/Episode.tsx": "211c4d62b9352256e6caa1b4dd46569de7578cb5",
+            "pages/Home.tsx": "3ed8c5ffa4d70de48c74d17672ea7fa0fe0b6146",
+            "pages/Inbox.tsx": "c991369769fd0d6f7e990097b87421ce46f7d29c",
+            "pages/Queue.tsx": "66749c586efef96486a1c0e4e827b46308a4a8b9",
+            "pages/Settings.tsx": "34e2391e61c4ef52605bf6b7c9e4dbb724257311",
+            "pages/Show.tsx": "0dce657680ad9fef1b98afd71fc74cc629a09a1f",
+            "pages/Shows.tsx": "de86b65c2ee0900b7aea290e4f8b31bb25de7a9d",
+            "pages/Starred.tsx": "98154020faceab351e27dd45a4de3841fb6466e6",
+            "pages/Stats.tsx": "b988dfb0cfbfd7c9b433b5164af6dac4b40ae015",
+            "parts.tsx": "f28d07063656f5db6a2383c8339370be66985ce5",
+            "script.ts": "9d4a06dff265ebd71f862c7c49355cb5708dcf53",
+            "state.tsx": "602904f5a9be928d3fa87d797661358347c8437c",
+            "themes.ts": "5f98ff7e6680d7dd2807416aff0c7de32b2852b1",
+            "voice.ts": "8676caf8d975c4981e8c9e972b2cd228a35ff28c"
+        }
+    },
+    "parts": {},
+    "screens": [
+        {
+            "name": "podcast_home",
+            "route": "home",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "podcast_inbox",
+            "route": "inbox",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "podcast_queue",
+            "route": "queue",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "podcast_discover",
+            "route": "discover",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "podcast_shows",
+            "route": "shows",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "podcast_show",
+            "route": "show/harbor-log",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "podcast_episode",
+            "route": "episode/low-tide-hours-1",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "podcast_stats",
+            "route": "stats",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "podcast_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "c95b8911dd02bf7925e96b62c93fc8a934d57800"
+}
