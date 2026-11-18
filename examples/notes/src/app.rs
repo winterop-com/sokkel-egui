@@ -56,6 +56,8 @@ pub struct NotesApp {
     /// The graph shows the notes around the open one, and the names linked to with no note yet.
     pub graph_around: bool,
     pub graph_missing: bool,
+    /// The note switcher while it is open: what is typed and the row lit.
+    pub switching: Option<(String, usize)>,
     /// The question asked in a dialog, and the dialog's fields.
     pub asking: Option<crate::backend::Asking>,
     pub dialog: crate::dialogs::DialogState,
@@ -97,6 +99,7 @@ impl NotesApp {
             quick: String::new(),
             tables: Default::default(),
             panel_tab: 0,
+            switching: None,
             asking: None,
             dialog: Default::default(),
             graph_around: false,
@@ -392,7 +395,28 @@ impl NotesApp {
         self.filter = std::mem::take(filter);
         self.open = std::mem::take(open);
         self.top_query = std::mem::take(top_query);
-        let _ = searched;
+        if searched {
+            self.palette = Some(Default::default());
+        }
+        // Mod-O opens a note by name, Mod-Shift-D today's note, Mod-Shift-F the search page
+        let (switch, today, search) = ctx.input_mut(|i| {
+            let shift = egui::Modifiers::COMMAND | egui::Modifiers::SHIFT;
+            (
+                i.consume_key(egui::Modifiers::COMMAND, egui::Key::O),
+                i.consume_key(shift, egui::Key::D),
+                i.consume_key(shift, egui::Key::F),
+            )
+        });
+        if switch {
+            self.switching = Some(Default::default());
+        }
+        if today {
+            let date = crate::model::day(0, now);
+            self.open_day(&ctx, &date);
+        }
+        if search {
+            self.go("search");
+        }
         if rail_place != was {
             self.go(&rail_place);
         }
@@ -420,6 +444,8 @@ impl NotesApp {
             Some(AccountAction::Appearance) => self.settings = Some("appearance".into()),
             None => {}
         }
+        self.search_palette(&ctx, &groups);
+        self.note_switcher(&ctx);
         self.dialogs(&ctx);
         self.settings_dialog(&ctx);
         Toaster::new().show(&ctx);

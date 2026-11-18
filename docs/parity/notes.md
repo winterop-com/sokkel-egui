@@ -58,9 +58,13 @@ shot into `parity/notes/web/` by `bun scripts/parity.ts web notes`.
   menus, the listings' row menus, the folder's buttons and a note's More. New note makes a note and
   asks its name, as the web's. A dialog with a confirm that waits on a reason is `DialogShell`, new
   in the library.
+- The palette: New note, New folder, today's note, Open a note by name and the panel shown or
+  hidden, the rail's places, the recent notes and every note by name, the look and the demo's data;
+  and the switcher (Mod-O), the notes alone, which makes the note typed when none has that name.
+  Mod-Shift-D opens today's note and Mod-Shift-F the search page.
 
 ## Open
-- The palette and the switcher, and the top bar's search with its results under it.
+- The top bar's search with its results under it and a preview beside them.
 - QuickAdd says nothing yet when a title is already in the vault (the web's `validate`).
 - The web's note editor draws in the sans face at c95b8911; that is a sokkel-ui bug (its lean
   stylesheet dropped `--font-mono`), so the egui editor keeps the mono face.

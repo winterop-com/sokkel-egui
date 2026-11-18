@@ -10,6 +10,7 @@ pub mod graph_page;
 pub mod model;
 pub mod note_page;
 pub mod note_panel;
+pub mod palette;
 pub mod search;
 pub mod search_page;
 pub mod seed;

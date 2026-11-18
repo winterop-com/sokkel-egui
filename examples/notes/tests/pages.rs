@@ -77,3 +77,16 @@ fn every_dialog() {
         results.add(harness.try_snapshot(name));
     }
 }
+
+#[test]
+fn the_palettes() {
+    let mut results = SnapshotResults::new();
+    let mut harness = render("notes");
+    harness.state_mut().palette = Some(Default::default());
+    harness.run_steps(4);
+    results.add(harness.try_snapshot("notes_palette"));
+    let mut harness = render("note/welcome");
+    harness.state_mut().switching = Some(("export ret".into(), 0));
+    harness.run_steps(4);
+    results.add(harness.try_snapshot("notes_switcher_make"));
+}
