@@ -280,7 +280,7 @@ impl TasksApp {
             ShellPart::RailFoot => {
                 account = AccountMenu::new("ada")
                     .place("tidevann.example.org")
-                    .scheme(self.appearance.scheme)
+                    .appearance(true)
                     .show(ui);
             }
             ShellPart::Top => {
@@ -305,7 +305,7 @@ impl TasksApp {
         }
         match account {
             Some(AccountAction::Settings) => self.go("settings"),
-            Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
+            Some(AccountAction::Appearance) => self.settings = Some("appearance".into()),
             None => {}
         }
         if searched {

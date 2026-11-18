@@ -264,7 +264,7 @@ impl MetricsApp {
                 ui.add(Rail::new("Metrics", &groups, &mut place).mark(TIDEVANN_MARK));
             }
             ShellPart::RailFoot => {
-                account = AccountMenu::new("ada").scheme(self.appearance.scheme).show(ui);
+                account = AccountMenu::new("ada").appearance(true).show(ui);
             }
             ShellPart::Top => {
                 searched |= TopBar::new(&trail).search("Search", "⌘K").show(ui, |_| {}).search;
@@ -296,7 +296,7 @@ impl MetricsApp {
         self.search_palette(&ui.ctx().clone(), &groups);
         self.board_dialogs(&ui.ctx().clone());
         match account {
-            Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
+            Some(AccountAction::Appearance) => self.settings = Some("appearance".into()),
             Some(AccountAction::Settings) => self.settings = Some("dashboards".into()),
             None => {}
         }

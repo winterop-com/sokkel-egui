@@ -473,10 +473,7 @@ impl AnalyticsApp {
                 ui.add(Rail::new(&workspace, &groups, &mut place).mark(TIDEVANN_MARK));
             }
             ShellPart::RailFoot => {
-                account = AccountMenu::new("ada")
-                    .local(true)
-                    .scheme(self.appearance.scheme)
-                    .show(ui);
+                account = AccountMenu::new("ada").local(true).appearance(true).show(ui);
             }
             ShellPart::Top => {
                 searched |= TopBar::new(&trail)
@@ -557,7 +554,10 @@ impl AnalyticsApp {
         self.settings_dialog(ui.ctx());
         Toaster::new().show(ui.ctx());
         match account {
-            Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
+            Some(AccountAction::Appearance) => {
+                self.settings = true;
+                self.settings_section = "appearance".into();
+            }
             Some(AccountAction::Settings) => self.settings = true,
             None => {}
         }

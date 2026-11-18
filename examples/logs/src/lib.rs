@@ -154,10 +154,7 @@ impl LogsApp {
                 ui.add(Rail::new("Logs", &groups, &mut place).mark(TIDEVANN_MARK));
             }
             ShellPart::RailFoot => {
-                account = AccountMenu::new("ada")
-                    .place("tidevann.example.org")
-                    .scheme(self.appearance.scheme)
-                    .show(ui);
+                account = AccountMenu::new("ada").place("tidevann.example.org").show(ui);
             }
             ShellPart::Top => {
                 TopBar::new(&trail).show(ui, |ui| {
@@ -195,8 +192,7 @@ impl LogsApp {
             self.opened = None;
         }
         match account {
-            Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
-            Some(AccountAction::Settings) | None => {}
+            Some(AccountAction::Settings | AccountAction::Appearance) | None => {}
         }
     }
 

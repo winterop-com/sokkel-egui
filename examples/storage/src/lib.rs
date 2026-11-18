@@ -8,10 +8,9 @@ use std::collections::HashSet;
 
 use eframe::egui::{self, Ui};
 use sokkel_egui::{
-    AccountAction, AccountMenu, Appearance, Cell, Column, DataTable, DescriptionList, DesktopWindow, Empty, FileKind,
-    FilePreview, Gap, Icon, Page, PageHeader, Rail, RailEntry, RailGroup, SearchField, Section, Shell, ShellPart,
-    SplitPane, Stack, StatusLine, StatusTone, TableState, TableVariant, TopBar, Tree, TreeNode, format_size, install,
-    tree_ancestors,
+    AccountMenu, Appearance, Cell, Column, DataTable, DescriptionList, DesktopWindow, Empty, FileKind, FilePreview,
+    Gap, Icon, Page, PageHeader, Rail, RailEntry, RailGroup, SearchField, Section, Shell, ShellPart, SplitPane, Stack,
+    StatusLine, StatusTone, TableState, TableVariant, TopBar, Tree, TreeNode, format_size, install, tree_ancestors,
 };
 
 use files::{Entry, buckets, find};
@@ -99,10 +98,7 @@ impl StorageApp {
                 ui.add(Rail::new("Storage", &groups, &mut place).mark(TIDEVANN_MARK));
             }
             ShellPart::RailFoot => {
-                account = AccountMenu::new("ada")
-                    .place("tidevann.example.org")
-                    .scheme(self.appearance.scheme)
-                    .show(ui);
+                account = AccountMenu::new("ada").place("tidevann.example.org").show(ui);
             }
             ShellPart::Top => {
                 TopBar::new(&trail).show(ui, |_| {});
@@ -117,9 +113,6 @@ impl StorageApp {
                 );
             }
         });
-        if let Some(AccountAction::Scheme(scheme)) = account {
-            self.appearance.scheme = scheme;
-        }
     }
 
     fn page(&mut self, ui: &mut Ui) {

@@ -3,7 +3,7 @@
 
 use egui::{Popup, PopupCloseBehavior, Rect, Response, Sense, Stroke, Ui, Widget, pos2, vec2};
 
-use crate::{Icon, Scheme, TextRole, Tokens, icons, tokens};
+use crate::{Icon, TextRole, Tokens, icons, tokens};
 
 /// The kind colors, in the order a name's hash picks from, as sokkel-ui's `KIND_COLORS`.
 const KINDS: [&str; 6] = ["blue", "violet", "green", "pink", "teal", "jade"];
@@ -125,17 +125,15 @@ impl Widget for PersonAvatar {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AccountAction {
     Settings,
-    Scheme(Scheme),
+    /// Open the settings at Appearance, where the theme and the scheme are chosen.
+    Appearance,
 }
 
 /// The words the account menu says, English by default.
 #[derive(Clone, Debug)]
 pub struct AccountWords {
     pub settings: String,
-    pub scheme: String,
-    pub light: String,
-    pub dark: String,
-    pub system: String,
+    pub appearance: String,
     /// The trigger's name for assistive technology.
     pub account: String,
 }
@@ -144,21 +142,19 @@ impl Default for AccountWords {
     fn default() -> Self {
         Self {
             settings: "Settings".into(),
-            scheme: "Scheme".into(),
-            light: "Light".into(),
-            dark: "Dark".into(),
-            system: "System".into(),
+            appearance: "Appearance".into(),
             account: "Account".into(),
         }
     }
 }
 
 /// The signed-in account in the rail's foot: its avatar and name, opening a menu above it with the
-/// account, Settings, and the scheme to pick.
+/// account, Settings and Appearance. The menu has no scheme of its own: light and dark are chosen in
+/// the settings and the command palette.
 pub struct AccountMenu {
     name: String,
     place: Option<String>,
-    scheme: Option<Scheme>,
+    appearance: bool,
     words: AccountWords,
     local: bool,
 }
@@ -168,7 +164,7 @@ impl AccountMenu {
         Self {
             name: name.into(),
             place: None,
-            scheme: None,
+            appearance: false,
             words: AccountWords::default(),
             local: false,
         }
@@ -187,9 +183,10 @@ impl AccountMenu {
         self
     }
 
-    /// Offer the scheme, with the one worn now checked.
-    pub fn scheme(mut self, scheme: Scheme) -> Self {
-        self.scheme = Some(scheme);
+    /// Offer Appearance after Settings, which the app answers by opening its settings at
+    /// Appearance, as the web's `onAppearance`.
+    pub fn appearance(mut self, appearance: bool) -> Self {
+        self.appearance = appearance;
         self
     }
 
@@ -320,31 +317,9 @@ impl AccountMenu {
                     action = Some(AccountAction::Settings);
                     ui.close();
                 }
-                if let Some(current) = self.scheme {
-                    separator(ui, &t);
-                    // the group's title: 28 tall, 8 in, as a menu label's `px-2 py-1.5`
-                    let (title, _) = ui.allocate_exact_size(vec2(244.0, 28.0), Sense::hover());
-                    let words = egui::WidgetText::from(TextRole::Badge.rich(&t, &self.words.scheme)).into_galley(
-                        ui,
-                        Some(egui::TextWrapMode::Truncate),
-                        232.0,
-                        TextRole::Badge.font(&t),
-                    );
-                    ui.painter().galley(
-                        pos2(title.left() + 8.0, title.center().y - words.size().y / 2.0),
-                        words,
-                        t.color("muted-foreground"),
-                    );
-                    for (scheme, label, icon) in [
-                        (Scheme::Light, &self.words.light, Icon::Sun),
-                        (Scheme::Dark, &self.words.dark, Icon::Moon),
-                        (Scheme::System, &self.words.system, Icon::Monitor),
-                    ] {
-                        if menu_row(ui, &t, Some(icon), label, scheme == current).clicked() {
-                            action = Some(AccountAction::Scheme(scheme));
-                            ui.close();
-                        }
-                    }
+                if self.appearance && menu_row(ui, &t, Some(Icon::Palette), &self.words.appearance, false).clicked() {
+                    action = Some(AccountAction::Appearance);
+                    ui.close();
                 }
             });
         action

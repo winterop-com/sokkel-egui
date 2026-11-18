@@ -312,7 +312,7 @@ impl DashboardApp {
                 account = AccountMenu::new("ada")
                     .local(true)
                     .place("tidevann.example.org")
-                    .scheme(self.appearance.scheme)
+                    .appearance(true)
                     .show(ui);
             }
             ShellPart::Top => {
@@ -365,7 +365,7 @@ impl DashboardApp {
             self.ask_name(None);
         }
         match account {
-            Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
+            Some(AccountAction::Appearance) => self.settings = Some("appearance".into()),
             Some(AccountAction::Settings) => self.settings = Some("live".into()),
             _ => {}
         }

@@ -474,7 +474,7 @@ impl StatusApp {
             ShellPart::RailFoot => {
                 account = AccountMenu::new(ME)
                     .place("tidevann.example.org")
-                    .scheme(self.appearance.scheme)
+                    .appearance(true)
                     .show(ui);
             }
             ShellPart::Top => {
@@ -605,7 +605,10 @@ impl StatusApp {
         sokkel_egui::Toaster::new().show(ui.ctx());
         match account {
             Some(AccountAction::Settings) => self.settings = true,
-            Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
+            Some(AccountAction::Appearance) => {
+                self.settings = true;
+                self.settings_state.active = "appearance".into();
+            }
             None => {}
         }
     }

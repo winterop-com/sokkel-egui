@@ -4,10 +4,9 @@
 
 use eframe::egui::{self, Ui};
 use sokkel_egui::{
-    AccountAction, AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, CalendarEvent, Checkbox, Chip, ChipTone,
-    Day, DescriptionList, DesktopWindow, Empty, Gap, Icon, IconButton, Moment, Page, PageHeader, Rail, RailEntry,
-    RailGroup, Section, Shell, ShellPart, SplitPane, Stack, StatusLine, StatusTone, TagChips, TopBar, WeekGrid,
-    install,
+    AccountMenu, Appearance, Button, ButtonSize, ButtonVariant, CalendarEvent, Checkbox, Chip, ChipTone, Day,
+    DescriptionList, DesktopWindow, Empty, Gap, Icon, IconButton, Moment, Page, PageHeader, Rail, RailEntry, RailGroup,
+    Section, Shell, ShellPart, SplitPane, Stack, StatusLine, StatusTone, TagChips, TopBar, WeekGrid, install,
 };
 
 /// Tidevann's mark, as sokkel-ui's examples draw it (`tidevann-shared/mark`).
@@ -248,10 +247,7 @@ impl PlannerApp {
                 ui.add(Rail::new("Planner", &groups, &mut place).mark(TIDEVANN_MARK));
             }
             ShellPart::RailFoot => {
-                account = AccountMenu::new("ada")
-                    .place("tidevann.example.org")
-                    .scheme(self.appearance.scheme)
-                    .show(ui);
+                account = AccountMenu::new("ada").place("tidevann.example.org").show(ui);
             }
             ShellPart::Top => {
                 TopBar::new(&["Planner", "Week"]).show(ui, |_| {});
@@ -266,9 +262,6 @@ impl PlannerApp {
                 );
             }
         });
-        if let Some(AccountAction::Scheme(scheme)) = account {
-            self.appearance.scheme = scheme;
-        }
     }
 
     fn page(&mut self, ui: &mut Ui) {

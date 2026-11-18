@@ -301,7 +301,7 @@ impl RecordsApp {
                 account = AccountMenu::new(ME)
                     .place(SERVER.address)
                     .local(true)
-                    .scheme(self.appearance.scheme)
+                    .appearance(true)
                     .show(ui);
             }
             ShellPart::Top => {
@@ -385,7 +385,7 @@ impl RecordsApp {
             self.go(if chosen == "overview" { "" } else { &chosen });
         }
         match account {
-            Some(AccountAction::Scheme(scheme)) => self.appearance.scheme = scheme,
+            Some(AccountAction::Appearance) => self.settings = Some("appearance".into()),
             Some(AccountAction::Settings) => self.settings = Some("appearance".into()),
             None => {}
         }
