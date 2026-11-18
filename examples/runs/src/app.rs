@@ -48,6 +48,8 @@ pub struct RunsApp {
     pub jobs_view: crate::jobs_page::JobsView,
     /// The schedules page's span, jobs and chosen lane.
     pub schedules_view: crate::schedules_page::SchedulesView,
+    /// What the sign-in page says went wrong.
+    pub sign_in_error: Option<String>,
     /// The step chosen in a run page's graph.
     pub run_step: Option<String>,
     /// The question before the demo's data goes back, while it is asked.
@@ -101,6 +103,7 @@ impl RunsApp {
             deleting: None,
             resetting: false,
             run_step: None,
+            sign_in_error: None,
             tables: Default::default(),
             started: now,
             started_at: None,
@@ -253,6 +256,38 @@ impl RunsApp {
         self.tables.clear();
     }
 
+    /// The console's door after signing out, as the web's `SignInPage.tsx`: ada, grace, linus or
+    /// margaret sign in with the password "tide".
+    fn sign_in_page(&mut self, ui: &mut Ui) {
+        let mut sign_in = sokkel_egui::SignIn::new("Tidevann")
+            .mark(TIDEVANN_MARK)
+            .eyebrow("Welcome to Tidevann")
+            .description("Sign in as ada, grace, linus or margaret, with the password tide.")
+            .facts([
+                sokkel_egui::SignInFact::new("instance", "tidevann.example.org"),
+                sokkel_egui::SignInFact::new("console", "jobs and runs"),
+            ])
+            .art(sokkel_egui::FlowLines::new())
+            .remember(true)
+            .resizable(true)
+            .error(self.sign_in_error.as_deref());
+        if self.desktop {
+            sign_in = sign_in.desktop(sokkel_egui::DesktopWindow::native());
+        }
+        if let Some(values) = sign_in.show_window(ui) {
+            let user = values.user.trim().to_lowercase();
+            match crate::model::PEOPLE.iter().find(|p| p.word() == user) {
+                Some(person) if values.password == "tide" => {
+                    self.sign_in_error = None;
+                    if let Some(mine) = self.backend.prefs.first_mut() {
+                        mine.user = Some(*person);
+                    }
+                }
+                _ => self.sign_in_error = Some("That username and password do not match.".into()),
+            }
+        }
+    }
+
     /// Signs out, back to the sign-in page.
     pub fn sign_out(&mut self) {
         if let Some(mine) = self.backend.prefs.first_mut() {
@@ -341,6 +376,11 @@ impl RunsApp {
         install(ui.ctx(), &self.appearance);
         let ctx = ui.ctx().clone();
         self.tick(&ctx);
+        if self.prefs().user.is_none() {
+            self.sign_in_page(ui);
+            Toaster::new().show(&ctx);
+            return;
+        }
         let runs = self.live_runs();
         let now = self.now();
         let prefs = self.prefs();

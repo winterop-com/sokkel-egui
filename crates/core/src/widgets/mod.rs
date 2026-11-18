@@ -42,6 +42,8 @@ mod section;
 mod server_menu;
 mod settings;
 mod sheet;
+mod sign_in;
+mod sign_in_art;
 mod stat;
 mod stat_panel;
 mod switch;
@@ -127,6 +129,8 @@ pub use settings::{
     setting_row_below, setting_row_found_by, theme_settings, theme_settings_listed, theme_settings_of,
 };
 pub use sheet::{DetailSheet, DetailSheetWords};
+pub use sign_in::{SignIn, SignInFact, SignInValues, SignInWords};
+pub use sign_in_art::{FlowEdge, FlowLines, FlowNode, FlowNodes, LevelBars, flow_graph, level_heights, seeded};
 pub use stat::{KpiRow, Stat, StatTiles, sparkline};
 pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_compact, format_value, threshold_color};
 pub use switch::Switch;

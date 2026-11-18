@@ -60,4 +60,9 @@ fn every_screen() {
     results.add(harness.try_snapshot("runs_run"));
     let mut harness = render_at("runs/run_toos50a9", 1500.0);
     results.add(harness.try_snapshot("runs_run_whole"));
+    let mut harness = render("");
+    harness.state_mut().sign_out();
+    harness.state_mut().appearance.motion = sokkel_egui::Motion::Off;
+    harness.run_steps(4);
+    results.add(harness.try_snapshot("runs_sign_in"));
 }

@@ -46,6 +46,10 @@ screens are shot into `parity/runs/web/` by `bun scripts/parity.ts web runs`.
   skipped step, all new in the graph crate), a chosen step's facts, its log as tall as its lines
   (`LogView::fit`, new), its facts, inputs and outputs, and its steps as a timeline. A `Columns`
   cell now stacks what it holds, as a grid's cell does.
-- Open: the overview, a job's page and the sign-in page (signed out, the console
-  still shows); the bulk actions on the selected runs; a table narrower than its
+- The sign-in page after signing out: the brand pane with the flow-lines art (`FlowLines`, its
+  seeded graph to the value, as the web's `flowGraph`), the mark, the name and the facts, and the
+  form; ada, grace, linus or margaret sign in with "tide" (`SignIn`, new in the library). Its
+  fields draw their own icons and the password's show button; the web's other ways in (a server,
+  a token) are not ported, the example asks for none.
+- Open: the overview and a job's page; the bulk actions on the selected runs; a table narrower than its
   least width scrolls sideways on the web and is cut short here; the log's wrapping.
