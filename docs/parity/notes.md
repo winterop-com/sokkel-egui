@@ -71,5 +71,7 @@ shot into `parity/notes/web/` by `bun scripts/parity.ts web notes`.
   the library: the arrows, Enter, Escape twice, and a press outside).
 
 ## Open
-- The web's note editor draws in the sans face at c95b8911; that is a sokkel-ui bug (its lean
+
+- A note dragged from a listing onto the tree's folder (the web's `DragDrop` across parts); rows
+  move within the tree.- The web's note editor draws in the sans face at c95b8911; that is a sokkel-ui bug (its lean
   stylesheet dropped `--font-mono`), so the egui editor keeps the mono face.

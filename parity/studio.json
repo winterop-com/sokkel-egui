@@ -1,0 +1,87 @@
+{
+    "example": "examples/studio/web/src",
+    "ported": {
+        "commit": "c95b8911",
+        "files": {
+            "App.tsx": "c7c557a560267f23a8e996c685b7b2ee877166fb",
+            "Dialogs.tsx": "43d5192979422067ec44de64906cd44700b663c1",
+            "Settings.tsx": "08bad5a12729ca9a9b1b0dae67616affdfde6e18",
+            "Studio.tsx": "756854fb750a551e015774a482d0fc4fdd6acf06",
+            "app.css": "c59537a73f52176c9f73939e6b0851d6ae4dd3ef",
+            "backend.ts": "effe1b33b646d14b6d4fc420037c59801f202f16",
+            "editors/PipelineCanvas.tsx": "d165afd8066c3556a35618e3fb1da93119b27714",
+            "editors/PipelineEditor.tsx": "ff3549fc25f823b7c3d64f993a66a30a13634c82",
+            "editors/Problems.tsx": "3953e9f9f49377cfbe435ff1f4387cee758d884b",
+            "editors/QueryEditor.tsx": "aade687833a30678939cae238104487d5d3d5ff5",
+            "editors/SchemaEditor.tsx": "ab8d6fecacb8aab70f92b9dfe6469c6958396a5d",
+            "editors/StepSettings.tsx": "d10953981ef0ccc603e6d348a989684a3a5cb8bb",
+            "editors/TableView.tsx": "d7c069cbc1cce135bbb5fd38e9f8f09f13724dd2",
+            "editors/parts.tsx": "a857fd117a805a3a12b6617f95cd7b28cf701912",
+            "editors/results.tsx": "7e8534ce5f942882c66b53a26afaeba6669ef273",
+            "main.tsx": "602c6c664f089caec0d04b8c35dec4cdf40b835b",
+            "model.ts": "e2a6ca18b999dad81228e04ce7156da812289321",
+            "pages/Runs.tsx": "edb00f311ed68f8f4a448701c20b75f2f4e95cb8",
+            "pages/WorkArea.tsx": "fc8926244f925101664c3337e3b46954c0e71e75",
+            "pipeline-edit.ts": "b9e65b6e1d9c89d9feb2e203ef33f1e4bf3461c9",
+            "pipeline.ts": "61ed0cef5c6725bd15292d730137655ccaf13465",
+            "seed.ts": "d65adac7c7c9b574b9bebb05d1317cac91ca95df",
+            "simulate.ts": "89710b7a857777987e8ce57af8bf9332e875a557",
+            "sql.ts": "8c8dfe25b4a98ae73c7b8c8668d949d5b0c31c6e",
+            "state.tsx": "382a7687748cfc5d36165b6ece6fc0453d609f11",
+            "tables.ts": "d3e59375b7ac725c6b95594a87a7a7d47402e628"
+        }
+    },
+    "parts": {},
+    "screens": [
+        {
+            "name": "studio_pipeline",
+            "route": "file/harbor-nightly-export",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "studio_schema",
+            "route": "file/harbor-order-schema",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "studio_query",
+            "route": "file/juniper-slow-steps",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "studio_table",
+            "route": "table/runs",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "studio_runs",
+            "route": "runs",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "studio_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "c95b8911dd02bf7925e96b62c93fc8a934d57800"
+}
