@@ -23,10 +23,26 @@ shot into `parity/notes/web/` by `bun scripts/parity.ts web notes`.
   the notes newest change first in a list table (`Cell::IconName`, new in the library: a note's
   kind as its icon, then its name), sorted, reordered by hand when the vault's order is manual,
   each row's menu.
+- A note: the open notes as tabs over it (`DocumentTabs`, with Recent and New note at the strip's
+  end), its name renamed in place in a pane's head (`PaneHeader`, new in the library, and
+  `InlineEdit::weight`), Edit, Both or Read, and its markdown in the code editor beside the page it
+  makes (`EditPreview`, new in the library, on `SplitPane::only`), the links followed and the tags
+  opened. Mod-E steps the view and Mod-S saves.
+- Beside a note, in the shell's panel: its linked and unlinked mentions, each line drawn as
+  markdown with the name marked, Link to turn a mention into a link, the links out (Make for a
+  name with no note yet), its tags, and its outline (`Item`, `item_group` and `TableOfContents`,
+  new in the library). A side panel's sections stand right under its head, each heading on a 20
+  row, as the web's.
+- Daily: today's note started or opened, a month to jump to any day with the days written dotted
+  (`MiniMonth`, new in the library), the template as it reads, and the days written.
+- Tags: every tag with how many notes carry it, filtered, the most used as bars (`BarList` takes
+  a closure to write a value), and one tag's notes (`Cell::TagName`, new in the library). A list's
+  chevron column keeps the column gap before it, as the web's grid.
 
 ## Open
 
-- A note's page (the editor, its preview, its tabs), the panel with its links and outline,
-  Daily, Tags, Graph, Search and Settings.
+- Graph, Search and Settings.
 - The dialogs that rename, move and delete, and New folder; the palette and the switcher.
 - QuickAdd says nothing yet when a title is already in the vault (the web's `validate`).
+- The web's note editor draws in the sans face at c95b8911; that is a sokkel-ui bug (its lean
+  stylesheet dropped `--font-mono`), so the egui editor keeps the mono face.

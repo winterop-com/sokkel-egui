@@ -255,6 +255,8 @@ impl<'a> SidePanel<'a> {
         let room = ui.available_rect_before_wrap();
         let top = t.length("spacing-shell-top");
         let head = Rect::from_min_size(room.min, vec2(room.width(), top));
+        // the content stands right under the head's rule
+        ui.spacing_mut().item_spacing.y = 0.0;
         ui.allocate_rect(head, Sense::hover());
         ui.painter().hline(
             head.x_range(),
@@ -333,7 +335,14 @@ pub fn panel_section(ui: &mut Ui, title: &str, body: impl FnOnce(&mut Ui)) {
         .show(ui, |ui| {
             ui.set_width(ui.available_width());
             ui.spacing_mut().item_spacing.y = 8.0;
-            group_label(ui, title);
+            // the heading's row is 20 tall, its words in the middle
+            let (row, _) = ui.allocate_exact_size(vec2(ui.available_width(), 20.0), Sense::hover());
+            let mut head = ui.new_child(
+                egui::UiBuilder::new()
+                    .max_rect(row)
+                    .layout(egui::Layout::left_to_right(egui::Align::Center)),
+            );
+            group_label(&mut head, title);
             body(ui);
         })
         .response

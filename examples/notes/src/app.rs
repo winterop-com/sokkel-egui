@@ -40,6 +40,14 @@ pub struct NotesApp {
     pub quick: String,
     /// Each table's sort, widths and the row opened, by the table's name.
     pub tables: std::collections::HashMap<String, sokkel_egui::TableState>,
+    /// The month the daily page shows, once it is moved off today's.
+    pub daily_month: Option<sokkel_egui::Day>,
+    /// What is typed in the tags' filter.
+    pub tag_query: String,
+    /// A heading of the note shown to scroll to, once drawn.
+    pub reveal: Option<String>,
+    /// The tab shown in the panel beside a note.
+    pub panel_tab: usize,
     started: i64,
     started_at: Option<f64>,
     elapsed: i64,
@@ -75,6 +83,10 @@ impl NotesApp {
             top_query: String::new(),
             quick: String::new(),
             tables: Default::default(),
+            panel_tab: 0,
+            reveal: None,
+            tag_query: String::new(),
+            daily_month: None,
             started: now,
             started_at: None,
             elapsed: 0,
@@ -208,9 +220,24 @@ impl NotesApp {
         let mut open = std::mem::take(&mut self.open);
         let mut top_query = std::mem::take(&mut self.top_query);
         let (filter, open, top_query) = (&mut filter, &mut open, &mut top_query);
+        let mut panel_open = prefs.panel;
+        let mut panel_asked = crate::note_panel::PanelAsked::default();
+        let mut panel_tab = self.panel_tab;
         let mut shell = Shell::new();
         if self.desktop {
             shell = shell.desktop(sokkel_egui::DesktopWindow::native());
+        }
+        // the panel beside a note: what links to it, what it links to, its outline
+        let panel_vault = note.as_ref().map(|_| vault.clone());
+        if let (Some(shown), Some(panel_vault)) = (note.clone(), panel_vault) {
+            let body = self
+                .backend
+                .draft(&shown.id)
+                .map_or_else(|| shown.body.clone(), str::to_owned);
+            let (asked, tab) = (&mut panel_asked, &mut panel_tab);
+            shell = shell.panel(&mut panel_open, move |ui| {
+                *asked = crate::note_panel::note_panel(ui, &panel_vault, &shown, &body, tab);
+            });
         }
         let mut tree_chosen = None;
         let mut tree_action: Option<(String, usize)> = None;
@@ -267,6 +294,15 @@ impl NotesApp {
             }
             ShellPart::Page => match page.as_str() {
                 "notes" => Page::scroll(ui, |ui| self.all_notes(ui, None)),
+                "note" if note.is_some() => {
+                    let id = note_id.clone().unwrap_or_default();
+                    self.note_page(ui, &id);
+                }
+                "daily" => Page::scroll(ui, |ui| self.daily(ui)),
+                "tags" => {
+                    let tag = second.clone();
+                    Page::scroll(ui, |ui| self.tags(ui, tag.as_deref()));
+                }
                 "folder" if folder_id.is_some() => {
                     let folder = folder_id.clone();
                     Page::scroll(ui, |ui| self.all_notes(ui, folder.as_deref()));
@@ -291,6 +327,38 @@ impl NotesApp {
                 ui.add(line.item("notes", notes_count));
             }
         });
+        self.panel_tab = panel_tab;
+        if panel_open != prefs.panel {
+            self.backend.set_prefs(|p| p.panel = panel_open);
+        }
+        if let Some(id) = panel_asked.open {
+            self.open_note(&id);
+        }
+        if let Some(target) = panel_asked.make {
+            self.follow(&target, note_id.as_deref());
+        }
+        if let Some(heading) = panel_asked.heading {
+            self.reveal = Some(heading);
+        }
+        if let Some(tag) = panel_asked.tag {
+            self.go(&format!("tags/{tag}"));
+        }
+        if let (Some((from, at)), Some(shown)) = (panel_asked.link, note.as_ref()) {
+            let title = shown.title.clone();
+            let _ = self.backend.rewrite(
+                &from,
+                |current| {
+                    let written = &current[at.clone()];
+                    let text = if written == title {
+                        format!("[[{title}]]")
+                    } else {
+                        format!("[[{title}|{written}]]")
+                    };
+                    format!("{}{}{}", &current[..at.start], text, &current[at.end..])
+                },
+                now,
+            );
+        }
         self.filter = std::mem::take(filter);
         self.open = std::mem::take(open);
         self.top_query = std::mem::take(top_query);

@@ -61,6 +61,7 @@ pub struct InlineEdit {
     words: InlineEditWords,
     display: Option<Display>,
     multiline: bool,
+    weight: Option<f32>,
 }
 
 /// How a value reads at rest.
@@ -79,6 +80,7 @@ impl InlineEdit {
             words: InlineEditWords::default(),
             display: None,
             multiline: false,
+            weight: None,
         }
     }
 
@@ -104,6 +106,12 @@ impl InlineEdit {
     /// `editor="select"`: the list opens in the value's place, and a choice saves at once.
     pub fn select(mut self, options: impl IntoIterator<Item = impl Into<String>>) -> Self {
         self.options = options.into_iter().map(Into::into).collect();
+        self
+    }
+
+    /// The value at rest at this weight, as the web's inherits the heading's it stands in.
+    pub fn weight(mut self, weight: f32) -> Self {
+        self.weight = Some(weight);
         self
     }
 
@@ -156,7 +164,11 @@ impl InlineEdit {
             } else {
                 displayed.as_ref().unwrap_or(&self.value)
             };
-            let galley = egui::WidgetText::from(role.rich(&t, shown)).into_galley(
+            let rich = match self.weight {
+                Some(weight) => role.rich(&t, shown).variation("wght", weight),
+                None => role.rich(&t, shown),
+            };
+            let galley = egui::WidgetText::from(rich).into_galley(
                 ui,
                 Some(if title || self.multiline {
                     egui::TextWrapMode::Wrap

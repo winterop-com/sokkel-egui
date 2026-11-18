@@ -11,10 +11,12 @@ mod chip_bar;
 mod choice;
 mod code_editor;
 mod commands;
+mod contents;
 mod dashboard;
 mod datetime;
 mod display;
 mod document_tabs;
+mod edit_preview;
 mod empty;
 mod entry_grid;
 mod fields;
@@ -24,6 +26,7 @@ mod form_fields;
 mod frame;
 mod info;
 mod inline_edit;
+mod item;
 mod item_card;
 mod json_tree;
 mod layout;
@@ -32,9 +35,11 @@ mod log_view;
 mod markdown;
 mod menu;
 mod meta_line;
+mod mini_month;
 mod number_field;
 mod overlay;
 mod page;
+mod pane_header;
 mod panel_menu;
 mod panes;
 mod person;
@@ -81,12 +86,14 @@ pub use code_editor::{
     CodeSize, CodeVariant, LARGE_DOCUMENT, MarkTone,
 };
 pub use commands::{AppearanceCommandWords, appearance_commands, place_commands, place_of, run_appearance_command};
+pub use contents::{ContentsEntry, TableOfContents, TableOfContentsWords};
 pub use dashboard::{
     DashboardGrid, DashboardPanel, GridCells, PanelSpan, body_room, cell_height, report_natural_height, took_room,
 };
 pub use datetime::{DateField, DateFieldWords, DateTimeField, DateTimeFieldResponse, DateTimeFieldWords, Moment};
 pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton, TextLink, Unfoldable};
 pub use document_tabs::{DocumentTab, DocumentTabs, DocumentTabsResponse, DocumentTabsWords};
+pub use edit_preview::{EditPreview, EditPreviewView};
 pub use empty::Empty;
 pub use entry_grid::{EntryColumn, EntryEdit, EntryGrid, EntryGridWords, EntryRow};
 pub(crate) use fields::search_field;
@@ -109,6 +116,7 @@ pub use frame::{
 };
 pub use info::info_tip;
 pub use inline_edit::{InlineEdit, InlineEditLook, InlineEditWords};
+pub use item::{Item, ItemDescription, ItemSize, ItemVariant, item_group};
 pub use item_card::{CardFact, ItemCard, SortableGrid, SortableOutcome};
 pub use json_tree::{JsonTree, JsonTreeWords};
 pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
@@ -117,11 +125,13 @@ pub use log_view::{LogLevel, LogLine, LogView, LogViewWords};
 pub use markdown::{Markdown, MarkdownResponse, MarkdownScale, MarkdownWords, heading_id};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use meta_line::MetaLine;
+pub use mini_month::{MiniMonth, MiniMonthResponse, MiniMonthWords};
 pub use number_field::{NumberField, NumberFieldWords, read_number, write_number};
 pub use overlay::{
     ConfirmAnswer, ConfirmDialog, Dialog, Select, UnsavedChangesWords, tooltip, tooltip_shown, unsaved_changes,
 };
 pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
+pub use pane_header::{PaneHeader, PaneHeaderVariant, PaneTitle, section_title_weight};
 pub use panel_menu::{PanelAsked, PanelMenu, PanelWindow, PanelWords, body_drawn, panel_away, quiet_tools, windowed};
 pub use panes::{Inspector, InspectorWords, SidePanel, SubNav, group_label, inspector_section, panel_section};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};

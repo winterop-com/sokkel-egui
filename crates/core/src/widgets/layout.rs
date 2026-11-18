@@ -235,6 +235,7 @@ pub struct SplitPane {
     max_share: f32,
     narrow_below: f32,
     scroll: bool,
+    only: Option<usize>,
 }
 
 impl SplitPane {
@@ -246,7 +247,15 @@ impl SplitPane {
             max_share: 0.8,
             narrow_below: 640.0,
             scroll: false,
+            only: None,
         }
+    }
+
+    /// One pane alone across the room, the first (0) or the second (1), as the web's `only`; the
+    /// other is not drawn.
+    pub fn only(mut self, only: Option<usize>) -> Self {
+        self.only = only;
+        self
     }
 
     /// Each pane scrolls what runs past its height, as the web's panes do around a block of their own.
@@ -296,6 +305,15 @@ impl SplitPane {
                 add(&mut child);
             }
         };
+        if let Some(alone) = self.only {
+            if alone == 0 {
+                pane(ui, room, "first", Box::new(first));
+            } else {
+                pane(ui, room, "second", Box::new(second));
+            }
+            ui.allocate_rect(room, egui::Sense::hover());
+            return;
+        }
         if room.width() < self.narrow_below {
             let half = room.height() / 2.0;
             let top = egui::Rect::from_min_size(room.min, vec2(room.width(), half));

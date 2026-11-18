@@ -24,7 +24,13 @@ pub fn render(path: &str) -> Harness<'static, NotesApp> {
 #[test]
 fn every_screen() {
     let mut results = SnapshotResults::new();
-    for (name, path) in [("notes_all", "notes"), ("notes_folder", "folder/runbooks")] {
+    for (name, path) in [
+        ("notes_all", "notes"),
+        ("notes_folder", "folder/runbooks"),
+        ("notes_note", "note/welcome"),
+        ("notes_daily", "daily"),
+        ("notes_tags", "tags"),
+    ] {
         let mut harness = render(path);
         results.add(harness.try_snapshot(name));
     }

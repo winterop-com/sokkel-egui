@@ -162,6 +162,8 @@ pub enum Cell {
         icon: Icon,
         name: String,
     },
+    /// A tag: the hash in the muted ink, then 4 on its name at medium weight.
+    TagName(String),
     /// A name, then 8 on its code small and muted in the mono face, on one line.
     NameThenCode {
         name: String,
@@ -263,6 +265,7 @@ impl Cell {
             Cell::NamedCode { name, .. } | Cell::NameThenCode { name, .. } | Cell::IconName { name, .. } => {
                 name.clone()
             }
+            Cell::TagName(name) => name.clone(),
             Cell::ChipNote { label, note, .. } => format!("{label} {note}"),
             Cell::Number { text, .. } | Cell::Marked { text, .. } | Cell::Swatch { text, .. } => text.clone(),
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
@@ -290,6 +293,7 @@ impl Cell {
             Cell::NamedCode { name, .. } | Cell::NameThenCode { name, .. } | Cell::IconName { name, .. } => {
                 name.clone()
             }
+            Cell::TagName(name) => name.clone(),
             Cell::ChipNote { label, note, .. } => format!("{label} {note}"),
             Cell::Check(on) | Cell::Switch { on, .. } => u8::from(*on).to_string(),
             Cell::Button { .. } => String::new(),
@@ -1451,6 +1455,12 @@ impl<'a> DataTable<'a> {
     /// The room after a row's last column: none where the actions' column stands at the row's very
     /// end, pinned there as the web's end column of a table with a least width, else the row's own
     /// padding.
+    /// The room between the last column and the chevron's: a list's column gap, as its grid has;
+    /// a table's end column stands against the last cell's own padding.
+    fn chevron_gap(&self) -> f32 {
+        if self.variant == TableVariant::List { GAP } else { 0.0 }
+    }
+
     fn end_pad(&self, pad: f32) -> f32 {
         if self.actions.is_some() && !self.fits { 0.0 } else { pad }
     }
@@ -1677,7 +1687,7 @@ impl<'a> DataTable<'a> {
                         Stroke::new(1.0, t.color_or("table-head-line", t.color("border"))),
                     );
                     let upper = t.word("table-head-transform") == Some("uppercase");
-                    let end = if self.chevron { 32.0 } else { 0.0 };
+                    let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
                     let places = self.layout(head.left() + pad + select_width, head.right() - self.end_pad(pad) - end);
                     if self.selectable {
                         let all = !self.rows.is_empty() && self.state.selected.len() == self.rows.len();
@@ -1834,7 +1844,7 @@ impl<'a> DataTable<'a> {
                 let free = !stacked && (self.auto || self.detail.is_some() || groups.is_some());
                 let lead = if self.detail.is_some() { 24.0 } else { 0.0 };
                 let heights: Vec<f32> = if free && self.auto {
-                    let end = if self.chevron { 32.0 } else { 0.0 };
+                    let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
                     let left = ui.cursor().left();
                     let places = self.layout(
                         left + pad + select_width,
@@ -2019,7 +2029,7 @@ impl<'a> DataTable<'a> {
                                 out.edited = edited;
                             }
                         }
-                        let end = if self.chevron { 32.0 } else { 0.0 };
+                        let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
                         if self.chevron && !stacked {
                             icons::paint(
                                 ui.painter(),
@@ -2530,6 +2540,26 @@ fn paint_cell(
                 .galley(pos2(rect.left(), y + height), small, t.color("muted-foreground"));
         }
         Cell::Code(label) => text(ui, code_rich(t, label, TextRole::Body), t.color("foreground")),
+        Cell::TagName(name) => {
+            icons::paint(
+                ui.painter(),
+                pos2(rect.left() + 8.0, rect.center().y),
+                Icon::Hash,
+                16.0,
+                t.color("muted-foreground"),
+            );
+            let galley = WidgetText::from(TextRole::Body.rich(t, name).variation("wght", 500.0)).into_galley(
+                ui,
+                Some(mode),
+                (room - 20.0).max(1.0),
+                TextRole::Body.font(t),
+            );
+            ui.painter().galley(
+                pos2(rect.left() + 20.0, rect.center().y - galley.size().y / 2.0),
+                galley,
+                t.color("foreground"),
+            );
+        }
         Cell::IconName { icon, name } => {
             icons::paint(
                 ui.painter(),
@@ -2829,7 +2859,8 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::OutlineTags(tags) => paint_tags(ui, tags, at, room, true),
         Cell::NamedCode { name: label, .. }
         | Cell::NameThenCode { name: label, .. }
-        | Cell::IconName { name: label, .. } => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
+        | Cell::IconName { name: label, .. }
+        | Cell::TagName(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
         Cell::ChipNote { label, tone, .. } => super::chip::paint_at(ui, at.x, at.y, label, *tone),
         Cell::CodeLines { code: label, .. } | Cell::Code(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));

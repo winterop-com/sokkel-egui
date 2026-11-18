@@ -4,9 +4,13 @@
 pub mod all_notes;
 pub mod app;
 pub mod backend;
+pub mod daily;
 pub mod model;
+pub mod note_page;
+pub mod note_panel;
 pub mod search;
 pub mod seed;
+pub mod tags;
 pub mod vault;
 pub mod wiki_links;
 

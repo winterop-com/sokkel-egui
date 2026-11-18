@@ -259,20 +259,20 @@ pub struct BarListItem {
 /// quiet; a value written as a whole percent. The bars keep at least two fifths of the width.
 pub struct BarList<'a> {
     items: &'a [BarListItem],
-    format: fn(f64) -> String,
+    format: Box<dyn Fn(f64) -> String + 'a>,
 }
 
 impl<'a> BarList<'a> {
     pub fn new(items: &'a [BarListItem]) -> Self {
         Self {
             items,
-            format: |v| format!("{}%", (v * 100.0).round()),
+            format: Box::new(|v| format!("{}%", (v * 100.0).round())),
         }
     }
 
     /// How a value is written; a whole percent by default.
-    pub fn format(mut self, format: fn(f64) -> String) -> Self {
-        self.format = format;
+    pub fn format(mut self, format: impl Fn(f64) -> String + 'a) -> Self {
+        self.format = Box::new(format);
         self
     }
 
