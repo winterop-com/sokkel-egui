@@ -491,6 +491,8 @@ pub struct Unfoldable<'a> {
     heading: String,
     open_first: bool,
     aside: Option<super::section::Tools<'a>>,
+    dot: Option<egui::Color32>,
+    forced: bool,
 }
 
 impl<'a> Unfoldable<'a> {
@@ -500,7 +502,22 @@ impl<'a> Unfoldable<'a> {
             heading: heading.into(),
             open_first: false,
             aside: None,
+            dot: None,
+            forced: false,
         }
+    }
+
+    /// A dot of 10 in `color` before the heading, 8 apart, as a heading led by sokkel-ui's `Dot`.
+    pub fn dot(mut self, color: egui::Color32) -> Self {
+        self.dot = Some(color);
+        self
+    }
+
+    /// Held open whatever the reader chose, as a filter does while it is typed: the row no longer
+    /// presses, its chevron turned and faint.
+    pub fn forced(mut self, forced: bool) -> Self {
+        self.forced = forced;
+        self
     }
 
     /// Open the first time it is drawn.
@@ -517,7 +534,9 @@ impl<'a> Unfoldable<'a> {
 
     pub fn show(self, ui: &mut egui::Ui, content: impl FnOnce(&mut egui::Ui)) {
         let t = tokens(ui.ctx());
-        let mut open: bool = ui.data(|d| d.get_temp(self.id)).unwrap_or(self.open_first);
+        let mut chosen: bool = ui.data(|d| d.get_temp(self.id)).unwrap_or(self.open_first);
+        let forced = self.forced;
+        let mut open = chosen || forced;
         let width = ui.available_width();
         ui.vertical(|ui| {
             ui.spacing_mut().item_spacing.y = 8.0;
@@ -535,9 +554,10 @@ impl<'a> Unfoldable<'a> {
                 aside_width = child.min_rect().width() + 8.0;
             }
             let face = egui::Rect::from_min_max(row.min, pos2(row.right() - aside_width, row.bottom()));
-            let hit = ui.interact(face, self.id.with("row"), Sense::click());
-            hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, open, &self.heading));
-            if hit.hovered() {
+            let sense = if forced { Sense::hover() } else { Sense::click() };
+            let hit = ui.interact(face, self.id.with("row"), sense);
+            hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, !forced, open, &self.heading));
+            if hit.hovered() && !forced {
                 ui.painter().rect_filled(face, t.radius("md"), t.color("hover"));
             }
             icons::paint(
@@ -545,22 +565,29 @@ impl<'a> Unfoldable<'a> {
                 pos2(face.left() + 4.0 + 7.0, face.center().y),
                 if open { Icon::ChevronDown } else { Icon::ChevronRight },
                 14.0,
-                t.color("muted-foreground"),
+                t.color(if forced { "faint" } else { "muted-foreground" }),
             );
+            let mut start = face.left() + 4.0 + 14.0 + 8.0;
+            if let Some(color) = self.dot {
+                ui.painter()
+                    .circle_filled(pos2(start + 5.0, face.center().y), 5.0, color);
+                start += 10.0 + 8.0;
+            }
             let galley = WidgetText::from(TextRole::Body.rich(&t, &self.heading).variation("wght", 500.0)).into_galley(
                 ui,
                 Some(TextWrapMode::Truncate),
-                (face.width() - 30.0).max(1.0),
+                (face.right() - start - 4.0).max(1.0),
                 TextRole::Body.font(&t),
             );
             ui.painter().galley(
-                pos2(face.left() + 4.0 + 14.0 + 8.0, face.center().y - galley.size().y / 2.0),
+                pos2(start, face.center().y - galley.size().y / 2.0),
                 galley,
                 t.color("foreground"),
             );
             super::focus_ring_inset(ui.painter(), &t, face, t.radius("md"), &hit);
             if hit.clicked() {
-                open = !open;
+                chosen = !chosen;
+                open = chosen;
             }
             if open {
                 ui.horizontal(|ui| {
@@ -572,6 +599,6 @@ impl<'a> Unfoldable<'a> {
                 });
             }
         });
-        ui.data_mut(|d| d.insert_temp(self.id, open));
+        ui.data_mut(|d| d.insert_temp(self.id, chosen));
     }
 }

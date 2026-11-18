@@ -11,6 +11,8 @@ pub mod form_layout;
 pub mod forms;
 pub mod forms_page;
 pub mod geo;
+pub mod health;
+pub mod health_page;
 pub mod households;
 pub mod overview;
 pub mod places_page;

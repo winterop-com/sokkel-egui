@@ -147,6 +147,12 @@ pub enum Cell {
     },
     /// An id or a code, in the mono face.
     Mono(String),
+    /// A name at medium weight over its id small and muted in the mono face, as an object named
+    /// over its code.
+    NamedCode {
+        name: String,
+        code: String,
+    },
     /// A code in the mono face at the body's size, as a `font-mono` cell in a `text-sm` row.
     Code(String),
     /// A code in the mono face at the body's size over a line of small muted words, as a kind's
@@ -233,6 +239,7 @@ impl Cell {
             | Cell::Person(text) => text.clone(),
             Cell::Lines { title, .. } => title.clone(),
             Cell::CodeLines { code, .. } => code.clone(),
+            Cell::NamedCode { name, .. } => name.clone(),
             Cell::Number { text, .. } | Cell::Marked { text, .. } | Cell::Swatch { text, .. } => text.clone(),
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
             Cell::Tags(tags) | Cell::OutlineTags(tags) => tags.join(" "),
@@ -255,6 +262,7 @@ impl Cell {
             | Cell::Person(text) => text.clone(),
             Cell::Lines { title, .. } => title.clone(),
             Cell::CodeLines { code, .. } => code.clone(),
+            Cell::NamedCode { name, .. } => name.clone(),
             Cell::Check(on) | Cell::Switch { on, .. } => u8::from(*on).to_string(),
             Cell::Button { .. } => String::new(),
             Cell::Clock { at, .. } => format!("{:024.3}", at + 1e18),
@@ -289,6 +297,8 @@ pub struct TableState {
     pub opened: Option<usize>,
     /// The rows opened into their own detail under them (a table with `detail`), by their index.
     pub expanded: BTreeSet<usize>,
+    /// The groups folded shut under their heads (a table with `groups`), by their key.
+    pub folded: BTreeSet<String>,
     /// The active cell of an editing table, by its row's index and its column's.
     pub active: Option<(usize, usize)>,
     /// The active cell's row by its key, so it follows that row when the rows move.
@@ -350,6 +360,9 @@ pub struct TableWords {
     /// A row's control that opens its detail, and closes it.
     pub expand: String,
     pub collapse: String,
+    /// A group head's control while the group is folded, and while it is open.
+    pub show_group: String,
+    pub hide_group: String,
     pub edit: EditWords,
 }
 
@@ -367,6 +380,8 @@ impl Default for TableWords {
             columns: "Columns".into(),
             expand: "Expand".into(),
             collapse: "Collapse".into(),
+            show_group: "Show group".into(),
+            hide_group: "Hide group".into(),
             edit: EditWords::default(),
         }
     }
@@ -442,6 +457,7 @@ pub struct DataTable<'a> {
     paging: Option<Vec<usize>>,
     auto: bool,
     detail: Option<RowDetail<'a>>,
+    groups: Option<Vec<String>>,
 }
 
 /// What a row opens into under it, drawn for its index in the rows given.
@@ -495,6 +511,7 @@ impl<'a> DataTable<'a> {
             bar: false,
             auto: false,
             detail: None,
+            groups: None,
         }
     }
 
@@ -529,6 +546,15 @@ impl<'a> DataTable<'a> {
     /// so does a press on the row. The open rows are the state's `expanded`.
     pub fn detail(mut self, detail: impl Fn(usize, &mut Ui) + 'a) -> Self {
         self.detail = Some(Box::new(detail));
+        self
+    }
+
+    /// The rows under a head for each group, by each row's key (one for each row, in the rows'
+    /// order), the groups in the order their keys first come, as the web's `groupBy`: the head
+    /// says the key and how many rows it holds, and a press on it folds the group shut or opens
+    /// it. The folded groups are the state's `folded`.
+    pub fn groups<S: Into<String>>(mut self, keys: impl IntoIterator<Item = S>) -> Self {
+        self.groups = Some(keys.into_iter().map(Into::into).collect());
         self
     }
 
@@ -1362,6 +1388,16 @@ impl<'a> DataTable<'a> {
                 if ascending { ordering } else { ordering.reverse() }
             });
         }
+        if let Some(groups) = self.groups.as_ref().filter(|g| g.len() == self.rows.len()) {
+            // the groups in the order their keys first come, each keeping its rows' order
+            let mut first: Vec<&String> = Vec::new();
+            for key in groups {
+                if !first.contains(&key) {
+                    first.push(key);
+                }
+            }
+            order.sort_by_key(|i| first.iter().position(|k| *k == &groups[*i]).unwrap_or(0));
+        }
         order
     }
 
@@ -1737,7 +1773,10 @@ impl<'a> DataTable<'a> {
                 });
                 // rows that grow to their words or open into a detail are each as tall as they
                 // measure, every one drawn; the details' heights are last frame's
-                let free = !stacked && (self.auto || self.detail.is_some());
+                let rows_count = self.rows.len();
+                let groups: Option<Vec<String>> = self.groups.clone().filter(|g| g.len() == rows_count);
+                let groups = groups.as_ref();
+                let free = !stacked && (self.auto || self.detail.is_some() || groups.is_some());
                 let lead = if self.detail.is_some() { 24.0 } else { 0.0 };
                 let heights: Vec<f32> = if free && self.auto {
                     let end = if self.chevron { 32.0 } else { 0.0 };
@@ -1770,7 +1809,19 @@ impl<'a> DataTable<'a> {
                         0.0
                     }
                 };
-                let whole: f32 = order.iter().map(|i| heights[*i] + detail_height(ui, *i)).sum();
+                let folded = |index: usize| groups.is_some_and(|g| self.state.folded.contains(&g[index]));
+                let heads = groups.map_or(0, |g| {
+                    let mut keys: Vec<&String> = g.iter().collect();
+                    keys.sort();
+                    keys.dedup();
+                    keys.len()
+                });
+                let whole: f32 = order
+                    .iter()
+                    .filter(|i| !folded(**i))
+                    .map(|i| heights[*i] + detail_height(ui, *i))
+                    .sum::<f32>()
+                    + heads as f32 * row_height;
                 let tall = if self.stretch {
                     // what is left under the bar and the head, less the foot and the frame's edge
                     (limit - ui.cursor().top() - foot_room - 1.0).max(row_height)
@@ -1789,9 +1840,28 @@ impl<'a> DataTable<'a> {
                     area = area.min_scrolled_height(tall);
                 }
                 let count = order.len();
+                let mut last_group: Option<String> = None;
                 let mut body = |ui: &mut Ui, range: std::ops::Range<usize>| {
                     for position in range {
                         let index = order[position];
+                        if let Some(groups) = groups {
+                            let key = &groups[index];
+                            if last_group.as_ref() != Some(key) {
+                                last_group = Some(key.clone());
+                                let shut = self.state.folded.contains(key);
+                                let held = order.iter().filter(|i| groups[**i] == *key).count();
+                                if group_head(ui, &t, key, held, shut, pad + select_width, &self.words) {
+                                    if shut {
+                                        self.state.folded.remove(key);
+                                    } else {
+                                        self.state.folded.insert(key.clone());
+                                    }
+                                }
+                            }
+                            if self.state.folded.contains(key) {
+                                continue;
+                            }
+                        }
                         let height = if free {
                             heights[index]
                         } else {
@@ -2401,6 +2471,22 @@ fn paint_cell(
                 .galley(pos2(rect.left(), y + height), small, t.color("muted-foreground"));
         }
         Cell::Code(label) => text(ui, code_rich(t, label, TextRole::Body), t.color("foreground")),
+        Cell::NamedCode { name, code } => {
+            let lay = |ui: &mut Ui, rich: egui::RichText, role: TextRole| {
+                WidgetText::from(rich).into_galley(ui, Some(mode), room, role.font(t))
+            };
+            let first = lay(
+                ui,
+                TextRole::Body.rich(t, name).variation("wght", 500.0),
+                TextRole::Body,
+            );
+            let second = lay(ui, code_rich(t, code, TextRole::Help), TextRole::Help);
+            let y = rect.center().y - (first.size().y + second.size().y) / 2.0;
+            let height = first.size().y;
+            ui.painter().galley(pos2(rect.left(), y), first, t.color("foreground"));
+            ui.painter()
+                .galley(pos2(rect.left(), y + height), second, t.color("muted-foreground"));
+        }
         Cell::Lines { title, detail, over } => {
             let lay = |ui: &mut Ui, rich: egui::RichText, role: TextRole| {
                 WidgetText::from(rich).into_galley(ui, Some(mode), room.max(1.0), role.font(t))
@@ -2626,6 +2712,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Chip(label, tone) => super::chip::paint_at(ui, at.x, at.y, label, *tone),
         Cell::Tags(tags) => paint_tags(ui, tags, at, room, false),
         Cell::OutlineTags(tags) => paint_tags(ui, tags, at, room, true),
+        Cell::NamedCode { name: label, .. } => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
         Cell::CodeLines { code: label, .. } | Cell::Code(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
             text(ui, rich, quiet, at.x, room)
@@ -2666,6 +2753,78 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
     }
 }
 
+/// A group's head as a line of the table, on the panel's ground: the control that folds it, the
+/// key in the column heads' words and how many rows it holds, small in the code face; whether it
+/// was pressed.
+fn group_head(
+    ui: &mut Ui,
+    t: &crate::Tokens,
+    key: &str,
+    held: usize,
+    shut: bool,
+    start: f32,
+    words: &TableWords,
+) -> bool {
+    let height = t.density("row");
+    let (rect, row) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
+    let said = if shut { &words.show_group } else { &words.hide_group };
+    row.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, format!("{said}: {key}")));
+    if row.hovered() {
+        ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
+    }
+    ui.painter()
+        .rect_filled(rect, CornerRadius::ZERO, t.color("panel-ground"));
+    ui.painter()
+        .hline(rect.x_range(), rect.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
+    let control = Rect::from_min_size(pos2(rect.left() + start, rect.center().y - 10.0), vec2(20.0, 20.0));
+    if row.hovered() && ui.rect_contains_pointer(control) {
+        ui.painter().rect_filled(control, t.radius("sm"), t.color("accent"));
+    }
+    icons::paint(
+        ui.painter(),
+        control.center(),
+        if shut { Icon::ChevronRight } else { Icon::ChevronDown },
+        14.0,
+        t.color("muted-foreground"),
+    );
+    let x = control.right() + 4.0;
+    let label = WidgetText::from(TextRole::ColumnHead.rich(t, key)).into_galley(
+        ui,
+        Some(TextWrapMode::Truncate),
+        (rect.right() - x - 48.0).max(1.0),
+        TextRole::ColumnHead.font(t),
+    );
+    let width = label.size().x;
+    ui.painter().galley(
+        pos2(x, rect.center().y - label.size().y / 2.0),
+        label,
+        t.color_or("table-head-ink", t.color("foreground")),
+    );
+    let count = WidgetText::from(
+        egui::RichText::new(thousands(held)).font(egui::FontId::monospace(TextRole::Help.font(t).size)),
+    )
+    .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Help.font(t));
+    ui.painter().galley(
+        pos2(x + width + 8.0, rect.center().y - count.size().y / 2.0),
+        count,
+        t.color("muted-foreground"),
+    );
+    row.clicked()
+}
+
+/// A count with its thousands grouped by commas, as `toLocaleString('en-US')` writes it.
+fn thousands(count: usize) -> String {
+    let digits = count.to_string();
+    let mut out = String::new();
+    for (i, digit) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(digit);
+    }
+    out
+}
+
 /// A code in the mono face at `role`'s size, on lines as tall as a cell's words.
 fn code_rich(t: &crate::Tokens, text: &str, role: TextRole) -> egui::RichText {
     egui::RichText::new(text)
@@ -2693,6 +2852,10 @@ fn cell_height(ui: &Ui, t: &crate::Tokens, cell: &Cell, room: f32) -> f32 {
         Cell::Code(label) => lay(code_rich(t, label, TextRole::Body), TextRole::Body),
         Cell::Lines { title, detail, .. } => {
             lay(TextRole::Body.rich(t, title), TextRole::Body) + lay(TextRole::Help.rich(t, detail), TextRole::Help)
+        }
+        Cell::NamedCode { name, code } => {
+            lay(TextRole::Body.rich(t, name).variation("wght", 500.0), TextRole::Body)
+                + lay(code_rich(t, code, TextRole::Help), TextRole::Help)
         }
         Cell::CodeLines { code, detail } => {
             lay(code_rich(t, code, TextRole::Body), TextRole::Body)

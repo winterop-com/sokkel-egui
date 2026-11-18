@@ -57,6 +57,7 @@ pub struct RecordsApp {
     pub places: crate::places_page::PlacesView,
     /// What the households' list narrows to.
     pub households: crate::households::HouseholdsView,
+    pub health: crate::health_page::HealthView,
     /// What the responses' list holds open.
     pub responses: crate::responses::ResponsesView,
     /// How a periodic report's grid of counts is laid.
@@ -104,6 +105,7 @@ impl RecordsApp {
             grid_view: Default::default(),
             responses: Default::default(),
             households: Default::default(),
+            health: Default::default(),
             places: Default::default(),
             probed_at: now - PROBE,
             answered: Some(true),
@@ -293,6 +295,7 @@ impl RecordsApp {
                     self.places_page(ui, given.as_deref());
                 }
                 (true, "server") => Page::scroll(ui, |ui| self.server_page(ui)),
+                (true, "health") => Page::scroll(ui, |ui| self.health_page(ui)),
                 (true, "people") if self.path.len() == 1 => Page::show(ui, |ui| self.households_page(ui)),
                 (true, "people") => {
                     let id = self.path[1].clone();

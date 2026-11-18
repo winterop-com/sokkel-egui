@@ -317,7 +317,9 @@ impl<'a> BarList<'a> {
         let spacing = ui.spacing().item_spacing.y;
         ui.spacing_mut().item_spacing.y = 0.0;
         for item in self.items {
-            let (row, _) = ui.allocate_exact_size(vec2(width, 28.0), Sense::hover());
+            // 4 over and under a line of the body's words, as the web's `py-1` row
+            let tall = TextRole::Body.line_height(&t) + 8.0;
+            let (row, _) = ui.allocate_exact_size(vec2(width, tall), Sense::hover());
             let painter = ui.painter();
             let middle = row.center().y;
             let ink = if item.chosen {

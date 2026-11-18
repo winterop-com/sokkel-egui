@@ -59,6 +59,10 @@ impl Columns {
                     d.remove::<super::fields::FieldRow>(row.with("measured"));
                 });
             }
+            if start + columns >= items {
+                // the last row stands as far from what follows as the room's own spacing says
+                ui.spacing_mut().item_spacing.y = gap.y;
+            }
             ui.horizontal_top(|ui| {
                 ui.spacing_mut().item_spacing.x = self.gap;
                 for index in start..(start + columns).min(items) {

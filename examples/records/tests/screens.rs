@@ -42,6 +42,7 @@ fn every_screen() {
         ("records_places", "places"),
         ("records_places_region", "places/bong"),
         ("records_server", "server"),
+        ("records_health", "health"),
     ];
     for &(name, path) in screens {
         let mut harness = render(path);
@@ -51,6 +52,7 @@ fn every_screen() {
         ("records_receipt", "responses/9832602a1b1ccacffb3c8507bd2d5fdf"),
         ("records_receipt_site", "responses/7f3d438ab4b07185d993c7ecf06aad0e"),
         ("records_household", "people/household-1"),
+        ("records_health_all", "health"),
     ] {
         let mut harness = render_at(path, 1500.0);
         results.add(harness.try_snapshot(name));

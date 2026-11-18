@@ -78,4 +78,13 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   with codes in cells at the body's size (`Cell::Code`, `Cell::CodeLines`), outline tags
   (`Cell::OutlineTags`) and terms in the code face (`DescriptionList::mono_terms`), all new in the
   library. Its web screen predates the column heads of contract 0.30.1, so the heads differ.
+- Metadata health: the checks run over the metadata and the households (`health.rs`, checked in
+  its test), the findings by severity as tiles, the forms' translations as bars, and the findings
+  searched by object and unfolding by severity (`Unfoldable::dot` and `::forced`, new in the
+  library), each a list grouped by the kind of object under heads that fold
+  (`DataTable::groups`), its rows naming an object over its id (`Cell::NamedCode`) and opening it,
+  all new in the library. Check again runs them again. A `BarList` row is now 4 over and under a
+  line of the body's words (30, as the web's `py-1`), and `Columns` leaves its room's own spacing
+  under its last row rather than its own gap, so status' tiles stand 24 over what follows, as the
+  web's. The web screen predates the regions of sokkel-ui 104fc70d, which gave four more notes.
 - Open: the Playground waits for the code editor's spec, as `ApiPlayground` is built on it.
