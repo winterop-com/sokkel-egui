@@ -1,0 +1,17 @@
+[package]
+name = "music"
+description = "Tidevann's music: a music library's data on a simulated backend, as sokkel-ui's music example keeps it: the catalog and its songs made by a synthesizer, favorites, playlists, downloads, radio, the player's queue and the words to sing along."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-egui-media = { path = "../../crates/media" }
+serde.workspace = true
+serde_json.workspace = true
+unicode-normalization = "0.1"
+
+[dev-dependencies]
+# The web's numbers read back to the bit, as `tests/web.rs` compares them.
+serde_json = { workspace = true, features = ["float_roundtrip"] }

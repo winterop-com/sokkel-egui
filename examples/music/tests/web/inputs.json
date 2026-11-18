@@ -1,0 +1,1393 @@
+{
+ "now": 1794992400000,
+ "random": 2026,
+ "seeds": [
+  0,
+  1,
+  11,
+  348,
+  4294967295,
+  2654435769
+ ],
+ "titleSeeds": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16,
+  17,
+  18,
+  19,
+  20,
+  21,
+  22,
+  23,
+  24
+ ],
+ "lengthSeeds": [
+  0,
+  1,
+  2,
+  3,
+  12345,
+  99999,
+  4294967295,
+  2654435769,
+  777
+ ],
+ "renders": [
+  "open-water-1-1",
+  "northern-coast-1-1",
+  "high-desert-1-1",
+  "glass-harbor-1-1",
+  "slow-current-1-1",
+  "lantern-rock-1-1",
+  "pilot-light-1-1",
+  "radio:fireside:4"
+ ],
+ "bytes": [
+  0,
+  1,
+  499,
+  500,
+  999,
+  1499,
+  1500,
+  999499,
+  999999,
+  1000000,
+  1049999,
+  1050000,
+  123456789
+ ],
+ "minutes": [
+  0,
+  29,
+  30,
+  31,
+  89.9,
+  90,
+  3600,
+  1234.5
+ ],
+ "stationsFrom": [
+  [
+   "artist",
+   "ada"
+  ],
+  [
+   "artist",
+   "eelgrass"
+  ],
+  [
+   "album",
+   "open-water"
+  ],
+  [
+   "album",
+   "lantern-rock"
+  ],
+  [
+   "song",
+   "open-water-1-2"
+  ],
+  [
+   "song",
+   "estuary-2-3"
+  ],
+  [
+   "artist",
+   "nobody"
+  ],
+  [
+   "song",
+   "radio:fireside:1"
+  ],
+  [
+   "album",
+   "nowhere"
+  ]
+ ],
+ "songIds": [
+  "open-water-1-1",
+  "archipelago-2-6",
+  "nowhere-1-1",
+  "radio:fireside:0",
+  "radio:fireside:12",
+  "radio:stone-church:3",
+  "radio:nowhere:1",
+  "radio::1",
+  "radio:fireside:x",
+  "radio:loud:weather:2",
+  "radio:fireside:007"
+ ],
+ "queries": [
+  "",
+  "   ",
+  "harbor",
+  "Harbor",
+  "the",
+  "low water",
+  "grace",
+  "ada",
+  "Caf\u00e9",
+  "OPEN w",
+  "xyz",
+  "\u00c6r\u00f8",
+  "tide",
+  "sea",
+  "  Northern   coast ",
+  "ri",
+  "river delta grace",
+  "linus high",
+  "e"
+ ],
+ "lyricPositions": [
+  -1,
+  0,
+  5,
+  12.5,
+  30,
+  1000
+ ],
+ "lrc": [
+  "[ti:Song]\n[ar: Ada ]\n[offset:+250]\n[00:01.00]One\n[00:03.5]Two <00:03.80>words <1:00:04.1>here\n\n[00:02:500]Three\n[01:02:03.25][00:00.50] Twice ",
+  "[ti:Song]\r\n[00:00.00]Start\r\n[00:00]Zero\r\n\r\n\r\nMiddle\r\n\r\n",
+  "Plain line\n\n\n\nAnother\n[Chorus: Ada]\nLa la\n\n",
+  "[00:05.00]a\n[00:05.00]b\n[00:04.999]c\n[offset:-1000]\n[length:3:20]\n[xx:yy]\n[00:123]bad\n[0:5]ok",
+  "[offset:abc]\n[00:10.00]x\n[01:00:00.5]hour\n[1:2:3]no\n<1:2>[00:20]y",
+  ""
+ ],
+ "queues": [
+  {
+   "items": 6,
+   "options": {},
+   "ops": [
+    [
+     "next"
+    ],
+    [
+     "next"
+    ],
+    [
+     "previous"
+    ],
+    [
+     "play",
+     5
+    ],
+    [
+     "next"
+    ],
+    [
+     "ended"
+    ],
+    [
+     "repeat",
+     "all"
+    ],
+    [
+     "next"
+    ],
+    [
+     "previous"
+    ],
+    [
+     "previous"
+    ],
+    [
+     "repeat",
+     "one"
+    ],
+    [
+     "ended"
+    ],
+    [
+     "next"
+    ],
+    [
+     "add",
+     2,
+     "next"
+    ],
+    [
+     "add",
+     1,
+     "end"
+    ],
+    [
+     "move",
+     0,
+     3
+    ],
+    [
+     "move",
+     3,
+     0
+    ],
+    [
+     "move",
+     9,
+     0
+    ],
+    [
+     "remove",
+     [
+      1,
+      2,
+      40,
+      -1
+     ]
+    ],
+    [
+     "shuffle",
+     true,
+     7
+    ],
+    [
+     "add",
+     2,
+     "next"
+    ],
+    [
+     "add",
+     2,
+     "end"
+    ],
+    [
+     "move",
+     1,
+     4
+    ],
+    [
+     "remove",
+     [
+      0
+     ]
+    ],
+    [
+     "shuffle",
+     false,
+     0
+    ],
+    [
+     "remove",
+     [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ]
+    ]
+   ]
+  },
+  {
+   "items": 8,
+   "options": {
+    "shuffle": true,
+    "seed": 42,
+    "start": 3
+   },
+   "ops": [
+    [
+     "next"
+    ],
+    [
+     "ended"
+    ],
+    [
+     "play",
+     3
+    ],
+    [
+     "remove",
+     [
+      3
+     ]
+    ],
+    [
+     "previous"
+    ],
+    [
+     "shuffle",
+     true,
+     "harbor"
+    ],
+    [
+     "shuffle",
+     false,
+     0
+    ],
+    [
+     "shuffle",
+     true,
+     4294967296.7
+    ]
+   ]
+  },
+  {
+   "items": 5,
+   "options": {
+    "shuffle": true,
+    "seed": "harbor"
+   },
+   "ops": [
+    [
+     "next"
+    ],
+    [
+     "repeat",
+     "all"
+    ],
+    [
+     "ended"
+    ],
+    [
+     "ended"
+    ],
+    [
+     "ended"
+    ],
+    [
+     "ended"
+    ],
+    [
+     "ended"
+    ]
+   ]
+  },
+  {
+   "items": 0,
+   "options": {
+    "repeat": "all"
+   },
+   "ops": [
+    [
+     "next"
+    ],
+    [
+     "previous"
+    ],
+    [
+     "ended"
+    ],
+    [
+     "shuffle",
+     true,
+     1
+    ],
+    [
+     "add",
+     2,
+     "next"
+    ],
+    [
+     "add",
+     1,
+     "next"
+    ]
+   ]
+  },
+  {
+   "items": 4,
+   "options": {
+    "order": [
+     2,
+     0,
+     1,
+     3
+    ]
+   },
+   "ops": [
+    [
+     "next"
+    ],
+    [
+     "shuffle",
+     false,
+     0
+    ]
+   ]
+  },
+  {
+   "items": 4,
+   "options": {
+    "order": [
+     0,
+     0,
+     1,
+     2
+    ],
+    "start": 2,
+    "shuffle": true,
+    "seed": 9
+   },
+   "ops": [
+    [
+     "remove",
+     [
+      2
+     ]
+    ],
+    [
+     "remove",
+     [
+      0,
+      1,
+      2
+     ]
+    ]
+   ]
+  },
+  {
+   "items": 4,
+   "options": {
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "start": 9.7
+   },
+   "ops": []
+  },
+  {
+   "items": 3,
+   "options": {
+    "start": -2,
+    "shuffle": false
+   },
+   "ops": [
+    [
+     "previous"
+    ],
+    [
+     "repeat",
+     "all"
+    ],
+    [
+     "previous"
+    ]
+   ]
+  },
+  {
+   "items": 7,
+   "options": {
+    "shuffle": true,
+    "seed": 1.9,
+    "start": 6
+   },
+   "ops": [
+    [
+     "remove",
+     [
+      6
+     ]
+    ],
+    [
+     "add",
+     3,
+     "next"
+    ],
+    [
+     "remove",
+     [
+      0,
+      2,
+      4,
+      6
+     ]
+    ]
+   ]
+  }
+ ],
+ "shuffles": [
+  [
+   0,
+   0,
+   1
+  ],
+  [
+   1,
+   0,
+   1
+  ],
+  [
+   10,
+   3,
+   5
+  ],
+  [
+   10,
+   12,
+   "harbor"
+  ],
+  [
+   10,
+   -4,
+   99
+  ],
+  [
+   6,
+   2.7,
+   0
+  ]
+ ],
+ "looks": [
+  "spectrum",
+  "mirror",
+  "bars",
+  "ring",
+  ""
+ ],
+ "steps": [
+  {
+   "at": 1000,
+   "op": "fav",
+   "kind": "song",
+   "ref": "northern-coast-1-2",
+   "on": true
+  },
+  {
+   "at": 2000,
+   "op": "fav",
+   "kind": "album",
+   "ref": "archipelago",
+   "on": false
+  },
+  {
+   "at": 3000,
+   "op": "fav",
+   "kind": "artist",
+   "ref": "linus",
+   "on": true
+  },
+  {
+   "at": 4000,
+   "op": "fav",
+   "kind": "song",
+   "ref": "open-water-1-2",
+   "on": false
+  },
+  {
+   "at": 5000,
+   "op": "fav",
+   "kind": "song",
+   "ref": "nobody-1-1",
+   "on": false
+  },
+  {
+   "at": 6000,
+   "op": "createPlaylist",
+   "name": "Ferry songs",
+   "songs": [
+    "lowlands-1-1",
+    "shoals-1-3",
+    "lowlands-1-1"
+   ]
+  },
+  {
+   "at": 7000,
+   "op": "createPlaylist",
+   "name": "Empty",
+   "songs": []
+  },
+  {
+   "at": 8000,
+   "op": "addToPlaylist",
+   "id": "morning-run",
+   "songs": [
+    "atoll-1-1",
+    "atoll-1-2"
+   ]
+  },
+  {
+   "at": 9000,
+   "op": "addToPlaylist",
+   "id": "nowhere",
+   "songs": [
+    "atoll-1-1"
+   ]
+  },
+  {
+   "at": 10000,
+   "op": "renamePlaylist",
+   "id": "morning-run",
+   "name": "  Morning swim "
+  },
+  {
+   "at": 11000,
+   "op": "describePlaylist",
+   "id": "long-drive",
+   "description": " Coast road, both ways. "
+  },
+  {
+   "at": 12000,
+   "op": "movePlaylist",
+   "id": "deep-focus",
+   "from": 0,
+   "to": 3
+  },
+  {
+   "at": 13000,
+   "op": "movePlaylist",
+   "id": "deep-focus",
+   "from": 5,
+   "to": 1
+  },
+  {
+   "at": 14000,
+   "op": "removeFromPlaylist",
+   "id": "long-drive",
+   "index": 2
+  },
+  {
+   "at": 15000,
+   "op": "deletePlaylist",
+   "id": "sunday-slow"
+  },
+  {
+   "at": 16000,
+   "op": "download",
+   "album": "open-water"
+  },
+  {
+   "at": 17000,
+   "op": "download",
+   "album": "archipelago"
+  },
+  {
+   "at": 18000,
+   "op": "removeDownload",
+   "album": "sea-glass"
+  },
+  {
+   "at": 19000,
+   "op": "settings",
+   "patch": {
+    "volume": 0.5,
+    "look": "ring"
+   }
+  },
+  {
+   "at": 20000,
+   "op": "settings",
+   "patch": {
+    "crossfade": 4,
+    "layout": "stage",
+    "barSize": 220,
+    "albumOrder": "year"
+   }
+  },
+  {
+   "at": 21000,
+   "op": "playSongs",
+   "album": "open-water",
+   "start": 2
+  },
+  {
+   "at": 22000,
+   "op": "next"
+  },
+  {
+   "at": 23000,
+   "op": "next"
+  },
+  {
+   "at": 24000,
+   "op": "previous"
+  },
+  {
+   "at": 25000,
+   "op": "seek",
+   "to": 10
+  },
+  {
+   "at": 26000,
+   "op": "previous"
+  },
+  {
+   "at": 27000,
+   "op": "seek",
+   "to": 1000000000.0
+  },
+  {
+   "at": 28000,
+   "op": "seekBy",
+   "by": -20
+  },
+  {
+   "at": 29000,
+   "op": "shuffle",
+   "on": true
+  },
+  {
+   "at": 30000,
+   "op": "next"
+  },
+  {
+   "at": 31000,
+   "op": "repeat",
+   "mode": "all"
+  },
+  {
+   "at": 32000,
+   "op": "shuffle",
+   "on": false
+  },
+  {
+   "at": 33000,
+   "op": "enqueue",
+   "songs": [
+    "atoll-1-3",
+    "atoll-1-4"
+   ],
+   "where": "next"
+  },
+  {
+   "at": 34000,
+   "op": "enqueue",
+   "songs": [
+    "meridian-1-1"
+   ],
+   "where": "end"
+  },
+  {
+   "at": 35000,
+   "op": "move",
+   "from": 2,
+   "to": 4
+  },
+  {
+   "at": 36000,
+   "op": "dequeue",
+   "positions": [
+    3
+   ]
+  },
+  {
+   "at": 37000,
+   "op": "toggle"
+  },
+  {
+   "at": 38000,
+   "op": "toggle"
+  },
+  {
+   "at": 39000,
+   "op": "ended"
+  },
+  {
+   "at": 40000,
+   "op": "repeat",
+   "mode": "one"
+  },
+  {
+   "at": 41000,
+   "op": "ended"
+  },
+  {
+   "at": 42000,
+   "op": "clearUpNext"
+  },
+  {
+   "at": 43000,
+   "op": "repeat",
+   "mode": "off"
+  },
+  {
+   "at": 44000,
+   "op": "ended"
+  },
+  {
+   "at": 45000,
+   "op": "toggle"
+  },
+  {
+   "at": 46000,
+   "op": "playSongs",
+   "artist": "grace",
+   "start": 0,
+   "shuffle": true
+  },
+  {
+   "at": 47000,
+   "op": "playIndex",
+   "index": 3
+  },
+  {
+   "at": 5,
+   "op": "playPosition"
+  },
+  {
+   "at": 49000,
+   "op": "next"
+  },
+  {
+   "at": 50000,
+   "op": "previous"
+  },
+  {
+   "at": 51000,
+   "op": "playSongs",
+   "playlist": "long-drive",
+   "start": 4
+  },
+  {
+   "at": 52000,
+   "op": "repeat",
+   "mode": "one"
+  },
+  {
+   "at": 53000,
+   "op": "playSongs",
+   "album": "estuary",
+   "start": 20
+  },
+  {
+   "at": 54000,
+   "op": "startRadio",
+   "kind": "artist",
+   "ref": "grace"
+  },
+  {
+   "at": 55000,
+   "op": "next"
+  },
+  {
+   "at": 56000,
+   "op": "next"
+  },
+  {
+   "at": 57000,
+   "op": "next"
+  },
+  {
+   "at": 58000,
+   "op": "previous"
+  },
+  {
+   "at": 59000,
+   "op": "ended"
+  },
+  {
+   "at": 60000,
+   "op": "dequeue",
+   "positions": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
+  },
+  {
+   "at": 61000,
+   "op": "playStation",
+   "id": "slack-water",
+   "label": "Slack Water"
+  },
+  {
+   "at": 62000,
+   "op": "ended"
+  },
+  {
+   "at": 63000,
+   "op": "startRadio",
+   "kind": "song",
+   "ref": "tidewater-2-3"
+  },
+  {
+   "at": 64000,
+   "op": "startRadio",
+   "kind": "artist",
+   "ref": "grace"
+  },
+  {
+   "at": 65000,
+   "op": "startRadio",
+   "kind": "album",
+   "ref": "nowhere"
+  },
+  {
+   "at": 66000,
+   "op": "clearHistory"
+  },
+  {
+   "at": 67000,
+   "op": "removeAllDownloads"
+  },
+  {
+   "at": 68000,
+   "op": "download",
+   "album": "pilot-light"
+  },
+  {
+   "at": 69000,
+   "op": "restore",
+   "resume": true,
+   "row": {
+    "id": "now",
+    "entries": [
+     {
+      "key": "a",
+      "song": "atoll-1-1"
+     },
+     {
+      "key": "b",
+      "song": "atoll-1-2"
+     },
+     {
+      "key": "c",
+      "song": "atoll-1-3"
+     }
+    ],
+    "order": [
+     2,
+     0,
+     1
+    ],
+    "at": 1,
+    "shuffle": true,
+    "repeat": "all",
+    "position": 12.5,
+    "source": {
+     "kind": "album",
+     "label": "Atoll"
+    },
+    "radio": null
+   }
+  },
+  {
+   "at": 70000,
+   "op": "restore",
+   "resume": true,
+   "row": {
+    "id": "now",
+    "entries": [
+     {
+      "key": "a",
+      "song": "atoll-1-1"
+     },
+     {
+      "key": "x",
+      "song": "gone-1-1"
+     },
+     {
+      "key": "c",
+      "song": "atoll-1-3"
+     }
+    ],
+    "order": [
+     2,
+     0,
+     1
+    ],
+    "at": 2,
+    "shuffle": true,
+    "repeat": "one",
+    "position": 1000000.0,
+    "source": null,
+    "radio": null
+   }
+  },
+  {
+   "at": 71000,
+   "op": "restore",
+   "resume": false,
+   "row": {
+    "id": "now",
+    "entries": [],
+    "order": [],
+    "at": 0,
+    "shuffle": false,
+    "repeat": "off",
+    "position": 3,
+    "source": null,
+    "radio": null
+   }
+  },
+  {
+   "at": 72000,
+   "op": "enqueue",
+   "songs": [
+    "driftwood-1-1",
+    "driftwood-1-2"
+   ],
+   "where": "next"
+  },
+  {
+   "at": 73000,
+   "op": "toggle"
+  },
+  {
+   "at": 74000,
+   "op": "dequeue",
+   "positions": [
+    0
+   ]
+  },
+  {
+   "at": 75000,
+   "op": "dequeue",
+   "positions": [
+    0
+   ]
+  },
+  {
+   "at": 76000,
+   "op": "toggle"
+  },
+  {
+   "at": 77000,
+   "op": "settings",
+   "patch": {
+    "muted": true,
+    "queueOpen": true,
+    "barSize": null
+   }
+  },
+  {
+   "at": 78000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 0
+  },
+  {
+   "at": 79000,
+   "op": "next"
+  },
+  {
+   "at": 80000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 2
+  },
+  {
+   "at": 81000,
+   "op": "next"
+  },
+  {
+   "at": 82000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 4
+  },
+  {
+   "at": 83000,
+   "op": "next"
+  },
+  {
+   "at": 84000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 6
+  },
+  {
+   "at": 85000,
+   "op": "next"
+  },
+  {
+   "at": 86000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 8
+  },
+  {
+   "at": 87000,
+   "op": "next"
+  },
+  {
+   "at": 88000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 10
+  },
+  {
+   "at": 89000,
+   "op": "next"
+  },
+  {
+   "at": 90000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 12
+  },
+  {
+   "at": 91000,
+   "op": "next"
+  },
+  {
+   "at": 92000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 0
+  },
+  {
+   "at": 93000,
+   "op": "next"
+  },
+  {
+   "at": 94000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 2
+  },
+  {
+   "at": 95000,
+   "op": "next"
+  },
+  {
+   "at": 96000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 4
+  },
+  {
+   "at": 97000,
+   "op": "next"
+  },
+  {
+   "at": 98000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 6
+  },
+  {
+   "at": 99000,
+   "op": "next"
+  },
+  {
+   "at": 100000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 8
+  },
+  {
+   "at": 101000,
+   "op": "next"
+  },
+  {
+   "at": 102000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 10
+  },
+  {
+   "at": 103000,
+   "op": "next"
+  },
+  {
+   "at": 104000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 12
+  },
+  {
+   "at": 105000,
+   "op": "next"
+  },
+  {
+   "at": 106000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 0
+  },
+  {
+   "at": 107000,
+   "op": "next"
+  },
+  {
+   "at": 108000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 2
+  },
+  {
+   "at": 109000,
+   "op": "next"
+  },
+  {
+   "at": 110000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 4
+  },
+  {
+   "at": 111000,
+   "op": "next"
+  },
+  {
+   "at": 112000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 6
+  },
+  {
+   "at": 113000,
+   "op": "next"
+  },
+  {
+   "at": 114000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 8
+  },
+  {
+   "at": 115000,
+   "op": "next"
+  },
+  {
+   "at": 116000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 10
+  },
+  {
+   "at": 117000,
+   "op": "next"
+  },
+  {
+   "at": 118000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 12
+  },
+  {
+   "at": 119000,
+   "op": "next"
+  },
+  {
+   "at": 120000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 0
+  },
+  {
+   "at": 121000,
+   "op": "next"
+  },
+  {
+   "at": 122000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 2
+  },
+  {
+   "at": 123000,
+   "op": "next"
+  },
+  {
+   "at": 124000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 4
+  },
+  {
+   "at": 125000,
+   "op": "next"
+  },
+  {
+   "at": 126000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 6
+  },
+  {
+   "at": 127000,
+   "op": "next"
+  },
+  {
+   "at": 128000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 8
+  },
+  {
+   "at": 129000,
+   "op": "next"
+  },
+  {
+   "at": 130000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 10
+  },
+  {
+   "at": 131000,
+   "op": "next"
+  },
+  {
+   "at": 132000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 12
+  },
+  {
+   "at": 133000,
+   "op": "next"
+  },
+  {
+   "at": 134000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 0
+  },
+  {
+   "at": 135000,
+   "op": "next"
+  },
+  {
+   "at": 136000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 2
+  },
+  {
+   "at": 137000,
+   "op": "next"
+  },
+  {
+   "at": 138000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 4
+  },
+  {
+   "at": 139000,
+   "op": "next"
+  },
+  {
+   "at": 140000,
+   "op": "playSongs",
+   "album": "tidewater",
+   "start": 6
+  },
+  {
+   "at": 141000,
+   "op": "next"
+  },
+  {
+   "at": 142000,
+   "op": "ended"
+  }
+ ]
+}
