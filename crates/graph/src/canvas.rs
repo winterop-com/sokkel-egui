@@ -387,7 +387,7 @@ fn paint_edge(painter: &egui::Painter, points: &[Pos2], arrow: bool, dashed: boo
 }
 
 /// `share` of `a` over `b`, as `color-mix` mixes two opaque colors.
-fn mix(a: Color32, b: Color32, share: f32) -> Color32 {
+pub(crate) fn mix(a: Color32, b: Color32, share: f32) -> Color32 {
     let channel = |x: u8, y: u8| (x as f32 * share + y as f32 * (1.0 - share)).round() as u8;
     Color32::from_rgb(channel(a.r(), b.r()), channel(a.g(), b.g()), channel(a.b(), b.b()))
 }

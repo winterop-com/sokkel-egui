@@ -4581,6 +4581,7 @@ version = "0.1.0"
 dependencies = [
  "egui",
  "egui_kittest",
+ "serde_json",
  "sokkel-egui",
 ]
 

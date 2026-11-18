@@ -13,3 +13,7 @@
 - The regions in `examples/records/data/regions.json`: Liberia's counties from Natural Earth's
   1:10m Admin 1 (v5.1.2), public domain, as sokkel-ui's examples carry them. The sites in
   `places.json` are generated.
+- d3-force 3.0.1 and d3-quadtree 3.0.2, Copyright 2010-2026 Mike Bostock, under the ISC license:
+  ported to Rust in `crates/graph/src/force.rs` (the simulation, its link, many-body, collide and
+  centering forces, its seeded random source, and the quadtree they search), the force layout
+  sokkel-ui-graph's `NetworkGraph` runs on.
