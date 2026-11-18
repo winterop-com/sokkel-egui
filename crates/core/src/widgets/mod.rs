@@ -9,6 +9,7 @@ mod calendar;
 mod chip;
 mod chip_bar;
 mod choice;
+mod code_editor;
 mod commands;
 mod dashboard;
 mod datetime;
@@ -74,6 +75,10 @@ pub use chip::{Chip, ChipTone, TagChips};
 pub use chip_bar::ChipBar;
 pub use choice::{
     Checkbox, Choice, ChoiceList, Segmented, SegmentedVariant, SwatchGroup, Tabs, TabsVariant, checkbox_list,
+};
+pub use code_editor::{
+    ActiveLine, CodeCompletion, CodeEditor, CodeEditorResponse, CodeEditorWords, CodeLanguage, CodeMark, CodeProblem,
+    CodeSize, CodeVariant, LARGE_DOCUMENT, MarkTone,
 };
 pub use commands::{AppearanceCommandWords, appearance_commands, place_commands, place_of, run_appearance_command};
 pub use dashboard::{
