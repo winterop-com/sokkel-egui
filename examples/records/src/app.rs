@@ -3,8 +3,9 @@
 
 use eframe::egui::{self, Ui};
 use sokkel_egui::{
-    AccountAction, AccountMenu, Appearance, Icon, MenuItem, Page, Rail, RailEntry, RailGroup, ServerMenu, ServerState,
-    Shell, ShellPart, StatusLine, Toast, ToastKind, Toaster, TopBar, install,
+    AccountAction, AccountMenu, Appearance, Banner, BannerTone, Button, ButtonSize, ButtonVariant, Icon, MenuItem,
+    Page, Rail, RailEntry, RailGroup, ServerMenu, ServerState, Shell, ShellPart, StatusLine, Toast, ToastKind, Toaster,
+    TopBar, install,
 };
 
 use crate::backend::{Backend, ME, ReceiptState, SERVER};
@@ -66,6 +67,10 @@ pub struct RecordsApp {
     probed_at: i64,
     answered: Option<bool>,
     pub foot: Foot,
+    /// The search palette while it is open: what is typed and the row lit.
+    pub palette: Option<(String, usize)>,
+    /// The question before the demo's data goes back, while it is asked.
+    pub resetting: bool,
     /// Each table's sort, widths and the row opened, by the table's name.
     pub tables: std::collections::HashMap<String, sokkel_egui::TableState>,
     started: i64,
@@ -110,12 +115,27 @@ impl RecordsApp {
             probed_at: now - PROBE,
             answered: Some(true),
             foot: Foot::default(),
+            palette: None,
+            resetting: false,
             tables: Default::default(),
             started: now,
             started_at: None,
             elapsed: 0,
             held: true,
         }
+    }
+
+    /// Everything as the demo started: the responses, the households and what the pages held; the
+    /// look, the address and the clock stay.
+    pub fn reset_demo(&mut self) {
+        let mut fresh = Self::at(self.now(), self.appearance.clone());
+        fresh.path = std::mem::take(&mut self.path);
+        fresh.held = self.held;
+        fresh.started = self.started;
+        fresh.started_at = self.started_at;
+        fresh.elapsed = self.elapsed;
+        fresh.backend = Backend::seeded(self.started);
+        *self = fresh;
     }
 
     /// The moment it is now.
@@ -139,7 +159,8 @@ impl RecordsApp {
     }
 
     fn settle_probe(&mut self) {
-        if self.answered.is_none() && self.now() >= self.probed_at + PROBE {
+        // a held clock, as the tests hold it, has the answer at once
+        if self.answered.is_none() && (self.held || self.now() >= self.probed_at + PROBE) {
             self.answered = Some(!self.backend.down);
         }
     }
@@ -258,7 +279,21 @@ impl RecordsApp {
         // the page fills the foot while it is drawn; what it said last frame is drawn this one
         let foot = std::mem::take(&mut self.foot);
         let mut searched = sokkel_egui::palette_shortcut(ui.ctx());
-        Shell::new().show_window(ui, |part, ui| match part {
+        let mut check_again = false;
+        let mut shell = Shell::new();
+        if state == ServerState::Down {
+            shell = shell.banner(|ui| {
+                Banner::new(
+                    BannerTone::Critical,
+                    "The server is not answering. What is shown was read before it stopped; nothing can be filed or sent on.",
+                )
+                .show_with(ui, |ui| {
+                    let button = Button::new("Check again").variant(ButtonVariant::Outline).size(ButtonSize::Sm);
+                    check_again = ui.add(button).clicked();
+                });
+            });
+        }
+        shell.show_window(ui, |part, ui| match part {
             ShellPart::Rail => {
                 ui.add(Rail::new("Records", &groups, &mut chosen).mark(TIDEVANN_MARK));
             }
@@ -333,8 +368,12 @@ impl RecordsApp {
                 ui.add(line);
             }
         });
-        let _ = searched;
-        if server.check {
+        if searched {
+            self.palette = Some((String::new(), 0));
+        }
+        self.search_palette(&ui.ctx().clone(), &groups);
+        self.settings_dialog(&ui.ctx().clone());
+        if server.check || check_again {
             self.check_server();
         }
         match server.item {

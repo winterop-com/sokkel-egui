@@ -87,4 +87,12 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   line of the body's words (30, as the web's `py-1`), and `Columns` leaves its room's own spacing
   under its last row rather than its own gap, so status' tiles stand 24 over what follows, as the
   web's. The web screen predates the regions of sokkel-ui 104fc70d, which gave four more notes.
+- The frame's own parts: Settings over the page (`#/settings`) with the look as a list of the
+  themes the app carries (`theme_settings_listed`, on `ChoiceList::swatches`, and settings sections
+  without icons, all new in the library), whether a form keeps the place, and the demo server:
+  whether it answers, and its data put back after asking; the search palette with the pages, the
+  forms, the actions, the look and the demo, and the responses and households found by what is
+  typed; and the banner over the page while the server does not answer, with Check again
+  (`Shell::banner` and `Banner::show_with`, new in the library; a banner's icon now stands on its
+  words' middle). Open: the palette's search does not say how many it found in all.
 - Open: the Playground waits for the code editor's spec, as `ApiPlayground` is built on it.

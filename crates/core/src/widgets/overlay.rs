@@ -234,7 +234,12 @@ impl Select<'_> {
 
 /// A theme's sample, 28 by 16 from `left_center`: its background with its text, accent and third
 /// chart color as dots, or a dashed empty box for no theme.
-fn paint_swatch(painter: &egui::Painter, t: &crate::Tokens, left_center: egui::Pos2, swatch: Option<Swatch>) {
+pub(crate) fn paint_swatch(
+    painter: &egui::Painter,
+    t: &crate::Tokens,
+    left_center: egui::Pos2,
+    swatch: Option<Swatch>,
+) {
     let rect = Rect::from_min_size(pos2(left_center.x, left_center.y - 8.0), vec2(28.0, 16.0));
     let control = t.radius("control");
     let radius = CornerRadius::same(control.nw / 2);

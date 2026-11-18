@@ -394,6 +394,12 @@ impl Banner {
     }
 
     pub fn show(self, ui: &mut egui::Ui) -> egui::Response {
+        self.show_with(ui, |_| {})
+    }
+
+    /// The banner with `actions` at its end, 8 apart and level with its words' middle, as the
+    /// web's `actions` (a Check again).
+    pub fn show_with(self, ui: &mut egui::Ui, actions: impl FnOnce(&mut egui::Ui)) -> egui::Response {
         let t = crate::tokens(ui.ctx());
         let (key, icon) = match self.tone {
             BannerTone::Critical => ("critical", crate::Icon::CircleAlert),
@@ -403,32 +409,56 @@ impl Banner {
         };
         let ink = t.color(&format!("{key}-ink"));
         let width = ui.available_width();
+        let top = ui.cursor().top();
+        let left = ui.cursor().left();
+        let ground = ui.painter().add(egui::Shape::Noop);
+        let rule = ui.painter().add(egui::Shape::Noop);
+        // the actions at the end first, so the words wrap in what they leave
+        let mut end = ui.new_child(
+            egui::UiBuilder::new()
+                .max_rect(egui::Rect::from_min_size(
+                    egui::pos2(left, top + 6.0),
+                    egui::vec2(width - 12.0, 28.0),
+                ))
+                .layout(egui::Layout::right_to_left(egui::Align::Center)),
+        );
+        end.spacing_mut().item_spacing.x = 8.0;
+        actions(&mut end);
+        let used = end.min_rect();
+        let taken = if used.width() > 0.0 { used.width() + 8.0 } else { 0.0 };
+        let tall_end = if used.width() > 0.0 { used.height() } else { 0.0 };
         let words = egui::WidgetText::from(crate::TextRole::Body.rich(&t, &self.text)).into_galley(
             ui,
             Some(egui::TextWrapMode::Wrap),
-            (width - 24.0 - 24.0).max(1.0),
+            (width - 24.0 - 24.0 - taken).max(1.0),
             crate::TextRole::Body.font(&t),
         );
-        let height = words.size().y.max(20.0) + 12.0;
+        let inner = words.size().y.max(20.0).max(tall_end);
+        let height = inner + 12.0;
         let (rect, response) = ui.allocate_exact_size(egui::vec2(width, height), egui::Sense::hover());
         // what it says, for a screen reader
         let said = self.text.clone();
         response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, &said));
         let painter = ui.painter();
-        painter.rect_filled(rect, egui::CornerRadius::ZERO, t.color_at(key, 0.12));
-        painter.hline(
-            rect.x_range(),
-            rect.bottom() - 0.5,
-            egui::Stroke::new(1.0, t.color_at(key, 0.35)),
+        painter.set(
+            ground,
+            egui::Shape::rect_filled(rect, egui::CornerRadius::ZERO, t.color_at(key, 0.12)),
         );
-        crate::icons::paint(
-            painter,
-            egui::pos2(rect.left() + 12.0 + 8.0, rect.top() + 6.0 + 10.0),
-            icon,
-            16.0,
+        painter.set(
+            rule,
+            egui::Shape::hline(
+                rect.x_range(),
+                rect.bottom() - 0.5,
+                egui::Stroke::new(1.0, t.color_at(key, 0.35)),
+            ),
+        );
+        let middle = rect.top() + 6.0 + inner / 2.0;
+        crate::icons::paint(painter, egui::pos2(rect.left() + 12.0 + 8.0, middle), icon, 16.0, ink);
+        painter.galley(
+            egui::pos2(rect.left() + 12.0 + 24.0, middle - words.size().y / 2.0),
+            words,
             ink,
         );
-        painter.galley(egui::pos2(rect.left() + 12.0 + 24.0, rect.top() + 6.0), words, ink);
         response
     }
 }

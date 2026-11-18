@@ -15,9 +15,11 @@ pub mod health;
 pub mod health_page;
 pub mod households;
 pub mod overview;
+pub mod palette;
 pub mod places_page;
 pub mod responses;
 pub mod server_page;
+pub mod settings;
 pub mod ui;
 
 pub use app::RecordsApp;

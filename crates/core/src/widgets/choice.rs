@@ -516,12 +516,25 @@ pub struct Choice<'a> {
 pub struct ChoiceList<'a> {
     label: &'a str,
     choices: &'a [Choice<'a>],
+    swatches: Option<Vec<Option<crate::Swatch>>>,
 }
 
 impl<'a> ChoiceList<'a> {
     /// `label` names the list for a screen reader.
     pub fn new(label: &'a str, choices: &'a [Choice<'a>]) -> Self {
-        Self { label, choices }
+        Self {
+            label,
+            choices,
+            swatches: None,
+        }
+    }
+
+    /// A theme's sample before each choice's words, 8 before them, as a theme list draws its
+    /// themes; the words are then at the body's own weight, as the web's label that is not words
+    /// alone.
+    pub fn swatches(mut self, swatches: impl IntoIterator<Item = Option<crate::Swatch>>) -> Self {
+        self.swatches = Some(swatches.into_iter().collect());
+        self
     }
 
     /// Draws the list; true when another choice was made, `value` then holding it.
@@ -531,12 +544,20 @@ impl<'a> ChoiceList<'a> {
         let mut changed = false;
         ui.vertical(|ui| {
             ui.spacing_mut().item_spacing.y = 2.0;
-            for choice in self.choices {
+            for (index, choice) in self.choices.iter().enumerate() {
                 let chosen = value == choice.value;
                 let text = (width - 20.0 - 28.0).max(1.0);
+                let sample = self.swatches.as_ref().map(|all| all.get(index).copied().flatten());
+                let lead = if sample.is_some() { 28.0 + 8.0 } else { 0.0 };
+                let weight = if sample.is_some() { 400.0 } else { 500.0 };
                 let label =
-                    egui::WidgetText::from(crate::TextRole::Body.rich(&t, choice.label).variation("wght", 500.0))
-                        .into_galley(ui, Some(egui::TextWrapMode::Wrap), text, crate::TextRole::Body.font(&t));
+                    egui::WidgetText::from(crate::TextRole::Body.rich(&t, choice.label).variation("wght", weight))
+                        .into_galley(
+                            ui,
+                            Some(egui::TextWrapMode::Wrap),
+                            (text - lead).max(1.0),
+                            crate::TextRole::Body.font(&t),
+                        );
                 let line = choice.description.map(|d| {
                     egui::WidgetText::from(crate::TextRole::Help.rich(&t, d)).into_galley(
                         ui,
@@ -577,7 +598,15 @@ impl<'a> ChoiceList<'a> {
                 );
                 let x = rect.left() + 10.0 + 16.0 + 12.0;
                 let label_height = label.size().y;
-                painter.galley(egui::pos2(x, rect.top() + 8.0), label, t.color("foreground"));
+                if let Some(sample) = sample {
+                    super::overlay::paint_swatch(
+                        painter,
+                        &t,
+                        egui::pos2(x, rect.top() + 8.0 + label_height / 2.0),
+                        sample,
+                    );
+                }
+                painter.galley(egui::pos2(x + lead, rect.top() + 8.0), label, t.color("foreground"));
                 if let Some(line) = line {
                     painter.galley(
                         egui::pos2(x, rect.top() + 8.0 + label_height),

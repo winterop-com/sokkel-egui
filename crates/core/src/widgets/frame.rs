@@ -1008,27 +1008,58 @@ impl DesktopWindow {
 
 /// The frame: the rail at the start, the top bar over the page, and the status line as one bar
 /// across the bottom, within the rect it is given.
-pub struct Shell {
+pub struct Shell<'a> {
     collapsed: bool,
     framed: bool,
     desktop: Option<DesktopWindow>,
     words: ShellWords,
+    banner: Option<ShellBanner<'a>>,
 }
 
-impl Default for Shell {
+/// What a shell's banner line draws.
+type ShellBanner<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
+
+impl Default for Shell<'_> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Shell {
+impl<'a> Shell<'a> {
     pub fn new() -> Self {
         Self {
             collapsed: false,
             framed: false,
             desktop: None,
             words: ShellWords::default(),
+            banner: None,
         }
+    }
+
+    /// A line across the page's column between the top bar and the page, such as a `Banner` saying
+    /// the server is not answering, as the web's `banner`: the page stands under it.
+    pub fn banner(mut self, banner: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.banner = Some(Box::new(banner));
+        self
+    }
+
+    /// Draws the banner across the top of `page` and answers with the page under it.
+    fn place_banner(&mut self, ui: &mut Ui, page: Rect) -> Rect {
+        let Some(banner) = self.banner.take() else {
+            return page;
+        };
+        let drawn = ui
+            .scope_builder(
+                UiBuilder::new().max_rect(page).layout(Layout::top_down(Align::Min)),
+                |ui| {
+                    ui.set_clip_rect(page.intersect(ui.clip_rect()));
+                    ui.spacing_mut().item_spacing.y = 0.0;
+                    banner(ui);
+                },
+            )
+            .response
+            .rect;
+        Rect::from_min_max(pos2(page.left(), drawn.bottom().min(page.bottom())), page.max)
     }
 
     /// The frame stands in a desktop window whose native title bar is hidden (eframe's
@@ -1068,7 +1099,7 @@ impl Shell {
     }
 
     /// Fill `rect` with the frame, asking `part` to draw each piece in its place.
-    pub fn show(self, ui: &mut Ui, rect: Rect, mut part: impl FnMut(ShellPart, &mut Ui)) {
+    pub fn show(mut self, ui: &mut Ui, rect: Rect, mut part: impl FnMut(ShellPart, &mut Ui)) {
         {
             let t = tokens(ui.ctx());
             let top = t.length("spacing-shell-top");
@@ -1110,6 +1141,9 @@ impl Shell {
             pos2(rail.right(), top_bar.bottom()),
             pos2(rect.right(), rect.bottom() - foot),
         );
+        ui.painter()
+            .rect_filled(page, CornerRadius::ZERO, t.color("background"));
+        let page = self.place_banner(ui, page);
         // the page's scroller keeps a thin track at its end whether or not it scrolls, as the web's
         // `scrollbar-gutter: stable` with a thin bar: its content stands 11 short of the window's edge
         let page_content = Rect::from_min_max(page.min, pos2(page.right() - SCROLL_GUTTER, page.bottom()));
@@ -1146,7 +1180,7 @@ impl Shell {
     /// window, and the top bar's menu button opening the rail as a drawer over them, expanded, with
     /// the account at its foot. A press on the scrim, Escape, the drawer's close or a place chosen
     /// in it closes it.
-    fn show_phone(self, ui: &mut Ui, rect: Rect, mut part: impl FnMut(ShellPart, &mut Ui)) {
+    fn show_phone(mut self, ui: &mut Ui, rect: Rect, mut part: impl FnMut(ShellPart, &mut Ui)) {
         let t = tokens(ui.ctx());
         let ctx = ui.ctx().clone();
         let foot = t.length("spacing-shell-foot");
@@ -1157,6 +1191,9 @@ impl Shell {
             pos2(rect.left(), top_bar.bottom()),
             pos2(rect.right(), rect.bottom() - foot),
         );
+        ui.painter()
+            .rect_filled(page, CornerRadius::ZERO, t.color("background"));
+        let page = self.place_banner(ui, page);
         let page_content = Rect::from_min_max(page.min, pos2(page.right() - SCROLL_GUTTER, page.bottom()));
         let foot_strip = Rect::from_min_max(pos2(rect.left(), rect.bottom() - foot), rect.max);
         ui.painter()

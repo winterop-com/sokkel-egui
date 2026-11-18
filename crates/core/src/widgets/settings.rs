@@ -9,12 +9,12 @@ use crate::{
     icons, swatch, themes, tokens,
 };
 
-/// One section of the settings: an id the app keeps, a label and an icon in the column.
+/// One section of the settings: an id the app keeps, a label and, when given, an icon in the column.
 #[derive(Clone, Debug)]
 pub struct SettingsSection {
     pub id: String,
     pub label: String,
-    pub icon: Icon,
+    pub icon: Option<Icon>,
     /// The group title over this section and those after it with the same group.
     pub group: Option<String>,
     /// Whether the footer offers Reset to defaults while the section shows.
@@ -24,11 +24,12 @@ pub struct SettingsSection {
 }
 
 impl SettingsSection {
-    pub fn new(id: impl Into<String>, label: impl Into<String>, icon: Icon) -> Self {
+    /// `icon` is an `Icon`, or `None` for a column of labels alone.
+    pub fn new(id: impl Into<String>, label: impl Into<String>, icon: impl Into<Option<Icon>>) -> Self {
         Self {
             id: id.into(),
             label: label.into(),
-            icon,
+            icon: icon.into(),
             group: None,
             reset: true,
             heading: None,
@@ -307,22 +308,23 @@ impl<'a> SettingsDialog<'a> {
                     } else {
                         t.color("muted-foreground")
                     };
-                    icons::paint(
-                        &painter,
-                        pos2(row.left() + 16.0, row.center().y),
-                        section.icon,
-                        16.0,
-                        ink,
-                    );
+                    // a label alone stands 8 in, after an icon 34
+                    let start = match section.icon {
+                        Some(icon) => {
+                            icons::paint(&painter, pos2(row.left() + 16.0, row.center().y), icon, 16.0, ink);
+                            34.0
+                        }
+                        None => 8.0,
+                    };
                     let role = if active { TextRole::Action } else { TextRole::Body };
                     let galley = egui::WidgetText::from(role.rich(&t, &section.label)).into_galley(
                         ui,
                         Some(egui::TextWrapMode::Truncate),
-                        row.width() - 44.0,
+                        row.width() - start - 10.0,
                         role.font(&t),
                     );
                     painter.galley(
-                        pos2(row.left() + 34.0, row.center().y - galley.size().y / 2.0),
+                        pos2(row.left() + start, row.center().y - galley.size().y / 2.0),
                         galley,
                         ink,
                     );
@@ -694,18 +696,62 @@ impl Default for ThemeWords {
 /// select with each theme's sample, the scheme (the system's as a third when `system`), the
 /// density and the motion, each found in the settings' search by its options' names too.
 pub fn theme_settings(ui: &mut Ui, appearance: &mut Appearance, system: bool, words: &ThemeWords) {
-    let all: Vec<_> = themes().collect();
+    theme_rows(ui, appearance, system, None, words);
+}
+
+/// The appearance rows with the theme as a list under its words, as `themeSettings` with
+/// `themeList`: each of the `carried` themes (by name, in the catalog's order) a row with its sample, its
+/// name and what it looks like, the chosen one marked.
+pub fn theme_settings_listed(
+    ui: &mut Ui,
+    appearance: &mut Appearance,
+    carried: &[&str],
+    system: bool,
+    words: &ThemeWords,
+) {
+    theme_rows(ui, appearance, system, Some(carried), words);
+}
+
+fn theme_rows(ui: &mut Ui, appearance: &mut Appearance, system: bool, carried: Option<&[&str]>, words: &ThemeWords) {
+    let all: Vec<_> = match carried {
+        Some(names) => themes().filter(|theme| names.contains(&theme.name.as_str())).collect(),
+        None => themes().collect(),
+    };
     let labels: Vec<&str> = all.iter().map(|theme| theme.label.as_str()).collect();
-    setting_row_found_by(ui, &words.theme, &words.theme_hint, &labels, |ui| {
-        let dark = tokens(ui.ctx()).dark;
-        let mut chosen = all.iter().position(|theme| theme.name == appearance.theme).unwrap_or(0);
-        let select = Select::new(&mut chosen, labels.iter().copied(), words.theme.clone())
-            .width(224.0)
-            .swatches(all.iter().map(|theme| swatch(&theme.name, dark)));
-        if ui.add(select).changed() {
-            appearance.theme = all[chosen].name.clone();
-        }
-    });
+    if carried.is_some() {
+        SettingRow::new(&words.theme, &words.theme_hint)
+            .keywords(&labels)
+            .below()
+            .show(ui, |ui| {
+                let dark = tokens(ui.ctx()).dark;
+                let choices: Vec<super::Choice> = all
+                    .iter()
+                    .map(|theme| super::Choice {
+                        value: &theme.name,
+                        label: &theme.label,
+                        description: theme.description.as_deref(),
+                    })
+                    .collect();
+                let mut value = appearance.theme.clone();
+                let list = super::ChoiceList::new(&words.theme, &choices)
+                    .swatches(all.iter().map(|theme| swatch(&theme.name, dark)));
+                if list.show(ui, &mut value) {
+                    appearance.theme = value;
+                }
+            });
+    }
+    if carried.is_none() {
+        setting_row_found_by(ui, &words.theme, &words.theme_hint, &labels, |ui| {
+            let dark = tokens(ui.ctx()).dark;
+            let mut chosen = all.iter().position(|theme| theme.name == appearance.theme).unwrap_or(0);
+            let select = Select::new(&mut chosen, labels.iter().copied(), words.theme.clone())
+                .width(224.0)
+                .swatches(all.iter().map(|theme| swatch(&theme.name, dark)));
+            if ui.add(select).changed() {
+                appearance.theme = all[chosen].name.clone();
+            }
+        });
+    }
     let mut schemes = vec![
         (Scheme::Dark, words.dark.as_str()),
         (Scheme::Light, words.light.as_str()),
