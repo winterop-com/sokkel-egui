@@ -16,8 +16,9 @@ sokkel-ui's components. Research stage; `docs/plan.md` says what was learned and
   else. `make parity` checks it against the web example as GitHub has it and lays both sides'
   screens beside each other (`docs/parity/tasks.md`); a difference is fixed in the library, never
   in the example alone.
-- `examples/runs` is a working app on the frame (Tidevann's runs, simulated): it uses only the
-  library's public parts; a part it lacks goes into the library.
+- `examples/runs` is sokkel-ui's runs example ported one to one (Tidevann's jobs console on a
+  simulated backend, `docs/parity/runs.md`): it uses only the library's public parts; a part it
+  lacks goes into the library.
 - `examples/storybook` is its own package that depends on the core by name, as an app would: the
   egui counterpart of sokkel-ui's Storybook, its stories grouped as sokkel-ui groups them
   (Foundations, Themes, Primitives/<group>, Patterns). A story is one `Story` in
