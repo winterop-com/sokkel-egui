@@ -617,6 +617,15 @@ pub struct DialogShell {
     cancel: String,
     why: Option<String>,
     destructive: bool,
+    other: Option<String>,
+}
+
+/// How a dialog shell was answered: its confirm, its other action, or Cancel (Escape, the shade).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ShellAnswer {
+    Confirm,
+    Other,
+    Cancel,
 }
 
 impl DialogShell {
@@ -627,11 +636,19 @@ impl DialogShell {
             cancel: "Cancel".into(),
             why: None,
             destructive: false,
+            other: None,
         }
     }
 
     pub fn description(mut self, description: impl Into<String>) -> Self {
         self.dialog = self.dialog.description(description);
+        self
+    }
+
+    /// Another answer beside the confirm, an outline button before it, as the web's `actions`:
+    /// "Don't save" beside Save.
+    pub fn other(mut self, label: impl Into<String>) -> Self {
+        self.other = Some(label.into());
         self
     }
 
@@ -659,8 +676,14 @@ impl DialogShell {
 
     /// Show it: true for the confirm, false for Cancel, Escape or the shade, none while it stays.
     pub fn show(self, ctx: &Context, body: impl FnOnce(&mut Ui)) -> Option<bool> {
+        self.answer(ctx, body).map(|a| a == ShellAnswer::Confirm)
+    }
+
+    /// Show it, with its other action among the answers.
+    pub fn answer(self, ctx: &Context, body: impl FnOnce(&mut Ui)) -> Option<ShellAnswer> {
         let mut answer = None;
-        let (confirm, cancel, why, destructive) = (self.confirm, self.cancel, self.why, self.destructive);
+        let (confirm, cancel, why, destructive, other) =
+            (self.confirm, self.cancel, self.why, self.destructive, self.other);
         let closed = self.dialog.show(ctx, body, |ui: &mut Ui| {
             let mut go = super::Button::new(&confirm);
             if destructive {
@@ -670,16 +693,23 @@ impl DialogShell {
                 go = go.reason(why);
             }
             if ui.add(go).clicked() && why.is_none() {
-                answer = Some(true);
+                answer = Some(ShellAnswer::Confirm);
+            }
+            if let Some(other) = &other
+                && ui
+                    .add(super::Button::new(other).variant(super::ButtonVariant::Outline))
+                    .clicked()
+            {
+                answer = Some(ShellAnswer::Other);
             }
             if ui
                 .add(super::Button::new(&cancel).variant(super::ButtonVariant::Ghost))
                 .clicked()
             {
-                answer = Some(false);
+                answer = Some(ShellAnswer::Cancel);
             }
         });
-        answer.or(closed.then_some(false))
+        answer.or(closed.then_some(ShellAnswer::Cancel))
     }
 }
 

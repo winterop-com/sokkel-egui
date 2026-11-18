@@ -78,6 +78,9 @@ pub struct RailBody<'a> {
     pub title: Option<String>,
     pub search: Option<ShellBanner<'a>>,
     pub content: Box<dyn FnOnce(&mut Ui) + 'a>,
+    /// The places stand over the body, both shown at once with no row back to the places, as the
+    /// web's `places: 'above'`, for an app with a few places.
+    pub places_above: bool,
 }
 
 /// The words a rail says.
@@ -277,7 +280,9 @@ impl Widget for Rail<'_> {
         };
         // the body in place of the groups while it shows
         let view_id = response.id.with("view");
-        let showing_body = !narrow && self.body.is_some() && ui.data(|d| d.get_temp::<bool>(view_id)).unwrap_or(true);
+        let above = self.body.as_ref().is_some_and(|b| b.places_above);
+        let showing_body =
+            !narrow && !above && self.body.is_some() && ui.data(|d| d.get_temp::<bool>(view_id)).unwrap_or(true);
         if showing_body && let Some(body) = self.body.take() {
             let mut y = head.bottom();
             let back = Rect::from_min_max(pos2(rect.left() + 8.0, y), pos2(rect.right() - 9.0, y + row));
@@ -309,56 +314,7 @@ impl Widget for Rail<'_> {
                 ui.data_mut(|d| d.insert_temp(view_id, false));
             }
             y = back.bottom();
-            if let Some(title) = &body.title {
-                // 16 over the heading's 20 line, 6 under it, as `pt-4 pb-1.5`
-                y += 16.0;
-                let spec = t.text("help");
-                let rich = TextRole::Help
-                    .rich(&t, title.to_uppercase())
-                    .variation("wght", 500.0)
-                    .extra_letter_spacing(spec.size * 0.025);
-                let label = WidgetText::from(rich).into_galley(
-                    ui,
-                    Some(TextWrapMode::Truncate),
-                    rect.width() - 32.0,
-                    TextRole::Help.font(&t),
-                );
-                painter.galley(pos2(rect.left() + 16.0, y), label, t.color("faint"));
-                y += 20.0 + 6.0;
-            }
-            if let Some(search) = body.search {
-                y += 4.0;
-                let mut child = ui.new_child(
-                    egui::UiBuilder::new()
-                        .max_rect(Rect::from_min_max(
-                            pos2(rect.left() + 8.0, y),
-                            pos2(rect.right() - 9.0, y + t.density("control")),
-                        ))
-                        .layout(Layout::left_to_right(Align::Center)),
-                );
-                child.spacing_mut().item_spacing.x = 2.0;
-                search(&mut child);
-                // the row a control tall, whatever its buttons' own hit areas
-                y += t.density("control");
-            }
-            y += 8.0;
-            let area = Rect::from_min_max(
-                pos2(rect.left() + 8.0, y),
-                pos2(rect.right() - 9.0, rect.bottom() - 12.0),
-            );
-            let mut child = ui.new_child(
-                egui::UiBuilder::new()
-                    .max_rect(area)
-                    .layout(Layout::top_down(Align::Min)),
-            );
-            child.set_clip_rect(area.intersect(ui.clip_rect()));
-            egui::ScrollArea::vertical()
-                .id_salt(response.id.with("body"))
-                .auto_shrink([false, false])
-                .show(&mut child, |ui| {
-                    ui.set_width(area.width());
-                    (body.content)(ui);
-                });
+            draw_rail_body(ui, &t, rect, response.id, y, body);
             return response;
         }
         // a first group without a title keeps 4 over its first entry, so the entry's focus is whole
@@ -408,7 +364,7 @@ impl Widget for Rail<'_> {
                 // a described entry: 6 over and under its 22 label line and its description's 20
                 // tall lines, wrapped beside the count as the web's `text-pretty` wraps them
                 let described = !narrow && entry.description.is_some();
-                let count_room = entry.count.map_or(0.0, |count| {
+                let count_room = entry.count.filter(|count| *count > 0).map_or(0.0, |count| {
                     let rich = TextRole::Badge.rich(&t, count.to_string()).variation("wght", 600.0);
                     WidgetText::from(rich)
                         .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Badge.font(&t))
@@ -508,7 +464,7 @@ impl Widget for Rail<'_> {
                             painter.galley(pos2(bounds.left() + 40.0, middle - words.size().y / 2.0), words, quiet);
                         }
                     }
-                    if let Some(count) = entry.count {
+                    if let Some(count) = entry.count.filter(|count| *count > 0) {
                         // the count at 600
                         let rich = TextRole::Badge.rich(&t, count.to_string()).variation("wght", 600.0);
                         let figure = WidgetText::from(rich).into_galley(
@@ -524,8 +480,70 @@ impl Widget for Rail<'_> {
                 y += if narrow { row } else { height } + 4.0;
             }
         }
+        // a body under the places, both shown at once
+        if above
+            && !narrow
+            && let Some(body) = self.body.take()
+        {
+            draw_rail_body(ui, &t, rect, response.id, y, body);
+        }
         response
     }
+}
+
+/// A rail body's heading, its search and its content, scrolling, from `y` down the rail.
+fn draw_rail_body(ui: &mut Ui, t: &crate::Tokens, rect: Rect, id: egui::Id, mut y: f32, body: RailBody<'_>) {
+    let painter = ui.painter().clone();
+    if let Some(title) = &body.title {
+        // 16 over the heading's 20 line, 6 under it, as `pt-4 pb-1.5`
+        y += 16.0;
+        let spec = t.text("help");
+        let rich = TextRole::Help
+            .rich(t, title.to_uppercase())
+            .variation("wght", 500.0)
+            .extra_letter_spacing(spec.size * 0.025);
+        let label = WidgetText::from(rich).into_galley(
+            ui,
+            Some(TextWrapMode::Truncate),
+            rect.width() - 32.0,
+            TextRole::Help.font(t),
+        );
+        painter.galley(pos2(rect.left() + 16.0, y), label, t.color("faint"));
+        y += 20.0 + 6.0;
+    }
+    if let Some(search) = body.search {
+        y += 4.0;
+        let mut child = ui.new_child(
+            egui::UiBuilder::new()
+                .max_rect(Rect::from_min_max(
+                    pos2(rect.left() + 8.0, y),
+                    pos2(rect.right() - 9.0, y + t.density("control")),
+                ))
+                .layout(Layout::left_to_right(Align::Center)),
+        );
+        child.spacing_mut().item_spacing.x = 2.0;
+        search(&mut child);
+        // the row a control tall, whatever its buttons' own hit areas
+        y += t.density("control");
+    }
+    y += 8.0;
+    let area = Rect::from_min_max(
+        pos2(rect.left() + 8.0, y),
+        pos2(rect.right() - 9.0, rect.bottom() - 12.0),
+    );
+    let mut child = ui.new_child(
+        egui::UiBuilder::new()
+            .max_rect(area)
+            .layout(Layout::top_down(Align::Min)),
+    );
+    child.set_clip_rect(area.intersect(ui.clip_rect()));
+    egui::ScrollArea::vertical()
+        .id_salt(id.with("body"))
+        .auto_shrink([false, false])
+        .show(&mut child, |ui| {
+            ui.set_width(area.width());
+            (body.content)(ui);
+        });
 }
 
 /// The app's mark on its tile's ink: the SVG, drawn in `currentColor`, or the name's initial.

@@ -31,6 +31,7 @@ mod inline_code;
 mod inline_edit;
 mod item;
 mod item_card;
+mod json_schema;
 mod json_tree;
 mod layout;
 mod list_row;
@@ -128,6 +129,7 @@ pub use inline_code::{InlineCode, InlineCodeTone};
 pub use inline_edit::{InlineEdit, InlineEditLook, InlineEditWords};
 pub use item::{Item, ItemDescription, ItemSize, ItemVariant, item_group};
 pub use item_card::{CardFact, ItemCard, SortableGrid, SortableOutcome};
+pub use json_schema::json_schema_2020_12;
 pub use json_tree::{JsonTree, JsonTreeWords};
 pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
 pub use list_row::{ListRow, ListRows, RowAside, RowMark};
@@ -138,8 +140,8 @@ pub use meta_line::MetaLine;
 pub use mini_month::{MiniMonth, MiniMonthResponse, MiniMonthWords};
 pub use number_field::{NumberField, NumberFieldWords, read_number, write_number};
 pub use overlay::{
-    ConfirmAnswer, ConfirmDialog, Dialog, DialogShell, Select, UnsavedChangesWords, tooltip, tooltip_shown,
-    unsaved_changes,
+    ConfirmAnswer, ConfirmDialog, Dialog, DialogShell, Select, ShellAnswer, UnsavedChangesWords, tooltip,
+    tooltip_shown, unsaved_changes,
 };
 pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
 pub use pane_header::{PaneHeader, PaneHeaderVariant, PaneTitle, section_title_weight};
@@ -291,13 +293,30 @@ pub fn keys_galley(
     let mut add = |rich: egui::RichText| {
         rich.append_to(&mut job, style, egui::FontSelection::Default, egui::Align::Center);
     };
-    for (index, part) in keys.split('⌘').enumerate() {
-        if index > 0 {
-            add(egui::RichText::new(char::from(crate::Icon::Command).to_string()).font(crate::icons::font(size)));
+    // the modifier keys' symbols, which the text faces lack, as their icons
+    let symbol = |c: char| match c {
+        '⌘' => Some(crate::Icon::Command),
+        '⇧' => Some(crate::Icon::ArrowBigUp),
+        '⌥' => Some(crate::Icon::Option),
+        '⌃' => Some(crate::Icon::ChevronUp),
+        _ => None,
+    };
+    let mut run = String::new();
+    for c in keys.chars() {
+        match symbol(c) {
+            Some(icon) => {
+                if !run.is_empty() {
+                    add(role
+                        .rich(tokens, std::mem::take(&mut run))
+                        .extra_letter_spacing(spacing));
+                }
+                add(egui::RichText::new(char::from(icon).to_string()).font(crate::icons::font(size)));
+            }
+            None => run.push(c),
         }
-        if !part.is_empty() {
-            add(role.rich(tokens, part).extra_letter_spacing(spacing));
-        }
+    }
+    if !run.is_empty() {
+        add(role.rich(tokens, run).extra_letter_spacing(spacing));
     }
     ui.painter().layout_job(job)
 }

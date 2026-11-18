@@ -164,6 +164,9 @@ pub enum Cell {
     },
     /// A tag: the hash in the muted ink, then 4 on its name at medium weight.
     TagName(String),
+    /// An 8 dot in a color token's color, the second the words a screen reader says for it, as a
+    /// problem's kind.
+    Dot(String, String),
     /// A name, then 8 on its code small and muted in the mono face, on one line.
     NameThenCode {
         name: String,
@@ -265,7 +268,7 @@ impl Cell {
             Cell::NamedCode { name, .. } | Cell::NameThenCode { name, .. } | Cell::IconName { name, .. } => {
                 name.clone()
             }
-            Cell::TagName(name) => name.clone(),
+            Cell::TagName(name) | Cell::Dot(_, name) => name.clone(),
             Cell::ChipNote { label, note, .. } => format!("{label} {note}"),
             Cell::Number { text, .. } | Cell::Marked { text, .. } | Cell::Swatch { text, .. } => text.clone(),
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
@@ -293,7 +296,7 @@ impl Cell {
             Cell::NamedCode { name, .. } | Cell::NameThenCode { name, .. } | Cell::IconName { name, .. } => {
                 name.clone()
             }
-            Cell::TagName(name) => name.clone(),
+            Cell::TagName(name) | Cell::Dot(_, name) => name.clone(),
             Cell::ChipNote { label, note, .. } => format!("{label} {note}"),
             Cell::Check(on) | Cell::Switch { on, .. } => u8::from(*on).to_string(),
             Cell::Button { .. } => String::new(),
@@ -484,6 +487,7 @@ pub struct DataTable<'a> {
     search: Option<&'a mut String>,
     search_placeholder: Option<String>,
     bar: bool,
+    heads: bool,
     toolbar: Option<Toolbar<'a>>,
     foot: Option<String>,
     paging: Option<Vec<usize>>,
@@ -542,6 +546,7 @@ impl<'a> DataTable<'a> {
             paging: None,
             search: None,
             bar: false,
+            heads: true,
             auto: false,
             detail: None,
             groups: None,
@@ -735,6 +740,13 @@ impl<'a> DataTable<'a> {
 
     /// The rows a page at a time, as the web's `paging="client"`: `sizes` the rows to a page the
     /// reader picks from, the first to start with, and a pager under the rows.
+    /// The head row left out, for a list whose columns say what they hold without names, as the
+    /// web's `columnHeads={false}`.
+    pub fn heads(mut self, heads: bool) -> Self {
+        self.heads = heads;
+        self
+    }
+
     pub fn paging(mut self, sizes: &[usize]) -> Self {
         self.paging = Some(sizes.to_vec());
         self
@@ -1609,7 +1621,7 @@ impl<'a> DataTable<'a> {
         } else {
             row_height
         };
-        let head_height = if stacked { 0.0 } else { head_height };
+        let head_height = if stacked || !self.heads { 0.0 } else { head_height };
         let keys: Vec<Id> = (0..self.rows.len())
             .map(|index| match self.keys.get(index) {
                 Some(key) if self.keys.len() == self.rows.len() => *key,
@@ -1713,7 +1725,7 @@ impl<'a> DataTable<'a> {
                 // the head, which a stacked table has none of
                 // a head's name too wide for its column wraps onto a second line, and the head row
                 // grows to hold it: one line padded by half of what the row leaves over it
-                let head_height = if stacked {
+                let head_height = if stacked || !self.heads {
                     head_height
                 } else {
                     let room = ui.available_rect_before_wrap();
@@ -1729,7 +1741,7 @@ impl<'a> DataTable<'a> {
                     head_height + (lines - 1) as f32 * line
                 };
                 let (head, _) = ui.allocate_exact_size(vec2(ui.available_width(), head_height), Sense::hover());
-                if !stacked {
+                if !stacked && self.heads {
                     let top = CornerRadius { sw: 0, se: 0, ..radius };
                     ui.painter()
                         .rect_filled(head, top, t.color_or("table-head-ground", t.color("card")));
@@ -2574,6 +2586,10 @@ fn paint_cell(
             t.color("muted-foreground"),
         ),
         Cell::Muted(label) => text(ui, TextRole::Body.rich(t, label), t.color("muted-foreground")),
+        Cell::Dot(color, _) => {
+            ui.painter()
+                .circle_filled(pos2(rect.left() + 4.0, rect.center().y), 4.0, t.color(color));
+        }
         Cell::Toned(label, ink) => text(ui, TextRole::Body.rich(t, label), t.color(ink)),
         Cell::CodeLines { code, detail } => {
             let lay = |ui: &mut Ui, rich: egui::RichText, role: TextRole| {
@@ -2917,6 +2933,10 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Relative { .. } => text(ui, TextRole::Help.rich(t, cell.draft()), quiet, at.x, room),
         Cell::Struck(label) => text(ui, TextRole::Help.rich(t, label).strikethrough(), quiet, at.x, room),
         Cell::Muted(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
+        Cell::Dot(color, _) => {
+            ui.painter().circle_filled(pos2(at.x + 4.0, at.y), 4.0, t.color(color));
+            8.0
+        }
         Cell::Lines { title, .. } => text(ui, TextRole::Help.rich(t, title), quiet, at.x, room),
         Cell::Toned(label, ink) => text(ui, TextRole::Help.rich(t, label), t.color(ink), at.x, room),
         Cell::Mono(label) | Cell::MutedCode(label) | Cell::Marked { text: label, .. } => {

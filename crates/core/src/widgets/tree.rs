@@ -20,6 +20,9 @@ pub struct TreeNode {
     pub icon: Option<Icon>,
     /// The icon an open branch shows in place of `icon`, such as an open folder.
     pub open_icon: Option<Icon>,
+    /// A 6 dot at the row's end in a color, such as a file's unsaved changes, said to a screen
+    /// reader with its words.
+    pub dot: Option<(egui::Color32, String)>,
 }
 
 impl TreeNode {
@@ -43,6 +46,11 @@ impl TreeNode {
 
     pub fn open_icon(mut self, icon: Icon) -> Self {
         self.open_icon = Some(icon);
+        self
+    }
+
+    pub fn dot(mut self, color: egui::Color32, said: impl Into<String>) -> Self {
+        self.dot = Some((color, said.into()));
         self
     }
 
@@ -442,6 +450,11 @@ impl<'a> Tree<'a> {
                     response.action = Some((row.node.id.clone(), chosen));
                 }
                 right -= 24.0 + 6.0;
+            }
+            if let Some((color, _)) = &row.node.dot {
+                right -= 6.0;
+                ui.painter().circle_filled(pos2(right + 3.0, center), 3.0, *color);
+                right -= 6.0;
             }
             if let Some(meta) = &row.node.meta {
                 let galley = WidgetText::from(TextRole::Help.rich(&t, meta)).into_galley(

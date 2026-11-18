@@ -311,6 +311,7 @@ impl NotesApp {
                         new_note = ui.add(IconButton::new(Icon::FilePlus, "New note")).clicked();
                         new_folder = ui.add(IconButton::new(Icon::FolderPlus, "New folder")).clicked();
                     })),
+                    places_above: false,
                     content: Box::new(|ui: &mut Ui| {
                         let menu = |node: &sokkel_egui::TreeNode| Some(row_actions(node));
                         // a row goes into a folder or the top, never into a note, nor a folder

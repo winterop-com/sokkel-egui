@@ -284,6 +284,7 @@ pub struct CodeEditor<'a> {
     hover: Option<Describe<'a>>,
     links: Option<&'a [String]>,
     schema: Option<&'a serde_json::Value>,
+    deferred: Option<&'a dyn Fn(&serde_json::Value) -> bool>,
     search: bool,
     folding: bool,
     bracket_colors: bool,
@@ -313,6 +314,7 @@ impl<'a> CodeEditor<'a> {
             hover: None,
             links: None,
             schema: None,
+            deferred: None,
             search: false,
             folding: false,
             bracket_colors: false,
@@ -402,6 +404,13 @@ impl<'a> CodeEditor<'a> {
     /// A JSON Schema (2020-12) a JSON or YAML document is checked against and completed from.
     pub fn schema(mut self, schema: &'a serde_json::Value) -> Self {
         self.schema = Some(schema);
+        self
+    }
+
+    /// Values the app checks itself, such as `${...}` references filled in later: the schema says
+    /// nothing of them, nor of what they hold, as the web's `deferred`.
+    pub fn deferred(mut self, deferred: &'a dyn Fn(&serde_json::Value) -> bool) -> Self {
+        self.deferred = Some(deferred);
         self
     }
 
@@ -2129,7 +2138,7 @@ impl CodeEditor<'_> {
             }
         }
         if let (Some(schema), Some(read)) = (self.schema, read.as_ref()) {
-            for (finding, _) in schema::findings(text, read, schema, self.language.name(), &self.words) {
+            for (finding, _) in schema::findings(text, read, schema, self.language.name(), &self.words, self.deferred) {
                 ranges.push(Placed {
                     from: finding.from,
                     to: finding.to,

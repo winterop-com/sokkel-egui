@@ -1086,6 +1086,7 @@ pub(crate) fn findings(
     schema: &Value,
     language_name: &str,
     words: &CodeEditorWords,
+    deferred: Option<&dyn Fn(&Value) -> bool>,
 ) -> Vec<(Finding, Vec<String>)> {
     if text.trim().is_empty() {
         return Vec::new();
@@ -1110,6 +1111,12 @@ pub(crate) fn findings(
     let mut out = Vec::new();
     for (value, spans) in documents {
         for issue in validate(schema, &value) {
+            // a value the app checks itself, or one under it, is left to the app
+            if let Some(deferred) = deferred
+                && (0..=issue.path.len()).any(|depth| value_at(&value, &issue.path[..depth]).is_some_and(deferred))
+            {
+                continue;
+            }
             let (from, to) = place(&issue, &spans, text);
             let path = match &issue.kind {
                 IssueKind::Additional(p) => with(&issue.path, p.clone()),
@@ -2057,10 +2064,17 @@ mod tests {
     fn messages(text: &str, yaml: bool) -> Vec<(String, String)> {
         let read = if yaml { read_yaml(text) } else { read_json(text) };
         let words = CodeEditorWords::default();
-        findings(text, &read, &pipeline(), if yaml { "YAML" } else { "JSON" }, &words)
-            .into_iter()
-            .map(|(f, _)| (text[f.from..f.to].to_owned(), f.message))
-            .collect()
+        findings(
+            text,
+            &read,
+            &pipeline(),
+            if yaml { "YAML" } else { "JSON" },
+            &words,
+            None,
+        )
+        .into_iter()
+        .map(|(f, _)| (text[f.from..f.to].to_owned(), f.message))
+        .collect()
     }
 
     #[test]

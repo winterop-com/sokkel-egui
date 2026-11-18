@@ -61,6 +61,17 @@ pub enum FileKind {
     Query,
 }
 
+impl FileKind {
+    /// The kind as the web writes it: pipeline, schema or query.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Pipeline => "pipeline",
+            Self::Schema => "schema",
+            Self::Query => "query",
+        }
+    }
+}
+
 /// How a kind of file is named and said.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct KindInfo {

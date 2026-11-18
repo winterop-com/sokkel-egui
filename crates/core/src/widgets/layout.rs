@@ -236,6 +236,7 @@ pub struct SplitPane {
     narrow_below: f32,
     scroll: bool,
     only: Option<usize>,
+    down: bool,
 }
 
 impl SplitPane {
@@ -248,7 +249,15 @@ impl SplitPane {
             narrow_below: 640.0,
             scroll: false,
             only: None,
+            down: false,
         }
+    }
+
+    /// The first pane over the second, the rule between them dragged up and down, as the web's
+    /// `direction="down"`.
+    pub fn down(mut self, down: bool) -> Self {
+        self.down = down;
+        self
     }
 
     /// One pane alone across the room, the first (0) or the second (1), as the web's `only`; the
@@ -311,6 +320,39 @@ impl SplitPane {
             } else {
                 pane(ui, room, "second", Box::new(second));
             }
+            ui.allocate_rect(room, egui::Sense::hover());
+            return;
+        }
+        if self.down {
+            let clamp = |share: f32| share.clamp(self.min_share, self.max_share);
+            let mut share = clamp(ui.data(|d| d.get_temp::<f32>(self.id)).unwrap_or(self.default_share));
+            let at = room.top() + (room.height() * share).round();
+            let handle = egui::Rect::from_center_size(egui::pos2(room.center().x, at), vec2(room.width(), 8.0));
+            let response = ui
+                .interact(handle, self.id.with("handle"), egui::Sense::click_and_drag())
+                .on_hover_cursor(egui::CursorIcon::ResizeVertical);
+            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Unknown, true, "Resize"));
+            if response.dragged()
+                && let Some(pos) = response.interact_pointer_pos()
+            {
+                share = clamp((pos.y - room.top()) / room.height());
+            }
+            if response.double_clicked() {
+                share = clamp(self.default_share);
+            }
+            ui.data_mut(|d| d.insert_temp(self.id, share));
+            let at = room.top() + (room.height() * share).round();
+            let top = egui::Rect::from_min_max(room.min, egui::pos2(room.right(), at));
+            let bottom = egui::Rect::from_min_max(egui::pos2(room.left(), at + 1.0), room.max);
+            pane(ui, top, "first", Box::new(first));
+            pane(ui, bottom, "second", Box::new(second));
+            let ink = if response.hovered() || response.dragged() {
+                t.color("ring")
+            } else {
+                rule
+            };
+            ui.painter()
+                .hline(room.x_range(), at + 0.5, egui::Stroke::new(1.0, ink));
             ui.allocate_rect(room, egui::Sense::hover());
             return;
         }

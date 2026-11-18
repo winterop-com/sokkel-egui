@@ -17,3 +17,7 @@
   ported to Rust in `crates/graph/src/force.rs` (the simulation, its link, many-body, collide and
   centering forces, its seeded random source, and the quadtree they search), the force layout
   sokkel-ui-graph's `NetworkGraph` runs on.
+- The JSON Schema 2020-12 meta-schema in `crates/core/src/widgets/json_schema_2020_12.json`, as
+  sokkel-ui's `json-schema.ts` flattens it (its seven vocabulary meta-schemas merged into one
+  object, every reference inside it), Copyright (c) 2022 JSON Schema Specification Authors, under
+  the BSD 3-Clause License.
