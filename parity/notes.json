@@ -1,0 +1,96 @@
+{
+    "example": "examples/notes/web/src",
+    "ported": {
+        "commit": "c95b8911",
+        "files": {
+            "App.tsx": "93784425a5905d0cc83bb920a93f9e2392ccb5e4",
+            "Dialogs.tsx": "3505e731a610e8442009f10c2e19b46c6a5066be",
+            "NotePanel.tsx": "80b21e54844a8c6a8d9d5dcaeee117564f662b00",
+            "Notes.tsx": "22cdebe0ee01cfcbd951f96a24670f8305119578",
+            "app.css": "dcf0927c247a4724e60d4e5922b41e7d4b44c9f3",
+            "backend.ts": "cac4c9f3803b6ba2f98064d326643b5c9c5a2f70",
+            "main.tsx": "71860b8eb0eb39adf96e4adedf34e61c545a82d4",
+            "model.ts": "7fea89b2d5e6061f29c0fb35bfd9a30a7bf71e9c",
+            "pages/AllNotes.tsx": "06066ca448e899a4b71786706a1c91683f8314b3",
+            "pages/Daily.tsx": "828ab1239559a5529592505ef59ec81091ca284f",
+            "pages/Graph.tsx": "d96d03219f877410c402d509a53e3dd1e5be5bf6",
+            "pages/NotePage.tsx": "183c27e24ebe1910fb0a19d208ae2356f35ffbdf",
+            "pages/SearchPage.tsx": "cd48aaca52e2eabeccac1336506a559a1108114f",
+            "pages/Settings.tsx": "26c44501e6bc5063271eb92345635efb4364303f",
+            "pages/Tags.tsx": "8e8a65b42aab0f37056533a38ade08449a898775",
+            "seed.ts": "dc0aa8dc6b41df983b065bb623355e73798590f4",
+            "state.tsx": "4080b347d5e5f1800360793274e24aaa0905d28c",
+            "themes.ts": "5f98ff7e6680d7dd2807416aff0c7de32b2852b1",
+            "vault.ts": "737f15e14a5818d34af32e6f6707bf970a2b2545"
+        }
+    },
+    "parts": {},
+    "screens": [
+        {
+            "name": "notes_all",
+            "route": "notes",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "notes_note",
+            "route": "note/welcome",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "notes_folder",
+            "route": "folder/runbooks",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "notes_daily",
+            "route": "daily",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "notes_tags",
+            "route": "tags",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "notes_graph",
+            "route": "graph",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "notes_search",
+            "route": "search",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "notes_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "c95b8911dd02bf7925e96b62c93fc8a934d57800"
+}
