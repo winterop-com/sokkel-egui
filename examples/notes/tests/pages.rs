@@ -130,3 +130,38 @@ fn a_name_already_taken() {
     harness.run_steps(3);
     results.add(harness.try_snapshot("notes_quick_add_taken"));
 }
+
+#[test]
+fn a_note_dragged_into_a_folder() {
+    use eframe::egui::{Event, Modifiers, PointerButton, pos2};
+    use egui_kittest::kittest::Queryable;
+    let mut harness = render("notes");
+    let row = |h: &Harness<'static, NotesApp>, label: &str| {
+        h.query_all_by_label(label)
+            .map(|n| n.rect())
+            .find(|r| r.left() < 240.0)
+            .unwrap()
+    };
+    let from = row(&harness, "Ideas").center();
+    let onto = row(&harness, "Runbooks");
+    let to = pos2(onto.center().x, onto.top() + onto.height() * 0.75);
+    let press = |pos, pressed| Event::PointerButton {
+        pos,
+        button: PointerButton::Primary,
+        pressed,
+        modifiers: Modifiers::NONE,
+    };
+    harness.input_mut().events.push(Event::PointerMoved(from));
+    harness.input_mut().events.push(press(from, true));
+    harness.run_steps(1);
+    for step in 1..=10 {
+        let at = from + (to - from) * (step as f32 / 10.0);
+        harness.input_mut().events.push(Event::PointerMoved(at));
+        harness.run_steps(1);
+    }
+    harness.input_mut().events.push(press(to, false));
+    harness.run_steps(3);
+    let vault = harness.state().backend.vault();
+    let ideas = vault.notes.iter().find(|n| n.title == "Ideas").unwrap();
+    assert_eq!(ideas.folder.as_deref(), Some("runbooks"));
+}

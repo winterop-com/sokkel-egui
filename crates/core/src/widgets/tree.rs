@@ -219,6 +219,46 @@ pub fn move_tree_node(nodes: &[TreeNode], id: &str, into: Option<&str>, index: u
 /// Whether a node may go into a branch (`None` for the top level).
 pub type CanMove<'a> = &'a dyn Fn(&str, Option<&str>) -> bool;
 
+/// The run of rows a node keeps to in its level, such as `folder` before `note`.
+pub type TreeBand<'a> = &'a dyn Fn(&TreeNode) -> &'static str;
+
+/// The order an app keeps a tree's levels in, as sokkel-ui's `TreeOrder`: `band` names the run of
+/// rows a node keeps to in its level (a node goes only among its band, and every place is counted
+/// among its band alone); `sorted` says the app sorts each band itself, so a node goes only into a
+/// branch or the top level, never beside a row.
+#[derive(Clone, Copy, Default)]
+pub struct TreeOrder<'a> {
+    pub band: Option<TreeBand<'a>>,
+    pub sorted: bool,
+}
+
+/// Which part of a row a point is in, as sokkel-ui's `dropPart`: a branch takes its middle half as
+/// inside and its quarters as before and after; a leaf splits at its middle.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TreeDropPart {
+    Before,
+    After,
+    Inside,
+}
+
+pub fn drop_part(y: f32, top: f32, height: f32, branch: bool) -> TreeDropPart {
+    let at = if height > 0.0 { (y - top) / height } else { 0.5 };
+    if !branch {
+        return if at < 0.5 {
+            TreeDropPart::Before
+        } else {
+            TreeDropPart::After
+        };
+    }
+    if at < 0.25 {
+        TreeDropPart::Before
+    } else if at > 0.75 {
+        TreeDropPart::After
+    } else {
+        TreeDropPart::Inside
+    }
+}
+
 /// What a node's menu offers, or `None` for a node without one.
 pub type NodeActions<'a> = &'a dyn Fn(&TreeNode) -> Option<Vec<MenuItem>>;
 
@@ -233,6 +273,7 @@ pub struct Tree<'a> {
     query: &'a str,
     words: TreeWords,
     movable: Option<CanMove<'a>>,
+    order: TreeOrder<'a>,
     actions: Option<NodeActions<'a>>,
     choosing: bool,
 }
@@ -252,6 +293,7 @@ impl<'a> Tree<'a> {
             query: "",
             words: TreeWords::default(),
             movable: None,
+            order: TreeOrder::default(),
             actions: None,
             choosing: true,
         }
@@ -269,6 +311,12 @@ impl<'a> Tree<'a> {
     /// response's `action`.
     pub fn actions(mut self, actions: NodeActions<'a>) -> Self {
         self.actions = Some(actions);
+        self
+    }
+
+    /// The order the app keeps each level in, which a drop keeps to and counts its place by.
+    pub fn order(mut self, order: TreeOrder<'a>) -> Self {
+        self.order = order;
         self
     }
 
@@ -440,70 +488,91 @@ impl<'a> Tree<'a> {
         // a row dragged: where it would land, drawn as a line, and kept on release
         if let (Some(from), Some(can_move)) = (dragging.clone(), self.movable) {
             let pointer = ui.input(|i| i.pointer.interact_pos());
-            let target = pointer.and_then(|p| {
-                let at = rects.iter().position(|r| r.contains(p))?;
-                Some((at, p.y > rects[at].center().y))
-            });
-            let landing = target.and_then(|(at, below)| {
-                let dragged = rows.iter().find(|r| r.node.id == from)?;
+            let band_of = |node: &TreeNode| self.order.band.map(|band| band(node));
+            let dragged = tree_node(self.nodes, &from);
+            let band = dragged.and_then(band_of);
+            // the rows of a level the dragged node is counted among: its band's, itself left out
+            let peers = |into: Option<&str>| -> Vec<&TreeNode> {
+                let level: Vec<&TreeNode> = match into {
+                    None => self.nodes.iter().collect(),
+                    Some(p) => tree_node(self.nodes, p)
+                        .map(|n| n.children.iter().collect())
+                        .unwrap_or_default(),
+                };
+                level
+                    .into_iter()
+                    .filter(|n| n.id != from && (band.is_none() || band_of(n) == band))
+                    .collect()
+            };
+            // where it lands: into a branch at its end, beside a row in that row's level, or at the
+            // top level's end on the tree's own ground under the rows
+            let landing = pointer.and_then(|p| {
+                let Some(at) = rects.iter().position(|r| r.contains(p)) else {
+                    let last = rects.last()?;
+                    let ground = p.y > last.bottom() && p.x >= last.left() && p.x <= last.right();
+                    return (ground && can_move(&from, None)).then(|| (None, peers(None).len(), None));
+                };
                 let onto = &rows[at];
                 if onto.node.id == from {
                     return None;
                 }
-                let siblings = |parent: Option<&str>| -> Vec<&TreeNode> {
-                    match parent {
-                        None => self.nodes.iter().collect(),
-                        Some(p) => tree_node(self.nodes, p)
-                            .map(|n| n.children.iter().collect())
-                            .unwrap_or_default(),
-                    }
-                };
-                // a top-level node goes among the top level, by the top-level row it is dropped on
-                let (into, place, line) = if dragged.level == 1 {
-                    let mut top = at;
-                    while rows[top].level > 1 {
-                        top -= 1;
-                    }
-                    let list = siblings(None);
-                    let pos = list.iter().position(|n| n.id == rows[top].node.id)?;
-                    let after =
-                        below && onto.level == 1 && !(onto.node.is_branch() && self.open.contains(&onto.node.id));
-                    let place = if after || onto.level > 1 { pos + 1 } else { pos };
-                    (None, place, if after { rects[at].bottom() } else { rects[top].top() })
-                } else if onto.node.is_branch() && onto.level < dragged.level {
-                    (Some(onto.node.id.clone()), 0, rects[at].bottom())
+                // a row the dragged one may go into takes a drop inside, as a branch does
+                let branch = onto.node.is_branch() || can_move(&from, Some(&onto.node.id));
+                let part = drop_part(p.y, rects[at].top(), rects[at].height(), branch);
+                let into = if part == TreeDropPart::Inside {
+                    Some(onto.node.id.clone())
                 } else {
-                    let parent = onto.parent?;
-                    let list = siblings(Some(parent));
-                    let pos = list.iter().position(|n| n.id == onto.node.id)?;
-                    let place = if below { pos + 1 } else { pos };
-                    (
-                        Some(parent.to_owned()),
-                        place,
-                        if below { rects[at].bottom() } else { rects[at].top() },
-                    )
+                    onto.parent.map(str::to_owned)
                 };
                 if !can_move(&from, into.as_deref()) {
                     return None;
                 }
-                // its place once it has left its old one in the same list
-                let old = siblings(into.as_deref()).iter().position(|n| n.id == from);
-                let place = match old {
-                    Some(old) if old < place => place - 1,
-                    _ => place,
+                let others = peers(into.as_deref());
+                let index = if part == TreeDropPart::Inside {
+                    others.len()
+                } else {
+                    if self.order.sorted {
+                        return None;
+                    }
+                    let place = others.iter().position(|n| n.id == onto.node.id)?;
+                    if part == TreeDropPart::Before { place } else { place + 1 }
                 };
-                Some((into, place, line, onto.level.min(dragged.level)))
+                Some((into, index, Some((at, part))))
             });
-            if let Some((_, _, line, level)) = &landing {
-                let left = rects[0].left() + (*level as f32 - 1.0) * 16.0 + 4.0;
-                ui.painter().hline(
-                    left..=rects[0].right(),
-                    *line,
-                    egui::Stroke::new(2.0, t.color("primary")),
-                );
+            match landing.as_ref().map(|l| l.2) {
+                Some(Some((at, TreeDropPart::Inside))) => {
+                    ui.painter().rect_stroke(
+                        rects[at],
+                        radius,
+                        egui::Stroke::new(2.0, t.color("ring")),
+                        egui::StrokeKind::Inside,
+                    );
+                }
+                Some(Some((at, part))) => {
+                    let left = rects[at].left() + (rows[at].level as f32 - 1.0) * 16.0 + 4.0;
+                    let y = if part == TreeDropPart::Before {
+                        rects[at].top()
+                    } else {
+                        rects[at].bottom()
+                    };
+                    ui.painter()
+                        .hline(left..=rects[at].right(), y, egui::Stroke::new(2.0, t.color("primary")));
+                }
+                Some(None) => {
+                    if let (Some(first), Some(last)) = (rects.first(), rects.last()) {
+                        let ground = egui::Rect::from_min_max(first.min, last.max);
+                        ui.painter().rect_stroke(
+                            ground,
+                            radius,
+                            egui::Stroke::new(2.0, t.color("ring")),
+                            egui::StrokeKind::Inside,
+                        );
+                    }
+                }
+                None => {}
             }
             if ui.input(|i| i.pointer.any_released()) {
-                if let Some((into, place, _, _)) = landing {
+                if let Some((into, place, _)) = landing {
                     response.moved = Some((from, into, place));
                 }
                 dragging = None;
@@ -565,7 +634,16 @@ impl<'a> Tree<'a> {
 
 #[cfg(test)]
 mod moving {
-    use super::{TreeNode, move_tree_node};
+    use super::{TreeDropPart, TreeNode, drop_part, move_tree_node};
+
+    #[test]
+    fn a_branch_takes_its_middle_half_as_inside_and_a_leaf_splits_at_its_middle() {
+        assert_eq!(drop_part(4.0, 0.0, 32.0, true), TreeDropPart::Before);
+        assert_eq!(drop_part(16.0, 0.0, 32.0, true), TreeDropPart::Inside);
+        assert_eq!(drop_part(28.0, 0.0, 32.0, true), TreeDropPart::After);
+        assert_eq!(drop_part(15.0, 0.0, 32.0, false), TreeDropPart::Before);
+        assert_eq!(drop_part(17.0, 0.0, 32.0, false), TreeDropPart::After);
+    }
 
     #[test]
     fn a_node_moves_into_another_branch_and_within_its_own() {

@@ -7,12 +7,12 @@ use eframe::egui::{self, Ui};
 use sokkel_egui::{
     AccountAction, AccountMenu, Appearance, Empty, Icon, IconButton, Markdown, MarkdownScale, MenuItem, Page, Rail,
     RailBody, RailEntry, RailGroup, Search, SearchField, SearchResponse, SearchResult, SearchWords, Shell, ShellPart,
-    StatusLine, StatusTone, Toaster, TopBar, Tree, install,
+    StatusLine, StatusTone, Toaster, TopBar, Tree, TreeOrder, install,
 };
 
-use crate::backend::{Backend, SaveState};
+use crate::backend::{Backend, Placing, SaveState};
 use crate::model::{clock, word_count};
-use crate::vault::vault_tree;
+use crate::vault::{folder_and_below, vault_tree};
 
 /// 2026-11-18 09:00 UTC: the moment the app's screenshots are taken at, as the web's are shot.
 pub const DEMO_START: i64 = 1_794_992_400_000;
@@ -287,8 +287,16 @@ impl NotesApp {
                 *asked = crate::note_panel::note_panel(ui, &panel_vault, &shown, &body, tab);
             });
         }
+        // each folder with the folders under it, which it cannot be moved into
+        let below: std::collections::HashMap<String, Vec<String>> = vault
+            .folders
+            .iter()
+            .map(|f| (f.id.clone(), folder_and_below(vault, &f.id)))
+            .collect();
+        let manual = self.backend.order() == crate::model::Order::Manual;
         let mut tree_chosen = None;
         let mut tree_action: Option<(String, usize)> = None;
+        let mut tree_moved: Option<(String, Option<String>, usize)> = None;
         shell.show_window(ui, |part, ui| match part {
             ShellPart::Rail => {
                 let query = filter.clone();
@@ -305,12 +313,39 @@ impl NotesApp {
                     })),
                     content: Box::new(|ui: &mut Ui| {
                         let menu = |node: &sokkel_egui::TreeNode| Some(row_actions(node));
+                        // a row goes into a folder or the top, never into a note, nor a folder
+                        // into itself
+                        let can_move = |id: &str, into: Option<&str>| match into {
+                            None => true,
+                            Some(into) => {
+                                into.starts_with("folder:")
+                                    && !id
+                                        .strip_prefix("folder:")
+                                        .and_then(|f| below.get(f))
+                                        .is_some_and(|inside| inside.iter().any(|b| into == format!("folder:{b}")))
+                            }
+                        };
+                        // folders stand before notes in every level, and by name the vault sorts
+                        // each level itself
+                        let band = |node: &sokkel_egui::TreeNode| {
+                            if node.id.starts_with("folder:") {
+                                "folder"
+                            } else {
+                                "note"
+                            }
+                        };
                         let out = Tree::new("vault-tree", &tree, &mut picked, open)
                             .query(&query)
                             .actions(&menu)
+                            .movable(&can_move)
+                            .order(TreeOrder {
+                                band: Some(&band),
+                                sorted: !manual,
+                            })
                             .show(ui);
                         tree_chosen = out.chosen;
                         tree_action = out.action;
+                        tree_moved = out.moved;
                     }),
                 };
                 ui.add(
@@ -458,6 +493,9 @@ impl NotesApp {
                 None => self.open_note(&id),
             }
         }
+        if let Some((id, into, index)) = tree_moved {
+            self.place_from_tree(&ctx, &id, into.as_deref(), index);
+        }
         if let Some((id, index)) = tree_action {
             match id.strip_prefix("folder:") {
                 Some(folder) => self.folder_action(folder, index),
@@ -481,6 +519,27 @@ impl NotesApp {
         self.dialogs(&ctx);
         self.settings_dialog(&ctx);
         Toaster::new().show(&ctx);
+    }
+}
+
+impl NotesApp {
+    /// Puts a note or a folder where the tree's drag says, as the web's `placeAt`: into a folder, at
+    /// its place among the notes or the folders there.
+    fn place_from_tree(&mut self, ctx: &egui::Context, id: &str, into: Option<&str>, band: usize) {
+        let folder = id.starts_with("folder:");
+        let (what, own) = if folder {
+            (Placing::Folder, id.trim_start_matches("folder:"))
+        } else {
+            (Placing::Note, id)
+        };
+        let into = into.map(|f| f.trim_start_matches("folder:"));
+        match self.backend.place(what, own, into, band) {
+            Ok(Some(notice)) => crate::daily::notify(ctx, notice),
+            Ok(None) => {}
+            Err(reason) => {
+                sokkel_egui::Toast::error("Not moved").description(reason).show(ctx);
+            }
+        }
     }
 }
 

@@ -18,7 +18,10 @@ shot into `parity/notes/web/` by `bun scripts/parity.ts web notes`.
   with the save, the words, the links in and the notes.
 - The tree: a menu on each row (`Tree::actions`, new in the library), seen while the row is
   pointed at, its room kept so a long name is cut short as the web's is: a folder's New note, New
-  folder, Rename, Move to and Delete; a note's Open, Rename, Move to and Delete.
+  folder, Rename, Move to and Delete; a note's Open, Rename, Move to and Delete. A row dragged
+  goes into a folder (its middle half) or beside a row (its quarters), folders before notes in
+  every level and only into folders while the vault sorts by name (`Tree::order`, `TreeOrder` and
+  `drop_part`, the web's placement, new in the library).
 - All notes and a folder: the header with the folder's buttons, the field that makes a note, and
   the notes newest change first in a list table (a name already in the vault refused in place,
   `QuickAdd::validate`, new in the library) (`Cell::IconName`, new in the library: a note's
