@@ -735,3 +735,61 @@ The person on call keeps an eye on **Recent failures** and hands over at *09:00*
     )
     .show(ui);
 }
+
+pub fn inline_code(_: &mut State, ui: &mut Ui) {
+    use sokkel_egui::{InlineCode, InlineCodeTone};
+    section(ui, "Tones");
+    ui.horizontal(|ui| {
+        ui.add(InlineCode::new("run_toowb0pi"));
+        ui.add(InlineCode::new("null").tone(InlineCodeTone::Muted));
+        ui.add(InlineCode::new("exit 1").tone(InlineCodeTone::Critical));
+        ui.add(InlineCode::new("retrying").tone(InlineCodeTone::Warning));
+        ui.add(InlineCode::new("queued").tone(InlineCodeTone::Info));
+        ui.add(InlineCode::new("exit 0").tone(InlineCodeTone::Good));
+    });
+    section(ui, "Bare and small");
+    ui.horizontal(|ui| {
+        ui.add(InlineCode::new("duration_ms").bare(true));
+        ui.add(InlineCode::new("api.example.org").role(sokkel_egui::TextRole::Help));
+    });
+    section(ui, "Cut short");
+    ui.allocate_ui(vec2(160.0, 24.0), |ui| {
+        ui.add(InlineCode::new(
+            "https://storage.example.org/juniper/import-orders/run_toowb0pi.csv",
+        ));
+    });
+}
+
+pub fn windowed_pane(_: &mut State, ui: &mut Ui) {
+    use sokkel_egui::{WindowedPane, WindowedPaneWhere, WindowedPaneWords, windowed_pane_button};
+    let held = ui.scope_id().with("story-windowed-open");
+    let mut open = ui.data(|d| d.get_temp::<bool>(held)).unwrap_or(true);
+    let words = WindowedPaneWords::default();
+    ui.set_max_width(480.0);
+    let mut expand = false;
+    WindowedPane::new("story-windowed", "nightly-export.yaml")
+        .keep_pane(true)
+        .aside(|ui| {
+            ui.label("The step kinds and what each takes.");
+        })
+        .show(ui, &mut open, |ui, place| {
+            ui.horizontal(|ui| {
+                ui.label(if place == WindowedPaneWhere::Pane {
+                    "In the pane"
+                } else {
+                    "In the window"
+                });
+                if place == WindowedPaneWhere::Pane {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        expand = windowed_pane_button(ui, &words);
+                    });
+                }
+            });
+            ui.label("name: nightly-export");
+            ui.label("schedule: every night at 02:00");
+        });
+    if expand {
+        open = true;
+    }
+    ui.data_mut(|d| d.insert_temp(held, open));
+}

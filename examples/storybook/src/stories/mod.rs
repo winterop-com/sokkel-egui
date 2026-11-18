@@ -332,6 +332,16 @@ pub const STORIES: &[Story] = &[
         show: parts::markdown,
     },
     Story {
+        path: "Patterns/Windowed pane",
+        doc: "A pane whose content opens near full screen in a window, a reference beside it there; the pane keeps its own copy.",
+        show: parts::windowed_pane,
+    },
+    Story {
+        path: "Patterns/Inline code",
+        doc: "A one-line value in the code face on a faint wash, in each tone, bare, small, and cut short where it runs past its room.",
+        show: parts::inline_code,
+    },
+    Story {
         path: "Patterns/Page header",
         doc: "A page's head: its title with a count or a code, a description, and the page's actions at the end of the row.",
         show: page::page_header,

@@ -27,6 +27,7 @@ mod filters;
 mod form_fields;
 mod frame;
 mod info;
+mod inline_code;
 mod inline_edit;
 mod item;
 mod item_card;
@@ -47,6 +48,7 @@ mod panes;
 mod person;
 mod problem;
 mod run_timeline;
+mod schema_form;
 mod search;
 mod search_results;
 mod section;
@@ -69,6 +71,7 @@ mod tree_select;
 mod uptime;
 mod variables;
 mod week;
+mod windowed_pane;
 
 pub use activity::{ActivityItem, ActivityList, ActivityResponse, ActivityTone, ActivityWords, BarList, BarListItem};
 pub use api_link::{ApiLink, ApiLinkWords};
@@ -121,6 +124,7 @@ pub use frame::{
     StatusTone, TopBar, desktop_viewport, is_phone,
 };
 pub use info::info_tip;
+pub use inline_code::{InlineCode, InlineCodeTone};
 pub use inline_edit::{InlineEdit, InlineEditLook, InlineEditWords};
 pub use item::{Item, ItemDescription, ItemSize, ItemVariant, item_group};
 pub use item_card::{CardFact, ItemCard, SortableGrid, SortableOutcome};
@@ -145,6 +149,11 @@ pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAva
 pub use problem::{Problem, ProblemTone, ProblemWords};
 pub use run_timeline::{
     RunTimeline, RunTimelineResponse, RunTimelineWords, TimelineLane, TimelineRun, format_shift, timeline_ticks,
+};
+pub use schema_form::{
+    IssueSaid, IssueTone, MapEntry, MapRow, SchemaForm, SchemaFormResponse, SchemaFormWords, SchemaIssue,
+    SchemaIssueKind, SchemaPath, ServerIssue, ShownIssue, blank_item, initial_value, object_of, pointer, read_scalar,
+    repeated_keys, rows_of, say_issue, scalar_union, schema_issues, unset_choice, without_deferred,
 };
 pub use search::{Search, SearchPreview, SearchResponse, SearchWords};
 pub use search_results::{
@@ -178,6 +187,7 @@ pub use tree::{
 pub use tree_select::{TreeSelect, TreeSelectWords};
 pub use uptime::{UptimeBar, UptimeBarWords, UptimeDay, format_uptime, overall_uptime, uptime_color};
 pub use week::{CalendarEvent, PlacedEvent, WeekGrid, WeekGridResponse, layout_day};
+pub use windowed_pane::{WindowedAside, WindowedPane, WindowedPaneWhere, WindowedPaneWords, windowed_pane_button};
 
 use egui::{Color32, CornerRadius, Painter, Rect, Response, Stroke, StrokeKind, Ui};
 
