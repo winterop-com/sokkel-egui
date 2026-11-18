@@ -47,6 +47,7 @@ mod panes;
 mod person;
 mod problem;
 mod run_timeline;
+mod search;
 mod search_results;
 mod section;
 mod server_menu;
@@ -145,6 +146,7 @@ pub use problem::{Problem, ProblemTone, ProblemWords};
 pub use run_timeline::{
     RunTimeline, RunTimelineResponse, RunTimelineWords, TimelineLane, TimelineRun, format_shift, timeline_ticks,
 };
+pub use search::{Search, SearchPreview, SearchResponse, SearchWords};
 pub use search_results::{
     KIND_FACET, SearchChosen, SearchFacet, SearchFacetValue, SearchGroup, SearchResult, SearchResults,
     SearchResultsResponse, SearchResultsWords, toggle_chosen,

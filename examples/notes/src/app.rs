@@ -5,8 +5,9 @@ use std::collections::HashSet;
 
 use eframe::egui::{self, Ui};
 use sokkel_egui::{
-    AccountAction, AccountMenu, Appearance, Empty, Icon, IconButton, MenuItem, Page, Rail, RailBody, RailEntry,
-    RailGroup, SearchField, Shell, ShellPart, StatusLine, StatusTone, Toaster, TopBar, Tree, install,
+    AccountAction, AccountMenu, Appearance, Empty, Icon, IconButton, Markdown, MarkdownScale, MenuItem, Page, Rail,
+    RailBody, RailEntry, RailGroup, Search, SearchField, SearchResponse, SearchResult, SearchWords, Shell, ShellPart,
+    StatusLine, StatusTone, Toaster, TopBar, Tree, install,
 };
 
 use crate::backend::{Backend, SaveState};
@@ -249,6 +250,22 @@ impl NotesApp {
         let mut new_from_top = false;
         let mut filter = std::mem::take(&mut self.filter);
         let mut open = std::mem::take(&mut self.open);
+        // the top bar's search: the vault searched, six of each kind, each note's text to preview
+        let top_found: Vec<sokkel_egui::SearchGroup> =
+            crate::search::search_vault(vault, &self.top_query, &Default::default())
+                .groups
+                .into_iter()
+                .map(|mut group| {
+                    group.results.truncate(6);
+                    group
+                })
+                .collect();
+        let top_bodies: std::collections::HashMap<String, String> = top_found
+            .iter()
+            .flat_map(|g| &g.results)
+            .filter_map(|r| vault.note(&r.id).map(|n| (n.id.clone(), n.body.clone())))
+            .collect();
+        let mut top_asked = SearchResponse::default();
         let mut top_query = std::mem::take(&mut self.top_query);
         let (filter, open, top_query) = (&mut filter, &mut open, &mut top_query);
         let mut panel_open = prefs.panel;
@@ -311,10 +328,19 @@ impl NotesApp {
             ShellPart::Top => {
                 searched |= TopBar::new(&trail_words)
                     .start(|ui| {
-                        SearchField::new("top-search", top_query)
-                            .placeholder("Search notes")
-                            .keys("/")
+                        let preview = |result: &SearchResult, ui: &mut Ui| {
+                            if let Some(body) = top_bodies.get(&result.id) {
+                                Markdown::new(body).scale(MarkdownScale::Document).show(ui);
+                            }
+                        };
+                        top_asked = Search::new("top-search", top_query, &top_found)
+                            .see_all(true)
+                            .preview(&preview)
                             .width(256.0)
+                            .words(SearchWords {
+                                placeholder: "Search notes".into(),
+                                ..Default::default()
+                            })
                             .show(ui);
                     })
                     .search("Search or run a command", "⌘K")
@@ -395,6 +421,12 @@ impl NotesApp {
         self.filter = std::mem::take(filter);
         self.open = std::mem::take(open);
         self.top_query = std::mem::take(top_query);
+        if let Some((_, id)) = top_asked.opened {
+            self.open_note(&id);
+        }
+        if let Some(query) = top_asked.see_all {
+            self.go(&format!("search/{query}"));
+        }
         if searched {
             self.palette = Some(Default::default());
         }

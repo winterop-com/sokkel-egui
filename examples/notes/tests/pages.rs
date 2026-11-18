@@ -90,3 +90,23 @@ fn the_palettes() {
     harness.run_steps(4);
     results.add(harness.try_snapshot("notes_switcher_make"));
 }
+
+#[test]
+fn the_top_search() {
+    use egui_kittest::kittest::Queryable;
+    let mut results = SnapshotResults::new();
+    let mut harness = render("notes");
+    // the top bar's field, after the rail's filter: typed in, its results open under it
+    let fields: Vec<_> = harness
+        .query_all_by_role(eframe::egui::accesskit::Role::TextInput)
+        .collect();
+    fields[1].click();
+    harness.run_steps(1);
+    harness
+        .get_all_by_role(eframe::egui::accesskit::Role::TextInput)
+        .nth(1)
+        .unwrap()
+        .type_text("export");
+    harness.run_steps(4);
+    results.add(harness.try_snapshot("notes_top_search"));
+}

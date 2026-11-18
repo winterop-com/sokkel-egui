@@ -62,9 +62,11 @@ shot into `parity/notes/web/` by `bun scripts/parity.ts web notes`.
   hidden, the rail's places, the recent notes and every note by name, the look and the demo's data;
   and the switcher (Mod-O), the notes alone, which makes the note typed when none has that name.
   Mod-Shift-D opens today's note and Mod-Shift-F the search page.
+- The top bar's search: the vault searched as it is typed, six of each kind, in a list under the
+  field with the highlighted note's text beside it and a way to the search page (`Search`, new in
+  the library: the arrows, Enter, Escape twice, and a press outside).
 
 ## Open
-- The top bar's search with its results under it and a preview beside them.
 - QuickAdd says nothing yet when a title is already in the vault (the web's `validate`).
 - The web's note editor draws in the sans face at c95b8911; that is a sokkel-ui bug (its lean
   stylesheet dropped `--font-mono`), so the egui editor keeps the mono face.

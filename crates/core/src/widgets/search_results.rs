@@ -147,7 +147,7 @@ fn marks(text: &str, query: &str) -> Vec<std::ops::Range<usize>> {
 
 /// A text with the query's words marked on the primary wash in the primary ink, as sokkel-ui's
 /// `Highlight`, cut short at `width`.
-fn marked(
+pub(crate) fn marked(
     ui: &Ui,
     text: &str,
     query: &str,
