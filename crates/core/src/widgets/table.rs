@@ -1455,6 +1455,41 @@ impl<'a> DataTable<'a> {
     /// The room after a row's last column: none where the actions' column stands at the row's very
     /// end, pinned there as the web's end column of a table with a least width, else the row's own
     /// padding.
+    /// A column's head name laid out in its column's width `w`: wrapped between its words onto two
+    /// lines at most, past them cut with an ellipsis; room kept for the sort arrow while sorted and
+    /// for a row's grip over the first column; lined up at the end in a column read from its end.
+    fn head_galley(&self, ui: &Ui, t: &crate::Tokens, index: usize, w: f32) -> std::sync::Arc<egui::Galley> {
+        let column = &self.columns[index];
+        let upper = t.word("table-head-transform") == Some("uppercase");
+        let title = if upper {
+            column.title.to_uppercase()
+        } else {
+            column.title.clone()
+        };
+        let lead = if index == 0 && self.reorder { GRIP + 6.0 } else { 0.0 };
+        let sorted = self.state.sort.is_some_and(|(c, _)| c == index);
+        let room = (w - lead - if sorted { 18.0 } else { 0.0 }).max(1.0);
+        let mut job = egui::text::LayoutJob::default();
+        TextRole::ColumnHead.rich(t, title).append_to(
+            &mut job,
+            ui.style(),
+            egui::FontSelection::Default,
+            egui::Align::Center,
+        );
+        job.halign = if column.numeric {
+            egui::Align::Max
+        } else {
+            egui::Align::Min
+        };
+        job.wrap = egui::text::TextWrapping {
+            max_width: room,
+            max_rows: 2,
+            break_anywhere: false,
+            overflow_character: Some('…'),
+        };
+        ui.painter().layout_job(job)
+    }
+
     /// The room between the last column and the chevron's: a list's column gap, as its grid has;
     /// a table's end column stands against the last cell's own padding.
     fn chevron_gap(&self) -> f32 {
@@ -1676,6 +1711,23 @@ impl<'a> DataTable<'a> {
                     return;
                 }
                 // the head, which a stacked table has none of
+                // a head's name too wide for its column wraps onto a second line, and the head row
+                // grows to hold it: one line padded by half of what the row leaves over it
+                let head_height = if stacked {
+                    head_height
+                } else {
+                    let room = ui.available_rect_before_wrap();
+                    let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
+                    let places = self.layout(room.left() + pad + select_width, room.right() - self.end_pad(pad) - end);
+                    let line = t.text(TextRole::ColumnHead.key()).line_height;
+                    let lines = (0..self.columns.len())
+                        .filter(|i| !self.state.hidden.contains(i))
+                        .map(|i| self.head_galley(ui, &t, i, places[i].1).rows.len())
+                        .max()
+                        .unwrap_or(1)
+                        .clamp(1, 2);
+                    head_height + (lines - 1) as f32 * line
+                };
                 let (head, _) = ui.allocate_exact_size(vec2(ui.available_width(), head_height), Sense::hover());
                 if !stacked {
                     let top = CornerRadius { sw: 0, se: 0, ..radius };
@@ -1744,17 +1796,11 @@ impl<'a> DataTable<'a> {
                         } else {
                             t.color_or("table-head-ink", t.color("muted-foreground"))
                         };
-                        let title = if upper {
-                            column.title.to_uppercase()
-                        } else {
-                            column.title.clone()
-                        };
-                        let galley = WidgetText::from(TextRole::ColumnHead.rich(&t, title)).into_galley(
-                            ui,
-                            Some(TextWrapMode::Truncate),
-                            w - 16.0,
-                            TextRole::ColumnHead.font(&t),
-                        );
+                        let _ = upper;
+                        let galley = self.head_galley(ui, &t, index, w);
+                        if galley.elided {
+                            hit.clone().on_hover_text(&column.title);
+                        }
                         // a head over a row's grip stands after it
                         let lead = if index == 0 && self.reorder { GRIP + 6.0 } else { 0.0 };
                         // the arrow 4 after the name, or before it in a column read from its end,
@@ -1765,8 +1811,10 @@ impl<'a> DataTable<'a> {
                         } else {
                             cell.left() + lead
                         };
+                        // a galley laid out at the end stands to the left of where it is put
+                        let at_x = if column.numeric { cell.right() } else { text_x };
                         ui.painter()
-                            .galley(pos2(text_x, cell.center().y - galley.size().y / 2.0), galley, ink);
+                            .galley(pos2(at_x, cell.center().y - galley.size().y / 2.0), galley, ink);
                         if let Some((_, ascending)) = sorted {
                             let arrow = if ascending { Icon::ArrowUp } else { Icon::ArrowDown };
                             let center = if column.numeric {
