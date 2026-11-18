@@ -48,6 +48,8 @@ pub struct RunsApp {
     pub jobs_view: crate::jobs_page::JobsView,
     /// The schedules page's span, jobs and chosen lane.
     pub schedules_view: crate::schedules_page::SchedulesView,
+    /// The step chosen in a run page's graph.
+    pub run_step: Option<String>,
     /// The question before the demo's data goes back, while it is asked.
     pub resetting: bool,
     /// The job asked to be deleted, while the question stands.
@@ -98,6 +100,7 @@ impl RunsApp {
             schedules_view: Default::default(),
             deleting: None,
             resetting: false,
+            run_step: None,
             tables: Default::default(),
             started: now,
             started_at: None,
@@ -455,6 +458,7 @@ impl RunsApp {
             }
             ShellPart::Page => match (page.as_str(), &second) {
                 ("runs", None) => Page::show(ui, |ui| self.runs_page(ui, &runs)),
+                ("runs", Some(id)) => Page::scroll(ui, |ui| self.run_page(ui, &runs, id)),
                 ("jobs", None) => Page::show(ui, |ui| self.jobs_page(ui, &runs)),
                 ("schedules", None) => Page::show(ui, |ui| self.schedules_page(ui)),
                 _ => Page::scroll(ui, |ui| {

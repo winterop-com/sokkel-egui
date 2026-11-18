@@ -37,6 +37,10 @@ pub struct GraphLink {
     pub source: String,
     pub target: String,
     pub arrow: bool,
+    /// The hue its source settled in, as a run's edge out of a step that ended.
+    pub tint: Option<Color32>,
+    /// Dashed, as an edge into a step that was skipped.
+    pub dashed: bool,
 }
 
 impl GraphLink {
@@ -45,7 +49,19 @@ impl GraphLink {
             source: source.into(),
             target: target.into(),
             arrow: false,
+            tint: None,
+            dashed: false,
         }
+    }
+
+    pub fn tint(mut self, tint: Option<Color32>) -> Self {
+        self.tint = tint;
+        self
+    }
+
+    pub fn dashed(mut self, dashed: bool) -> Self {
+        self.dashed = dashed;
+        self
     }
 
     pub fn arrow(mut self, arrow: bool) -> Self {
@@ -166,7 +182,11 @@ impl<'a> GraphCanvas<'a> {
         let stroke = Stroke::new(1.4 * zoom, mix(t.color("graph-edge"), t.color("muted-foreground"), 0.7));
         for (link, route) in self.links.iter().zip(&placed.edges) {
             let points: Vec<Pos2> = route.iter().map(|p| at(*p)).collect();
-            paint_edge(&painter, &points, link.arrow, zoom, stroke);
+            let stroke = match link.tint {
+                Some(tint) => Stroke::new(stroke.width, tint),
+                None => stroke,
+            };
+            paint_edge(&painter, &points, link.arrow, link.dashed, zoom, stroke);
         }
 
         let mut pressed = None;
@@ -321,7 +341,7 @@ pub fn fitted_zoom(width: f32, drawing: f32) -> f32 {
 }
 
 /// An edge along its route, its corners rounded, ending in an arrowhead when it has one.
-fn paint_edge(painter: &egui::Painter, points: &[Pos2], arrow: bool, zoom: f32, stroke: Stroke) {
+fn paint_edge(painter: &egui::Painter, points: &[Pos2], arrow: bool, dashed: bool, zoom: f32, stroke: Stroke) {
     if points.len() < 2 {
         return;
     }
@@ -349,7 +369,11 @@ fn paint_edge(painter: &egui::Painter, points: &[Pos2], arrow: bool, zoom: f32, 
         }
     }
     line.push(route[route.len() - 1]);
-    painter.add(Shape::line(line, stroke));
+    if dashed {
+        painter.extend(Shape::dashed_line(&line, stroke, 4.0 * zoom, 3.0 * zoom));
+    } else {
+        painter.add(Shape::line(line, stroke));
+    }
     if arrow {
         let length = ARROW * zoom;
         let base = tip - way * length;

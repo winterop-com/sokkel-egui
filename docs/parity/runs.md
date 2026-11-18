@@ -40,6 +40,12 @@ screens are shot into `parity/runs/web/` by `bun scripts/parity.ts web runs`.
   look with the app's carried themes alone (`theme_settings_of`, new in the library), the
   scheduler, the account with Sign out, and the demo's data put back after asking; the palette with
   the pages, the jobs, a job to run now, the look, the demo and signing out.
-- Open: the overview, a run's page, a job's page and the sign-in page (signed out, the console
+- A run's page: its job, code, state and where it stands, Open job, Retry and Cancel, its failure
+  or skip as a `Problem`, its steps as a graph (a step's duration on its box, a failed step's box
+  edged in its state, the steps not reached dashed, an edge in its source's hue and dashed into a
+  skipped step, all new in the graph crate), a chosen step's facts, its log as tall as its lines
+  (`LogView::fit`, new), its facts, inputs and outputs, and its steps as a timeline. A `Columns`
+  cell now stacks what it holds, as a grid's cell does.
+- Open: the overview, a job's page and the sign-in page (signed out, the console
   still shows); the bulk actions on the selected runs; a table narrower than its
   least width scrolls sideways on the web and is cut short here; the log's wrapping.

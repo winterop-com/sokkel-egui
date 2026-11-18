@@ -9,6 +9,7 @@ pub mod model;
 pub mod new_job;
 pub mod palette;
 pub mod parts;
+pub mod run_page;
 pub mod run_panel;
 pub mod runs_page;
 pub mod schedule;

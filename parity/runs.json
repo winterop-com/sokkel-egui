@@ -78,6 +78,26 @@
                 "width": 1440,
                 "height": 900
             }
+        },
+        {
+            "name": "runs_sign_in",
+            "route": "settings",
+            "steps": [
+                "button:Account",
+                "button:Sign out"
+            ],
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "runs_run",
+            "route": "runs/run_toos50a9",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
         }
     ],
     "today": "2026-11-18",

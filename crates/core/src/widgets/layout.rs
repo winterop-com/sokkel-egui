@@ -66,7 +66,8 @@ impl Columns {
             ui.horizontal_top(|ui| {
                 ui.spacing_mut().item_spacing.x = self.gap;
                 for index in start..(start + columns).min(items) {
-                    ui.allocate_ui(vec2(width, 0.0), |ui| {
+                    // each cell stacks what it holds, as a grid's cell does
+                    ui.allocate_ui_with_layout(vec2(width, 0.0), egui::Layout::top_down(egui::Align::Min), |ui| {
                         ui.set_width(width);
                         cell(ui, index, width);
                     });

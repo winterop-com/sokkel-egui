@@ -1,6 +1,6 @@
 //! One node as a box, after sokkel-ui-graph's `GraphNodeBox`.
 
-use egui::{Color32, CornerRadius, Painter, Rect, Stroke, StrokeKind, Vec2, pos2, vec2};
+use egui::{Color32, CornerRadius, Painter, Rect, Shape, Stroke, StrokeKind, Vec2, pos2, vec2};
 use sokkel_egui::{Icon, TextRole, Tokens, mono_font};
 
 /// The narrowest and widest a node box is drawn; past the widest its words are cut short.
@@ -43,6 +43,12 @@ pub struct GraphNode {
     pub status: Option<NodeStatus>,
     /// Wider corners, as a store beside services.
     pub round: bool,
+    /// How long the step took, at the code line's end.
+    pub duration: Option<String>,
+    /// The box's edge in this hue, 2 wide over a wash of it, as a step that failed.
+    pub tint: Option<Color32>,
+    /// The box's edge dashed, as a step the run has not reached.
+    pub dashed: bool,
 }
 
 impl GraphNode {
@@ -56,7 +62,25 @@ impl GraphNode {
             icon: None,
             status: None,
             round: false,
+            duration: None,
+            tint: None,
+            dashed: false,
         }
+    }
+
+    pub fn duration(mut self, duration: Option<String>) -> Self {
+        self.duration = duration;
+        self
+    }
+
+    pub fn tint(mut self, tint: Option<Color32>) -> Self {
+        self.tint = tint;
+        self
+    }
+
+    pub fn dashed(mut self, dashed: bool) -> Self {
+        self.dashed = dashed;
+        self
     }
 
     pub fn code(mut self, code: impl Into<String>) -> Self {
@@ -162,13 +186,39 @@ impl GraphNode {
         } else {
             t.color("node-line")
         };
-        painter.rect(
-            rect,
-            corners,
-            t.color("node"),
-            Stroke::new(zoom, edge),
-            StrokeKind::Inside,
-        );
+        match (self.tint, self.dashed) {
+            (Some(tint), _) => {
+                let wash = tint.gamma_multiply(0.08);
+                painter.rect_filled(rect, corners, t.color("node"));
+                painter.rect(rect, corners, wash, Stroke::new(2.0 * zoom, tint), StrokeKind::Inside);
+            }
+            (None, true) => {
+                painter.rect_filled(rect, corners, t.color("node"));
+                let r = rect.shrink(0.5 * zoom);
+                let outline = [
+                    r.left_top(),
+                    r.right_top(),
+                    r.right_bottom(),
+                    r.left_bottom(),
+                    r.left_top(),
+                ];
+                painter.extend(Shape::dashed_line(
+                    &outline,
+                    Stroke::new(zoom, edge),
+                    3.0 * zoom,
+                    2.0 * zoom,
+                ));
+            }
+            (None, false) => {
+                painter.rect(
+                    rect,
+                    corners,
+                    t.color("node"),
+                    Stroke::new(zoom, edge),
+                    StrokeKind::Inside,
+                );
+            }
+        }
         if selected {
             let ring = rect.expand(2.0 * zoom);
             painter.rect_stroke(
@@ -224,6 +274,15 @@ impl GraphNode {
                 let line_mid = top + (title_line + 2.0 + small_line / 2.0) * zoom;
                 let galley = small_mono(&painter, t, &line, zoom);
                 painter.galley(pos2(inner.left(), line_mid - galley.size().y / 2.0), galley, muted);
+            }
+            if let Some(duration) = &self.duration {
+                let line_mid = top + (title_line + 2.0 + small_line / 2.0) * zoom;
+                let galley = small_mono(&painter, t, duration, zoom);
+                painter.galley(
+                    pos2(inner.right() - galley.size().x, line_mid - galley.size().y / 2.0),
+                    galley,
+                    muted,
+                );
             }
         }
     }

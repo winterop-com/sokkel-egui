@@ -8,9 +8,13 @@ use runs::app::DEMO_START;
 use sokkel_egui::Appearance;
 
 pub fn render(path: &str) -> Harness<'static, RunsApp> {
+    render_at(path, 900.0)
+}
+
+pub fn render_at(path: &str, height: f32) -> Harness<'static, RunsApp> {
     let mut app = RunsApp::at(DEMO_START, Appearance::default());
     app.go(path);
-    let mut harness = Harness::builder().with_size([1440.0, 900.0]).build_ui_state(
+    let mut harness = Harness::builder().with_size([1440.0, height]).build_ui_state(
         |ui, app: &mut RunsApp| {
             eframe::egui::CentralPanel::default()
                 .frame(eframe::egui::Frame::NONE)
@@ -52,4 +56,8 @@ fn every_screen() {
     harness.state_mut().palette = Some(("nig".into(), 0));
     harness.run_steps(4);
     results.add(harness.try_snapshot("runs_palette"));
+    let mut harness = render("runs/run_toos50a9");
+    results.add(harness.try_snapshot("runs_run"));
+    let mut harness = render_at("runs/run_toos50a9", 1500.0);
+    results.add(harness.try_snapshot("runs_run_whole"));
 }

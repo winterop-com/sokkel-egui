@@ -77,6 +77,8 @@ pub struct LogView<'a> {
     framed: bool,
     height: f32,
     grow: bool,
+    /// As tall as its lines.
+    fit: bool,
     words: LogViewWords,
 }
 
@@ -90,6 +92,7 @@ impl<'a> LogView<'a> {
             framed: true,
             height: 288.0,
             grow: false,
+            fit: false,
             words: LogViewWords::default(),
         }
     }
@@ -115,6 +118,13 @@ impl<'a> LogView<'a> {
         self
     }
 
+    /// As tall as its lines (20 each, 8 over and under them), as the web's log with no height of
+    /// its own given.
+    pub fn fit(mut self, fit: bool) -> Self {
+        self.fit = fit;
+        self
+    }
+
     /// Grows past its height into the room a stretched dashboard panel has, as the web's `grow`
     /// with `h-72` its basis: 288 alone, as tall as its row beside a taller panel.
     pub fn grow(mut self, grow: bool) -> Self {
@@ -136,7 +146,12 @@ impl<'a> LogView<'a> {
         if extra > 0.0 {
             crate::took_room(ui, extra);
         }
-        let (outer, _) = ui.allocate_exact_size(vec2(width, self.height + extra), Sense::hover());
+        let tall = if self.fit {
+            self.lines.len() as f32 * 20.0 + 16.0
+        } else {
+            self.height + extra
+        };
+        let (outer, _) = ui.allocate_exact_size(vec2(width, tall), Sense::hover());
         let radius = if self.framed {
             t.radius("surface")
         } else {
