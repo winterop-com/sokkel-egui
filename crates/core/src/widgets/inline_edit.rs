@@ -59,7 +59,12 @@ pub struct InlineEdit {
     disabled: bool,
     options: Vec<String>,
     words: InlineEditWords,
+    display: Option<Display>,
+    multiline: bool,
 }
+
+/// How a value reads at rest.
+type Display = Box<dyn Fn(&str) -> String>;
 
 impl InlineEdit {
     pub fn new(id: impl std::hash::Hash + std::fmt::Debug, label: impl Into<String>, value: impl Into<String>) -> Self {
@@ -72,7 +77,27 @@ impl InlineEdit {
             disabled: false,
             options: Vec::new(),
             words: InlineEditWords::default(),
+            display: None,
+            multiline: false,
         }
+    }
+
+    /// How the value reads at rest, as the web's `display`: `60 min` for `60`.
+    pub fn display(mut self, display: impl Fn(&str) -> String + 'static) -> Self {
+        self.display = Some(Box::new(display));
+        self
+    }
+
+    /// What it says at rest while the value is empty, as the web's `placeholder`.
+    pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
+        self.words.empty = placeholder.into();
+        self
+    }
+
+    /// Words that wrap onto lines at rest, as the web's `editor="multiline"`.
+    pub fn multiline(mut self, multiline: bool) -> Self {
+        self.multiline = multiline;
+        self
     }
 
     /// Edited by choosing one of `options` from a list rather than typing, as the web's
@@ -125,10 +150,15 @@ impl InlineEdit {
         let Some(mut open) = editing else {
             // at rest: the value, and a pencil on pointing
             let empty = self.value.is_empty();
-            let shown = if empty { &self.words.empty } else { &self.value };
+            let displayed = self.display.as_ref().map(|d| d(&self.value));
+            let shown = if empty {
+                &self.words.empty
+            } else {
+                displayed.as_ref().unwrap_or(&self.value)
+            };
             let galley = egui::WidgetText::from(role.rich(&t, shown)).into_galley(
                 ui,
-                Some(if title {
+                Some(if title || self.multiline {
                     egui::TextWrapMode::Wrap
                 } else {
                     egui::TextWrapMode::Truncate

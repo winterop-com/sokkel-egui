@@ -51,5 +51,11 @@ screens are shot into `parity/runs/web/` by `bun scripts/parity.ts web runs`.
   form; ada, grace, linus or margaret sign in with "tide" (`SignIn`, new in the library). Its
   fields draw their own icons and the password's show button; the web's other ways in (a server,
   a token) are not ported, the example asks for none.
-- Open: the overview and a job's page; the bulk actions on the selected runs; a table narrower than its
+- A job's page: its name edited in place, its schedule, owner, project and runs, Run now, Pause
+  and Delete, its steps as a graph and a chosen step's facts, its schedule and settings each saved
+  as it is changed (`InlineEdit::display`, `::placeholder` and `::multiline`, new in the library),
+  and its recent runs. A description list's term stands level with its value's first line. Open:
+  the time, day and number editors are typed as text with the value checked, not the web's
+  pickers; the recent runs' last column fills the row, where the web leaves the room empty.
+- Open: the overview; the bulk actions on the selected runs; a table narrower than its
   least width scrolls sideways on the web and is cut short here; the log's wrapping.

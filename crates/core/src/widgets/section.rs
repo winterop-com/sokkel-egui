@@ -568,8 +568,11 @@ impl<'a> DescriptionList<'a> {
                         } else {
                             TextRole::Help.font(&t)
                         };
+                        // level with the value's first line: its middle, or a control's middle when
+                        // the value runs onto more lines
+                        let first = drawn.center().y.min(drawn.top() + t.density("control") / 2.0);
                         ui.painter().text(
-                            egui::pos2(cell.left(), drawn.center().y),
+                            egui::pos2(cell.left(), first),
                             egui::Align2::LEFT_CENTER,
                             term,
                             face,

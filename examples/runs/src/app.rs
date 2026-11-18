@@ -50,6 +50,8 @@ pub struct RunsApp {
     pub schedules_view: crate::schedules_page::SchedulesView,
     /// What the sign-in page says went wrong.
     pub sign_in_error: Option<String>,
+    /// The step chosen in a job page's graph.
+    pub job_step: Option<String>,
     /// The step chosen in a run page's graph.
     pub run_step: Option<String>,
     /// The question before the demo's data goes back, while it is asked.
@@ -103,6 +105,7 @@ impl RunsApp {
             deleting: None,
             resetting: false,
             run_step: None,
+            job_step: None,
             sign_in_error: None,
             tables: Default::default(),
             started: now,
@@ -500,6 +503,7 @@ impl RunsApp {
                 ("runs", None) => Page::show(ui, |ui| self.runs_page(ui, &runs)),
                 ("runs", Some(id)) => Page::scroll(ui, |ui| self.run_page(ui, &runs, id)),
                 ("jobs", None) => Page::show(ui, |ui| self.jobs_page(ui, &runs)),
+                ("jobs", Some(id)) => Page::scroll(ui, |ui| self.job_page(ui, &runs, id)),
                 ("schedules", None) => Page::show(ui, |ui| self.schedules_page(ui)),
                 _ => Page::scroll(ui, |ui| {
                     sokkel_egui::Empty::new("Nothing at this address")
