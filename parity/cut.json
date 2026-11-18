@@ -1,0 +1,60 @@
+{
+    "example": "examples/cut/web/src",
+    "ported": {
+        "commit": "c95b8911",
+        "files": {
+            "App.tsx": "62de8a2bee0ad1b19bbc8296a7e3b61157dad9a3",
+            "Home.tsx": "7aaae57f2fb36a7e6948b5f99f9722c5bedb3845",
+            "ProjectDialog.tsx": "ccfb9811bc75105ad2c4c5b0cc966948181802bc",
+            "ProjectsPage.tsx": "811a11487ccfbc8f0a1fc01153f7053d565a44a4",
+            "Settings.tsx": "46e75ea5775d633169d1557c2555ebbf832f17c6",
+            "actions.ts": "f2daf93807b32aac9722560e6537226925c32121",
+            "app.css": "78c8a0d8e4d3a28c71087d6ef845e8dda61fb577",
+            "collections.ts": "c56523340c50c1131cb9ca87b5e018493243bf98",
+            "editor/Bin.tsx": "ea39c43378608caa81efc49b684b8a21715111d3",
+            "editor/ClipInspector.tsx": "a2bf3297e046789958796ad349f33ce78068a438",
+            "editor/EditorPage.tsx": "ff65184e6593fa340fee2e340db4097b78fc48a0",
+            "editor/ExportDialog.tsx": "302b0aafdd00589334386ab7191dbd310f03d930",
+            "editor/Preview.tsx": "f038162ba05b0621eb162d122e89a5153c4a86ac",
+            "editor/use-playback.ts": "d725e5520e3a6c594f398359ccda64b25be4aebc",
+            "export.ts": "3de3beaed038ad9cc7a3ce8c8559afa78f4e5295",
+            "history.ts": "df47379601b4e4e266caa8201e05e25607e43b54",
+            "main.tsx": "3c74faac0b992d424a8dffc66f8c007234894335",
+            "media.ts": "a5441969dbe2b1bffe08fdc35cb07b317945efe4",
+            "model.ts": "2766d6eafdea292cdfb5c4b132222818e3abeeb5",
+            "render.ts": "7caaca7a0198bd6fb09b99f43d0ba074a76f4daf",
+            "seed.ts": "f4cddb746c2f8e92101fa70da61bde9ba804a72a",
+            "sound.ts": "6581b0f4a23e97e338d3a90b1b3e45343bdd4597",
+            "themes.ts": "5f98ff7e6680d7dd2807416aff0c7de32b2852b1"
+        }
+    },
+    "parts": {},
+    "screens": [
+        {
+            "name": "cut_projects",
+            "route": "projects",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "cut_editor",
+            "route": "p/harbor",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "cut_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "c95b8911dd02bf7925e96b62c93fc8a934d57800"
+}
