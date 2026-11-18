@@ -5,6 +5,7 @@ pub mod all_notes;
 pub mod app;
 pub mod backend;
 pub mod daily;
+pub mod graph_page;
 pub mod model;
 pub mod note_page;
 pub mod note_panel;

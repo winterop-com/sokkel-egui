@@ -16,6 +16,7 @@ mod dashboard;
 mod datetime;
 mod display;
 mod document_tabs;
+mod dot;
 mod edit_preview;
 mod empty;
 mod entry_grid;
@@ -94,6 +95,7 @@ pub use dashboard::{
 pub use datetime::{DateField, DateFieldWords, DateTimeField, DateTimeFieldResponse, DateTimeFieldWords, Moment};
 pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton, TextLink, Unfoldable};
 pub use document_tabs::{DocumentTab, DocumentTabs, DocumentTabsResponse, DocumentTabsWords};
+pub use dot::Dot;
 pub use edit_preview::{EditPreview, EditPreviewView};
 pub use empty::Empty;
 pub use entry_grid::{EntryColumn, EntryEdit, EntryGrid, EntryGridWords, EntryRow};

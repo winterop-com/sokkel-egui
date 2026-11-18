@@ -53,6 +53,9 @@ pub struct NotesApp {
     pub template_draft: Option<(String, Option<f64>)>,
     /// The question before the demo's data goes back is open.
     pub resetting: bool,
+    /// The graph shows the notes around the open one, and the names linked to with no note yet.
+    pub graph_around: bool,
+    pub graph_missing: bool,
     /// The tab shown in the panel beside a note.
     pub panel_tab: usize,
     started: i64,
@@ -91,6 +94,8 @@ impl NotesApp {
             quick: String::new(),
             tables: Default::default(),
             panel_tab: 0,
+            graph_around: false,
+            graph_missing: true,
             template_draft: None,
             resetting: false,
             search_query: String::new(),
@@ -318,6 +323,7 @@ impl NotesApp {
                 }
                 "daily" => Page::scroll(ui, |ui| self.daily(ui)),
                 "search" => Page::scroll(ui, |ui| self.search_page(ui)),
+                "graph" => Page::show(ui, |ui| self.graph_page(ui)),
                 "tags" => {
                     let tag = second.clone();
                     Page::scroll(ui, |ui| self.tags(ui, tag.as_deref()));

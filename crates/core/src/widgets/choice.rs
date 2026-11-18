@@ -268,6 +268,7 @@ pub struct Segmented<'a> {
     counts: Vec<Option<usize>>,
     dots: Vec<Option<Color32>>,
     fill: bool,
+    off: Vec<Option<String>>,
 }
 
 impl<'a> Segmented<'a> {
@@ -279,7 +280,16 @@ impl<'a> Segmented<'a> {
             counts: Vec::new(),
             dots: Vec::new(),
             fill: false,
+            off: Vec::new(),
         }
+    }
+
+    /// Options that cannot be chosen now, each with what to do first (shown while it is pointed
+    /// at), as the web's option `disabled` with its `hint`: drawn in the faint ink, a press does
+    /// nothing.
+    pub fn disabled(mut self, off: impl IntoIterator<Item = Option<String>>) -> Self {
+        self.off = off.into_iter().collect();
+        self
     }
 
     /// Stretch the control across its room, as the web's `fill`, so controls stacked in one
@@ -427,10 +437,15 @@ impl Widget for Segmented<'_> {
         }
         for (index, galley) in galleys.into_iter().enumerate() {
             let option = place(index);
-            let hit = ui.interact(option, response.id.with(index), Sense::click());
+            let off = self.off.get(index).cloned().flatten();
+            let sense = if off.is_some() { Sense::hover() } else { Sense::click() };
+            let mut hit = ui.interact(option, response.id.with(index), sense);
             let chosen = *self.chosen == index;
-            hit.widget_info(|| WidgetInfo::selected(Role::Button, true, chosen, &self.options[index]));
-            if hit.clicked() && !chosen {
+            hit.widget_info(|| WidgetInfo::selected(Role::Button, off.is_none(), chosen, &self.options[index]));
+            if let Some(hint) = &off {
+                hit = hit.on_hover_text(hint);
+            }
+            if hit.clicked() && !chosen && off.is_none() {
                 *self.chosen = index;
                 response.mark_changed();
             }
@@ -461,6 +476,7 @@ impl Widget for Segmented<'_> {
                 (SegmentedVariant::Tint, true) => (t.color_at("primary", 0.15), t.color("primary-ink")),
                 (SegmentedVariant::Outline, true) => (t.color("secondary"), t.color("foreground")),
                 (SegmentedVariant::Solid, true) => (t.color("primary"), t.color("primary-foreground")),
+                (_, false) if off.is_some() => (Color32::TRANSPARENT, t.color("faint")),
                 (_, false) if hit.hovered() => (t.color("hover"), t.color("foreground")),
                 (_, false) => (Color32::TRANSPARENT, t.color("muted-foreground")),
             };

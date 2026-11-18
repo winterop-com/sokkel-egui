@@ -46,10 +46,13 @@ shot into `parity/notes/web/` by `bun scripts/parity.ts web notes`.
   numbers and the view a note opens in; the daily notes' folder and template (kept once typing
   rests half a second); the look with the app's carried themes; and the vault's order, its tabs,
   the recent notes and the demo's data put back after asking.
+- Graph: the vault as a network of its notes and their links, or the notes within two links of
+  the one open, colored by their top folder, with the names linked to that have no note yet
+  (`NetworkGraph`, new in the graph add-on, its force layout d3-force's to the bit), the notes
+  with no link shown or not, an option that cannot be chosen yet (`Segmented::disabled`, new in
+  the library) and the legend (`Dot`, new in the library); a dot opens its note.
 
 ## Open
-
-- Graph.
 - The dialogs that rename, move and delete, and New folder; the palette and the switcher.
 - QuickAdd says nothing yet when a title is already in the vault (the web's `validate`).
 - The web's note editor draws in the sans face at c95b8911; that is a sokkel-ui bug (its lean

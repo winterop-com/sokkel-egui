@@ -30,6 +30,7 @@ fn every_screen() {
         ("notes_note", "note/welcome"),
         ("notes_daily", "daily"),
         ("notes_tags", "tags"),
+        ("notes_graph", "graph"),
         ("notes_search", "search"),
         ("notes_search_found", "search/export"),
         ("notes_settings", "settings"),
