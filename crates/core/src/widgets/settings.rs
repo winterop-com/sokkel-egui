@@ -696,7 +696,13 @@ impl Default for ThemeWords {
 /// select with each theme's sample, the scheme (the system's as a third when `system`), the
 /// density and the motion, each found in the settings' search by its options' names too.
 pub fn theme_settings(ui: &mut Ui, appearance: &mut Appearance, system: bool, words: &ThemeWords) {
-    theme_rows(ui, appearance, system, None, words);
+    theme_rows(ui, appearance, system, None, false, words);
+}
+
+/// The appearance rows offering only the `carried` themes (by name, in the catalog's order) in
+/// the select, as `themeSettings` given the app's `themes`.
+pub fn theme_settings_of(ui: &mut Ui, appearance: &mut Appearance, carried: &[&str], system: bool, words: &ThemeWords) {
+    theme_rows(ui, appearance, system, Some(carried), false, words);
 }
 
 /// The appearance rows with the theme as a list under its words, as `themeSettings` with
@@ -709,16 +715,23 @@ pub fn theme_settings_listed(
     system: bool,
     words: &ThemeWords,
 ) {
-    theme_rows(ui, appearance, system, Some(carried), words);
+    theme_rows(ui, appearance, system, Some(carried), true, words);
 }
 
-fn theme_rows(ui: &mut Ui, appearance: &mut Appearance, system: bool, carried: Option<&[&str]>, words: &ThemeWords) {
+fn theme_rows(
+    ui: &mut Ui,
+    appearance: &mut Appearance,
+    system: bool,
+    carried: Option<&[&str]>,
+    listed: bool,
+    words: &ThemeWords,
+) {
     let all: Vec<_> = match carried {
         Some(names) => themes().filter(|theme| names.contains(&theme.name.as_str())).collect(),
         None => themes().collect(),
     };
     let labels: Vec<&str> = all.iter().map(|theme| theme.label.as_str()).collect();
-    if carried.is_some() {
+    if listed {
         SettingRow::new(&words.theme, &words.theme_hint)
             .keywords(&labels)
             .below()
@@ -740,7 +753,7 @@ fn theme_rows(ui: &mut Ui, appearance: &mut Appearance, system: bool, carried: O
                 }
             });
     }
-    if carried.is_none() {
+    if !listed {
         setting_row_found_by(ui, &words.theme, &words.theme_hint, &labels, |ui| {
             let dark = tokens(ui.ctx()).dark;
             let mut chosen = all.iter().position(|theme| theme.name == appearance.theme).unwrap_or(0);

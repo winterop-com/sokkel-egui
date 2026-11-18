@@ -124,7 +124,7 @@ pub use section::{DescriptionList, PersonRow, Section, Timeline, TimelineEvent};
 pub use server_menu::{ServerMenu, ServerMenuResponse, ServerMenuWords, ServerState};
 pub use settings::{
     SettingRow, SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, ThemeWords, setting_row,
-    setting_row_below, setting_row_found_by, theme_settings, theme_settings_listed,
+    setting_row_below, setting_row_found_by, theme_settings, theme_settings_listed, theme_settings_of,
 };
 pub use sheet::{DetailSheet, DetailSheetWords};
 pub use stat::{KpiRow, Stat, StatTiles, sparkline};

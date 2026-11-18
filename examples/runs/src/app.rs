@@ -48,6 +48,8 @@ pub struct RunsApp {
     pub jobs_view: crate::jobs_page::JobsView,
     /// The schedules page's span, jobs and chosen lane.
     pub schedules_view: crate::schedules_page::SchedulesView,
+    /// The question before the demo's data goes back, while it is asked.
+    pub resetting: bool,
     /// The job asked to be deleted, while the question stands.
     pub deleting: Option<String>,
     /// Each table's sort, widths and the row opened, by the table's name.
@@ -95,6 +97,7 @@ impl RunsApp {
             jobs_view: Default::default(),
             schedules_view: Default::default(),
             deleting: None,
+            resetting: false,
             tables: Default::default(),
             started: now,
             started_at: None,
@@ -228,6 +231,30 @@ impl RunsApp {
         })
         .description(ids.join(", "))
         .show(ctx);
+    }
+
+    /// Everything as the demo started: the jobs, two days of runs, the views and the settings; the
+    /// look, the address and the clock stay.
+    pub fn reset_demo(&mut self) {
+        let now = self.now();
+        let mut backend = Backend::seeded(now);
+        backend.start_engine(now);
+        self.backend = backend;
+        self.resetting = false;
+        self.opened = None;
+        self.cancelling.clear();
+        self.deleting = None;
+        self.runs_view = Default::default();
+        self.jobs_view = Default::default();
+        self.schedules_view = Default::default();
+        self.tables.clear();
+    }
+
+    /// Signs out, back to the sign-in page.
+    pub fn sign_out(&mut self) {
+        if let Some(mine) = self.backend.prefs.first_mut() {
+            mine.user = None;
+        }
     }
 
     /// Pauses a job's schedule or resumes it, saying so.
@@ -463,6 +490,8 @@ impl RunsApp {
         if searched {
             self.palette = Some((String::new(), 0));
         }
+        self.search_palette(&ctx, &groups);
+        self.settings_dialog(&ctx);
         self.cancel_question(&ctx);
         self.delete_question(&ctx);
         self.new_job_dialog(&ctx);

@@ -46,4 +46,10 @@ fn every_screen() {
     results.add(harness.try_snapshot("runs_new_job"));
     let mut harness = render("schedules");
     results.add(harness.try_snapshot("runs_schedules"));
+    let mut harness = render("settings");
+    results.add(harness.try_snapshot("runs_settings"));
+    let mut harness = render("runs");
+    harness.state_mut().palette = Some(("nig".into(), 0));
+    harness.run_steps(4);
+    results.add(harness.try_snapshot("runs_palette"));
 }
