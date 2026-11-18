@@ -49,6 +49,10 @@ pub struct NotesApp {
     /// What the search page searches for, and the facets' values chosen there.
     pub search_query: String,
     pub search_chosen: sokkel_egui::SearchChosen,
+    /// The daily template while it is typed in Settings, and when it was last typed.
+    pub template_draft: Option<(String, Option<f64>)>,
+    /// The question before the demo's data goes back is open.
+    pub resetting: bool,
     /// The tab shown in the panel beside a note.
     pub panel_tab: usize,
     started: i64,
@@ -87,6 +91,8 @@ impl NotesApp {
             quick: String::new(),
             tables: Default::default(),
             panel_tab: 0,
+            template_draft: None,
+            resetting: false,
             search_query: String::new(),
             search_chosen: Default::default(),
             reveal: None,
@@ -105,8 +111,10 @@ impl NotesApp {
     }
 
     pub fn go(&mut self, path: &str) {
-        if path.trim_matches('/') == "settings" {
-            self.settings = Some("editor".into());
+        // settings open over the page, at the section the address names
+        if let Some(rest) = path.trim_matches('/').strip_prefix("settings") {
+            let section = rest.trim_start_matches('/');
+            self.settings = Some(if section.is_empty() { "editor" } else { section }.to_owned());
             return;
         }
         self.path = path
@@ -407,6 +415,7 @@ impl NotesApp {
             None => {}
         }
         let _ = new_folder;
+        self.settings_dialog(&ctx);
         Toaster::new().show(&ctx);
     }
 }

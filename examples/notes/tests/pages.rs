@@ -32,6 +32,8 @@ fn every_screen() {
         ("notes_tags", "tags"),
         ("notes_search", "search"),
         ("notes_search_found", "search/export"),
+        ("notes_settings", "settings"),
+        ("notes_settings_daily", "settings/daily"),
     ] {
         let mut harness = render(path);
         results.add(harness.try_snapshot(name));

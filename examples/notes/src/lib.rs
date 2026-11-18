@@ -11,6 +11,7 @@ pub mod note_panel;
 pub mod search;
 pub mod search_page;
 pub mod seed;
+pub mod settings;
 pub mod tags;
 pub mod vault;
 pub mod wiki_links;
