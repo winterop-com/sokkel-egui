@@ -114,7 +114,7 @@ pub use json_tree::{JsonTree, JsonTreeWords};
 pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
 pub use list_row::{ListRow, ListRows, RowAside, RowMark};
 pub use log_view::{LogLevel, LogLine, LogView, LogViewWords};
-pub use markdown::Markdown;
+pub use markdown::{Markdown, MarkdownResponse, MarkdownScale, MarkdownWords, heading_id};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
 pub use meta_line::MetaLine;
 pub use number_field::{NumberField, NumberFieldWords, read_number, write_number};
