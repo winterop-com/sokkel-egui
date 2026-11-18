@@ -157,6 +157,11 @@ pub enum Cell {
         code: String,
         strong: bool,
     },
+    /// An icon in the muted ink, then 6 on a name at medium weight, as a document named by its kind.
+    IconName {
+        icon: Icon,
+        name: String,
+    },
     /// A name, then 8 on its code small and muted in the mono face, on one line.
     NameThenCode {
         name: String,
@@ -255,7 +260,9 @@ impl Cell {
             | Cell::Person(text) => text.clone(),
             Cell::Lines { title, .. } => title.clone(),
             Cell::CodeLines { code, .. } => code.clone(),
-            Cell::NamedCode { name, .. } | Cell::NameThenCode { name, .. } => name.clone(),
+            Cell::NamedCode { name, .. } | Cell::NameThenCode { name, .. } | Cell::IconName { name, .. } => {
+                name.clone()
+            }
             Cell::ChipNote { label, note, .. } => format!("{label} {note}"),
             Cell::Number { text, .. } | Cell::Marked { text, .. } | Cell::Swatch { text, .. } => text.clone(),
             Cell::Due { date, .. } => date.map(|d| d.to_string()).unwrap_or_default(),
@@ -280,7 +287,9 @@ impl Cell {
             | Cell::Person(text) => text.clone(),
             Cell::Lines { title, .. } => title.clone(),
             Cell::CodeLines { code, .. } => code.clone(),
-            Cell::NamedCode { name, .. } | Cell::NameThenCode { name, .. } => name.clone(),
+            Cell::NamedCode { name, .. } | Cell::NameThenCode { name, .. } | Cell::IconName { name, .. } => {
+                name.clone()
+            }
             Cell::ChipNote { label, note, .. } => format!("{label} {note}"),
             Cell::Check(on) | Cell::Switch { on, .. } => u8::from(*on).to_string(),
             Cell::Button { .. } => String::new(),
@@ -2521,6 +2530,26 @@ fn paint_cell(
                 .galley(pos2(rect.left(), y + height), small, t.color("muted-foreground"));
         }
         Cell::Code(label) => text(ui, code_rich(t, label, TextRole::Body), t.color("foreground")),
+        Cell::IconName { icon, name } => {
+            icons::paint(
+                ui.painter(),
+                pos2(rect.left() + 8.0, rect.center().y),
+                *icon,
+                16.0,
+                t.color("muted-foreground"),
+            );
+            let galley = WidgetText::from(TextRole::Body.rich(t, name).variation("wght", 500.0)).into_galley(
+                ui,
+                Some(mode),
+                (room - 22.0).max(1.0),
+                TextRole::Body.font(t),
+            );
+            ui.painter().galley(
+                pos2(rect.left() + 22.0, rect.center().y - galley.size().y / 2.0),
+                galley,
+                t.color("foreground"),
+            );
+        }
         Cell::NameThenCode { name, code } => {
             let mut job = egui::text::LayoutJob::default();
             TextRole::Body.rich(t, name).color(t.color("foreground")).append_to(
@@ -2798,9 +2827,9 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Chip(label, tone) => super::chip::paint_at(ui, at.x, at.y, label, *tone),
         Cell::Tags(tags) => paint_tags(ui, tags, at, room, false),
         Cell::OutlineTags(tags) => paint_tags(ui, tags, at, room, true),
-        Cell::NamedCode { name: label, .. } | Cell::NameThenCode { name: label, .. } => {
-            text(ui, TextRole::Help.rich(t, label), quiet, at.x, room)
-        }
+        Cell::NamedCode { name: label, .. }
+        | Cell::NameThenCode { name: label, .. }
+        | Cell::IconName { name: label, .. } => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
         Cell::ChipNote { label, tone, .. } => super::chip::paint_at(ui, at.x, at.y, label, *tone),
         Cell::CodeLines { code: label, .. } | Cell::Code(label) => {
             let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));

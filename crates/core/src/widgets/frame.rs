@@ -332,13 +332,14 @@ impl Widget for Rail<'_> {
                     egui::UiBuilder::new()
                         .max_rect(Rect::from_min_max(
                             pos2(rect.left() + 8.0, y),
-                            pos2(rect.right() - 9.0, y + 40.0),
+                            pos2(rect.right() - 9.0, y + t.density("control")),
                         ))
                         .layout(Layout::left_to_right(Align::Center)),
                 );
                 child.spacing_mut().item_spacing.x = 2.0;
                 search(&mut child);
-                y = child.min_rect().bottom();
+                // the row a control tall, whatever its buttons' own hit areas
+                y += t.density("control");
             }
             y += 8.0;
             let area = Rect::from_min_max(
@@ -625,6 +626,8 @@ pub struct TopBar<'a> {
     mark: Option<&'static str>,
     /// The crumbs drawn in the code face, by index.
     codes: Vec<usize>,
+    /// What stands before the trail, such as a search field.
+    start: Option<ShellBanner<'a>>,
 }
 
 /// The frame's top bar alone, for a screen without the shell, after sokkel-ui's `AppBar`: the
@@ -695,6 +698,7 @@ impl<'a> TopBar<'a> {
             trail,
             search: None,
             mark: None,
+            start: None,
             codes: Vec::new(),
         }
     }
@@ -703,6 +707,12 @@ impl<'a> TopBar<'a> {
     /// `code: true`), such as an incident's `INC-41`.
     pub fn code(mut self, index: usize) -> Self {
         self.codes.push(index);
+        self
+    }
+
+    /// Something before the trail, 12 before it, as the web's top bar `search`: a search field.
+    pub fn start(mut self, start: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.start = Some(Box::new(start));
         self
     }
 
@@ -742,6 +752,7 @@ impl<'a> TopBar<'a> {
         // on a phone the last crumb alone, and the palette's button an icon
         let phone = is_phone(ui.ctx());
         let first = if phone { self.trail.len().saturating_sub(1) } else { 0 };
+        let field = self.start.is_some();
         ui.scope_builder(
             UiBuilder::new()
                 .max_rect(inner)
@@ -751,6 +762,10 @@ impl<'a> TopBar<'a> {
                     let (tile, _) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::hover());
                     ui.painter().rect_filled(tile, t.radius("md"), t.color("primary"));
                     paint_mark(ui, ui.painter(), &t, tile, Some(svg), "");
+                    ui.add_space(12.0 - ui.spacing().item_spacing.x);
+                }
+                if let Some(start) = self.start {
+                    start(ui);
                     ui.add_space(12.0 - ui.spacing().item_spacing.x);
                 }
                 // crumbs and chevrons 4 apart
@@ -792,6 +807,8 @@ impl<'a> TopBar<'a> {
                     if let Some((word, keys)) = &self.search {
                         searched = if phone {
                             search_icon(ui, word).clicked()
+                        } else if field {
+                            palette_keys_button(ui, word, keys).clicked()
                         } else {
                             search_button(ui, word, keys).clicked()
                         };
@@ -814,6 +831,56 @@ fn search_icon(ui: &mut Ui, word: &str) -> Response {
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, word));
     phone_control(ui.painter(), &t, rect, &response, Icon::Search);
     response
+}
+
+/// The palette's button beside a search field at the bar's start, as the web's: a control tall,
+/// 8 at each side, a field's ground and edge, and the keys alone in the code face, small.
+fn palette_keys_button(ui: &mut Ui, word: &str, keys: &str) -> Response {
+    let t = tokens(ui.ctx());
+    let spec = t.text(TextRole::Help.key());
+    let font = crate::mono_font(ui.ctx(), crate::mono_size(&t, spec.size), spec.weight);
+    // the code face has no ⌘: it is drawn as the icon, smaller, as the web's fallback face draws it
+    let glyph = font.size * 0.75;
+    let commands = keys.matches('⌘').count();
+    let rest = keys.replace('⌘', "");
+    let text = ui.painter().layout_no_wrap(rest, font, egui::Color32::PLACEHOLDER);
+    let width = commands as f32 * glyph + text.size().x;
+    let (rect, response) = ui.allocate_exact_size(vec2(width + 16.0 + 2.0, t.density("control")), Sense::click());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, word));
+    let hot = response.hovered();
+    let edge = if response.has_focus() {
+        t.color("ring")
+    } else if hot {
+        t.color("border-strong")
+    } else {
+        t.color("border")
+    };
+    let painter = ui.painter();
+    painter.rect(
+        rect,
+        t.radius("control"),
+        t.color("field"),
+        Stroke::new(1.0, edge),
+        egui::StrokeKind::Inside,
+    );
+    let ink = if hot {
+        t.color("foreground")
+    } else {
+        t.color("muted-foreground")
+    };
+    let mut x = rect.center().x - width / 2.0;
+    for _ in 0..commands {
+        icons::paint(
+            painter,
+            pos2(x + glyph / 2.0, rect.center().y),
+            Icon::Command,
+            glyph,
+            ink,
+        );
+        x += glyph;
+    }
+    painter.galley(pos2(x, rect.center().y - text.size().y / 2.0), text, ink);
+    response.on_hover_text(word)
 }
 
 /// The palette's button: 224 wide, a control tall, a field's ground and edge, a magnifier, the word

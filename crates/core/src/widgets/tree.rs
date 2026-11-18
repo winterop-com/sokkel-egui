@@ -5,7 +5,7 @@ use std::collections::HashSet;
 
 use egui::{Id, Key, Modifiers, Sense, TextWrapMode, Ui, WidgetText, pos2, vec2};
 
-use crate::{Icon, TextRole, icons, tokens};
+use crate::{DropdownMenu, Icon, MenuItem, TextRole, icons, tokens};
 
 /// One node of a tree, as sokkel-ui's `TreeNode`: what it answers with, what it is called, and
 /// what is under it.
@@ -158,12 +158,15 @@ pub fn tree_node<'a>(nodes: &'a [TreeNode], id: &str) -> Option<&'a TreeNode> {
 pub struct TreeWords {
     /// Said when a search keeps no row.
     pub empty: String,
+    /// A row's menu button.
+    pub actions: String,
 }
 
 impl Default for TreeWords {
     fn default() -> Self {
         Self {
             empty: "Nothing matches.".into(),
+            actions: "Actions".into(),
         }
     }
 }
@@ -175,6 +178,8 @@ pub struct TreeResponse {
     /// A node dropped in a new place: its id, the branch it goes into (`None` for the top level),
     /// and its place among that branch's nodes once it has left its old one.
     pub moved: Option<(String, Option<String>, usize)>,
+    /// An entry pressed in a row's menu: the node's id and the entry's index.
+    pub action: Option<(String, usize)>,
 }
 
 /// A copy of `nodes` with `id` taken from its place and put into `into` (the top level for
@@ -214,6 +219,9 @@ pub fn move_tree_node(nodes: &[TreeNode], id: &str, into: Option<&str>, index: u
 /// Whether a node may go into a branch (`None` for the top level).
 pub type CanMove<'a> = &'a dyn Fn(&str, Option<&str>) -> bool;
 
+/// What a node's menu offers, or `None` for a node without one.
+pub type NodeActions<'a> = &'a dyn Fn(&TreeNode) -> Option<Vec<MenuItem>>;
+
 /// A tree of nodes, one chosen at a time. A branch opens from its chevron, from Right on it, or by
 /// choosing it; Left shuts it or goes to its parent; Up, Down, Home and End walk the rows. With a
 /// query the rows matching it and those above them show, every branch among them open.
@@ -225,6 +233,7 @@ pub struct Tree<'a> {
     query: &'a str,
     words: TreeWords,
     movable: Option<CanMove<'a>>,
+    actions: Option<NodeActions<'a>>,
     choosing: bool,
 }
 
@@ -243,6 +252,7 @@ impl<'a> Tree<'a> {
             query: "",
             words: TreeWords::default(),
             movable: None,
+            actions: None,
             choosing: true,
         }
     }
@@ -251,6 +261,14 @@ impl<'a> Tree<'a> {
     /// response's `moved`, for the caller to keep.
     pub fn movable(mut self, can_move: CanMove<'a>) -> Self {
         self.movable = Some(can_move);
+        self
+    }
+
+    /// A menu on each row that has one, as the web's `actions`: a 24 button at the row's end, 4
+    /// from it, seen while the row is pointed at or its menu is open; the press comes back as the
+    /// response's `action`.
+    pub fn actions(mut self, actions: NodeActions<'a>) -> Self {
+        self.actions = Some(actions);
         self
     }
 
@@ -359,7 +377,24 @@ impl<'a> Tree<'a> {
                 icons::paint(painter, pos2(x + 8.0, center), icon, 16.0, muted);
                 x += 16.0 + 6.0;
             }
-            let mut right = rect.right() - 8.0;
+            let menu = self.actions.and_then(|actions| actions(row.node));
+            let mut right = rect.right() - if menu.is_some() { 4.0 } else { 8.0 };
+            if let Some(items) = &menu {
+                let button = egui::Rect::from_center_size(pos2(right - 12.0, center), vec2(24.0, 24.0));
+                let trigger = ui.interact(button, id.with("actions"), Sense::click());
+                trigger.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.actions));
+                let open = egui::Popup::is_id_open(ui.ctx(), trigger.id.with("menu"));
+                if hit.hovered() || trigger.hovered() || open {
+                    if trigger.hovered() || open {
+                        ui.painter().rect_filled(button, t.radius("sm"), t.color("hover"));
+                    }
+                    icons::paint(ui.painter(), button.center(), Icon::Ellipsis, 16.0, muted);
+                }
+                if let Some(chosen) = DropdownMenu::new(items).end(true).width(192.0).show(&trigger) {
+                    response.action = Some((row.node.id.clone(), chosen));
+                }
+                right -= 24.0 + 6.0;
+            }
             if let Some(meta) = &row.node.meta {
                 let galley = WidgetText::from(TextRole::Help.rich(&t, meta)).into_galley(
                     ui,
