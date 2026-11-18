@@ -11,7 +11,13 @@ use sokkel_egui::{
 };
 use sokkel_egui_charts::{LineChart, Series, Sparkline, legend};
 
+pub mod backend;
 mod data;
+pub mod logs;
+pub mod model;
+pub mod schedule;
+pub mod seed;
+pub mod timeline;
 
 const APPEARANCE_KEY: &str = "tidevann/appearance";
 

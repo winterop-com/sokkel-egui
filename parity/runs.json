@@ -1,0 +1,85 @@
+{
+    "example": "examples/runs/web/src",
+    "ported": {
+        "commit": "c95b8911",
+        "files": {
+            "App.tsx": "ec8f2389bc3f50257cdbc2f70f30cb6022495bc4",
+            "Console.tsx": "cb1644786d855c4b7fc6007ff09a04449a75572c",
+            "NewJobDialog.tsx": "b2ccb0a29667d2ed18e6c3b45fe923e7ba0e59d3",
+            "RunPanel.tsx": "9dc4be3dd54b60d5b9060668adc37024d8294d42",
+            "SignInPage.tsx": "2cc1b81a9d97ef96dd6587292c515fde1d93806e",
+            "actions.tsx": "02703b056b9adcb3a5fb2e30931444800a1181ee",
+            "app.css": "6eee7ab6bac987a79b331163786b80481e0e2a35",
+            "backend.ts": "60d646989e260102d106c08e4c5d9425e327b36e",
+            "logs.ts": "5b9ecdc2883591440f3c3c14d592b1b060d4736f",
+            "main.tsx": "e6d17fc39f80129878f1ac842385b7573b47e7dd",
+            "model.ts": "d3cab7fffdfb02e4edd3cb96174163a0e3f5fd99",
+            "pages/JobPage.tsx": "628c02520489fb834ca68c72beae7023e851c922",
+            "pages/Jobs.tsx": "6ace619d7bf8b2feccabfdb18c1ae20b141797e4",
+            "pages/Overview.tsx": "798ee681844e8568213583176bf3afce92ccf2a1",
+            "pages/RunPage.tsx": "070af28762047c35c8070a4e7fbcd8aa151de7a0",
+            "pages/Runs.tsx": "f43808e343b54859a90f2759cf8707c9519d2024",
+            "pages/Schedules.tsx": "ece78fa0a84b979f4a8aa166b9885501119da16a",
+            "pages/Settings.tsx": "3ebc4ab892b552480998f659d63506e18dbeb45c",
+            "parts.tsx": "9976f47158253704c99f3c14aa2dbf50f834fb14",
+            "schedule.ts": "78b1433a7589dd40e866189e0584f106026bde97",
+            "seed.ts": "cb43fa0de237deed88282e7442072b2f6e9aabd5",
+            "state.tsx": "ff29cbe01f9d32233aadaf68d219d217f313d133",
+            "themes.ts": "5f98ff7e6680d7dd2807416aff0c7de32b2852b1",
+            "timeline.ts": "212721f58e6c9b1432e35a515f3aff46298eada8"
+        }
+    },
+    "parts": {},
+    "screens": [
+        {
+            "name": "runs_overview",
+            "route": "",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "runs_runs",
+            "route": "runs",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "runs_schedules",
+            "route": "schedules",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "runs_jobs",
+            "route": "jobs",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "runs_job",
+            "route": "jobs/nightly-export",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "runs_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "c95b8911dd02bf7925e96b62c93fc8a934d57800"
+}

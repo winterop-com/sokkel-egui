@@ -10,6 +10,8 @@ publish.workspace = true
 sokkel-egui.workspace = true
 sokkel-egui-charts.workspace = true
 eframe.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]
 egui_kittest.workspace = true
