@@ -1,6 +1,6 @@
 //! A dashboard's chart panels, after sokkel-ui's `TimeSeriesPanel` in its `ChartFrame`.
 
-use egui::{Color32, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
+use egui::{Color32, Rect, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
 use sokkel_egui::{
     Cell, Column, DataTable, TableState, TableVariant, TextRole, Threshold, cell_height, format_value,
     report_natural_height, threshold_color, tokens,
@@ -465,6 +465,18 @@ fn chart_frame_with(ui: &mut Ui, head_of: Head<'_>, actions: Option<HeadActions<
                         ui.add_space(32.0);
                     } else if !sokkel_egui::panel_away(ui, cell) {
                         let top = ui.cursor().top();
+                        // the room a taller row gives past the panel's own height, for a body that
+                        // grows into it
+                        let natural: f32 = ui.data(|d| d.get_temp(cell.with("natural"))).unwrap_or(0.0);
+                        let room = if natural > 0.0 {
+                            (stretch - natural).max(0.0)
+                        } else {
+                            0.0
+                        };
+                        ui.data_mut(|d| {
+                            d.insert_temp(grow_id(), room);
+                            d.insert_temp(grew_id(), 0.0_f32);
+                        });
                         body(ui);
                         sokkel_egui::body_drawn(ui, cell, ui.min_rect().bottom() - top);
                     }
@@ -472,11 +484,32 @@ fn chart_frame_with(ui: &mut Ui, head_of: Head<'_>, actions: Option<HeadActions<
             let used = ui.min_rect().height() + 2.0;
             let frame = ui.min_rect().expand(1.0);
             ui.data_mut(|d| d.insert_temp(cell.with("frame-rect"), frame));
-            report_natural_height(ui, cell, used);
+            let grew: f32 = ui.data_mut(|d| d.remove_temp(grew_id())).unwrap_or(0.0);
+            ui.data_mut(|d| {
+                d.remove::<f32>(grow_id());
+                d.insert_temp(cell.with("natural"), used - grew);
+            });
+            report_natural_height(ui, cell, used - grew);
             if stretch > used {
                 ui.add_space(stretch - used);
             }
         });
+}
+
+fn grow_id() -> egui::Id {
+    egui::Id::unique("sokkel-chart-grow")
+}
+
+fn grew_id() -> egui::Id {
+    egui::Id::unique("sokkel-chart-grew")
+}
+
+/// The room a chart's body may grow into where its panel stands stretched in a taller row; the
+/// body takes it all, and its row is not sized by it.
+fn grow_room(ui: &Ui) -> f32 {
+    let room: f32 = ui.data(|d| d.get_temp(grow_id())).unwrap_or(0.0);
+    ui.data_mut(|d| d.insert_temp(grew_id(), room));
+    room
 }
 
 /// A dashboard panel of one reading on an arc, as sokkel-ui's `GaugePanel`: the arc filled in the
@@ -1263,7 +1296,11 @@ impl DonutPanel {
         chart_frame(ui, head, |ui| {
             let height = fill_height(ui, height);
             let t = tokens(ui.ctx());
-            let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
+            // the legend stands inside the body, under the ring, as the web's chart holds its legend
+            let items: Vec<(&str, Color32)> = slices.iter().map(|(n, _, k)| (n.as_str(), t.color(k))).collect();
+            let legend = crate::legend_height(ui, &items, ui.available_width()) + 4.0;
+            let ring = (height - legend).max(height / 2.0) + grow_room(ui);
+            let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), ring), Sense::hover());
             let center = rect.center();
             let radius = rect.width().min(rect.height()) / 2.0;
             let (inner, outer) = (radius * 0.58, radius * 0.82);
@@ -1376,11 +1413,9 @@ impl DonutPanel {
                     &writing,
                 );
             }
-            let under = ui.min_rect().bottom();
             ui.add_space(4.0);
-            let items: Vec<(&str, Color32)> = slices.iter().map(|(n, _, k)| (n.as_str(), t.color(k))).collect();
             legend_of(ui, &items);
-            drawn_under(ui, under);
+            drawn_under(ui, rect.bottom());
         });
     }
 }
@@ -1542,5 +1577,219 @@ mod tests {
         assert_eq!(LegendStat::Avg.of(&values), Some(4.0));
         assert_eq!(LegendStat::Current.of(&values), Some(7.0));
         assert_eq!(LegendStat::Avg.of(&[None]), None);
+    }
+}
+
+/// A spread of values: the furthest within one and a half box heights, the quartiles and the
+/// median, the values beyond, and how many there were, as the web's `spreadOf`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Spread {
+    pub low: f64,
+    pub lower: f64,
+    pub median: f64,
+    pub upper: f64,
+    pub high: f64,
+    pub outliers: Vec<f64>,
+    pub count: usize,
+}
+
+/// The value at `at` (0 to 1) along sorted values, between two neighbours linearly, as the web's
+/// `quantile`.
+pub fn quantile(sorted: &[f64], at: f64) -> Option<f64> {
+    if sorted.is_empty() {
+        return None;
+    }
+    let index = (sorted.len() - 1) as f64 * at;
+    let (low, high) = (index.floor() as usize, index.ceil() as usize);
+    Some(sorted[low] + (sorted[high] - sorted[low]) * (index - low as f64))
+}
+
+/// The spread of `values`, or `None` for none, as the web's `spreadOf`.
+pub fn spread_of(values: &[f64]) -> Option<Spread> {
+    let mut sorted = values.to_vec();
+    sorted.sort_by(f64::total_cmp);
+    let lower = quantile(&sorted, 0.25)?;
+    let median = quantile(&sorted, 0.5)?;
+    let upper = quantile(&sorted, 0.75)?;
+    let reach = (upper - lower) * 1.5;
+    let inside: Vec<f64> = sorted
+        .iter()
+        .copied()
+        .filter(|v| *v >= lower - reach && *v <= upper + reach)
+        .collect();
+    Some(Spread {
+        low: inside[0],
+        lower,
+        median,
+        upper,
+        high: inside[inside.len() - 1],
+        outliers: sorted
+            .iter()
+            .copied()
+            .filter(|v| *v < lower - reach || *v > upper + reach)
+            .collect(),
+        count: sorted.len(),
+    })
+}
+
+/// A dashboard panel of each category's spread, as sokkel-ui's `ChartPanel` of the `boxplot` kind:
+/// a box from the lower to the upper quartile (the first series color at 22% inside its 1.25 edge)
+/// with the median across it, whiskers out to the furthest values within one and a half box
+/// heights, the values beyond as hollow points, on a value axis fitted to the values. On a 192
+/// tall body, as the web's `h-48`.
+pub struct BoxPlotPanel {
+    title: String,
+    subtitle: Option<String>,
+    info: Option<String>,
+    empty: bool,
+    words: PanelWords,
+    groups: Vec<(String, Vec<f64>)>,
+    unit: String,
+    height: f32,
+}
+
+impl BoxPlotPanel {
+    /// Each category's name and its values, in order.
+    pub fn new(title: impl Into<String>, groups: impl IntoIterator<Item = (String, Vec<f64>)>) -> Self {
+        Self {
+            title: title.into(),
+            subtitle: None,
+            info: None,
+            empty: false,
+            words: PanelWords::default(),
+            groups: groups.into_iter().collect(),
+            unit: String::new(),
+            height: 192.0,
+        }
+    }
+
+    pub fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
+        self.subtitle = Some(subtitle.into());
+        self
+    }
+
+    /// What the panel shows, behind the Info mark beside its title.
+    pub fn info(mut self, info: impl Into<String>) -> Self {
+        self.info = Some(info.into());
+        self
+    }
+
+    pub fn empty(mut self, empty: bool) -> Self {
+        self.empty = empty;
+        self
+    }
+
+    /// Written after each tick, as `%`.
+    pub fn unit(mut self, unit: impl Into<String>) -> Self {
+        self.unit = unit.into();
+        self
+    }
+
+    pub fn show(self, ui: &mut Ui) {
+        let head = Head {
+            subtitle: self.subtitle.as_deref(),
+            info: self.info.as_deref(),
+            empty: self.empty.then_some(self.words.empty.as_str()),
+            ..Head::new(&self.title)
+        };
+        let (groups, unit, height) = (self.groups, self.unit, self.height);
+        chart_frame(ui, head, |ui| {
+            let t = tokens(ui.ctx());
+            let height = fill_height(ui, height);
+            let (rect, _) = ui.allocate_exact_size(egui::vec2(ui.available_width(), height), Sense::hover());
+            let spreads: Vec<Option<Spread>> = groups.iter().map(|(_, v)| spread_of(v)).collect();
+            let values = spreads
+                .iter()
+                .flatten()
+                .flat_map(|s| s.outliers.iter().copied().chain([s.low, s.high]));
+            let (mut least, mut most) = (f64::INFINITY, f64::NEG_INFINITY);
+            for v in values {
+                least = least.min(v);
+                most = most.max(v);
+            }
+            if !least.is_finite() {
+                return;
+            }
+            // a value axis fitted to the values, as `scale: true`
+            let step = crate::nice_step((most - least).max(1.0), 5);
+            let bottom = (least / step).floor() * step;
+            let top = (most / step).ceil() * step;
+            let font = crate::axis_font(&t);
+            let muted = t.color("muted-foreground");
+            let painter = ui.painter_at(rect);
+            let tick_words: Vec<String> = {
+                let mut out = Vec::new();
+                let mut v = bottom;
+                while v <= top + step / 2.0 {
+                    out.push(format!("{}{unit}", crate::format_tick(v)));
+                    v += step;
+                }
+                out
+            };
+            let gutter = tick_words
+                .iter()
+                .map(|w| painter.layout_no_wrap(w.clone(), font.clone(), muted).size().x)
+                .fold(0.0_f32, f32::max)
+                + 8.0
+                + 4.0;
+            let label_room = 20.0;
+            let plot = Rect::from_min_max(
+                rect.min + egui::vec2(gutter, 10.0),
+                rect.max - egui::vec2(10.0, label_room + 4.0),
+            );
+            let y_of =
+                |v: f64| plot.bottom() - ((v - bottom) / (top - bottom).max(f64::MIN_POSITIVE)) as f32 * plot.height();
+            for (index, words) in tick_words.iter().enumerate() {
+                let v = bottom + step * index as f64;
+                let y = y_of(v);
+                painter.hline(plot.x_range(), y, Stroke::new(1.0, t.color("border")));
+                painter.text(
+                    egui::pos2(plot.left() - 8.0, y),
+                    egui::Align2::RIGHT_CENTER,
+                    words,
+                    font.clone(),
+                    muted,
+                );
+            }
+            let color = crate::series_color(&t, 0);
+            let card = t.color("card");
+            let mix = |a: u8, b: u8| (a as f32 * 0.22 + b as f32 * 0.78).round() as u8;
+            let fill = Color32::from_rgb(
+                mix(color.r(), card.r()),
+                mix(color.g(), card.g()),
+                mix(color.b(), card.b()),
+            );
+            let band = plot.width() / groups.len().max(1) as f32;
+            let box_width = (band * 0.5).clamp(8.0, 40.0);
+            let mut last_label = f32::NEG_INFINITY;
+            for (index, ((name, _), spread)) in groups.iter().zip(&spreads).enumerate() {
+                let x = plot.left() + band * (index as f32 + 0.5);
+                // a label where it clears the one before it
+                let galley = painter.layout_no_wrap(name.clone(), font.clone(), muted);
+                if x - galley.size().x / 2.0 > last_label + 8.0 {
+                    painter.galley(
+                        egui::pos2(x - galley.size().x / 2.0, plot.bottom() + 4.0),
+                        galley.clone(),
+                        muted,
+                    );
+                    last_label = x + galley.size().x / 2.0;
+                }
+                let Some(s) = spread else { continue };
+                let edge = Stroke::new(1.25, color);
+                painter.vline(x, y_of(s.upper)..=y_of(s.high), edge);
+                painter.vline(x, y_of(s.low)..=y_of(s.lower), edge);
+                painter.hline(x - box_width / 2.0..=x + box_width / 2.0, y_of(s.high), edge);
+                painter.hline(x - box_width / 2.0..=x + box_width / 2.0, y_of(s.low), edge);
+                let body = Rect::from_min_max(
+                    egui::pos2(x - box_width / 2.0, y_of(s.upper)),
+                    egui::pos2(x + box_width / 2.0, y_of(s.lower)),
+                );
+                painter.rect(body, 0.0, fill, edge, egui::StrokeKind::Middle);
+                painter.hline(body.x_range(), y_of(s.median), edge);
+                for out in &s.outliers {
+                    painter.circle(egui::pos2(x, y_of(*out)), 2.5, t.color("card"), edge);
+                }
+            }
+        });
     }
 }

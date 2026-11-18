@@ -14,8 +14,8 @@ use std::sync::Arc;
 
 mod panel;
 pub use panel::{
-    BarGauge, BarPanel, DonutPanel, FunnelPanel, GaugePanel, HeatmapPanel, LegendStat, LegendWords, PanelWords,
-    TimeSeriesPanel, WaterfallPanel,
+    BarGauge, BarPanel, BoxPlotPanel, DonutPanel, FunnelPanel, GaugePanel, HeatmapPanel, LegendStat, LegendWords,
+    PanelWords, Spread, TimeSeriesPanel, WaterfallPanel, quantile, spread_of,
 };
 
 use sokkel_egui::{TextRole, Tokens, tokens};
@@ -436,6 +436,33 @@ pub fn legend_of(ui: &mut Ui, items: &[(&str, Color32)]) {
             );
         }
     });
+}
+
+/// How tall `legend_of` stands with `items` in `width`: its lines of 24, wrapped between items.
+pub fn legend_height(ui: &Ui, items: &[(&str, Color32)], width: f32) -> f32 {
+    let t = tokens(ui.ctx());
+    let gap_y = ui.spacing().item_spacing.y;
+    let mut lines = 1;
+    let mut x = 0.0;
+    for (name, _) in items {
+        let galley = egui::WidgetText::from(TextRole::Help.rich(&t, *name)).into_galley(
+            ui,
+            Some(egui::TextWrapMode::Extend),
+            f32::INFINITY,
+            TextRole::Help.font(&t),
+        );
+        let wide = 16.0 + galley.size().x;
+        if x > 0.0 && x + wide > width {
+            lines += 1;
+            x = 0.0;
+        }
+        x += wide + 16.0;
+    }
+    if items.is_empty() {
+        0.0
+    } else {
+        lines as f32 * 24.0 + (lines - 1) as f32 * gap_y
+    }
 }
 
 fn tooltip(

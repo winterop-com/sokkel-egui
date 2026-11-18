@@ -4054,6 +4054,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sokkel-egui",
+ "sokkel-egui-charts",
  "sokkel-egui-graph",
 ]
 

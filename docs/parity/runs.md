@@ -57,5 +57,13 @@ screens are shot into `parity/runs/web/` by `bun scripts/parity.ts web runs`.
   and its recent runs. A description list's term stands level with its value's first line. Open:
   the time, day and number editors are typed as text with the value checked, not the web's
   pickers; the recent runs' last column fills the row, where the web leaves the room empty.
-- Open: the overview; the bulk actions on the selected runs; a table narrower than its
+- The overview: the panels the person arranges and keeps (Edit, the palette of the others), with
+  the refresh: the figures of the last 24 hours as stat panels, the runs per hour by state,
+  failures and runs by job and by trigger, each run's time against its job's median as a box plot
+  (`BoxPlotPanel` with the web's `spreadOf`, new in the charts crate), and the lists of runs in
+  trouble, going, latest and next up. A donut now holds its legend inside its body and grows into
+  a taller row, as the web's chart does (`legend_height`, and a chart body's room in a stretched
+  row, new in the charts crate). Open: a chart panel's body keeps 8 over and under it where the
+  web's has none, so the overview's rows stand some 24 taller.
+- Open: the bulk actions on the selected runs; a table narrower than its
   least width scrolls sideways on the web and is cut short here; the log's wrapping.

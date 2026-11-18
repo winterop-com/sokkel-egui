@@ -8,6 +8,7 @@ pub mod jobs_page;
 pub mod logs;
 pub mod model;
 pub mod new_job;
+pub mod overview;
 pub mod palette;
 pub mod parts;
 pub mod run_page;

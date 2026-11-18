@@ -50,6 +50,9 @@ pub struct RunsApp {
     pub schedules_view: crate::schedules_page::SchedulesView,
     /// What the sign-in page says went wrong.
     pub sign_in_error: Option<String>,
+    /// The overview's arrangement while it is edited, and its refresh.
+    pub overview_edit: sokkel_egui::DashboardEdit,
+    pub overview_view: crate::overview::OverviewView,
     /// The step chosen in a job page's graph.
     pub job_step: Option<String>,
     /// The step chosen in a run page's graph.
@@ -106,6 +109,8 @@ impl RunsApp {
             resetting: false,
             run_step: None,
             job_step: None,
+            overview_edit: Default::default(),
+            overview_view: Default::default(),
             sign_in_error: None,
             tables: Default::default(),
             started: now,
@@ -500,6 +505,7 @@ impl RunsApp {
                     .search;
             }
             ShellPart::Page => match (page.as_str(), &second) {
+                ("overview", _) => Page::scroll(ui, |ui| self.overview(ui, &runs)),
                 ("runs", None) => Page::show(ui, |ui| self.runs_page(ui, &runs)),
                 ("runs", Some(id)) => Page::scroll(ui, |ui| self.run_page(ui, &runs, id)),
                 ("jobs", None) => Page::show(ui, |ui| self.jobs_page(ui, &runs)),

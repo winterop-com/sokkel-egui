@@ -29,6 +29,10 @@ pub fn render_at(path: &str, height: f32) -> Harness<'static, RunsApp> {
 #[test]
 fn every_screen() {
     let mut results = SnapshotResults::new();
+    let mut harness = render("");
+    results.add(harness.try_snapshot("runs_overview"));
+    let mut harness = render_at("", 1600.0);
+    results.add(harness.try_snapshot("runs_overview_whole"));
     let mut harness = render("runs");
     results.add(harness.try_snapshot("runs_runs"));
     // a run opened beside the list, on each of its panel's tabs
