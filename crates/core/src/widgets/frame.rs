@@ -69,6 +69,15 @@ pub struct Rail<'a> {
     toggle: Option<&'a mut bool>,
     mark: Option<&'static str>,
     words: RailWords,
+    body: Option<RailBody<'a>>,
+}
+
+/// What a rail holds in place of its groups, after sokkel-ui's rail `body`: a heading, a row such
+/// as a search, and the content the rail scrolls under them.
+pub struct RailBody<'a> {
+    pub title: Option<String>,
+    pub search: Option<ShellBanner<'a>>,
+    pub content: Box<dyn FnOnce(&mut Ui) + 'a>,
 }
 
 /// The words a rail says.
@@ -76,6 +85,8 @@ pub struct Rail<'a> {
 pub struct RailWords {
     pub collapse: String,
     pub expand: String,
+    /// The row over a body that goes back to the places.
+    pub places: String,
 }
 
 impl Default for RailWords {
@@ -83,6 +94,7 @@ impl Default for RailWords {
         Self {
             collapse: "Collapse the navigation".into(),
             expand: "Expand the navigation".into(),
+            places: "All places".into(),
         }
     }
 }
@@ -97,7 +109,16 @@ impl<'a> Rail<'a> {
             toggle: None,
             mark: None,
             words: RailWords::default(),
+            body: None,
         }
+    }
+
+    /// The app's own content in place of the groups, as the web's `body`: a row at the top ("All
+    /// places") shows the groups in its place, and a place chosen there brings the body back.
+    /// Collapsed, the rail draws the groups' icons, a body having no icon form.
+    pub fn body(mut self, body: RailBody<'a>) -> Self {
+        self.body = Some(body);
+        self
     }
 
     /// The reader narrows the rail to its icons and widens it again: a button at the head's end
@@ -254,6 +275,91 @@ impl Widget for Rail<'_> {
         } else {
             t.density("row")
         };
+        // the body in place of the groups while it shows
+        let view_id = response.id.with("view");
+        let showing_body = !narrow && self.body.is_some() && ui.data(|d| d.get_temp::<bool>(view_id)).unwrap_or(true);
+        if showing_body && let Some(body) = self.body.take() {
+            let mut y = head.bottom();
+            let back = Rect::from_min_max(pos2(rect.left() + 8.0, y), pos2(rect.right() - 9.0, y + row));
+            let hit = ui.interact(back, response.id.with("places"), Sense::click());
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.places));
+            if hit.hovered() {
+                painter.rect_filled(back, t.radius("md"), t.color("hover"));
+            }
+            super::focus_ring(&painter, &t, back, t.radius("md"), &hit);
+            let ink = if hit.hovered() {
+                t.color("foreground")
+            } else {
+                t.color("muted-foreground")
+            };
+            icons::paint(
+                &painter,
+                pos2(back.left() + 12.0 + 8.0, back.center().y),
+                Icon::ChevronLeft,
+                16.0,
+                ink,
+            );
+            let label = galley(ui, TextRole::Body, &self.words.places, back.width() - 52.0);
+            painter.galley(
+                pos2(back.left() + 40.0, back.center().y - label.size().y / 2.0),
+                label,
+                ink,
+            );
+            if hit.clicked() {
+                ui.data_mut(|d| d.insert_temp(view_id, false));
+            }
+            y = back.bottom();
+            if let Some(title) = &body.title {
+                // 16 over the heading's 20 line, 6 under it, as `pt-4 pb-1.5`
+                y += 16.0;
+                let spec = t.text("help");
+                let rich = TextRole::Help
+                    .rich(&t, title.to_uppercase())
+                    .variation("wght", 500.0)
+                    .extra_letter_spacing(spec.size * 0.025);
+                let label = WidgetText::from(rich).into_galley(
+                    ui,
+                    Some(TextWrapMode::Truncate),
+                    rect.width() - 32.0,
+                    TextRole::Help.font(&t),
+                );
+                painter.galley(pos2(rect.left() + 16.0, y), label, t.color("faint"));
+                y += 20.0 + 6.0;
+            }
+            if let Some(search) = body.search {
+                y += 4.0;
+                let mut child = ui.new_child(
+                    egui::UiBuilder::new()
+                        .max_rect(Rect::from_min_max(
+                            pos2(rect.left() + 8.0, y),
+                            pos2(rect.right() - 9.0, y + 40.0),
+                        ))
+                        .layout(Layout::left_to_right(Align::Center)),
+                );
+                child.spacing_mut().item_spacing.x = 2.0;
+                search(&mut child);
+                y = child.min_rect().bottom();
+            }
+            y += 8.0;
+            let area = Rect::from_min_max(
+                pos2(rect.left() + 8.0, y),
+                pos2(rect.right() - 9.0, rect.bottom() - 12.0),
+            );
+            let mut child = ui.new_child(
+                egui::UiBuilder::new()
+                    .max_rect(area)
+                    .layout(Layout::top_down(Align::Min)),
+            );
+            child.set_clip_rect(area.intersect(ui.clip_rect()));
+            egui::ScrollArea::vertical()
+                .id_salt(response.id.with("body"))
+                .auto_shrink([false, false])
+                .show(&mut child, |ui| {
+                    ui.set_width(area.width());
+                    (body.content)(ui);
+                });
+            return response;
+        }
         // a first group without a title keeps 4 over its first entry, so the entry's focus is whole
         let untitled_top = if self.groups.first().is_some_and(|g| g.title.is_none()) {
             4.0
@@ -337,6 +443,8 @@ impl Widget for Rail<'_> {
                     *self.active = entry.id.clone();
                     // a place chosen in the drawer closes it, as a change of route does
                     set_drawer(ui.ctx(), |d| d.open = false);
+                    // a place chosen while a body waits brings the body back
+                    ui.data_mut(|d| d.insert_temp(view_id, true));
                 }
                 let hit = if narrow {
                     super::tooltip(hit, entry.label.clone())

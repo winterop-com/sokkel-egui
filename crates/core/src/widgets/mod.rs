@@ -13,6 +13,7 @@ mod commands;
 mod dashboard;
 mod datetime;
 mod display;
+mod document_tabs;
 mod empty;
 mod entry_grid;
 mod fields;
@@ -80,6 +81,7 @@ pub use dashboard::{
 };
 pub use datetime::{DateField, DateFieldWords, DateTimeField, DateTimeFieldResponse, DateTimeFieldWords, Moment};
 pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton, TextLink, Unfoldable};
+pub use document_tabs::{DocumentTab, DocumentTabs, DocumentTabsResponse, DocumentTabsWords};
 pub use empty::Empty;
 pub use entry_grid::{EntryColumn, EntryEdit, EntryGrid, EntryGridWords, EntryRow};
 pub(crate) use fields::search_field;
@@ -97,8 +99,8 @@ pub use form_fields::{
     RepeatedGroupWords, RepeatedOutcome, TimeField, TimeFieldWords, YesNoField, YesNoFieldWords, read_time,
 };
 pub use frame::{
-    AppBar, DesktopWindow, Rail, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine, StatusTone,
-    TopBar, desktop_viewport, is_phone,
+    AppBar, DesktopWindow, Rail, RailBody, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine,
+    StatusTone, TopBar, desktop_viewport, is_phone,
 };
 pub use info::info_tip;
 pub use inline_edit::{InlineEdit, InlineEditLook, InlineEditWords};
