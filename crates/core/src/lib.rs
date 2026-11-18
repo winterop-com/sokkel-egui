@@ -229,6 +229,8 @@ pub fn install_fonts(ctx: &Context) {
     let proportional = fonts.families.entry(FontFamily::Proportional).or_default();
     proportional.insert(0, "plex-sans-ext".into());
     proportional.insert(0, "plex-sans".into());
+    // the code face after them for the symbols the Latin faces lack, such as the arrows
+    proportional.insert(2, "plex-mono".into());
     fonts
         .families
         .entry(FontFamily::Monospace)
