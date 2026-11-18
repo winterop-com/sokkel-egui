@@ -4,15 +4,21 @@
 # (Contents/Resources/AppIcon.icns) from scripts/icon.py: the app's initials on a rounded square in
 # the base theme's primary color (needs uv for Pillow), and an ad-hoc signature so Gatekeeper
 # takes it for a local build.
-# Usage: scripts/bundle.sh [app ...]   (every app in examples/ when none is named)
+# Usage: scripts/bundle.sh [app ...]   (every app in examples/ with a program when none is named)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if [ "$#" -gt 0 ]; then
   names=("$@")
 else
+  # every package under examples/ that builds a program: a library there (the shared scenes, an
+  # app whose window is not written yet) has nothing to bundle
   names=()
-  for d in examples/*/; do names+=("$(basename "$d")"); done
+  while IFS= read -r n; do names+=("$n"); done < <(
+    cargo metadata --no-deps --format-version 1 | jq -r --arg root "$PWD/examples/" '
+      .packages[] | select(.manifest_path | startswith($root))
+      | select(any(.targets[]; .kind | index("bin"))) | .name' | sort
+  )
 fi
 
 args=()
