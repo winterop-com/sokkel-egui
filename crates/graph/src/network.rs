@@ -5,10 +5,11 @@
 use std::hash::{Hash, Hasher};
 
 use egui::{Align2, Color32, CursorIcon, Id, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2, pos2, vec2};
-use sokkel_egui::{Icon, TextRole, Tokens, tokens};
+use sokkel_egui::{TextRole, Tokens, tokens};
 
 use crate::canvas::{MAX_ZOOM, MIN_ZOOM, ZOOM_STEP, mix};
 use crate::force::{CHANGED_HEAT, DRAG_HEAT, FORCE_MOST_TICKS, FORCE_WARM_TICKS, ForceBody, ForceSimulation};
+use crate::view_buttons::{ButtonsOrientation, GraphViewButtons, GraphViewWords};
 
 /// The width a node's name may take under its dot, the height of its line, and the gap between.
 const NAME_WIDTH: f64 = 120.0;
@@ -26,9 +27,6 @@ const RING: f32 = 2.0;
 /// The stage's dots: their spacing and size, as React Flow's dotted background.
 const DOT_GAP: f32 = 18.0;
 const DOT_SIZE: f32 = 1.0;
-/// One zoom button's side, and the cluster's margin from the stage's corner.
-const BUTTON: f32 = 28.0;
-const BUTTON_MARGIN: f32 = 8.0;
 /// The opacity of a node another one's neighbors leave out, a faint node's dot, and a link
 /// the pointed-at node does not touch.
 const DIM: f32 = 0.25;
@@ -517,7 +515,7 @@ impl<'a> NetworkGraph<'a> {
             );
         }
 
-        if let Some(moved) = self.buttons(ui, &painter, &t, rect, view) {
+        if let Some(moved) = self.buttons(ui, &painter, rect, view) {
             state.moved = moved;
             ui.ctx().request_repaint();
         }
@@ -605,52 +603,26 @@ impl<'a> NetworkGraph<'a> {
 
     /// The zoom buttons, one over another at the stage's bottom right: the view a press leaves,
     /// `Some(None)` for the fit again.
-    fn buttons(&self, ui: &Ui, painter: &egui::Painter, t: &Tokens, rect: Rect, view: View) -> Option<Option<View>> {
-        let group = Rect::from_min_size(
-            rect.right_bottom() - vec2(BUTTON + 2.0 + BUTTON_MARGIN, 3.0 * BUTTON + 2.0 + BUTTON_MARGIN),
-            vec2(BUTTON + 2.0, 3.0 * BUTTON + 2.0),
-        );
-        let corners = t.radius("control");
-        for shadow in t.shadows("elevation-node") {
-            painter.add(shadow.as_shape(group, corners));
+    fn buttons(&self, ui: &Ui, painter: &egui::Painter, rect: Rect, view: View) -> Option<Option<View>> {
+        let pressed = GraphViewButtons::new(self.id)
+            .orientation(ButtonsOrientation::Column)
+            .words(GraphViewWords {
+                zoom_in: self.words.zoom_in.clone(),
+                zoom_out: self.words.zoom_out.clone(),
+                fit: self.words.fit.clone(),
+                ..Default::default()
+            })
+            .show_in_corner(ui, painter, rect);
+        let center = rect.size() / 2.0;
+        if pressed.zoom_in {
+            Some(Some(view.zoomed(view.zoom * ZOOM_STEP, center)))
+        } else if pressed.zoom_out {
+            Some(Some(view.zoomed(view.zoom / ZOOM_STEP, center)))
+        } else if pressed.fit {
+            Some(None)
+        } else {
+            None
         }
-        painter.rect(
-            group,
-            corners,
-            t.color("card"),
-            Stroke::new(1.0, t.color("border")),
-            egui::StrokeKind::Inside,
-        );
-        let buttons = [
-            (Icon::ZoomIn, &self.words.zoom_in),
-            (Icon::ZoomOut, &self.words.zoom_out),
-            (Icon::Scan, &self.words.fit),
-        ];
-        let mut moved = None;
-        for (k, (icon, word)) in buttons.into_iter().enumerate() {
-            let spot = Rect::from_min_size(group.min + vec2(1.0, 1.0 + k as f32 * BUTTON), Vec2::splat(BUTTON));
-            let response = ui.interact(spot, self.id.with(("button", k)), Sense::click());
-            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, word.as_str()));
-            if k > 0 {
-                painter.hline(spot.x_range(), spot.top() - 0.5, Stroke::new(1.0, t.color("border")));
-            }
-            let ink = if response.hovered() {
-                painter.rect_filled(spot, 0.0, t.color("hover"));
-                t.color("foreground")
-            } else {
-                t.color("muted-foreground")
-            };
-            sokkel_egui::icons::paint(painter, spot.center(), icon, 14.0, ink);
-            if response.on_hover_text(word.as_str()).clicked() {
-                let center = rect.size() / 2.0;
-                moved = Some(match k {
-                    0 => Some(view.zoomed(view.zoom * ZOOM_STEP, center)),
-                    1 => Some(view.zoomed(view.zoom / ZOOM_STEP, center)),
-                    _ => None,
-                });
-            }
-        }
-        moved
     }
 }
 

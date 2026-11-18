@@ -20,6 +20,75 @@ const GLYPH: f32 = 12.0;
 const ROUND_PAD: f32 = 8.0;
 /// The duration a box with a state keeps room for, so it does not widen when its step ends.
 const DURATION_ROOM: &str = "59m 59s";
+/// The room an issue mark takes, and the glyph inside it.
+const MARK: f32 = 20.0;
+const MARK_GLYPH: f32 = 16.0;
+/// The height of the line a step's progress is drawn along its foot.
+const PROGRESS: f32 = 2.0;
+
+/// How bad an issue on a node is: a warning is allowed, a critical one stops a run.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum IssueTone {
+    Critical,
+    Warning,
+}
+
+impl IssueTone {
+    /// The tone's color and its ink, as the tokens name them.
+    fn keys(self) -> (&'static str, &'static str) {
+        match self {
+            IssueTone::Critical => ("critical", "critical-ink"),
+            IssueTone::Warning => ("warning", "warning-ink"),
+        }
+    }
+
+    fn icon(self) -> Icon {
+        match self {
+            IssueTone::Critical => Icon::CircleAlert,
+            IssueTone::Warning => Icon::TriangleAlert,
+        }
+    }
+}
+
+/// What is wrong with a node, as a form field says it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct NodeIssue {
+    pub tone: IssueTone,
+    pub text: String,
+}
+
+impl NodeIssue {
+    pub fn critical(text: impl Into<String>) -> Self {
+        Self {
+            tone: IssueTone::Critical,
+            text: text.into(),
+        }
+    }
+
+    pub fn warning(text: impl Into<String>) -> Self {
+        Self {
+            tone: IssueTone::Warning,
+            text: text.into(),
+        }
+    }
+}
+
+/// The worst tone among some issues: critical over warning, and `None` when there are none.
+pub fn worst_issue(issues: &[NodeIssue]) -> Option<IssueTone> {
+    if issues.iter().any(|i| i.tone == IssueTone::Critical) {
+        Some(IssueTone::Critical)
+    } else if issues.is_empty() {
+        None
+    } else {
+        Some(IssueTone::Warning)
+    }
+}
+
+/// What painting a box left where a reader can point: its issue mark, if it has one.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct NodePainted {
+    pub mark: Option<Rect>,
+}
 
 /// A node's state: the word pointing at its dot says, and the dot's color.
 #[derive(Clone, Debug, PartialEq)]
@@ -49,6 +118,19 @@ pub struct GraphNode {
     pub tint: Option<Color32>,
     /// The box's edge dashed, as a step the run has not reached.
     pub dashed: bool,
+    /// What is wrong with the node: the box takes the worst issue's edge, and a mark says them.
+    pub issues: Vec<NodeIssue>,
+    /// The box's edge in this color, as a run state gives it, and how wide.
+    pub border: Option<Color32>,
+    pub border_width: f32,
+    /// The box's ground in place of the node's, as a failed step's wash.
+    pub fill: Option<Color32>,
+    /// The title in the muted ink, as a step skipped or cancelled.
+    pub muted: bool,
+    /// Where data enters rather than a step that runs: dashed on the canvas's ground, no shadow.
+    pub source: bool,
+    /// How far along the node is, from 0 to 1, drawn as a line along its foot in the status color.
+    pub progress: Option<f32>,
 }
 
 impl GraphNode {
@@ -65,7 +147,46 @@ impl GraphNode {
             duration: None,
             tint: None,
             dashed: false,
+            issues: Vec::new(),
+            border: None,
+            border_width: 1.0,
+            fill: None,
+            muted: false,
+            source: false,
+            progress: None,
         }
+    }
+
+    pub fn issues(mut self, issues: Vec<NodeIssue>) -> Self {
+        self.issues = issues;
+        self
+    }
+
+    /// The box's edge in `color`, `width` wide.
+    pub fn border(mut self, color: Option<Color32>, width: f32) -> Self {
+        self.border = color;
+        self.border_width = width;
+        self
+    }
+
+    pub fn fill(mut self, fill: Option<Color32>) -> Self {
+        self.fill = fill;
+        self
+    }
+
+    pub fn muted(mut self, muted: bool) -> Self {
+        self.muted = muted;
+        self
+    }
+
+    pub fn source(mut self, source: bool) -> Self {
+        self.source = source;
+        self
+    }
+
+    pub fn progress(mut self, progress: Option<f32>) -> Self {
+        self.progress = progress.map(|p| p.clamp(0.0, 1.0));
+        self
     }
 
     pub fn duration(mut self, duration: Option<String>) -> Self {
@@ -148,7 +269,8 @@ impl GraphNode {
         let measure = |galley: std::sync::Arc<egui::Galley>| galley.size().x.ceil();
         let head = self.icon.map_or(0.0, |_| GLYPH + GAP)
             + measure(title_galley(painter, t, self.title(), self.named(), 1.0))
-            + self.status.as_ref().map_or(0.0, |_| GAP + DOT);
+            + self.status.as_ref().map_or(0.0, |_| GAP + DOT)
+            + if self.issues.is_empty() { 0.0 } else { GAP + MARK - 4.0 };
         let line = self.line();
         let said = if line.is_empty() {
             0.0
@@ -175,17 +297,90 @@ impl GraphNode {
 
     /// Paint the box into `rect`, drawn at `zoom`; the box's edge darkens under the pointer and a
     /// chosen box wears a ring.
-    pub fn paint(&self, painter: &Painter, t: &Tokens, rect: Rect, zoom: f32, hovered: bool, selected: bool) {
+    pub fn paint(
+        &self,
+        painter: &Painter,
+        t: &Tokens,
+        rect: Rect,
+        zoom: f32,
+        hovered: bool,
+        selected: bool,
+    ) -> NodePainted {
+        let mut painted = NodePainted::default();
         let radius = t.length("radius-node") * if self.round { 3.0 } else { 1.0 } * zoom;
         let corners = CornerRadius::same(radius.round() as u8);
-        for shadow in t.shadows("elevation-node") {
-            painter.add(shadow.as_shape(rect, corners));
+        if !self.source {
+            for shadow in t.shadows("elevation-node") {
+                painter.add(shadow.as_shape(rect, corners));
+            }
         }
+        let issue = worst_issue(&self.issues);
+        // the edge: the pointer's, else an issue's, else a state's, else the node's line
         let edge = if hovered {
-            t.color("muted-foreground")
+            match issue {
+                Some(tone) => t.color(tone.keys().0),
+                None => t.color("muted-foreground"),
+            }
+        } else if let Some(tone) = issue {
+            t.color_at(tone.keys().0, 0.8)
+        } else if let Some(border) = self.border {
+            border
         } else {
             t.color("node-line")
         };
+        let ground = if self.source {
+            t.color("canvas")
+        } else {
+            self.fill.unwrap_or(t.color("node"))
+        };
+        if self.source || (self.border.is_some() || issue.is_some()) && self.tint.is_none() && !self.dashed {
+            let width = if issue.is_some() || hovered {
+                1.0
+            } else {
+                self.border_width
+            };
+            if self.source {
+                painter.rect_filled(rect, corners, ground);
+                dashed_outline(painter, rect, zoom, Stroke::new(zoom, edge));
+            } else {
+                painter.rect(
+                    rect,
+                    corners,
+                    ground,
+                    Stroke::new(width * zoom, edge),
+                    StrokeKind::Inside,
+                );
+            }
+        } else {
+            self.paint_plain(painter, t, rect, corners, zoom, edge);
+        }
+        if selected {
+            let ring = rect.expand(2.0 * zoom);
+            painter.rect_stroke(
+                ring,
+                CornerRadius::same((radius + 2.0 * zoom).round() as u8),
+                Stroke::new(2.0 * zoom, t.color("foreground")),
+                StrokeKind::Outside,
+            );
+        }
+        if let Some(progress) = self.progress {
+            let hue = self
+                .status
+                .as_ref()
+                .map_or(t.color("status-running"), |status| status.color);
+            let foot = Rect::from_min_max(pos2(rect.left(), rect.bottom() - PROGRESS * zoom), rect.right_bottom());
+            let painter = painter.with_clip_rect(rect.intersect(painter.clip_rect()));
+            painter.rect_filled(foot, CornerRadius::ZERO, hue.gamma_multiply(0.18));
+            let done = Rect::from_min_size(foot.min, vec2(foot.width() * progress, foot.height()));
+            painter.rect_filled(done, CornerRadius::ZERO, hue);
+        }
+        self.paint_words(painter, t, rect, zoom, issue, &mut painted);
+        painted
+    }
+
+    /// The box as the runs page draws it: its node ground and line, a failed step's tint or a
+    /// dashed edge for a step not reached.
+    fn paint_plain(&self, painter: &Painter, t: &Tokens, rect: Rect, corners: CornerRadius, zoom: f32, edge: Color32) {
         match (self.tint, self.dashed) {
             (Some(tint), _) => {
                 let wash = tint.gamma_multiply(0.08);
@@ -194,20 +389,7 @@ impl GraphNode {
             }
             (None, true) => {
                 painter.rect_filled(rect, corners, t.color("node"));
-                let r = rect.shrink(0.5 * zoom);
-                let outline = [
-                    r.left_top(),
-                    r.right_top(),
-                    r.right_bottom(),
-                    r.left_bottom(),
-                    r.left_top(),
-                ];
-                painter.extend(Shape::dashed_line(
-                    &outline,
-                    Stroke::new(zoom, edge),
-                    3.0 * zoom,
-                    2.0 * zoom,
-                ));
+                dashed_outline(painter, rect, zoom, Stroke::new(zoom, edge));
             }
             (None, false) => {
                 painter.rect(
@@ -219,15 +401,18 @@ impl GraphNode {
                 );
             }
         }
-        if selected {
-            let ring = rect.expand(2.0 * zoom);
-            painter.rect_stroke(
-                ring,
-                CornerRadius::same((radius + 2.0 * zoom).round() as u8),
-                Stroke::new(2.0 * zoom, t.color("foreground")),
-                StrokeKind::Outside,
-            );
-        }
+    }
+
+    /// The words, the glyph, the status dot and the issue mark inside the box.
+    fn paint_words(
+        &self,
+        painter: &Painter,
+        t: &Tokens,
+        rect: Rect,
+        zoom: f32,
+        issue: Option<IssueTone>,
+        painted: &mut NodePainted,
+    ) {
         let pad = (1.0 + 10.0 + if self.round { 4.0 } else { 0.0 }) * zoom;
         let inner = rect.shrink2(vec2(pad, zoom));
         let painter = painter.with_clip_rect(rect.intersect(painter.clip_rect()));
@@ -253,6 +438,22 @@ impl GraphNode {
             x += (GLYPH + GAP) * zoom;
         }
         let mut right = inner.right();
+        if let Some(tone) = issue {
+            // the mark reaches 6 into the box's padding, as `-mr-1.5`
+            let mark = Rect::from_center_size(
+                pos2(right + 6.0 * zoom - MARK * zoom / 2.0, title_mid),
+                Vec2::splat(MARK * zoom),
+            );
+            sokkel_egui::icons::paint(
+                &painter,
+                mark.center(),
+                tone.icon(),
+                MARK_GLYPH * zoom,
+                t.color(tone.keys().1),
+            );
+            painted.mark = Some(mark);
+            right = mark.left() - GAP * zoom;
+        }
         if let Some(status) = &self.status {
             painter.circle_filled(
                 pos2(right - DOT * zoom / 2.0, title_mid),
@@ -266,7 +467,7 @@ impl GraphNode {
         painter.with_clip_rect(clip.intersect(painter.clip_rect())).galley(
             pos2(x, title_mid - title.size().y / 2.0),
             title,
-            t.color("foreground"),
+            if self.muted { muted } else { t.color("foreground") },
         );
         if self.two_lines() {
             let line = self.line();
@@ -286,6 +487,19 @@ impl GraphNode {
             }
         }
     }
+}
+
+/// A box's edge dashed, as a step not reached or a source.
+fn dashed_outline(painter: &Painter, rect: Rect, zoom: f32, stroke: Stroke) {
+    let r = rect.shrink(0.5 * zoom);
+    let outline = [
+        r.left_top(),
+        r.right_top(),
+        r.right_bottom(),
+        r.left_bottom(),
+        r.left_top(),
+    ];
+    painter.extend(Shape::dashed_line(&outline, stroke, 3.0 * zoom, 2.0 * zoom));
 }
 
 /// The title: the name in the graph's title role, or the code in the code face, both semibold.
