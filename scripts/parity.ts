@@ -33,7 +33,8 @@ interface Screen {
     viewport?: { width: number; height: number }
     /**
      * In order: clicks by accessible name (`role:name`), keys (`key:Meta+K`), and double clicks on
-     * visible text (`dblclick:text`) or on what a selector finds (`dblclick-css:selector`).
+     * visible text (`dblclick:text`) or on what a selector finds (`dblclick-css:selector`), and waits
+     * (`wait:ms`) for work the page does in the background, such as a video made in a worker.
      */
     steps?: string[]
 }
@@ -180,7 +181,8 @@ async function web() {
             for (const step of screen.steps ?? []) {
                 const [kind, ...rest] = step.split(':')
                 const what = rest.join(':')
-                if (kind === 'key') await page.keyboard.press(what)
+                if (kind === 'wait') await page.waitForTimeout(Number(what))
+                else if (kind === 'key') await page.keyboard.press(what)
                 else if (kind === 'dblclick-css') await page.locator(what).locator('visible=true').first().dblclick()
                 else if (kind === 'dblclick') await page.getByText(what, { exact: true }).locator('visible=true').first().dblclick()
                 else await page.getByRole(kind as 'button', { name: what, exact: true }).first().click()

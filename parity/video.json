@@ -1,0 +1,117 @@
+{
+    "example": "examples/video/web/src",
+    "ported": {
+        "commit": "c95b8911",
+        "files": {
+            "App.tsx": "b5d1a27ee720bd1fdf3c4609f5fc09f2ae4d332d",
+            "Site.tsx": "6e7ef797ea5640623d8c2507e116f00a442db947",
+            "app.css": "78c8a0d8e4d3a28c71087d6ef845e8dda61fb577",
+            "catalog.ts": "39db870fad2791bb640f2938b33e463c41ac1b5f",
+            "clips/index.ts": "53f37200d56bd99cf9d83e7a86abd5a2379234ae",
+            "clips/kept.ts": "d3707aa45ec2a397c0748fece62a0784f0c0bd83",
+            "clips/source.ts": "02c083dffbfad8b6e61c658c0a966a0be99aa974",
+            "clips/worker.ts": "5ad2647321375a46ef9f9a47cf6de693600c6023",
+            "data.ts": "fa9206ba22bf8fe6e6dc07f163d72bf78892e8eb",
+            "dialogs.tsx": "f7c14cb83ffb082f6612b30d0f3b752c2c5964e5",
+            "format.ts": "fe53bd890ff44b22ed44fb5d6a3b85f365c09c79",
+            "main.tsx": "a4cde43b1395944aa12cd9c48cafca3da31c42eb",
+            "pages/Channel.tsx": "aec66137ef5e6b6e3db9a41bae3ba81e30ce9561",
+            "pages/Downloads.tsx": "3c3c6cdb6cf8c9a9442c5becf830ac3864951c40",
+            "pages/History.tsx": "6956dc60e98c38893887c71430b014c11cd1dc5c",
+            "pages/Home.tsx": "b15365c1d9be8dcbddd3935ae9e25949b10c8eb1",
+            "pages/Library.tsx": "d7c9239d4bef321d585c4e0ed2afc421120ac864",
+            "pages/Liked.tsx": "b4a0327d45081efcdc61bd92f687cb57ead0fd13",
+            "pages/NotFound.tsx": "21aa59ee3ac39fde54fe14ae62d92c4a78f52b68",
+            "pages/Playlist.tsx": "626d9f33a2604c2cef5571b558c45236882eea90",
+            "pages/Playlists.tsx": "76873cd41567876a9154010faa2c5fe6669045ce",
+            "pages/Search.tsx": "87f1057aefb763e8ba56ca7355aa2f8ef0d29979",
+            "pages/Settings.tsx": "ae3363161a63ffd4b50cb8cd695e42329861d145",
+            "pages/Subscriptions.tsx": "ee4a5c09dcc9d52346fd37c1a7b77d6f3959bec1",
+            "pages/Watch.tsx": "a234c52467d7dd024dca7e57698e88bbf732b483",
+            "pages/watch/Aside.tsx": "c0fe84f147b4d99f8ad45ff633107e8ceb743ae8",
+            "pages/watch/Comments.tsx": "121fa47e27c80fd83638559c863903db44c415be",
+            "parts.tsx": "6d5793ede7b97615a57faef8352b8cae57a1c6ed",
+            "themes.ts": "5f98ff7e6680d7dd2807416aff0c7de32b2852b1"
+        }
+    },
+    "parts": {},
+    "screens": [
+        {
+            "name": "video_home",
+            "route": "home",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "video_watch",
+            "route": "watch/harbor-wakes",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "steps": [
+                "wait:15000"
+            ]
+        },
+        {
+            "name": "video_channel",
+            "route": "channel/harbor",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "video_subscriptions",
+            "route": "subscriptions",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "video_library",
+            "route": "library",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "video_history",
+            "route": "history",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "video_playlists",
+            "route": "playlists",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "video_search",
+            "route": "search/harbor",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "video_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "c95b8911dd02bf7925e96b62c93fc8a934d57800"
+}
