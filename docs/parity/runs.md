@@ -36,6 +36,10 @@ screens are shot into `parity/runs/web/` by `bun scripts/parity.ts web runs`.
   upcoming runs dragged sideways as one, snapped, and its schedule moved), the jobs not on a
   schedule, and the fires by day (a name and its code on one line, `Cell::NameThenCode`, new),
   filtered by job. A table's toolbar with no search stands in the search's place, as the web's.
-- Open: the overview, a run's page, a job's page, the settings, the
-  palette and the sign-in page; the bulk actions on the selected runs; a table narrower than its
+- Settings over the page: how a run opens and how times read, the notes to hear, the log, the
+  look with the app's carried themes alone (`theme_settings_of`, new in the library), the
+  scheduler, the account with Sign out, and the demo's data put back after asking; the palette with
+  the pages, the jobs, a job to run now, the look, the demo and signing out.
+- Open: the overview, a run's page, a job's page and the sign-in page (signed out, the console
+  still shows); the bulk actions on the selected runs; a table narrower than its
   least width scrolls sideways on the web and is cut short here; the log's wrapping.
