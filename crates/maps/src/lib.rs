@@ -311,6 +311,10 @@ pub struct MapView {
     satellite: Option<HttpTiles>,
     /// Whether the basemap switcher's menu is open.
     switching: bool,
+    /// Boundaries drawn under the markers, pressed to choose one by its id.
+    pub areas: Vec<Area>,
+    /// No basemap offered: the card's ground alone, and no switcher, as the web's `basemaps={[]}`.
+    pub bare: bool,
 }
 
 impl MapView {
@@ -338,6 +342,8 @@ impl MapView {
             basemap: None,
             satellite: None,
             switching: false,
+            areas: Vec::new(),
+            bare: false,
         }
     }
 
@@ -523,6 +529,7 @@ impl MapView {
             Basemap::Blank => None,
         };
         let mut points = Vec::new();
+        let mut area_hit: Option<String> = None;
         let response = ui
             .allocate_ui(size, |ui| {
                 ui.set_min_size(size);
@@ -538,8 +545,22 @@ impl MapView {
                     .zoom_with_ctrl(false)
                     .show(ui, |ui, response, projector, _| {
                         let painter = ui.painter_at(response.rect);
-                        if !has_tiles {
+                        if self.bare {
+                            painter.rect_filled(response.rect, corners, t.color("card"));
+                        } else if !has_tiles {
                             ground(&painter, &t, response.rect, projector, corners);
+                        }
+                        draw_areas(&painter, &t, projector, &self.areas);
+                        // the area under a press, as longitude and latitude
+                        if response.clicked()
+                            && let Some(pos) = response.interact_pointer_pos()
+                        {
+                            let at = projector.unproject(pos.to_vec2());
+                            area_hit = self
+                                .areas
+                                .iter()
+                                .find(|a| a.holds(at.x(), at.y()))
+                                .map(|a| a.id.clone());
                         }
                         overlays(&painter, &t, projector, markers, routes);
                         points = markers
@@ -569,10 +590,11 @@ impl MapView {
             ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
         }
         if response.clicked() {
-            self.selected = response.interact_pointer_pos().and_then(near);
+            self.selected = response.interact_pointer_pos().and_then(near).or(area_hit);
         }
         if let Some(chosen) = &self.selected
             && !points.iter().any(|(id, _, _)| id == chosen)
+            && !self.areas.iter().any(|a| a.id == *chosen)
         {
             self.selected = None;
         }
@@ -629,6 +651,8 @@ impl MapView {
             &[(full_icon, full_words)],
             &[(Icon::Layers, basemap_words)],
         ];
+        // a map with no basemap offered has no switcher
+        let groups = if self.bare { &groups[..2] } else { &groups[..] };
         let mut switcher = Rect::NOTHING;
         let mut pressed = None;
         for group in groups {
@@ -1167,5 +1191,187 @@ mod tests {
         let template = super::current_planet("sokkel-egui-test").expect("an answer");
         assert!(template.starts_with("https://tiles.openfreemap.org/planet/"));
         assert!(template.ends_with("/{z}/{x}/{y}.pbf"));
+    }
+}
+
+/// How an area stands out, as sokkel-ui-maps' `AREA_EMPHASIS`: the selection, what is lit with it,
+/// or a plain area.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Emphasis {
+    Plain,
+    Highlighted,
+    Selected,
+}
+
+impl Emphasis {
+    /// Its fill and edge, as the web's `AREA_EMPHASIS`: the color at the fill's share over the
+    /// card, and the edge in the color itself (a plain edge the muted ink at 70% over the card).
+    pub fn colors(self, t: &Tokens) -> (Color32, Color32) {
+        let over = |color: Color32, share: f32| mix(color, t.color("card"), share);
+        match self {
+            Emphasis::Selected => (over(t.color("map-selection"), 0.3), t.color("map-selection")),
+            Emphasis::Highlighted => (over(t.color("map-highlight"), 0.16), t.color("map-highlight")),
+            Emphasis::Plain => (
+                over(t.color("muted-foreground"), 0.07),
+                mix(t.color("muted-foreground"), t.color("card"), 0.7),
+            ),
+        }
+    }
+}
+
+/// A region's boundary on the map, as sokkel-ui-maps' `BoundaryLayer` draws one: its outlines as
+/// longitude and latitude, filled and edged by its emphasis, pressed to choose it.
+#[derive(Clone, Debug)]
+pub struct Area {
+    pub id: String,
+    pub label: String,
+    /// Each polygon's outer ring, as longitude and latitude.
+    rings: Vec<Vec<(f64, f64)>>,
+    /// Each ring's triangles, as indices into it, cut once when the area is made.
+    triangles: Vec<Vec<[usize; 3]>>,
+    pub emphasis: Emphasis,
+}
+
+impl Area {
+    /// An area from its polygons' outer rings, each as longitude and latitude.
+    pub fn new(id: impl Into<String>, label: impl Into<String>, rings: Vec<Vec<(f64, f64)>>) -> Self {
+        let triangles = rings.iter().map(|ring| triangulate(ring)).collect();
+        Self {
+            id: id.into(),
+            label: label.into(),
+            rings,
+            triangles,
+            emphasis: Emphasis::Plain,
+        }
+    }
+
+    pub fn emphasis(mut self, emphasis: Emphasis) -> Self {
+        self.emphasis = emphasis;
+        self
+    }
+
+    /// Whether a place, as longitude and latitude, lies inside the area.
+    pub fn holds(&self, lon: f64, lat: f64) -> bool {
+        self.rings.iter().any(|ring| {
+            let mut inside = false;
+            let mut j = ring.len().saturating_sub(1);
+            for i in 0..ring.len() {
+                let (xi, yi) = ring[i];
+                let (xj, yj) = ring[j];
+                if (yi > lat) != (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi {
+                    inside = !inside;
+                }
+                j = i;
+            }
+            inside
+        })
+    }
+
+    /// Its bounds, as `[west, south, east, north]`.
+    pub fn bounds(&self) -> Option<[f64; 4]> {
+        let mut points = self.rings.iter().flatten();
+        let first = points.next()?;
+        let mut b = [first.0, first.1, first.0, first.1];
+        for (lon, lat) in points {
+            b[0] = b[0].min(*lon);
+            b[1] = b[1].min(*lat);
+            b[2] = b[2].max(*lon);
+            b[3] = b[3].max(*lat);
+        }
+        Some(b)
+    }
+}
+
+/// A simple polygon cut into triangles by clipping its ears, on its Mercator outline, so the cut
+/// holds at every zoom.
+fn triangulate(ring: &[(f64, f64)]) -> Vec<[usize; 3]> {
+    let mut n = ring.len();
+    if n > 3 && ring[0] == ring[n - 1] {
+        n -= 1;
+    }
+    if n < 3 {
+        return Vec::new();
+    }
+    let p: Vec<(f64, f64)> = ring[..n]
+        .iter()
+        .map(|(lon, lat)| {
+            let y = (std::f64::consts::FRAC_PI_4 + lat.to_radians() / 2.0).tan().ln();
+            (lon.to_radians(), y)
+        })
+        .collect();
+    let area: f64 = (0..n)
+        .map(|i| {
+            let (a, b) = (p[i], p[(i + 1) % n]);
+            a.0 * b.1 - b.0 * a.1
+        })
+        .sum();
+    let mut left: Vec<usize> = if area > 0.0 {
+        (0..n).collect()
+    } else {
+        (0..n).rev().collect()
+    };
+    let cross = |a: (f64, f64), b: (f64, f64), c: (f64, f64)| (b.0 - a.0) * (c.1 - a.1) - (b.1 - a.1) * (c.0 - a.0);
+    let inside = |a, b, c, q| cross(a, b, q) >= 0.0 && cross(b, c, q) >= 0.0 && cross(c, a, q) >= 0.0;
+    let mut out = Vec::with_capacity(n);
+    let mut guard = 0;
+    while left.len() > 3 && guard < n * n {
+        guard += 1;
+        let m = left.len();
+        let mut clipped = false;
+        for i in 0..m {
+            let (ia, ib, ic) = (left[(i + m - 1) % m], left[i], left[(i + 1) % m]);
+            let (a, b, c) = (p[ia], p[ib], p[ic]);
+            if cross(a, b, c) <= 0.0 {
+                continue;
+            }
+            let blocked = left
+                .iter()
+                .any(|&k| k != ia && k != ib && k != ic && inside(a, b, c, p[k]));
+            if blocked {
+                continue;
+            }
+            out.push([ia, ib, ic]);
+            left.remove(i);
+            clipped = true;
+            break;
+        }
+        if !clipped {
+            // a ring that crosses itself: fan what is left, rather than lose it
+            for i in 1..left.len() - 1 {
+                out.push([left[0], left[i], left[i + 1]]);
+            }
+            return out;
+        }
+    }
+    if left.len() == 3 {
+        out.push([left[0], left[1], left[2]]);
+    }
+    out
+}
+
+fn draw_areas(painter: &egui::Painter, t: &Tokens, projector: &Projector, areas: &[Area]) {
+    let at = |(lon, lat): (f64, f64)| -> Pos2 { projector.project(lat_lon(lat, lon)).to_pos2() };
+    // the plain ones first, so a lit or chosen edge stands over its neighbors'
+    let mut order: Vec<&Area> = areas.iter().collect();
+    order.sort_by_key(|a| match a.emphasis {
+        Emphasis::Plain => 0,
+        Emphasis::Highlighted => 1,
+        Emphasis::Selected => 2,
+    });
+    for area in order {
+        let (fill, edge) = area.emphasis.colors(t);
+        for (ring, triangles) in area.rings.iter().zip(&area.triangles) {
+            let points: Vec<Pos2> = ring.iter().map(|p| at(*p)).collect();
+            let mut mesh = egui::epaint::Mesh::default();
+            for point in &points {
+                mesh.colored_vertex(*point, fill);
+            }
+            for [a, b, c] in triangles {
+                mesh.add_triangle(*a as u32, *b as u32, *c as u32);
+            }
+            painter.add(egui::Shape::mesh(mesh));
+            let width = if area.emphasis == Emphasis::Plain { 1.0 } else { 1.5 };
+            painter.add(egui::Shape::closed_line(points, Stroke::new(width, edge)));
+        }
     }
 }

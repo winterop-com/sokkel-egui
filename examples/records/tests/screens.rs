@@ -39,6 +39,8 @@ fn every_screen() {
         ("records_form_layout_site", "forms/FRM-SITE/layout"),
         ("records_responses", "responses"),
         ("records_households", "people"),
+        ("records_places", "places"),
+        ("records_places_region", "places/bong"),
     ];
     for &(name, path) in screens {
         let mut harness = render(path);

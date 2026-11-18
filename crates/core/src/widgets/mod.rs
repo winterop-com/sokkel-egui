@@ -33,6 +33,7 @@ mod number_field;
 mod overlay;
 mod page;
 mod panel_menu;
+mod panes;
 mod person;
 mod section;
 mod server_menu;
@@ -109,6 +110,7 @@ pub use overlay::{
 };
 pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
 pub use panel_menu::{PanelAsked, PanelMenu, PanelWindow, PanelWords, body_drawn, panel_away, quiet_tools, windowed};
+pub use panes::{Inspector, InspectorWords, SubNav, inspector_section};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
 pub use section::{DescriptionList, PersonRow, Section, Timeline, TimelineEvent};
 pub use server_menu::{ServerMenu, ServerMenuResponse, ServerMenuWords, ServerState};

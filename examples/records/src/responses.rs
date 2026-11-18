@@ -13,7 +13,7 @@ use crate::app::{Foot, RecordsApp};
 use crate::backend::{Failure, Receipt, ReceiptState, STATES};
 use crate::forms::{Form, cell_key, form_of, forms, grid_cells, is_answered};
 use crate::geo::place_name;
-use crate::ui::{answer_text, count, kind_chip, on_day, state_chip, state_dot, when};
+use crate::ui::{answer_text, count, kind_chip, on_day, state_chip, state_dot, state_tone, when};
 
 /// What the list holds open: the form filter, the search, the sheet's receipt and its width.
 #[derive(Clone, Debug)]
@@ -565,15 +565,6 @@ impl RecordsApp {
 
 fn states_of(all: &[Receipt], code: &str) -> Option<ReceiptState> {
     all.iter().find(|r| r.receipt == code).map(|r| r.state)
-}
-
-fn state_tone(state: ReceiptState) -> ChipTone {
-    match state {
-        ReceiptState::Received => ChipTone::Info,
-        ReceiptState::Forwarded => ChipTone::Good,
-        ReceiptState::Rejected => ChipTone::Critical,
-        ReceiptState::Withdrawn => ChipTone::Neutral,
-    }
 }
 
 /// What can be done with a receipt where it is now: send it on, or take it back out of the

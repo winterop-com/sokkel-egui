@@ -27,15 +27,19 @@ pub fn state_dot(t: &Tokens, state: ReceiptState) -> Color32 {
     t.color(&format!("status-{}", state_status(state)))
 }
 
-/// A state as its chip: the state's words in the app's colors.
-pub fn state_chip(state: ReceiptState) -> Chip {
-    let tone = match state {
+/// A state's chip tone, in the app's colors.
+pub fn state_tone(state: ReceiptState) -> ChipTone {
+    match state {
         ReceiptState::Received => ChipTone::Info,
         ReceiptState::Forwarded => ChipTone::Good,
         ReceiptState::Rejected => ChipTone::Critical,
         ReceiptState::Withdrawn => ChipTone::Neutral,
-    };
-    Chip::new(state.key()).tone(tone)
+    }
+}
+
+/// A state as its chip: the state's words in the app's colors.
+pub fn state_chip(state: ReceiptState) -> Chip {
+    Chip::new(state.key()).tone(state_tone(state))
 }
 
 /// A number with its thousands grouped, as `Intl.NumberFormat('en-US')` writes it.

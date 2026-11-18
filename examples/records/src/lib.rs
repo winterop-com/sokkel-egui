@@ -13,6 +13,7 @@ pub mod forms_page;
 pub mod geo;
 pub mod households;
 pub mod overview;
+pub mod places_page;
 pub mod responses;
 pub mod ui;
 

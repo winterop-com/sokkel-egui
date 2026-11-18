@@ -53,6 +53,8 @@ pub struct RecordsApp {
     pub last_place: Option<String>,
     /// The form being filled.
     pub fill: Option<crate::form_fill::Fill>,
+    /// The places page's column, tree and map.
+    pub places: crate::places_page::PlacesView,
     /// What the households' list narrows to.
     pub households: crate::households::HouseholdsView,
     /// What the responses' list holds open.
@@ -102,6 +104,7 @@ impl RecordsApp {
             grid_view: Default::default(),
             responses: Default::default(),
             households: Default::default(),
+            places: Default::default(),
             probed_at: now - PROBE,
             answered: Some(true),
             foot: Foot::default(),
@@ -284,6 +287,10 @@ impl RecordsApp {
                 (true, "responses") if self.path.get(1).is_none_or(|p| p == "in") => {
                     let state = self.path.get(2).cloned();
                     Page::show(ui, |ui| self.responses_page(ui, state.as_deref()));
+                }
+                (true, "places") => {
+                    let given = (self.path.len() > 1).then(|| self.path[1..].join("/"));
+                    self.places_page(ui, given.as_deref());
                 }
                 (true, "people") if self.path.len() == 1 => Page::show(ui, |ui| self.households_page(ui)),
                 (true, "people") => {

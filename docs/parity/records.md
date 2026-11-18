@@ -65,4 +65,11 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   header's meta words now stand 12 apart, as the web's `gap-x-3`, or 6 where the app gives them as
   one row (`PageHeader::meta_row`, as status' incident and analytics' customer do). Open: Raw
   record waits for the code editor, and the banner names the other household without linking it.
+- Places: the hierarchy in a column of its own (`SubNav`, new in the library) with its search and
+  tree, the map with no basemap (`MapView::bare`) of the regions' boundaries (`Area`, cut into
+  triangles once and filled and edged by its `Emphasis`, chosen by a press, new in the maps crate)
+  and the sites as points, the chosen region lit with its sites, the notes under the map, and the
+  place's facts in an `Inspector` (new in the library): its code to copy, its path, the forms
+  reported there, and what was recorded there. Open: the web folds the map's legend into a
+  button.
 - Open: the Playground waits for the code editor's spec, as `ApiPlayground` is built on it.
