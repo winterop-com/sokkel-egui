@@ -1,0 +1,106 @@
+{
+    "example": "examples/fhir/web/src",
+    "ported": {
+        "commit": "c95b8911",
+        "files": {
+            "App.tsx": "3857f33655483593592193fc5f161c9cbdd36265",
+            "app.css": "98517ce0e6764bb0cfee69b58736a74fbc93c5bb",
+            "data/evaluate.ts": "d2fe327e18106c86176223e812074707df88bcf0",
+            "data/model.ts": "9892a406b1fc8736ff8159676a5c26ef3cb650fa",
+            "data/search.ts": "929145e3d695110c4e160ebc9ef8f8e6391f2165",
+            "data/seed.ts": "d68a3eabdbff8d9b727d950cd17834b2b56efe6c",
+            "data/server.ts": "cf24cb08a9597d71a921d28065159791623b9896",
+            "data/types.ts": "a32e12d12df7bddc4806fa7aac4f28668db10f93",
+            "data/validate.ts": "3d12726d89a6ca4970c15c683b11bf87435f4a38",
+            "editing.ts": "3d8eda99b74133cbce0ff5c977fd4c275c9915cc",
+            "main.tsx": "c16a5b19bfaeb97c51566f4ad36d3e44387992c8",
+            "pages/Cql.tsx": "83dcd55e92c06511c5c14e4e0bace51c8fed3874",
+            "pages/FhirPath.tsx": "09546696e0600e4c6daf8b7b7006ed6f8cd9ba00",
+            "pages/Overview.tsx": "7c12c06847b03ad2624d8579cf02c4780ec7379b",
+            "pages/Resource.tsx": "0de49e0e75c41a7de1898003f3383de1fda6a90d",
+            "pages/ResourcePanel.tsx": "79289f473bc743d13ac862b33861d0d7e713ec4e",
+            "pages/Resources.tsx": "2316057d8729684fa3c31c7ab69fbef41bf4a642",
+            "pages/Search.tsx": "4d98aee0b506f0aa76e29efc0be8fd472d6e4d48",
+            "pane.tsx": "7d867e3e57756464403c767befc769292b00c2c8",
+            "themes.ts": "477fd7c461246a97a687fb86a4a8af93efceaa18",
+            "ui.tsx": "26d74248082b5ed8df0249aa47919b30c44a1d41"
+        }
+    },
+    "parts": {},
+    "screens": [
+        {
+            "name": "fhir_overview",
+            "route": "overview",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "fhir_resources",
+            "route": "resources",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "fhir_patients",
+            "route": "resources/Patient",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "fhir_patient",
+            "route": "resources/Patient/pat-001",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "fhir_fhirpath",
+            "route": "fhirpath",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "fhir_cql",
+            "route": "cql",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "fhir_search",
+            "route": "search",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "fhir_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "fhir_cql_library",
+            "route": "cql/lib-hypertension",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "c95b8911dd02bf7925e96b62c93fc8a934d57800"
+}
