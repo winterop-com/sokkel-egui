@@ -1,0 +1,115 @@
+{
+    "example": "examples/models/web/src",
+    "ported": {
+        "commit": "c95b8911",
+        "files": {
+            "App.tsx": "7b98c35328268a3051d6b12d57bf8e047706aa4c",
+            "ModelsApp.tsx": "a19df2bbf22a30d34e7bbb6c5d6d68376006f2a3",
+            "actions.tsx": "485d1d760de81c9f81faa4d2adba7fe79da8d2ea",
+            "app.css": "8b475c7a428066a2cb6e9de7805ca929624bd077",
+            "data/backend.ts": "435688a2976a86905d99cce2c3e27b83bc70e09b",
+            "data/catalog.ts": "054efa1ae508966e80a1db5a176cf6b867d9c1ed",
+            "data/disk.ts": "6b021472acdffae8336fcfff54a024bb513f4663",
+            "data/format.ts": "e7c6d6eb2cf83471c6c7d6147e3079eb25016568",
+            "data/model.ts": "4eb12173a6e78b0acd001141007749f4bed30930",
+            "data/seed.ts": "d300e1186c1afa714108df2c77312866b0d14833",
+            "engine/chat.ts": "7e79559033b78e0c0ab3dc2953ce92340d828574",
+            "engine/downloads.ts": "cd6e3f30be3ac69301da4ba741f31e027de9da4b",
+            "engine/generate.ts": "0de9aab970ab81d9d5b4fb0c6ca692c2eda5a5f1",
+            "engine/mirror.ts": "0ade2ff38778231c72fdd1d7a3c4462c74ceb000",
+            "engine/runner.ts": "afe37fc70b2863e648df5b67b6ad33633e2d1b73",
+            "engine/stream.ts": "a1f82d63f6624c7429b9ddfcff546cc068732650",
+            "main.tsx": "8ec435313e9e71987ecf931bc2da59f4f2713f5a",
+            "pages/Chat.tsx": "b08182ea845ef9f972d80f205804e1e273c12986",
+            "pages/ChatSettings.tsx": "420c9468ebf36415f9071400395a4c7eecfee728",
+            "pages/Compare.tsx": "94fbd92b6494ebf2451e9a13f98a6aefedc1dbe7",
+            "pages/Discover.tsx": "e5dc1b024d019cf2fa606aa338af3a581f0d7ba1",
+            "pages/Disk.tsx": "67cff1cf37443d39a14498b914670d85eb3ae636",
+            "pages/Downloads.tsx": "7cefd404c5fadcb9a91e5906f7d59e87da61d707",
+            "pages/Library.tsx": "4c75a51291ab2c9d65eecd8a4326a618ef54f575",
+            "pages/ModelPage.tsx": "4f1b70765f7326d645602e8424b5bc837e5659c6",
+            "pages/Runner.tsx": "db393f78c1a562eed4a0793dbd724c1a83b4e4c9",
+            "pages/Settings.tsx": "86f1c04dc8e827bde495d8e25662957e3b728b8d",
+            "pages/pull.tsx": "2f045a5ed8b46d114d7c0fe867f48bc476ce74e1",
+            "state.tsx": "107f2c8602a5e9466b2ace3a8fd5491e91bbc59f",
+            "themes.ts": "5f98ff7e6680d7dd2807416aff0c7de32b2852b1"
+        }
+    },
+    "parts": {},
+    "screens": [
+        {
+            "name": "models_library",
+            "route": "library",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "models_model",
+            "route": "library/brine-coder-14b-4bit",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "models_disk",
+            "route": "disk",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "models_discover",
+            "route": "discover",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "models_downloads",
+            "route": "downloads",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "models_chat",
+            "route": "chat/c-parse",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "models_compare",
+            "route": "compare/cmp-seed",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "models_runner",
+            "route": "runner",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "models_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "c95b8911dd02bf7925e96b62c93fc8a934d57800"
+}
