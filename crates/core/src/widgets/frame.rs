@@ -1288,14 +1288,18 @@ impl Widget for StatusLine {
             StatusTone::Warn => t.color("warning"),
             StatusTone::Error => t.color("destructive"),
         };
-        // the facts first, from the end, 12 in and 12 apart; the note takes what they leave
+        // the facts first, from the end, 12 in and 12 apart, in at most 70% of the line (`max-w-[70%]`),
+        // a value cut short only where they would pass it; the note takes what they leave
         let mut right = rect.right() - 12.0;
+        let least = rect.right() - 12.0 - rect.width() * 0.7;
         for (label, value, code) in self.items.iter().rev() {
+            let label_width = galley(ui, TextRole::Help, label, 160.0).size().x;
+            let room = (right - least - label_width - 6.0).max(48.0);
             let value = if *code {
                 let rich = egui::RichText::new(value).font(egui::FontId::monospace(TextRole::Help.font(&t).size));
-                WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), 120.0, TextRole::Help.font(&t))
+                WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), room, TextRole::Help.font(&t))
             } else {
-                galley(ui, TextRole::Help, value, 120.0)
+                galley(ui, TextRole::Help, value, room)
             };
             right -= value.size().x;
             let value_ink = if *code { t.color("foreground") } else { quiet };
@@ -1385,6 +1389,8 @@ pub struct ShellWords {
     /// The toggle in an open side panel's corner, and its edge's drag.
     pub hide_panel: String,
     pub resize_panel: String,
+    /// The top bar's toggle that opens the side panel while it is shut.
+    pub show_panel: String,
 }
 
 impl Default for ShellWords {
@@ -1394,6 +1400,7 @@ impl Default for ShellWords {
             close: "Close the navigation".into(),
             hide_panel: "Hide the panel".into(),
             resize_panel: "Resize the side panel".into(),
+            show_panel: "Show the panel".into(),
         }
     }
 }
@@ -1457,6 +1464,8 @@ pub struct Shell<'a> {
     banner: Option<ShellBanner<'a>>,
     panel: Option<(&'a mut bool, ShellBanner<'a>)>,
     panel_width: f32,
+    /// What the top bar leaves at its end for the shut panel's toggle.
+    top_inset: f32,
     bottom: Option<ShellBanner<'a>>,
 }
 
@@ -1479,6 +1488,7 @@ impl<'a> Shell<'a> {
             banner: None,
             panel: None,
             panel_width: 352.0,
+            top_inset: 0.0,
             bottom: None,
         }
     }
@@ -1544,6 +1554,39 @@ impl<'a> Shell<'a> {
             return column;
         };
         if !*open {
+            // shut, its toggle stands at the top bar's end, a control square 8 from the edge, and
+            // the bar keeps clear of it
+            let t = tokens(ui.ctx());
+            let top = t.length("spacing-shell-top");
+            let control = t.density("control");
+            let toggle = Rect::from_center_size(
+                pos2(column.right() - 8.0 - control / 2.0, column.top() + top / 2.0),
+                vec2(control, control),
+            );
+            // the top bar's ground and rule under it, as the bar beside it has them
+            let strip = Rect::from_min_max(
+                pos2(column.right() - control - 8.0, column.top()),
+                pos2(column.right(), column.top() + top),
+            );
+            ui.painter().rect_filled(strip, CornerRadius::ZERO, t.color("sidebar"));
+            ui.painter().hline(
+                strip.x_range(),
+                strip.bottom() - 0.5,
+                Stroke::new(1.0, t.color("border-strong")),
+            );
+            let hit = ui.interact(toggle, egui::Id::unique("sokkel-shell-panel-show"), Sense::click());
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.show_panel));
+            let ink = if hit.hovered() {
+                ui.painter().rect_filled(toggle, t.radius("md"), t.color("hover"));
+                t.color("foreground")
+            } else {
+                t.color("muted-foreground")
+            };
+            icons::paint(ui.painter(), toggle.center(), Icon::PanelRight, 16.0, ink);
+            if hit.clicked() {
+                *open = true;
+            }
+            self.top_inset = control + 8.0;
             return column;
         }
         let t = tokens(ui.ctx());
@@ -1710,7 +1753,7 @@ impl<'a> Shell<'a> {
         // the content's column, less the side panel at its end while it is open
         let column = Rect::from_min_max(pos2(rail.right(), rect.top()), pos2(rect.right(), floor));
         let column = self.place_panel(ui, column);
-        let top_bar = Rect::from_min_max(column.min, pos2(column.right(), rect.top() + top));
+        let top_bar = Rect::from_min_max(column.min, pos2(column.right() - self.top_inset, rect.top() + top));
         let page = Rect::from_min_max(pos2(column.left(), top_bar.bottom()), column.max);
         ui.painter()
             .rect_filled(page, CornerRadius::ZERO, t.color("background"));

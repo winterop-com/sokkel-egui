@@ -6,6 +6,7 @@ mod arrange;
 mod board;
 mod button;
 mod calendar;
+mod chat;
 mod chip;
 mod chip_bar;
 mod choice;
@@ -55,6 +56,7 @@ mod panel_menu;
 mod panes;
 mod person;
 mod problem;
+mod progress;
 mod run_timeline;
 pub(crate) mod schema_form;
 mod search;
@@ -100,6 +102,14 @@ pub use arrange::{
 pub use board::{BOARD_COLUMN, Board, BoardCard, BoardColumn, BoardMove, CardResponse};
 pub use button::{Button, ButtonSize, ButtonVariant, IconButton};
 pub use calendar::{Calendar, CalendarWords, RangeCalendar, WeekStart, calendar_forget};
+pub use chat::{
+    AnswerColumn, AnswerColumnResponse, AnswerColumnWords, AnswerState, AssistantReply, AssistantReplyResponse,
+    AssistantReplyWords, AssistantState, AttachmentKind, Bubble, BubbleVariant, Composer, ComposerAttachment,
+    ComposerLayout, ComposerResponse, ComposerWords, Conversation, ConversationEntry, ConversationGroup,
+    ConversationHistory, ConversationHistoryResponse, ConversationHistoryWords, ReactionChips, ReactionChipsWords,
+    ReplyFeedback, UsageFigures, UsageLine, UsageLineWords, conversation_group, conversation_time, usage_count,
+    usage_speed, usage_time, word_count,
+};
 pub use chip::{Chip, ChipTone, TagChips};
 pub use chip_bar::{ChipBar, ChipBarWords};
 pub use choice::{
@@ -189,6 +199,7 @@ pub use panes::{
 };
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
 pub use problem::{Problem, ProblemTone, ProblemWords};
+pub use progress::{Check, CheckList, CheckStatus, Progress, check_tree, worst_status};
 pub use run_timeline::{
     RunTimeline, RunTimelineResponse, RunTimelineWords, TimelineLane, TimelineRun, format_shift, timeline_ticks,
 };

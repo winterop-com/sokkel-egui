@@ -23,6 +23,9 @@ pub struct DownloadButtonWords {
     pub download: String,
     /// What a running download says, given how many of how many parts are in: `{count}` and `{total}`.
     pub progress: String,
+    /// What a running download with a share and no count says: `{percent}` is the share as
+    /// `format_percent` writes it, as the web's `share`; a pull waiting its turn says `Queued`.
+    pub share: String,
     /// What a running download with no count and no share says.
     pub running: String,
     /// What a paused download says.
@@ -43,6 +46,7 @@ impl Default for DownloadButtonWords {
         Self {
             download: "Download".into(),
             progress: "{count} of {total}".into(),
+            share: "{percent}".into(),
             running: "Downloading".into(),
             paused: "Paused".into(),
             pause: "Pause the download".into(),
@@ -277,7 +281,7 @@ impl DownloadButton {
                         .replace("{count}", &count.to_string())
                         .replace("{total}", &total.to_string())
                 } else if let Some(value) = self.value {
-                    format_percent(value)
+                    self.words.share.replace("{percent}", &format_percent(value))
                 } else {
                     self.words.running.clone()
                 };

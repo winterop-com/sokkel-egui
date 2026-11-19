@@ -2795,9 +2795,12 @@ dependencies = [
 name = "models"
 version = "0.1.0"
 dependencies = [
+ "eframe",
+ "egui_kittest",
  "serde",
  "serde_json",
  "sokkel-egui",
+ "sokkel-egui-charts",
 ]
 
 [[package]]

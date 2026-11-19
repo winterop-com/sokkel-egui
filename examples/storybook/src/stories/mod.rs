@@ -6,6 +6,7 @@ use sokkel_egui::{TextRole, tokens};
 
 mod chart_kinds;
 mod charts;
+mod chat;
 mod dhis2;
 mod display;
 mod fhir;
@@ -22,6 +23,7 @@ mod page;
 mod parts;
 mod players;
 mod primitives;
+mod runner;
 pub mod settings;
 mod table;
 mod themes;
@@ -647,6 +649,71 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Rail collapsed",
         doc: "A rail collapsed to its icons, as a video's page asks: each count a round badge at its icon's corner, a channel's color as a dot in its icon's place; beside it the same rail open.",
         show: watching::rail_collapsed,
+    },
+    Story {
+        path: "Primitives/Chat/Bubble",
+        doc: "A message's words in a bubble, after sokkel-ui's Bubble: the person's question at the row's end on the secondary ground with its reactions and the add button under it, then the default and muted grounds.",
+        show: chat::bubble,
+    },
+    Story {
+        path: "Patterns/Usage line",
+        doc: "What an answer cost and how fast it came, in one quiet line under it: the tokens in and out, the time to the first token, the rate and how long it took, the figures in the text's ink and their units muted; still coming, and stopped at its limit.",
+        show: chat::usage_line,
+    },
+    Story {
+        path: "Patterns/Assistant reply",
+        doc: "The assistant's side of a turn in a card: the model's mark and name, the answer in markdown with its code colored, its usage line, and the foot with the versions, Copy, Try again and the feedback; streaming with nothing written yet, and failed.",
+        show: chat::assistant_reply,
+    },
+    Story {
+        path: "Patterns/Answer column",
+        doc: "One model's answer beside the others' in a comparison: the model over its rounding and size, the state as a chip, Copy, Stop, Run again and Remove, the thinking folded behind a line counting its words, the answer, and the usage line at its foot.",
+        show: chat::answer_column,
+    },
+    Story {
+        path: "Patterns/Composer",
+        doc: "Where a message to an assistant is written, after sokkel-design's composer: inline as a pill with a model's select, opened into the box by a long question while an answer streams (Stop in Send's place), stacked with files waiting to go, and shut.",
+        show: chat::composer,
+    },
+    Story {
+        path: "Patterns/Conversation history",
+        doc: "The conversations beside a chat, newest first under Pinned, Today and Earlier, each with its time (the hour today, the day this year, the date before), the current one marked; each row's menu pins, renames in place and deletes.",
+        show: chat::conversation_history,
+    },
+    Story {
+        path: "Patterns/Chat",
+        doc: "A conversation with a model beside the conversations: the header, the question and its reactions, the reply with its code and usage, and the inline composer at the foot, the messages scrolled to their end.",
+        show: chat::chat,
+    },
+    Story {
+        path: "Primitives/Display/Progress",
+        doc: "How far something has come, after sokkel-ui's Progress: its label and its share on one line over the track, quiet for a line of facts, small in a table's cell, never 0% once begun nor 100% before the end.",
+        show: runner::progress,
+    },
+    Story {
+        path: "Patterns/Check list",
+        doc: "A health report, after sokkel-ui's CheckList: each check's verdict as a dot, what it found and a hint when it needs attention; a check with checks under it wears the worst and starts open when it is not ok.",
+        show: runner::check_list,
+    },
+    Story {
+        path: "Patterns/Stat state",
+        doc: "A stat tile whose value is a state's chip, as the runner's State tile beside its numbers.",
+        show: runner::stat_chip,
+    },
+    Story {
+        path: "Primitives/Inputs/Select quiet",
+        doc: "The small select, the body's words in a control-sm trigger, and the quiet one, a ghost trigger in the action's words, as a composer's model.",
+        show: runner::select_quiet,
+    },
+    Story {
+        path: "Patterns/Data table cells",
+        doc: "A table's quiet badge in the code face and a cell the app draws itself (a pull's button), as the models' library and discover tables have them.",
+        show: runner::table_cells,
+    },
+    Story {
+        path: "Charts/Treemap",
+        doc: "Rows sized by a figure in nested rectangles, by source, then format, then model, squarified, after the web's treemap.",
+        show: runner::treemap,
     },
 ];
 

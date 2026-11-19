@@ -18,8 +18,9 @@ pub enum FilterType {
     Date,
 }
 
-/// How a filter compares.
+/// How a filter compares, named as the web names it (`atMost`) where it is kept.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum FilterOperator {
     Is,
     IsNot,
@@ -291,16 +292,25 @@ pub fn same_filters(a: &[Filter], b: &[Filter]) -> bool {
 }
 
 /// How a listing is set up, as sokkel-ui's `ListViewState`: its filters, its sort (a column's id
-/// and whether it rises) and its hidden columns' ids.
+/// and whether it rises), its hidden columns' ids, the columns' order (a column not named follows
+/// in its own order) and the widths they were dragged to. Kept as the web keeps it: the sort as
+/// `{ column, direction }` or null.
 #[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct ListViewState {
     pub filters: Vec<Filter>,
+    #[serde(with = "view_sort")]
     pub sort: Option<(String, bool)>,
     pub hidden: Vec<String>,
+    #[serde(default)]
+    pub order: Vec<String>,
+    #[serde(default)]
+    pub widths: std::collections::BTreeMap<String, f32>,
 }
 
 impl ListViewState {
-    /// Whether the listing now differs from this saved setup, as the web's `viewChanges` finds any.
+    /// Whether the listing now differs from this saved setup, as the web's `viewChanges` finds any:
+    /// its complete filters in any order, its sort, its hidden columns in any order, the order, and
+    /// the widths to the pixel.
     pub fn differs(&self, now: &ListViewState) -> bool {
         let hidden = |s: &ListViewState| {
             let mut h = s.hidden.clone();
@@ -308,7 +318,42 @@ impl ListViewState {
             h.dedup();
             h
         };
-        !same_filters(&self.filters, &now.filters) || self.sort != now.sort || hidden(self) != hidden(now)
+        let widths = |s: &ListViewState| -> Vec<(String, i64)> {
+            s.widths
+                .iter()
+                .map(|(id, width)| (id.clone(), width.round() as i64))
+                .collect()
+        };
+        !same_filters(&self.filters, &now.filters)
+            || self.sort != now.sort
+            || hidden(self) != hidden(now)
+            || self.order != now.order
+            || widths(self) != widths(now)
+    }
+}
+
+/// A view's sort as the web keeps it: `{ "column": id, "direction": "asc" | "desc" }`, or null.
+mod view_sort {
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    #[derive(Serialize, Deserialize)]
+    struct ViewSort {
+        column: String,
+        direction: String,
+    }
+
+    pub fn serialize<S: Serializer>(sort: &Option<(String, bool)>, serializer: S) -> Result<S::Ok, S::Error> {
+        sort.as_ref()
+            .map(|(column, rises)| ViewSort {
+                column: column.clone(),
+                direction: if *rises { "asc" } else { "desc" }.to_owned(),
+            })
+            .serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<(String, bool)>, D::Error> {
+        let sort = Option::<ViewSort>::deserialize(deserializer)?;
+        Ok(sort.map(|one| (one.column, one.direction != "desc")))
     }
 }
 

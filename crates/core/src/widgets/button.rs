@@ -403,6 +403,8 @@ pub struct IconButton {
     outline: bool,
     destructive: bool,
     on_picture: bool,
+    pressed: Option<bool>,
+    enabled: bool,
 }
 
 impl IconButton {
@@ -416,7 +418,22 @@ impl IconButton {
             outline: false,
             destructive: false,
             on_picture: false,
+            pressed: None,
+            enabled: true,
         }
+    }
+
+    /// On or off, for a button that toggles: on, the `muted` ground and the foreground ink, as the
+    /// web's `pressed`.
+    pub fn pressed(mut self, pressed: bool) -> Self {
+        self.pressed = Some(pressed);
+        self
+    }
+
+    /// Shut: drawn at the disabled opacity, taking no press.
+    pub fn enabled(mut self, enabled: bool) -> Self {
+        self.enabled = enabled;
+        self
     }
 
     /// Drawn over a picture: the icon in `terminal-muted`, and under the pointer in
@@ -478,9 +495,18 @@ impl egui::Widget for IconButton {
             let r = t.radius("control");
             egui::CornerRadius::same(r.nw.min(12))
         };
-        let (rect, response) = ui.allocate_exact_size(egui::vec2(side, side), egui::Sense::click());
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.label));
-        let hot = response.hovered();
+        let sense = if self.enabled {
+            egui::Sense::click()
+        } else {
+            egui::Sense::hover()
+        };
+        let (rect, response) = ui.allocate_exact_size(egui::vec2(side, side), sense);
+        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, self.enabled, &self.label));
+        let hot = response.hovered() && self.enabled;
+        let on = self.pressed == Some(true);
+        if on {
+            ui.painter().rect_filled(rect, radius, t.color("muted"));
+        }
         if self.outline {
             let (fill, border) = if t.dark {
                 (t.color_at("input", 0.3), t.color("input"))
@@ -508,9 +534,10 @@ impl egui::Widget for IconButton {
             _ if self.on_picture => t.color("terminal-muted"),
             (true, true) => t.color("critical-ink"),
             (true, false) => t.color("foreground"),
-            _ if self.outline => t.color("foreground"),
+            _ if self.outline || on => t.color("foreground"),
             _ => t.color("muted-foreground"),
         };
+        let ink = super::dim(ink, self.enabled);
         let glyph = self.glyph.unwrap_or(if self.xs { 12.0 } else { 16.0 });
         crate::icons::paint(ui.painter(), rect.center(), self.icon, glyph, ink);
         super::focus_ring(ui.painter(), &t, rect, radius, &response);

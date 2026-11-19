@@ -144,6 +144,7 @@ pub struct Select<'a> {
     dot_rows: Option<Vec<Vec<egui::Color32>>>,
     small: bool,
     bare: bool,
+    quiet: bool,
     codes: Option<Vec<String>>,
     placeholder: Option<String>,
 }
@@ -166,6 +167,7 @@ impl<'a> Select<'a> {
             dot_rows: None,
             small: false,
             bare: false,
+            quiet: false,
             codes: None,
             placeholder: None,
         }
@@ -184,9 +186,19 @@ impl<'a> Select<'a> {
         self
     }
 
-    /// The small size, as the web's `size="sm"`: `control-sm` tall, its words in the help role.
+    /// The small size, as the web's `size="sm"`: `control-sm` tall and otherwise as the default,
+    /// its words in the body's role (a bare select in a chip's frame keeps the help's).
     pub fn small(mut self, small: bool) -> Self {
         self.small = small;
+        self
+    }
+
+    /// The quiet trigger, as the web's `variant="quiet"`: a ghost button that shows the chosen
+    /// value, for a value picked in a bar or beside a heading: no ground or edge, `hover` under
+    /// the pointer and while open, its words in the action's role, 8 in at its start and 6 at its
+    /// end.
+    pub fn quiet(mut self, quiet: bool) -> Self {
+        self.quiet = quiet;
         self
     }
 
@@ -305,7 +317,13 @@ impl Widget for Select<'_> {
             &t,
             t.density(if self.small { "control-sm" } else { "control" }),
         );
-        let role = if self.small { TextRole::Help } else { TextRole::Body };
+        let role = if self.quiet {
+            TextRole::Action
+        } else if self.small && self.bare {
+            TextRole::Help
+        } else {
+            TextRole::Body
+        };
         // across the row it is given where that row asks it to fill (a setting's control under its words)
         let width = if ui.layout().main_justify {
             ui.available_width()
@@ -322,7 +340,11 @@ impl Widget for Select<'_> {
             Popup::open_id(ui.ctx(), popup_id);
         }
         let open = Popup::is_id_open(ui.ctx(), popup_id);
-        let radius = t.radius("control");
+        let radius = if self.small {
+            CornerRadius::from(t.radius("control").nw.min(10))
+        } else {
+            t.radius("control")
+        };
         let painter = ui.painter();
         let edge = if open || response.has_focus() {
             t.color("ring")
@@ -334,7 +356,11 @@ impl Widget for Select<'_> {
         } else {
             t.color("field")
         };
-        if self.bare {
+        if self.quiet {
+            if response.hovered() || open {
+                painter.rect_filled(rect, radius, t.color("hover"));
+            }
+        } else if self.bare {
             if ground != t.color("field") {
                 painter.rect_filled(rect, CornerRadius::ZERO, ground);
             }
@@ -368,11 +394,17 @@ impl Widget for Select<'_> {
                 swatches.get(*self.chosen).copied().flatten(),
             );
         }
-        let (pad, chevron) = if self.small { (8.0, 14.0) } else { (10.0, 16.0) };
+        let (pad, end, chevron) = if self.quiet {
+            (8.0, 6.0, 16.0)
+        } else if self.small && self.bare {
+            (8.0, 6.0, 14.0)
+        } else {
+            (10.0, 8.0, 16.0)
+        };
         let galley = WidgetText::from(role.rich(&t, current)).into_galley(
             ui,
             Some(TextWrapMode::Truncate),
-            rect.width() - 30.0 - pad - lead,
+            rect.width() - pad - lead - 6.0 - chevron - end,
             role.font(&t),
         );
         let label_width = galley.size().x;
@@ -398,12 +430,12 @@ impl Widget for Select<'_> {
         }
         icons::paint(
             painter,
-            pos2(rect.right() - pad - chevron / 2.0 + 2.0, rect.center().y),
+            pos2(rect.right() - end - chevron / 2.0, rect.center().y),
             Icon::ChevronDown,
             chevron,
             t.color("muted-foreground"),
         );
-        if !self.bare {
+        if !self.bare && !self.quiet {
             focus_ring(painter, &t, rect, radius, &response);
         }
 

@@ -8,9 +8,12 @@ publish.workspace = true
 
 [dependencies]
 sokkel-egui.workspace = true
+sokkel-egui-charts.workspace = true
+eframe.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 
 [dev-dependencies]
+egui_kittest.workspace = true
 # The web's numbers read back to the bit, as `tests/web.rs` compares them.
 serde_json = { workspace = true, features = ["float_roundtrip"] }

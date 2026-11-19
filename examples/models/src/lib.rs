@@ -9,6 +9,11 @@
 //! engines run on, held by hand.
 //!
 //! `tests/web.rs` holds each against the web's own modules, run under bun.
+//!
+//! The UI over it is the web's one to one: the frame with the rail, the top bar with the runner's
+//! menu, the status line, the palette, Settings and the questions (`workbench`), the library, a
+//! model, the disk, discover, the downloads and the runner (`screens`), and the chat with its
+//! settings panel and the comparison (`talk`). `tests/screens.rs` draws its screens.
 
 pub mod actions;
 pub mod app;
@@ -17,4 +22,9 @@ pub mod engine;
 pub mod js;
 pub mod pages;
 pub mod runtime;
+pub mod screens;
+pub mod talk;
 pub mod themes;
+pub mod workbench;
+
+pub use workbench::ModelsApp;

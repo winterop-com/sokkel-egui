@@ -481,7 +481,7 @@ impl Draw<'_> {
                 );
             }
             Block::Quote(Some(kind), inner) => self.callout(ui, *kind, inner),
-            Block::Code(_, code) => self.code(ui, code),
+            Block::Code(language, code) => self.code(ui, language, code),
             Block::Rule => {
                 let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), 1.0), Sense::hover());
                 ui.painter().rect_filled(rect, 0.0, t.color("border"));
@@ -631,7 +631,7 @@ impl Draw<'_> {
 
     /// Fenced code in the code face on the editor's ground, framed, scrolled sideways when wide,
     /// with a copy button over its corner under the pointer.
-    fn code(&mut self, ui: &mut Ui, code: &str) {
+    fn code(&mut self, ui: &mut Ui, language: &str, code: &str) {
         let t = self.t.clone();
         self.count += 1;
         let id = self.base.with(("code", self.count));
@@ -647,15 +647,35 @@ impl Draw<'_> {
                 ui.set_min_width(ui.available_width());
                 egui::ScrollArea::horizontal().id_salt(id).show(ui, |ui| {
                     let text = if code.is_empty() { " " } else { code };
-                    let job = LayoutJob::single_section(
-                        text.to_owned(),
-                        egui::TextFormat {
-                            font_id: font.clone(),
-                            color: t.color("foreground"),
-                            line_height: Some(self.metrics.relaxed),
-                            ..Default::default()
-                        },
-                    );
+                    let format = |color: Color32| egui::TextFormat {
+                        font_id: font.clone(),
+                        color,
+                        line_height: Some(self.metrics.relaxed),
+                        ..Default::default()
+                    };
+                    // a language the fence names is colored as the editor colors it
+                    let tokens = super::code_editor::fence_language(language)
+                        .map(|language| super::code_editor::highlight_tokens(language, text))
+                        .unwrap_or_default();
+                    let mut job = LayoutJob::default();
+                    let mut at = 0;
+                    for token in tokens {
+                        if token.from < at || token.to > text.len() {
+                            continue;
+                        }
+                        if token.from > at {
+                            job.append(&text[at..token.from], 0.0, format(t.color("foreground")));
+                        }
+                        let ink = token
+                            .kind
+                            .ink()
+                            .map_or_else(|| t.color("foreground"), |key| t.color(key));
+                        job.append(&text[token.from..token.to], 0.0, format(ink));
+                        at = token.to;
+                    }
+                    if at < text.len() {
+                        job.append(&text[at..], 0.0, format(t.color("foreground")));
+                    }
                     let galley = ui.painter().layout_job(job);
                     let (rect, _) = ui.allocate_exact_size(galley.size(), Sense::hover());
                     ui.painter().galley(rect.min, galley, t.color("foreground"));

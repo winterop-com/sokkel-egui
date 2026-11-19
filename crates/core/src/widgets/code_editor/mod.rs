@@ -33,6 +33,26 @@ pub use highlight::{Kind as CodeTag, Token as CodeToken};
 use document::ReadDocument;
 use edit::{Fold, Offsets, WikiLink};
 use highlight::{Kind, Token};
+
+/// The tokens of `text` in `language`, for code drawn outside an editor (a markdown code block).
+pub(crate) fn highlight_tokens(language: CodeLanguage, text: &str) -> Vec<Token> {
+    highlight::tokens(language, text)
+}
+
+/// The language a fenced code block's info string names (`jq`, `sh`, `json`), if one is read.
+pub(crate) fn fence_language(info: &str) -> Option<CodeLanguage> {
+    let name = info.split_whitespace().next().unwrap_or("").to_ascii_lowercase();
+    Some(match name.as_str() {
+        "json" | "jsonc" => CodeLanguage::Json,
+        "yaml" | "yml" => CodeLanguage::Yaml,
+        "jq" => CodeLanguage::Jq,
+        "md" | "markdown" => CodeLanguage::Markdown,
+        "sql" => CodeLanguage::Sql,
+        "sh" | "bash" | "shell" | "zsh" | "console" => CodeLanguage::Shell,
+        "jinja" | "j2" => CodeLanguage::Jinja,
+        _ => return None,
+    })
+}
 use popup::{Offer, SearchBar, Tip};
 
 /// The language a document is read and colored in.

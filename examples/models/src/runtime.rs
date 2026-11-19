@@ -77,6 +77,11 @@ impl<B> Runtime<B> {
     pub fn next_due(&self) -> Option<i64> {
         self.timers.iter().map(|timer| timer.at).min()
     }
+
+    /// What a promise settled with, once it has: the app reads its answer as a page's `then` would.
+    pub fn settled(&self, promise: Promise) -> Option<&Outcome> {
+        self.promises.get(promise.0).and_then(|slot| slot.settled.as_ref())
+    }
 }
 
 /// What owns a runtime: the app its engines run in.

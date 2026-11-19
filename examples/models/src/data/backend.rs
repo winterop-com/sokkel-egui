@@ -13,7 +13,7 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use serde::{Deserialize, Serialize};
-use sokkel_egui::{Filter, FilterOperator};
+use sokkel_egui::{Filter, FilterOperator, ListViewState};
 
 use super::model::{
     Comparison, Conversation, Download, Level, Loaded, LogEvent, LogSource, Model, Prefs, Runner, default_prefs,
@@ -53,57 +53,12 @@ row!(
     LibraryView
 );
 
-/// A filter as a saved view keeps it, its operator as the web names it.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct ViewFilter {
-    pub field: String,
-    pub operator: String,
-    pub values: Vec<String>,
-}
-
-impl ViewFilter {
-    /// The filter the library's matching reads.
-    pub fn filter(&self) -> Option<Filter> {
-        let operator = match self.operator.as_str() {
-            "is" => FilterOperator::Is,
-            "isNot" => FilterOperator::IsNot,
-            "contains" => FilterOperator::Contains,
-            "oneOf" => FilterOperator::OneOf,
-            "noneOf" => FilterOperator::NoneOf,
-            "between" => FilterOperator::Between,
-            "atLeast" => FilterOperator::AtLeast,
-            "atMost" => FilterOperator::AtMost,
-            "after" => FilterOperator::After,
-            "before" => FilterOperator::Before,
-            _ => return None,
-        };
-        Some(Filter::new(self.field.clone(), operator, self.values.clone()))
-    }
-}
-
-/// A view's sort: a column and its direction.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct ViewSort {
-    pub column: String,
-    pub direction: String,
-}
-
-/// How a listing is set up, as sokkel-ui's `ListViewState`.
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
-pub struct ViewState {
-    pub filters: Vec<ViewFilter>,
-    pub sort: Option<ViewSort>,
-    pub hidden: Vec<String>,
-    pub order: Vec<String>,
-    pub widths: serde_json::Map<String, serde_json::Value>,
-}
-
 /// A view of the library: its filters, sort and columns under a name.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LibraryView {
     pub id: String,
     pub name: String,
-    pub state: ViewState,
+    pub state: ListViewState,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub locked: Option<bool>,
 }
@@ -114,37 +69,26 @@ pub fn seed_views() -> Vec<LibraryView> {
         LibraryView {
             id: "all".to_owned(),
             name: "All models".to_owned(),
-            state: ViewState::default(),
+            state: ListViewState::default(),
             locked: Some(true),
         },
         LibraryView {
             id: "small".to_owned(),
             name: "Fits a laptop".to_owned(),
-            state: ViewState {
-                filters: vec![ViewFilter {
-                    field: "size".to_owned(),
-                    operator: "atMost".to_owned(),
-                    values: vec!["6".to_owned()],
-                }],
-                sort: Some(ViewSort {
-                    column: "size".to_owned(),
-                    direction: "asc".to_owned(),
-                }),
-                ..ViewState::default()
+            state: ListViewState {
+                filters: vec![Filter::new("size", FilterOperator::AtMost, ["6"])],
+                sort: Some(("size".to_owned(), true)),
+                ..ListViewState::default()
             },
             locked: None,
         },
         LibraryView {
             id: "code".to_owned(),
             name: "For code".to_owned(),
-            state: ViewState {
-                filters: vec![ViewFilter {
-                    field: "capabilities".to_owned(),
-                    operator: "oneOf".to_owned(),
-                    values: vec!["code".to_owned()],
-                }],
+            state: ListViewState {
+                filters: vec![Filter::new("capabilities", FilterOperator::OneOf, ["code"])],
                 hidden: vec!["context".to_owned()],
-                ..ViewState::default()
+                ..ListViewState::default()
             },
             locked: None,
         },

@@ -22,6 +22,8 @@ pub struct Stat {
     emphasis: bool,
     large: bool,
     min_height: f32,
+    /// A state as a chip in place of the number, as the web's `value={<StatusChip />}`.
+    chip: Option<(String, crate::ChipTone)>,
 }
 
 impl Stat {
@@ -37,7 +39,15 @@ impl Stat {
             emphasis: false,
             large: false,
             min_height: 0.0,
+            chip: None,
         }
+    }
+
+    /// A state as a chip where the number stands, in the number's line, as a tile whose value is a
+    /// `StatusChip`.
+    pub fn chip(mut self, label: impl Into<String>, tone: crate::ChipTone) -> Self {
+        self.chip = Some((label.into(), tone));
+        self
     }
 
     /// A dot before the label in `color`, such as a state's.
@@ -122,6 +132,19 @@ impl Stat {
         painter.galley(pos2(x + lead, y), label.clone(), t.color("foreground"));
         y += label.size().y + 8.0;
         let line = baseline(&value);
+        if let Some((label, tone)) = &self.chip {
+            // the chip on the number's line, sitting where the figures would
+            let chip = crate::Chip::new(label).tone(*tone);
+            let at = egui::Rect::from_min_size(pos2(x, y + value.size().y - 20.0 - 2.0), vec2(inner, 20.0));
+            ui.scope_builder(egui::UiBuilder::new().max_rect(at), |ui| ui.add(chip));
+            y += value.size().y;
+            if let Some(note) = note {
+                y += 4.0;
+                ui.painter().galley(pos2(x, y), note, t.color("muted-foreground"));
+            }
+            super::focus_ring(ui.painter(), &t, rect, radius, &response);
+            return response;
+        }
         painter.galley(pos2(x, y), value.clone(), t.color("card-foreground"));
         if let Some(unit) = unit {
             painter.galley(

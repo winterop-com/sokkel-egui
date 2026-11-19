@@ -63,6 +63,7 @@ pub fn seed_views() -> Vec<SavedView> {
                 filters: vec![Filter::new("status", FilterOperator::OneOf, ["failed"])],
                 sort: Some(("date".into(), false)),
                 hidden: Vec::new(),
+                ..ListViewState::default()
             },
             false,
         ),
@@ -73,6 +74,7 @@ pub fn seed_views() -> Vec<SavedView> {
                 filters: vec![Filter::new("status", FilterOperator::OneOf, ["refunded"])],
                 sort: None,
                 hidden: vec!["kind".into()],
+                ..ListViewState::default()
             },
             false,
         ),
@@ -86,6 +88,7 @@ pub fn seed_views() -> Vec<SavedView> {
                 ],
                 sort: Some(("amount".into(), false)),
                 hidden: Vec::new(),
+                ..ListViewState::default()
             },
             false,
         ),
@@ -124,6 +127,7 @@ impl AnalyticsApp {
             filters: self.invoices.filters.clone(),
             sort: state.sort.map(|(c, up)| (COLUMNS[c].to_owned(), up)),
             hidden: state.hidden.iter().map(|c| COLUMNS[*c].to_owned()).collect(),
+            ..ListViewState::default()
         }
     }
 

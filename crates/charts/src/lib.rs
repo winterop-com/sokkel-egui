@@ -15,6 +15,7 @@ use std::sync::Arc;
 pub mod data;
 mod kinds;
 mod panel;
+mod treemap;
 pub use kinds::{
     Chart, ChartKind, ChartPanel, ChartSpec, ChartWords, LegendItem, Stack, chart_legend, mix_oklab, token_color,
 };
@@ -22,6 +23,7 @@ pub use panel::{
     BarGauge, BarPanel, BoxPlotPanel, DonutPanel, FunnelPanel, GaugePanel, HeatmapPanel, LegendStat, LegendWords,
     PanelWords, Spread, TimeSeriesPanel, WaterfallPanel, quantile, spread_of,
 };
+pub use treemap::{TreeGroup, TreemapPanel, squarify, tree_of};
 
 use sokkel_egui::{TextRole, Tokens, tokens};
 

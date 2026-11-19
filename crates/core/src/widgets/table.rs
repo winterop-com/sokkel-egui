@@ -243,6 +243,14 @@ pub enum Cell {
     /// Words in runs, each in its own ink token and face, as a cell of spans: a muted formula with
     /// its joining word in the faint ink, or a rule with its operator in the code face.
     Runs(Vec<CellRun>),
+    /// A quiet badge in the code face, as the web's `Badge variant="secondary"` with `font-mono`:
+    /// a model's format.
+    Badge(String),
+    /// A cell the app draws itself, with `DataTable::slot`, such as a download's button or a
+    /// progress bar; `words` is what it says for the sort, the search and a stacked line.
+    Slot {
+        words: String,
+    },
     /// A figure written as `text` and sorted by `value`, as a column's `sortValue` sorts by the
     /// number rather than the words: `144 ms`.
     Number {
@@ -310,6 +318,7 @@ impl Cell {
             | Cell::Mono(text)
             | Cell::MutedCode(text)
             | Cell::Code(text)
+            | Cell::Badge(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
             Cell::Lines { title, .. } => title.clone(),
@@ -325,6 +334,7 @@ impl Cell {
             Cell::Relative { at, now } => super::relative_time(at - now),
             Cell::Clock { clock, .. } => clock.clone(),
             Cell::Runs(runs) => runs_text(runs),
+            Cell::Slot { words } => words.clone(),
             Cell::Check(_) | Cell::Switch { .. } | Cell::Button { .. } | Cell::Trend(..) | Cell::Empty => String::new(),
         }
     }
@@ -339,6 +349,7 @@ impl Cell {
             | Cell::Mono(text)
             | Cell::MutedCode(text)
             | Cell::Code(text)
+            | Cell::Badge(text)
             | Cell::Chip(text, _)
             | Cell::Person(text) => text.clone(),
             Cell::Lines { title, .. } => title.clone(),
@@ -360,6 +371,7 @@ impl Cell {
             Cell::Number { value, .. } => format!("{:024.6}", value + 1e12),
             Cell::Marked { text, .. } | Cell::Swatch { text, .. } => text.clone(),
             Cell::Runs(runs) => runs_text(runs),
+            Cell::Slot { words } => words.clone(),
             Cell::Empty => String::new(),
         }
     }
@@ -559,7 +571,16 @@ pub struct DataTable<'a> {
     fits: bool,
     cards: Option<Cards<'a>>,
     actions_hover: bool,
+    bulk: Option<Bulk<'a>>,
+    slot: Option<Slot<'a>>,
 }
+
+/// How the app draws a `Cell::Slot`: in a child of the cell's room, given the row's index in the
+/// rows given and the column's.
+type Slot<'a> = Box<dyn Fn(&mut Ui, usize, usize) + 'a>;
+
+/// What the selection bar offers for the rows chosen, by their indexes in the rows given.
+type Bulk<'a> = Box<dyn FnOnce(&mut Ui, &BTreeSet<usize>) + 'a>;
 
 /// What a row opens into under it, drawn for its index in the rows given.
 pub type RowDetail<'a> = Box<dyn Fn(usize, &mut Ui) + 'a>;
@@ -627,7 +648,24 @@ impl<'a> DataTable<'a> {
             fits: false,
             cards: None,
             actions_hover: false,
+            bulk: None,
+            slot: None,
         }
+    }
+
+    /// Draws each `Cell::Slot` with `slot`, in a child of the cell's room laid from its start and
+    /// centered down it, given the row's index in the rows given and the column's: a download's
+    /// button, a progress bar.
+    pub fn slot(mut self, slot: impl Fn(&mut Ui, usize, usize) + 'a) -> Self {
+        self.slot = Some(Box::new(slot));
+        self
+    }
+
+    /// What the selection bar offers for the rows chosen, after its Clear, as the web's
+    /// `bulkActions`: drawn with the chosen rows' indexes in the rows given.
+    pub fn bulk(mut self, bulk: impl FnOnce(&mut Ui, &BTreeSet<usize>) + 'a) -> Self {
+        self.bulk = Some(Box::new(bulk));
+        self
     }
 
     /// The rows as cards in a grid too, as the web's `card` with `view` and `onViewChange`: each
@@ -1169,9 +1207,7 @@ impl<'a> DataTable<'a> {
                 .layout(egui::Layout::right_to_left(egui::Align::Center)),
         );
         child.spacing_mut().item_spacing.x = 16.0;
-        if self.cards.is_some() {
-            self.view_toggle(&mut child, t);
-        }
+        // from the end: the columns' menu, then the view's toggle, then the sort, as the web's bar
         let gridded = self.gridded();
         if !stacked && !gridded && self.columns.len() > 1 {
             let trigger = child.add(super::IconButton::new(Icon::Columns3, &self.words.columns));
@@ -1219,6 +1255,9 @@ impl<'a> DataTable<'a> {
                         }
                     }
                 });
+        }
+        if self.cards.is_some() {
+            self.view_toggle(&mut child, t);
         }
         let sortable: Vec<usize> = (0..self.columns.len())
             .filter(|c| self.columns[*c].sortable && (stacked || gridded))
@@ -1918,6 +1957,12 @@ impl<'a> DataTable<'a> {
                 {
                     self.state.selected.clear();
                 }
+                if let Some(bulk) = self.bulk.take()
+                    && !self.state.selected.is_empty()
+                {
+                    let chosen = self.state.selected.clone();
+                    bulk(ui, &chosen);
+                }
             });
             ui.add_space(6.0);
         }
@@ -2451,6 +2496,15 @@ impl<'a> DataTable<'a> {
                                         );
                                     }
                                 }
+                            } else if let (Cell::Slot { .. }, Some(slot)) = (&self.rows[index][c], &self.slot) {
+                                let mut child = ui.new_child(
+                                    egui::UiBuilder::new()
+                                        .max_rect(cell)
+                                        .id_salt(("slot", index, c))
+                                        .layout(egui::Layout::left_to_right(egui::Align::Center)),
+                                );
+                                child.set_clip_rect(cell.intersect(ui.clip_rect()));
+                                slot(&mut child, index, c);
                             } else if let Some(toggled) = paint_cell(
                                 ui,
                                 &t,
@@ -2982,6 +3036,9 @@ fn paint_cell(
             ui.painter().galley(pos2(rect.left(), y + height), second, second_ink);
         }
         Cell::Mono(label) => text(ui, code_rich(t, label, TextRole::Help), t.color("foreground")),
+        Cell::Badge(label) => {
+            paint_badge(ui, t, label, pos2(rect.left(), rect.center().y));
+        }
         Cell::MutedCode(label) => text(ui, code_rich(t, label, TextRole::Help), t.color("muted-foreground")),
         Cell::Marked { text: label, dot } => {
             // a 10 dot, 8 before the code, as the web's `Dot` and `gap-2`
@@ -3106,7 +3163,7 @@ fn paint_cell(
             );
             super::sparkline(ui.painter(), place, values, *ink);
         }
-        Cell::Empty => {}
+        Cell::Slot { .. } | Cell::Empty => {}
     }
     None
 }
@@ -3187,6 +3244,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Chip(label, tone) => super::chip::paint_at(ui, at.x, at.y, label, *tone),
         Cell::Tags(tags) => paint_tags(ui, tags, at, room, false),
         Cell::OutlineTags(tags) => paint_tags(ui, tags, at, room, true),
+        Cell::Badge(label) => paint_badge(ui, t, label, at),
         Cell::NamedCode { name: label, .. }
         | Cell::NameThenCode { name: label, .. }
         | Cell::IconName { name: label, .. }
@@ -3233,7 +3291,12 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
             at.x,
             room,
         ),
-        Cell::Check(_) | Cell::Switch { .. } | Cell::Button { .. } | Cell::Trend(..) | Cell::Empty => 0.0,
+        Cell::Check(_)
+        | Cell::Switch { .. }
+        | Cell::Button { .. }
+        | Cell::Trend(..)
+        | Cell::Slot { .. }
+        | Cell::Empty => 0.0,
     }
 }
 
@@ -3310,6 +3373,27 @@ pub(crate) fn thousands(count: usize) -> String {
 }
 
 /// A code in the mono face at `role`'s size, on lines as tall as a cell's words.
+/// A quiet badge in the code face from `at` (on its middle), 20 tall and 6 across: the width it took.
+fn paint_badge(ui: &Ui, t: &crate::Tokens, label: &str, at: egui::Pos2) -> f32 {
+    let role = TextRole::Badge;
+    let font = crate::mono_font(
+        ui.ctx(),
+        crate::mono_size(t, role.font(t).size),
+        t.text(role.key()).weight,
+    );
+    let ink = t.color("secondary-foreground");
+    let galley = ui.painter().layout_no_wrap(label.to_owned(), font, ink);
+    let rect = Rect::from_min_size(pos2(at.x, at.y - 10.0), vec2(galley.size().x + 12.0, 20.0));
+    ui.painter().rect_filled(rect, t.radius("chip"), t.color("secondary"));
+    let width = rect.width();
+    ui.painter().galley(
+        pos2(rect.left() + 6.0, rect.center().y - galley.size().y / 2.0),
+        galley,
+        ink,
+    );
+    width
+}
+
 fn code_rich(t: &crate::Tokens, text: &str, role: TextRole) -> egui::RichText {
     egui::RichText::new(text)
         .font(egui::FontId::monospace(role.font(t).size))

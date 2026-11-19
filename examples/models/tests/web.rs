@@ -832,9 +832,8 @@ fn pages_look(backend: &Backend) -> Json {
             .expect("library")
             .iter()
             .map(|ask| {
-                let filters: Vec<models::data::backend::ViewFilter> =
+                let filters: Vec<sokkel_egui::Filter> =
                     serde_json::from_value(ask["filters"].clone()).expect("filters");
-                let filters: Vec<_> = filters.iter().filter_map(|one| one.filter()).collect();
                 let rows = library::shown(models, &filters, text(&ask["query"]));
                 json!({"ids": rows.iter().map(|one| one.id.clone()).collect::<Vec<_>>(), "total": library::size_total(&rows)})
             })

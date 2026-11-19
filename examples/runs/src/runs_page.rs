@@ -30,6 +30,7 @@ impl RunsApp {
                 .sort
                 .map(|(column, ascending)| (COLUMN_IDS[column].to_owned(), ascending)),
             hidden: state.hidden.iter().map(|c| COLUMN_IDS[*c].to_owned()).collect(),
+            ..ListViewState::default()
         }
     }
 
