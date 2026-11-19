@@ -1,0 +1,3729 @@
+{
+ "now": 1795084200000,
+ "random": 20261119,
+ "origin": "https://example.org",
+ "pathname": "/fhir/",
+ "issuePaths": [
+  [
+   "Patient",
+   [
+    "name",
+    0,
+    "family"
+   ]
+  ],
+  [
+   "Patient",
+   null
+  ],
+  [
+   "Patient",
+   []
+  ],
+  [
+   "Library",
+   [
+    "content",
+    1,
+    "data"
+   ]
+  ],
+  [
+   "Observation",
+   [
+    0
+   ]
+  ]
+ ],
+ "outcomeIssues": [
+  {
+   "severity": "error",
+   "code": "value",
+   "path": [
+    "name",
+    0
+   ],
+   "message": "Bad."
+  },
+  {
+   "severity": "warning",
+   "code": "business-rule",
+   "message": "Hm."
+  }
+ ],
+ "refusals": [
+  [
+   422,
+   [
+    {
+     "severity": "warning",
+     "code": "x",
+     "message": "First warning."
+    },
+    {
+     "severity": "error",
+     "code": "y",
+     "message": "The error."
+    }
+   ]
+  ],
+  [
+   409,
+   [
+    {
+     "severity": "information",
+     "code": "z",
+     "message": "Only note."
+    }
+   ]
+  ],
+  [
+   500,
+   []
+  ]
+ ],
+ "concepts": [
+  {
+   "text": "T",
+   "coding": [
+    {
+     "display": "D",
+     "code": "C"
+    }
+   ]
+  },
+  {
+   "coding": [
+    {
+     "display": "D",
+     "code": "C"
+    }
+   ]
+  },
+  {
+   "coding": [
+    {
+     "code": "C"
+    }
+   ]
+  },
+  {
+   "display": "Plain"
+  },
+  {
+   "code": "c"
+  },
+  {},
+  null,
+  "x",
+  {
+   "coding": []
+  }
+ ],
+ "names": [
+  [
+   {
+    "text": "Whole"
+   }
+  ],
+  [
+   {
+    "given": [
+     "A",
+     "B"
+    ],
+    "family": "C",
+    "prefix": [
+     "Dr."
+    ]
+   }
+  ],
+  [
+   {
+    "family": ""
+   }
+  ],
+  [],
+  null,
+  [
+   {
+    "given": [
+     ""
+    ],
+    "family": "Z"
+   }
+  ]
+ ],
+ "quantities": [
+  {
+   "value": 72,
+   "unit": "/min"
+  },
+  {
+   "value": 81.4,
+   "code": "kg"
+  },
+  {
+   "value": 3
+  },
+  {
+   "unit": "kg"
+  },
+  null,
+  {
+   "value": 0.5,
+   "unit": ""
+  }
+ ],
+ "references": [
+  {
+   "reference": "Patient/pat-001",
+   "display": "Solveig Brekke"
+  },
+  {
+   "reference": "Patient/pat-001"
+  },
+  {},
+  null
+ ],
+ "texts": [
+  "",
+  "library A",
+  "Tromsø og Sjøgata",
+  "line\nbreak \"quoted\" ’"
+ ],
+ "patterns": [
+  [
+   "id",
+   "pat-001"
+  ],
+  [
+   "id",
+   "pat 001"
+  ],
+  [
+   "id",
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ],
+  [
+   "id",
+   ""
+  ],
+  [
+   "date",
+   "2026"
+  ],
+  [
+   "date",
+   "2026-03"
+  ],
+  [
+   "date",
+   "2026-3"
+  ],
+  [
+   "dateTime",
+   "2026-01-12T09:10:00Z"
+  ],
+  [
+   "dateTime",
+   "2026-01-12T09:10Z"
+  ],
+  [
+   "dateTime",
+   "2026-01-12T09:10"
+  ],
+  [
+   "dateTime",
+   "2026-01-12T09:10:00.5+01:00"
+  ],
+  [
+   "instant",
+   "2026-01-12T09:10:00Z"
+  ],
+  [
+   "instant",
+   "2026-01-12T09:10Z"
+  ],
+  [
+   "instant",
+   "2026-01-12"
+  ],
+  [
+   "string",
+   "anything"
+  ],
+  [
+   "date",
+   "2026-01-12\n"
+  ]
+ ],
+ "validations": [
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-001"
+  },
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-001",
+   "set": {
+    "gender": "woman"
+   }
+  },
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-001",
+   "set": {
+    "birthDate": "1958-3-14"
+   }
+  },
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-001",
+   "set": {
+    "birthDate": ""
+   }
+  },
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-001",
+   "set": {
+    "name": {
+     "family": "Brekke"
+    }
+   }
+  },
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-001",
+   "set": {
+    "name": []
+   }
+  },
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-001",
+   "set": {
+    "name": [
+     {
+      "family": "Brekke",
+      "given": "Solveig"
+     }
+    ]
+   }
+  },
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-001",
+   "set": {
+    "foo": 1,
+    "bar": [
+     2
+    ]
+   }
+  },
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-001",
+   "set": {
+    "active": "yes",
+    "deceasedBoolean": "no"
+   }
+  },
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-001",
+   "set": {
+    "managingOrganization": {
+     "reference": "Patient/pat-002"
+    }
+   }
+  },
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-001",
+   "set": {
+    "generalPractitioner": [
+     {
+      "reference": "Practitioner/prac-99"
+     },
+     {
+      "reference": "prac-01"
+     },
+     {
+      "reference": "Organization/org-harbor"
+     }
+    ]
+   }
+  },
+  {
+   "type": "Patient",
+   "id": "pat-001",
+   "base": "Patient/pat-002"
+  },
+  {
+   "type": "Observation",
+   "id": "pat-001",
+   "base": "Patient/pat-001"
+  },
+  {
+   "type": "Medication",
+   "id": null,
+   "raw": {
+    "resourceType": "Medication"
+   }
+  },
+  {
+   "type": "Patient",
+   "id": null,
+   "raw": []
+  },
+  {
+   "type": "Patient",
+   "id": null,
+   "raw": "text"
+  },
+  {
+   "type": "Patient",
+   "id": null,
+   "raw": null
+  },
+  {
+   "type": "Patient",
+   "id": null,
+   "raw": {
+    "id": "x"
+   }
+  },
+  {
+   "type": "Observation",
+   "id": "obs-001-1-weight",
+   "base": "Observation/obs-001-1-weight",
+   "drop": [
+    "subject"
+   ],
+   "set": {
+    "valueString": "heavy"
+   }
+  },
+  {
+   "type": "Observation",
+   "id": "obs-001-1-weight",
+   "base": "Observation/obs-001-1-weight",
+   "drop": [
+    "status",
+    "code"
+   ]
+  },
+  {
+   "type": "Observation",
+   "id": "obs-001-1-weight",
+   "base": "Observation/obs-001-1-weight",
+   "set": {
+    "valueQuantity": {
+     "value": "high",
+     "unit": "kg",
+     "comparator": "<"
+    }
+   }
+  },
+  {
+   "type": "Observation",
+   "id": "obs-001-1-weight",
+   "base": "Observation/obs-001-1-weight",
+   "set": {
+    "effectiveDateTime": "2026-01-12T09:10",
+    "issued": "2026-01-12"
+   }
+  },
+  {
+   "type": "Observation",
+   "id": "obs-001-1-weight",
+   "base": "Observation/obs-001-1-weight",
+   "set": {
+    "meta": {
+     "versionId": "x y",
+     "lastUpdated": "2026-01-12T11:00:00"
+    }
+   }
+  },
+  {
+   "type": "Observation",
+   "id": "obs-001-1-weight",
+   "base": "Observation/obs-001-1-weight",
+   "set": {
+    "component": [
+     {
+      "valueQuantity": {
+       "value": 1
+      }
+     }
+    ],
+    "note": [
+     {
+      "text": "",
+      "time": "2026"
+     }
+    ]
+   }
+  },
+  {
+   "type": "Observation",
+   "id": "obs-001-1-weight",
+   "base": "Observation/obs-001-1-weight",
+   "set": {
+    "status": 1,
+    "category": "vital-signs",
+    "encounter": {
+     "reference": "Encounter/enc-999-1"
+    }
+   }
+  },
+  {
+   "type": "Encounter",
+   "id": "enc-001-1",
+   "base": "Encounter/enc-001-1",
+   "set": {
+    "class": [
+     {
+      "code": "AMB"
+     }
+    ],
+    "participant": [
+     {
+      "individual": {
+       "reference": "Patient/pat-001"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "type": "Encounter",
+   "id": "enc-001-1",
+   "base": "Encounter/enc-001-1",
+   "set": {
+    "period": {
+     "start": "2026-01-12T09:00:00+01:00",
+     "end": "yesterday"
+    },
+    "status": "done"
+   }
+  },
+  {
+   "type": "Condition",
+   "id": "cond-001",
+   "base": "Condition/cond-001",
+   "drop": [
+    "subject"
+   ],
+   "set": {
+    "clinicalStatus": "active"
+   }
+  },
+  {
+   "type": "Condition",
+   "id": "cond-001",
+   "base": "Condition/cond-001",
+   "set": {
+    "recorder": {
+     "reference": "Organization/org-harbor"
+    },
+    "onsetDateTime": "2019"
+   }
+  },
+  {
+   "type": "Library",
+   "id": "lib-hypertension",
+   "base": "Library/lib-hypertension"
+  },
+  {
+   "type": "Library",
+   "id": "lib-hypertension",
+   "base": "Library/lib-hypertension",
+   "set": {
+    "content": [
+     {
+      "contentType": "text/cql",
+      "data": "not base64!"
+     }
+    ]
+   }
+  },
+  {
+   "type": "Library",
+   "id": "lib-hypertension",
+   "base": "Library/lib-hypertension",
+   "set": {
+    "content": [
+     {
+      "contentType": "text/plain",
+      "data": "eA=="
+     },
+     {
+      "contentType": "text/cql",
+      "data": "Ly8gbm8gbGlicmFyeQpkZWZpbmUgIngiOiAx"
+     }
+    ]
+   }
+  },
+  {
+   "type": "Library",
+   "id": "lib-hypertension",
+   "base": "Library/lib-hypertension",
+   "set": {
+    "name": "Other",
+    "version": "9.9.9"
+   }
+  },
+  {
+   "type": "Library",
+   "id": "lib-hypertension",
+   "base": "Library/lib-hypertension",
+   "set": {
+    "status": "published",
+    "type": {
+     "text": "logic"
+    },
+    "date": "2026-13-01"
+   }
+  },
+  {
+   "type": "Library",
+   "id": "lib-hypertension",
+   "base": "Library/lib-hypertension",
+   "drop": [
+    "name",
+    "version"
+   ]
+  },
+  {
+   "type": "Library",
+   "id": null,
+   "base": "Library/lib-hypertension",
+   "set": {
+    "id": "lib-x",
+    "content": [
+     {
+      "contentType": "text/cql"
+     }
+    ]
+   }
+  },
+  {
+   "type": "Practitioner",
+   "id": "prac-01",
+   "base": "Practitioner/prac-01",
+   "set": {
+    "qualification": [
+     {
+      "issuer": {
+       "reference": "Practitioner/prac-02"
+      }
+     }
+    ],
+    "telecom": [
+     {
+      "system": "mail",
+      "use": "office"
+     }
+    ]
+   }
+  },
+  {
+   "type": "Organization",
+   "id": "org-harbor",
+   "base": "Organization/org-harbor",
+   "set": {
+    "name": 5,
+    "text": {
+     "status": "generated",
+     "div": "<div>Harbor</div>"
+    },
+    "identifier": [
+     {
+      "value": ""
+     }
+    ]
+   }
+  },
+  {
+   "type": "Organization",
+   "id": "org-harbor",
+   "base": "Organization/org-harbor",
+   "set": {
+    "id": "org harbor",
+    "address": [
+     {
+      "line": [],
+      "postalCode": 5005
+     }
+    ]
+   }
+  },
+  {
+   "type": "Patient",
+   "id": null,
+   "raw": {
+    "resourceType": "Patient",
+    "id": "",
+    "active": true,
+    "name": [
+     {
+      "use": "official",
+      "family": "",
+      "given": [
+       ""
+      ]
+     }
+    ],
+    "gender": "unknown",
+    "birthDate": ""
+   }
+  },
+  {
+   "type": "Patient",
+   "id": "pat-x",
+   "raw": {
+    "resourceType": "Patient",
+    "id": "pat-x",
+    "valueA": 1,
+    "valueB": 2,
+    "valueC": 3
+   }
+  }
+ ],
+ "cql": [
+  "library A version '1.0.0'",
+  "  \n// note\nlibrary \"Quoted Name\" version '2'\n",
+  "library B",
+  "library _x9 version'1'",
+  "library  C   version   '3.0'  // tail",
+  "define x: 1\nlibrary A",
+  "",
+  "//only\n//comments",
+  "library \"\" version '1'",
+  "library 9A",
+  "libraryA version '1'",
+  "library A version '1",
+  "\tlibrary\tTab\tversion\t't'",
+  "library A version \"1\"",
+  "library A versions '1'"
+ ],
+ "fhirpath": [
+  [
+   "Patient/pat-001",
+   "name.where(use = 'official')\n  .select(given.join(' ') + ' ' + family)"
+  ],
+  [
+   "Patient/pat-006",
+   "// Born more than 65 years ago\nbirthDate < today() - 65 years"
+  ],
+  [
+   "bundle",
+   "// Who had a systolic pressure of 140 or more\nentry.resource.ofType(Observation)\n  .where(code.coding.exists(system = %loinc and code = '8480-6'))\n  .where(value.ofType(Quantity).value >= 140)\n  .subject.display\n  .distinct()"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Condition)\n  .where(clinicalStatus.coding.code = 'active')\n  .code.text\n  .distinct()"
+  ],
+  [
+   "bundle",
+   "/* The mean of every heart rate measured,\n   rounded to one decimal */\nentry.resource.ofType(Observation)\n  .where(code.coding.code = '8867-4')\n  .value.ofType(Quantity).value\n  .avg()\n  .round(1)"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Patient)\n  .where(address.city = 'Tromsø')\n  .name.family"
+  ],
+  [
+   "Patient/pat-001",
+   "today()"
+  ],
+  [
+   "Patient/pat-001",
+   "now()"
+  ],
+  [
+   "Patient/pat-001",
+   "today() - 65 years"
+  ],
+  [
+   "Patient/pat-001",
+   "65 years"
+  ],
+  [
+   "Patient/pat-001",
+   "5 'mg'"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate + 1 day"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate + 2 months"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate - 1 year"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "value"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "value.ofType(Quantity)"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "effective"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "effective + 1 day"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "effective + 90 minutes"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "value.value * 2"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "value > 100 'mm[Hg]'"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "value = 148 'mm[Hg]'"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "value.value / 3"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "1/3"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "7 div 2"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "7 mod 2"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "(1|2|3).avg()"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "(1|2|4).avg().round(2)"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.first()"
+  ],
+  [
+   "Patient/pat-001",
+   "nope("
+  ],
+  [
+   "Patient/pat-001",
+   "name.foo()"
+  ],
+  [
+   "Patient/pat-001",
+   "1 +"
+  ],
+  [
+   "Patient/pat-001",
+   "%x"
+  ],
+  [
+   "Patient/pat-001",
+   "name.where(1)"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.toString()"
+  ],
+  [
+   "Patient/pat-001",
+   "@2026-01-01"
+  ],
+  [
+   "Patient/pat-001",
+   "@2026-01-01T10:00:00Z"
+  ],
+  [
+   "Patient/pat-001",
+   "@T10:00"
+  ],
+  [
+   "Patient/pat-001",
+   "children()"
+  ],
+  [
+   "Patient/pat-001",
+   "children().count()"
+  ],
+  [
+   "Patient/pat-001",
+   "descendants().count()"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "descendants().count()"
+  ],
+  [
+   "Patient/pat-001",
+   "1.0"
+  ],
+  [
+   "Patient/pat-001",
+   "1.50"
+  ],
+  [
+   "Patient/pat-001",
+   "2.0 * 3"
+  ],
+  [
+   "Patient/pat-001",
+   "1 = 1.0"
+  ],
+  [
+   "Patient/pat-001",
+   "{}"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given | name.family"
+  ],
+  [
+   "Patient/pat-001",
+   "name.where("
+  ],
+  [
+   "Patient/pat-001",
+   "name."
+  ],
+  [
+   "Patient/pat-001",
+   "(1 + 2"
+  ],
+  [
+   "Patient/pat-001",
+   "1 + 2)"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given["
+  ],
+  [
+   "Patient/pat-001",
+   "'abc"
+  ],
+  [
+   "Patient/pat-001",
+   "#"
+  ],
+  [
+   "Patient/pat-001",
+   "name.where(use = )"
+  ],
+  [
+   "Patient/pat-001",
+   "1 2"
+  ],
+  [
+   "Patient/pat-001",
+   "and"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.join("
+  ],
+  [
+   "Patient/pat-001",
+   "\n\nname.\n"
+  ],
+  [
+   "Patient/pat-001",
+   "name.where(use = 'official'"
+  ],
+  [
+   "Patient/pat-001",
+   "1 +\n"
+  ],
+  [
+   "Patient/pat-001",
+   "@2026-13"
+  ],
+  [
+   "Patient/pat-001",
+   "name[0]"
+  ],
+  [
+   "Patient/pat-001",
+   "name[0].given[1]"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.foo"
+  ],
+  [
+   "Patient/pat-001",
+   "Patient.name"
+  ],
+  [
+   "Patient/pat-001",
+   "Observation.name"
+  ],
+  [
+   "Patient/pat-001",
+   "gender = 'female'"
+  ],
+  [
+   "Patient/pat-001",
+   "gender ~ 'FEMALE'"
+  ],
+  [
+   "Patient/pat-001",
+   "1 / 0"
+  ],
+  [
+   "Patient/pat-001",
+   "0.1 + 0.2"
+  ],
+  [
+   "Patient/pat-001",
+   "(2.25).round(1)"
+  ],
+  [
+   "Patient/pat-001",
+   "(72.45).round(1)"
+  ],
+  [
+   "Patient/pat-001",
+   "(2.5).round()"
+  ],
+  [
+   "Patient/pat-001",
+   "(-2.5).round()"
+  ],
+  [
+   "Patient/pat-001",
+   "(1.005).round(2)"
+  ],
+  [
+   "Patient/pat-001",
+   "10 div 3"
+  ],
+  [
+   "Patient/pat-001",
+   "-7 div 2"
+  ],
+  [
+   "Patient/pat-001",
+   "-7 mod 2"
+  ],
+  [
+   "Patient/pat-001",
+   "7.5 mod 2"
+  ],
+  [
+   "Patient/pat-001",
+   "'abc'.substring(1)"
+  ],
+  [
+   "Patient/pat-001",
+   "'abc'.substring(1,1)"
+  ],
+  [
+   "Patient/pat-001",
+   "'a,b'.split(',')"
+  ],
+  [
+   "Patient/pat-001",
+   "'abc'.matches('b')"
+  ],
+  [
+   "Patient/pat-001",
+   "'abc'.matches('^a.c$')"
+  ],
+  [
+   "Patient/pat-001",
+   "'abc'.replace('b','x')"
+  ],
+  [
+   "Patient/pat-001",
+   "'abc'.length()"
+  ],
+  [
+   "Patient/pat-001",
+   "'Abc'.upper()"
+  ],
+  [
+   "Patient/pat-001",
+   "'Abc'.lower()"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2|2).count()"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2|2).distinct()"
+  ],
+  [
+   "Patient/pat-001",
+   "(1 | 2).combine(2)"
+  ],
+  [
+   "Patient/pat-001",
+   "true and {}"
+  ],
+  [
+   "Patient/pat-001",
+   "{} and false"
+  ],
+  [
+   "Patient/pat-001",
+   "true implies {}"
+  ],
+  [
+   "Patient/pat-001",
+   "false implies {}"
+  ],
+  [
+   "Patient/pat-001",
+   "true xor false"
+  ],
+  [
+   "Patient/pat-001",
+   "true or {}"
+  ],
+  [
+   "Patient/pat-001",
+   "1 < 2"
+  ],
+  [
+   "Patient/pat-001",
+   "'a' < 'b'"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020 < @2020-01-01"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020-01 = @2020-01-01"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020-01-01 ~ @2020-01"
+  ],
+  [
+   "Patient/pat-001",
+   "today() > @2000"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.exists()"
+  ],
+  [
+   "Patient/pat-001",
+   "name.exists(use='x')"
+  ],
+  [
+   "Patient/pat-001",
+   "name.all(given.exists())"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.skip(1)"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.take(1)"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.tail()"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.last()"
+  ],
+  [
+   "Patient/pat-001",
+   "iif(true, 1, 2)"
+  ],
+  [
+   "Patient/pat-001",
+   "iif(false, 1)"
+  ],
+  [
+   "Patient/pat-001",
+   "1.is(Integer)"
+  ],
+  [
+   "Patient/pat-001",
+   "1.0.is(Decimal)"
+  ],
+  [
+   "Patient/pat-001",
+   "'a'.is(String)"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate.is(date)"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate is Date"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate is FHIR.date"
+  ],
+  [
+   "Patient/pat-001",
+   "gender.is(code)"
+  ],
+  [
+   "Patient/pat-001",
+   "gender.is(string)"
+  ],
+  [
+   "Patient/pat-001",
+   "is(Patient)"
+  ],
+  [
+   "Patient/pat-001",
+   "is(Resource)"
+  ],
+  [
+   "Patient/pat-001",
+   "is(DomainResource)"
+  ],
+  [
+   "Patient/pat-001",
+   "1.toString()"
+  ],
+  [
+   "Patient/pat-001",
+   "'5'.toInteger()"
+  ],
+  [
+   "Patient/pat-001",
+   "'5.5'.toDecimal()"
+  ],
+  [
+   "Patient/pat-001",
+   "'2020-01-02'.toDate()"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2|3).sum()"
+  ],
+  [
+   "Patient/pat-001",
+   "(3|1|2).min()"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2).max()"
+  ],
+  [
+   "Patient/pat-001",
+   "(-1.5).abs()"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.select($this + '!')"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.where($index = 0)"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2|3).aggregate($this + $total, 0)"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2).union(2|3)"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2).intersect(2|3)"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2).exclude(2)"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate.hasValue()"
+  ],
+  [
+   "Patient/pat-001",
+   "name.hasValue()"
+  ],
+  [
+   "Patient/pat-001",
+   "extension('x')"
+  ],
+  [
+   "Patient/pat-001",
+   "name.trace('x')"
+  ],
+  [
+   "Patient/pat-001",
+   "not()"
+  ],
+  [
+   "Patient/pat-001",
+   "true.not()"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2).not()"
+  ],
+  [
+   "Patient/pat-001",
+   "%resource.id"
+  ],
+  [
+   "Patient/pat-001",
+   "%context.id"
+  ],
+  [
+   "Patient/pat-001",
+   "%loinc"
+  ],
+  [
+   "Patient/pat-001",
+   "%sct"
+  ],
+  [
+   "Patient/pat-001",
+   "%ucum"
+  ],
+  [
+   "Patient/pat-001",
+   "1 'kg' + 2 'kg'"
+  ],
+  [
+   "Patient/pat-001",
+   "70 '/min'"
+  ],
+  [
+   "Patient/pat-001",
+   "2 years"
+  ],
+  [
+   "Patient/pat-001",
+   "4 weeks"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate.toString() + 'x'"
+  ],
+  [
+   "Patient/pat-001",
+   "'a' & {}"
+  ],
+  [
+   "Patient/pat-001",
+   "'a' + {}"
+  ],
+  [
+   "Patient/pat-001",
+   "'1' = 1"
+  ],
+  [
+   "Patient/pat-001",
+   "1 in (1|2)"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2) contains 3"
+  ],
+  [
+   "Patient/pat-001",
+   "Patient.id"
+  ],
+  [
+   "Patient/pat-001",
+   "$this.id"
+  ],
+  [
+   "Patient/pat-001",
+   "id.length() + 1.5"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.join()"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.join(', ')"
+  ],
+  [
+   "Patient/pat-001",
+   "@2026-01-01T10:00"
+  ],
+  [
+   "Patient/pat-001",
+   "@2026-01-01T10:00:00.123+02:00"
+  ],
+  [
+   "Patient/pat-001",
+   "now() > @2000-01-01T00:00:00Z"
+  ],
+  [
+   "Patient/pat-001",
+   "today().toString()"
+  ],
+  [
+   "Patient/pat-001",
+   "(1 | 'a')"
+  ],
+  [
+   "Patient/pat-001",
+   "1 = 'a'"
+  ],
+  [
+   "Patient/pat-001",
+   "true = 'true'"
+  ],
+  [
+   "Patient/pat-001",
+   "name = name"
+  ],
+  [
+   "Patient/pat-001",
+   "name ~ name"
+  ],
+  [
+   "Patient/pat-001",
+   "{} = 1"
+  ],
+  [
+   "Patient/pat-001",
+   "1 != 2"
+  ],
+  [
+   "Patient/pat-001",
+   "-name.given"
+  ],
+  [
+   "Patient/pat-001",
+   "-(1)"
+  ],
+  [
+   "Patient/pat-001",
+   "-1.5"
+  ],
+  [
+   "Patient/pat-001",
+   "+1"
+  ],
+  [
+   "Patient/pat-001",
+   "5 * -1"
+  ],
+  [
+   "Patient/pat-001",
+   "1 + 2 * 3"
+  ],
+  [
+   "Patient/pat-001",
+   "(1 + 2) * 3"
+  ],
+  [
+   "Patient/pat-001",
+   "2 / 4"
+  ],
+  [
+   "Patient/pat-001",
+   "4 / 2"
+  ],
+  [
+   "Patient/pat-001",
+   "1.5 * 2"
+  ],
+  [
+   "Patient/pat-001",
+   "3 - 1.5"
+  ],
+  [
+   "Patient/pat-001",
+   "name)"
+  ],
+  [
+   "Patient/pat-001",
+   "1)"
+  ],
+  [
+   "Patient/pat-001",
+   "a b"
+  ],
+  [
+   "Patient/pat-001",
+   "(1) 2"
+  ],
+  [
+   "Patient/pat-001",
+   "name 'x'"
+  ],
+  [
+   "Patient/pat-001",
+   "name.where(x))"
+  ],
+  [
+   "Patient/pat-001",
+   "1 + 2 3"
+  ],
+  [
+   "Patient/pat-001",
+   "1 * "
+  ],
+  [
+   "Patient/pat-001",
+   "name.where(use = 'a' or )"
+  ],
+  [
+   "Patient/pat-001",
+   "name.select("
+  ],
+  [
+   "Patient/pat-001",
+   "("
+  ],
+  [
+   "Patient/pat-001",
+   ")"
+  ],
+  [
+   "Patient/pat-001",
+   "name[0"
+  ],
+  [
+   "Patient/pat-001",
+   "name.where(a,"
+  ],
+  [
+   "Patient/pat-001",
+   "name.where(a b)"
+  ],
+  [
+   "Patient/pat-001",
+   "iif(true, 1"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.join(', '"
+  ],
+  [
+   "Patient/pat-001",
+   "{"
+  ],
+  [
+   "Patient/pat-001",
+   "{}}"
+  ],
+  [
+   "Patient/pat-001",
+   "@"
+  ],
+  [
+   "Patient/pat-001",
+   "1."
+  ],
+  [
+   "Patient/pat-001",
+   "true and"
+  ],
+  [
+   "Patient/pat-001",
+   "a is"
+  ],
+  [
+   "Patient/pat-001",
+   "x = = 1"
+  ],
+  [
+   "Patient/pat-001",
+   "x ! y"
+  ],
+  [
+   "Patient/pat-001",
+   "x !"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020-"
+  ],
+  [
+   "Patient/pat-001",
+   "2 yearz"
+  ],
+  [
+   "Patient/pat-001",
+   "x[1]]"
+  ],
+  [
+   "Patient/pat-001",
+   "'it''s'"
+  ],
+  [
+   "Patient/pat-001",
+   "\"x\""
+  ],
+  [
+   "Patient/pat-001",
+   "// just a note"
+  ],
+  [
+   "Patient/pat-001",
+   "/* only */"
+  ],
+  [
+   "Patient/pat-001",
+   "   "
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.indexOf('A')"
+  ],
+  [
+   "Patient/pat-001",
+   "'a' < 1"
+  ],
+  [
+   "Patient/pat-001",
+   "name < 1"
+  ],
+  [
+   "Patient/pat-001",
+   "'a' + 1"
+  ],
+  [
+   "Patient/pat-001",
+   "name.substring(1)"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate < @1960"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate > @1958-03"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate = @1958-03-14"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate ~ @1958-03-14"
+  ],
+  [
+   "bundle",
+   "entry.count()"
+  ],
+  [
+   "bundle",
+   "total"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Library).name"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Observation).where(subject.reference = 'Patient/pat-002' and code.coding.code = '29463-7').value.value"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Observation).value.value.max()"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Observation).value.value.min()"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Observation).value.value.sum()"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Encounter).period.start.first()"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Condition).onset.first()"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Condition).onset.ofType(dateTime).count()"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Patient).where(birthDate < @1960-01-01).name.given"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Practitioner).name.prefix.distinct()"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Patient).gender.distinct()"
+  ],
+  [
+   "bundle",
+   "entry.resource.select(resourceType).distinct()"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Observation).where(effective >= @2026-10-01).count()"
+  ],
+  [
+   "bundle",
+   "entry.resource.ofType(Observation).where(value > 150 'mm[Hg]').subject.reference.distinct()"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "code.coding.code"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "code.text.upper()"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "category.coding.display"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "valueQuantity.unit"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "effectiveDateTime"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "effective.ofType(dateTime)"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "value.is(Quantity)"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "value.unit & ' ' & value.code"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "performer.reference.substring(13)"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "subject.reference.split('/').last()"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "status in ('final' | 'amended')"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "meta.versionId.toInteger() + 1"
+  ],
+  [
+   "Observation/obs-001-1-systolic",
+   "effective.toString().substring(0, 10)"
+  ],
+  [
+   "Library/lib-hypertension",
+   "content.data.length()"
+  ],
+  [
+   "Library/lib-hypertension",
+   "version.split('.').count()"
+  ],
+  [
+   "Library/lib-hypertension",
+   "url.endsWith(name)"
+  ],
+  [
+   "Library/lib-hypertension",
+   "status = 'active' and version.startsWith('1.')"
+  ],
+  [
+   "Condition/cond-001",
+   "onset"
+  ],
+  [
+   "Condition/cond-001",
+   "onset + 1 month"
+  ],
+  [
+   "Condition/cond-001",
+   "recordedDate.toDate()"
+  ],
+  [
+   "Condition/cond-001",
+   "clinicalStatus.coding.code"
+  ],
+  [
+   "Condition/cond-001",
+   "code.coding.where(system = %sct).code"
+  ],
+  [
+   "Condition/cond-001",
+   "subject.display.lower().contains('brekke')"
+  ],
+  [
+   "Patient/pat-001",
+   "  -name.given"
+  ],
+  [
+   "Patient/pat-001",
+   "\n -gender"
+  ],
+  [
+   "Patient/pat-001",
+   "-{}"
+  ],
+  [
+   "Patient/pat-001",
+   "+gender"
+  ],
+  [
+   "Patient/pat-001",
+   "-(1|2)"
+  ],
+  [
+   "Patient/pat-001",
+   "'a' < 1.5"
+  ],
+  [
+   "Patient/pat-001",
+   "1 < 'a'"
+  ],
+  [
+   "Patient/pat-001",
+   "true < 1"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020 < 1"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate < 1"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate < 'x'"
+  ],
+  [
+   "Patient/pat-001",
+   "gender < 1"
+  ],
+  [
+   "Patient/pat-001",
+   "active < 1"
+  ],
+  [
+   "Patient/pat-001",
+   "1 'mg' < 1"
+  ],
+  [
+   "Patient/pat-001",
+   "@T10:00 < @2020"
+  ],
+  [
+   "Patient/pat-001",
+   "'a' > true"
+  ],
+  [
+   "Patient/pat-001",
+   "active > true"
+  ],
+  [
+   "Patient/pat-001",
+   "name < name"
+  ],
+  [
+   "Patient/pat-001",
+   "name <= name"
+  ],
+  [
+   "Patient/pat-001",
+   "5 'mg' < 'a'"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate.length()"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020.length()"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.skip(1.5)"
+  ],
+  [
+   "Patient/pat-001",
+   "'abc'.substring(1.5)"
+  ],
+  [
+   "Patient/pat-001",
+   "(1.5).round(1)"
+  ],
+  [
+   "Patient/pat-001",
+   "'x'.round()"
+  ],
+  [
+   "Patient/pat-001",
+   "name.round()"
+  ],
+  [
+   "Patient/pat-001",
+   "gender.upper() + '!'"
+  ],
+  [
+   "Patient/pat-001",
+   "telecom.value"
+  ],
+  [
+   "Patient/pat-001",
+   "address.line.first().substring(0, 4)"
+  ],
+  [
+   "Patient/pat-001",
+   "identifier.where(system.contains('patient')).value"
+  ],
+  [
+   "Patient/pat-001",
+   "generalPractitioner.reference"
+  ],
+  [
+   "Patient/pat-001",
+   "managingOrganization.reference.replace('Organization/', '')"
+  ],
+  [
+   "Patient/pat-001",
+   "name.given.count() > 0 and gender = 'female'"
+  ],
+  [
+   "Patient/pat-001",
+   "birthDate.toString().substring(0,4).toInteger() < 1960"
+  ],
+  [
+   "Patient/pat-001",
+   "today() - birthDate"
+  ],
+  [
+   "Patient/pat-001",
+   "address.city in ('Bergen' | 'Oslo')"
+  ],
+  [
+   "Patient/pat-001",
+   "(gender | 'x').count()"
+  ],
+  [
+   "Patient/pat-001",
+   "meta.lastUpdated"
+  ],
+  [
+   "Patient/pat-001",
+   "meta.lastUpdated > @2026-01-01T00:00:00Z"
+  ],
+  [
+   "Patient/pat-001",
+   "meta.lastUpdated + 1 hour"
+  ],
+  [
+   "Patient/pat-001",
+   "id.matches('^pat-[0-9]+$')"
+  ],
+  [
+   "Patient/pat-001",
+   "telecom.where(system = 'phone').value.replace(' ', '')"
+  ],
+  [
+   "Patient/pat-001",
+   "name.family.toChars().count()"
+  ],
+  [
+   "Patient/pat-001",
+   "'a b'.split(' ').join('-')"
+  ],
+  [
+   "Patient/pat-001",
+   "iif(gender = 'male', 'M', 'F')"
+  ],
+  [
+   "Patient/pat-001",
+   "name.exists() and name.all(family.exists())"
+  ],
+  [
+   "Patient/pat-001",
+   "Patient.name.given[0]"
+  ],
+  [
+   "Patient/pat-001",
+   "name[1]"
+  ],
+  [
+   "Patient/pat-001",
+   "name[-1]"
+  ],
+  [
+   "Patient/pat-001",
+   "descendants().where($this is FHIR.string).count()"
+  ],
+  [
+   "Patient/pat-001",
+   "children().ofType(HumanName).family"
+  ],
+  [
+   "Patient/pat-001",
+   "repeat(children()).count()"
+  ],
+  [
+   "Patient/pat-001",
+   "active.not()"
+  ],
+  [
+   "Patient/pat-001",
+   "{}.not()"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2|3).where($this > 1).select($this * 10)"
+  ],
+  [
+   "Patient/pat-001",
+   "(1|2|3).aggregate($total + $this)"
+  ],
+  [
+   "Patient/pat-001",
+   "1.toString() + 2.toString()"
+  ],
+  [
+   "Patient/pat-001",
+   "true.toString()"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020-01-15 + 1 month"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020-01-31 + 1 month"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020-01-31T10:00:00Z + 1 month"
+  ],
+  [
+   "Patient/pat-001",
+   "@2024-02-29 + 1 year"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020-01-01 - 1 day"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020-01-01T00:00:00+02:00"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020-01-01T00:00:00+02:00 + 0 days"
+  ],
+  [
+   "Patient/pat-001",
+   "@2020-01-01T00:00:00+02:00 = @2019-12-31T22:00:00Z"
+  ],
+  [
+   "Encounter/enc-003-2",
+   "period.start < period.end"
+  ],
+  [
+   "Encounter/enc-003-2",
+   "class.code & '/' & type.text"
+  ],
+  [
+   "Practitioner/prac-02",
+   "qualification.issuer.reference"
+  ],
+  [
+   "Organization/org-juniper",
+   "address.city.length()"
+  ],
+  [
+   "Library/lib-weight",
+   "content.contentType"
+  ],
+  [
+   "Patient/pat-012",
+   "gender"
+  ],
+  [
+   "Patient/nobody",
+   "id"
+  ]
+ ],
+ "elementNames": [
+  "Patient/pat-001",
+  "Observation/obs-001-1-systolic",
+  "Library/lib-weight",
+  "bundle",
+  "Patient/nobody"
+ ],
+ "words": [
+  "where",
+  "resource",
+  "%loinc",
+  "loinc",
+  "ucum",
+  "nothing",
+  "count",
+  "%count"
+ ],
+ "queries": [
+  "Patient?gender=female",
+  "/Patient?x=1",
+  "https://fhir.example.org/r4/Observation?code=a%7Cb",
+  "  Library ",
+  "?a=1",
+  "",
+  "Patient?a=1&&b=&=c&d",
+  "Patient?name=a+b&q=%41%zz"
+ ],
+ "searches": [
+  [
+   "Patient?gender=female&birthdate=lt1970-01-01&_sort=birthdate",
+   20
+  ],
+  [
+   "Patient?address-city=Troms&_sort=family",
+   20
+  ],
+  [
+   "Observation?code=http://loinc.org|8480-6&value-quantity=ge150&_sort=-date",
+   20
+  ],
+  [
+   "Observation?patient=Patient/pat-002&code=29463-7&_sort=date",
+   20
+  ],
+  [
+   "Condition?code=38341003&clinical-status=active",
+   20
+  ],
+  [
+   "Encounter?date=ge2026-09-01&_count=10",
+   20
+  ],
+  [
+   "Library?status=draft",
+   20
+  ],
+  [
+   "Observation?_summary=count",
+   20
+  ],
+  [
+   "Patient?name=sol",
+   5
+  ],
+  [
+   "Patient?name:exact=Solveig",
+   5
+  ],
+  [
+   "Patient?name:exact=solveig",
+   5
+  ],
+  [
+   "Patient?name:contains=erik",
+   5
+  ],
+  [
+   "Patient?family=lie",
+   5
+  ],
+  [
+   "Patient?given=tor",
+   5
+  ],
+  [
+   "Patient?gender=male,unknown",
+   5
+  ],
+  [
+   "Patient?gender:not=female",
+   5
+  ],
+  [
+   "Patient?birthdate=ge1990",
+   5
+  ],
+  [
+   "Patient?birthdate=1958-03",
+   5
+  ],
+  [
+   "Patient?birthdate=bad",
+   5
+  ],
+  [
+   "Patient?birthdate=sa2000-01-01",
+   5
+  ],
+  [
+   "Patient?birthdate=eb1950",
+   5
+  ],
+  [
+   "Patient?birthdate=ne1958-03-14&_count=2",
+   5
+  ],
+  [
+   "Patient?birthdate=le1949-01-17",
+   5
+  ],
+  [
+   "Patient?identifier=https://example.org/fhir/sid/patient-number|P-1003",
+   5
+  ],
+  [
+   "Patient?identifier=|P-1003",
+   5
+  ],
+  [
+   "Patient?identifier=P-1003",
+   5
+  ],
+  [
+   "Patient?identifier=https://example.org/fhir/sid/patient-number|",
+   5
+  ],
+  [
+   "Patient?active=true&_count=1",
+   5
+  ],
+  [
+   "Patient?active=false",
+   5
+  ],
+  [
+   "Patient?general-practitioner=prac-03",
+   5
+  ],
+  [
+   "Patient?organization=Organization/org-harbor",
+   5
+  ],
+  [
+   "Patient?address-city=bergen&_sort=-birthdate",
+   5
+  ],
+  [
+   "Patient?_id=pat-001,pat-002",
+   5
+  ],
+  [
+   "Patient?_lastUpdated=ge2026-01-05&_count=2",
+   5
+  ],
+  [
+   "Patient?nope=1",
+   5
+  ],
+  [
+   "Patient?name:fuzzy=a",
+   5
+  ],
+  [
+   "Patient?gender:missing=false&_count=1",
+   5
+  ],
+  [
+   "Patient?gender:missing=true",
+   5
+  ],
+  [
+   "Patient?_count=3&_offset=3",
+   5
+  ],
+  [
+   "Patient?_count=abc",
+   5
+  ],
+  [
+   "Patient?_count=0",
+   5
+  ],
+  [
+   "Patient?_count=-1",
+   5
+  ],
+  [
+   "Patient?_count=2.5",
+   5
+  ],
+  [
+   "Patient?_offset=10&_count=5",
+   5
+  ],
+  [
+   "Patient?_offset=x&_count=2",
+   5
+  ],
+  [
+   "Patient?_offset=1.5&_count=2",
+   5
+  ],
+  [
+   "Patient?_sort=nope,-family&_count=3",
+   5
+  ],
+  [
+   "Patient?_summary=count",
+   5
+  ],
+  [
+   "Patient?_summary=true&_count=1",
+   5
+  ],
+  [
+   "Practitioner?name=dr",
+   5
+  ],
+  [
+   "Practitioner?name=hedda&_sort=family",
+   5
+  ],
+  [
+   "Organization?address-city=troms",
+   5
+  ],
+  [
+   "Organization?name=harbor clinic",
+   5
+  ],
+  [
+   "Encounter?class=AMB&_count=2",
+   5
+  ],
+  [
+   "Encounter?class:text=ambul&_count=2",
+   5
+  ],
+  [
+   "Encounter?practitioner=prac-01&_count=2",
+   5
+  ],
+  [
+   "Encounter?status=finished&date=lt2026-01-14",
+   5
+  ],
+  [
+   "Encounter?service-provider=org-juniper&_count=1&_offset=20",
+   5
+  ],
+  [
+   "Observation?value-quantity=gt160",
+   5
+  ],
+  [
+   "Observation?value-quantity=le40|http://unitsofmeasure.org|kg",
+   5
+  ],
+  [
+   "Observation?value-quantity=ne70&code=8867-4&_count=2",
+   5
+  ],
+  [
+   "Observation?value-quantity=x",
+   5
+  ],
+  [
+   "Observation?value-quantity=100||mm[Hg]",
+   5
+  ],
+  [
+   "Observation?category=vital-signs&_count=1",
+   5
+  ],
+  [
+   "Observation?code:text=heart&_count=2&_sort=-value-quantity",
+   5
+  ],
+  [
+   "Observation?encounter=Encounter/enc-001-1",
+   5
+  ],
+  [
+   "Observation?date=2026-01&patient=pat-001",
+   5
+  ],
+  [
+   "Observation?performer=Practitioner/prac-02&_count=1&_sort=date",
+   5
+  ],
+  [
+   "Observation?date=gt2026-10-29T09:00:00Z&_count=2",
+   5
+  ],
+  [
+   "Observation?status=final&status=amended",
+   5
+  ],
+  [
+   "Observation?subject:missing=true",
+   5
+  ],
+  [
+   "Condition?onset-date=lt2010",
+   5
+  ],
+  [
+   "Condition?recorded-date=ge2020&_sort=recorded-date",
+   5
+  ],
+  [
+   "Condition?code=http://snomed.info/sct|195967001",
+   5
+  ],
+  [
+   "Condition?clinical-status=resolved",
+   5
+  ],
+  [
+   "Condition?code:text=diabetes&_sort=patient",
+   5
+  ],
+  [
+   "Library?url=https://example.org/fhir/Library/WeightFollowUp",
+   5
+  ],
+  [
+   "Library?title=hyper",
+   5
+  ],
+  [
+   "Library?description:contains=follow",
+   5
+  ],
+  [
+   "Library?version=1.1.0",
+   5
+  ],
+  [
+   "Library?name=WeightFollowUp&_sort=-version",
+   5
+  ],
+  [
+   "Nothing?x=1",
+   5
+  ],
+  [
+   "?gender=male",
+   5
+  ],
+  [
+   "",
+   5
+  ],
+  [
+   "https://fhir.example.org/r4/Patient?gender=female&_count=2",
+   5
+  ],
+  [
+   "/Patient?family=vik",
+   5
+  ],
+  [
+   "Patient?gender=female&gender=male",
+   5
+  ],
+  [
+   "Patient?name=",
+   5
+  ],
+  [
+   "Patient?family=nyland&_sort=",
+   5
+  ],
+  [
+   "Patient?birthdate=eq1958-03-14T00:00",
+   5
+  ],
+  [
+   "Patient?address-city=Troms%C3%B8&_count=2",
+   5
+  ],
+  [
+   "Patient?name=tor+erik",
+   5
+  ],
+  [
+   "Observation?_sort=value-quantity&_count=3",
+   5
+  ],
+  [
+   "Observation?_sort=-value-quantity,date&_count=3&code=29463-7",
+   5
+  ],
+  [
+   "Patient",
+   5
+  ],
+  [
+   "  Patient?gender=male  ",
+   5
+  ],
+  [
+   "Patient?gender=male&_count=1&_offset=2&_sort=family",
+   5
+  ],
+  [
+   "Patient?_sort=gender,-birthdate&_count=4",
+   5
+  ],
+  [
+   "Encounter?_sort=-date,subject&_count=3",
+   5
+  ],
+  [
+   "Observation?_count=2&_offset=4&code=8480-6&_sort=-value-quantity",
+   5
+  ]
+ ],
+ "pointing": [
+  "Patient/pat-001",
+  "Organization/org-harbor",
+  "Practitioner/prac-03",
+  "Observation/obs-001-1-weight",
+  "Library/lib-weight",
+  "Encounter/enc-012-6"
+ ],
+ "json": [
+  "{",
+  "{\"a\":1,}",
+  "{'a':1}",
+  "",
+  "nul",
+  "[1,2",
+  "{\"a\" 1}",
+  "{\"a\":1}}",
+  "\"abc",
+  "{\"a\":01}",
+  "  ",
+  "{\"a\":tru}",
+  "{\"a\":1,\"b\":}",
+  "[1,]",
+  "{\"a\": -}",
+  "{\"a\":.5}",
+  "x",
+  "{\"a\": [1, 2.50, -0, 1e3, true, false, null, \"\\u00f8\\n\"]}",
+  "  {\"resourceType\":\"Patient\"}  ",
+  "123",
+  "\"text\""
+ ],
+ "diffs": [
+  [
+   "a\nb\nc\n",
+   "a\nx\nc\n",
+   3
+  ],
+  [
+   "",
+   "one\ntwo",
+   3
+  ],
+  [
+   "one\ntwo\n",
+   "",
+   3
+  ],
+  [
+   "same\n",
+   "same",
+   3
+  ],
+  [
+   "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29",
+   "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\nend",
+   3
+  ],
+  [
+   "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29",
+   "1\n2\n3\n4\nx\nx\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\nx\n26\n27\n28\n29",
+   2
+  ],
+  [
+   "a\nb\nc\nd\ne\nf\ng\nh",
+   "a\nb\nc\nd\nE\nf\ng\nh",
+   0
+  ],
+  [
+   "a\nb\na\nb",
+   "b\na\nb\na",
+   1
+  ]
+ ],
+ "instants": [
+  "2026-01-05T09:00:00Z",
+  "2026-10-20T13:12:00Z",
+  "2026-01-12",
+  "bad",
+  "",
+  null,
+  "2026-03-01T00:30:00+02:00",
+  "2026-11-19T10:30:00.000Z",
+  "2026-11-19T00:05:00Z",
+  "2026-11-19T12:59:00Z",
+  "2026",
+  "2026-02-30"
+ ],
+ "days": [
+  "1958-03-14",
+  "2026-01-12T09:10:00Z",
+  "2026",
+  "2026-03",
+  null,
+  "",
+  "2004-05-30"
+ ],
+ "counts": [
+  [
+   0,
+   "item",
+   null
+  ],
+  [
+   1,
+   "item",
+   null
+  ],
+  [
+   2,
+   "item",
+   null
+  ],
+  [
+   1234,
+   "resource",
+   null
+  ],
+  [
+   1,
+   "library",
+   "libraries"
+  ],
+  [
+   3,
+   "library",
+   "libraries"
+  ],
+  [
+   1,
+   "match",
+   "matches"
+  ],
+  [
+   20,
+   "match",
+   "matches"
+  ]
+ ],
+ "titled": [
+  {
+   "raw": {
+    "resourceType": "Patient",
+    "id": "p",
+    "name": [
+     {
+      "text": "Ms. Text"
+     }
+    ]
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Patient",
+    "id": "p",
+    "name": []
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Patient",
+    "id": "p",
+    "name": [
+     {
+      "prefix": [
+       "Dr."
+      ],
+      "given": [
+       "A",
+       "B"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Organization",
+    "id": "o",
+    "name": ""
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Observation",
+    "id": "o",
+    "code": {
+     "coding": [
+      {
+       "code": "x"
+      }
+     ]
+    },
+    "valueString": "high"
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Observation",
+    "id": "o",
+    "code": {
+     "text": "Mood"
+    },
+    "valueCodeableConcept": {
+     "coding": [
+      {
+       "display": "Calm"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Observation",
+    "id": "o"
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Observation",
+    "id": "o",
+    "code": {
+     "text": "W"
+    },
+    "valueQuantity": {
+     "value": 81.4
+    }
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Encounter",
+    "id": "e",
+    "class": {
+     "display": "virtual"
+    }
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Encounter",
+    "id": "e",
+    "period": {
+     "start": "2026-02-03T10:00:00Z"
+    }
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Library",
+    "id": "l",
+    "name": "N"
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Library",
+    "id": "l"
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Condition",
+    "id": "c",
+    "clinicalStatus": {
+     "coding": [
+      {
+       "code": "remission"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Condition",
+    "id": "c",
+    "clinicalStatus": {}
+   }
+  },
+  {
+   "raw": {
+    "resourceType": "Basic",
+    "id": "b",
+    "active": false
+   }
+  }
+ ],
+ "paletteSearches": [
+  "so",
+  "pat-01",
+  "Hyper",
+  "  BERG ",
+  "obs-001-1",
+  "zz"
+ ],
+ "steps": [
+  {
+   "at": 2000,
+   "op": "open",
+   "id": "Library/lib-weight/_history/2"
+  },
+  {
+   "at": 3000,
+   "op": "go",
+   "path": "/"
+  },
+  {
+   "at": 4000,
+   "op": "stat",
+   "label": "Patient"
+  },
+  {
+   "at": 5000,
+   "op": "search",
+   "value": "sol"
+  },
+  {
+   "at": 6000,
+   "op": "search",
+   "value": "pat-01"
+  },
+  {
+   "at": 7000,
+   "op": "search",
+   "value": ""
+  },
+  {
+   "at": 8000,
+   "op": "segment",
+   "value": "Observation"
+  },
+  {
+   "at": 9000,
+   "op": "open",
+   "id": "Observation/obs-001-1-weight"
+  },
+  {
+   "at": 10000,
+   "op": "edit",
+   "set": {
+    "status": "amended"
+   }
+  },
+  {
+   "at": 11000,
+   "op": "button",
+   "label": "Save",
+   "wait": 100
+  },
+  {
+   "at": 12000,
+   "op": "wait"
+  },
+  {
+   "at": 13000,
+   "op": "edit",
+   "set": {
+    "status": "bogus",
+    "valueQuantity": {
+     "value": "heavy",
+     "unit": "kg"
+    }
+   }
+  },
+  {
+   "at": 14000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 15000,
+   "op": "button",
+   "label": "Revert"
+  },
+  {
+   "at": 16000,
+   "op": "edit",
+   "value": "{\n  \"resourceType\": "
+  },
+  {
+   "at": 17000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 18000,
+   "op": "button",
+   "label": "Revert"
+  },
+  {
+   "at": 19000,
+   "op": "edit",
+   "set": {
+    "note": [
+     {
+      "text": "Weighed after lunch."
+     }
+    ]
+   }
+  },
+  {
+   "at": 20000,
+   "op": "server",
+   "call": "update",
+   "type": "Observation",
+   "id": "obs-001-1-weight",
+   "readAt": 2,
+   "resource": {
+    "base": "Observation/obs-001-1-weight",
+    "set": {
+     "meta": {
+      "versionId": "2"
+     },
+     "status": "corrected"
+    }
+   }
+  },
+  {
+   "at": 21000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 22000,
+   "op": "button",
+   "label": "Revert"
+  },
+  {
+   "at": 23000,
+   "op": "edit",
+   "set": {
+    "status": "corrected"
+   }
+  },
+  {
+   "at": 24000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 25000,
+   "op": "edit",
+   "set": {
+    "status": "amended"
+   }
+  },
+  {
+   "at": 26000,
+   "op": "edit",
+   "set": {
+    "status": "corrected"
+   }
+  },
+  {
+   "at": 27000,
+   "op": "button",
+   "label": "Delete"
+  },
+  {
+   "at": 28000,
+   "op": "cancel"
+  },
+  {
+   "at": 29000,
+   "op": "button",
+   "label": "Delete"
+  },
+  {
+   "at": 30000,
+   "op": "confirm"
+  },
+  {
+   "at": 31000,
+   "op": "go",
+   "path": "/resources/Observation/obs-001-1-weight"
+  },
+  {
+   "at": 32000,
+   "op": "go",
+   "path": "/resources/Patient/pat-002"
+  },
+  {
+   "at": 33000,
+   "op": "button",
+   "label": "Delete"
+  },
+  {
+   "at": 34000,
+   "op": "confirm"
+  },
+  {
+   "at": 35000,
+   "op": "reference",
+   "table": 0,
+   "key": "Practitioner/prac-02"
+  },
+  {
+   "at": 36000,
+   "op": "go",
+   "path": "/resources/Library/lib-hypertension"
+  },
+  {
+   "at": 37000,
+   "op": "version",
+   "value": 1
+  },
+  {
+   "at": 38000,
+   "op": "version",
+   "value": 3
+  },
+  {
+   "at": 39000,
+   "op": "edit",
+   "set": {
+    "title": "Hypertension control, edited"
+   }
+  },
+  {
+   "at": 40000,
+   "op": "version",
+   "value": 2
+  },
+  {
+   "at": 41000,
+   "op": "button",
+   "label": "FHIRPath"
+  },
+  {
+   "at": 42000,
+   "op": "go",
+   "path": "/resources/Patient/new"
+  },
+  {
+   "at": 43000,
+   "op": "button",
+   "label": "Create"
+  },
+  {
+   "at": 44000,
+   "op": "edit",
+   "set": {
+    "id": "pat-001"
+   }
+  },
+  {
+   "at": 45000,
+   "op": "button",
+   "label": "Create"
+  },
+  {
+   "at": 46000,
+   "op": "edit",
+   "set": {
+    "id": "",
+    "name": [
+     {
+      "use": "official",
+      "family": "Aasland",
+      "given": [
+       "Kari"
+      ]
+     }
+    ],
+    "birthDate": "1990-04-01",
+    "managingOrganization": {
+     "reference": "Organization/org-juniper"
+    }
+   }
+  },
+  {
+   "at": 47000,
+   "op": "button",
+   "label": "Create"
+  },
+  {
+   "at": 48000,
+   "op": "edit",
+   "set": {
+    "gender": "female"
+   }
+  },
+  {
+   "at": 49000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 50000,
+   "op": "go",
+   "path": "/resources/Encounter/new"
+  },
+  {
+   "at": 51000,
+   "op": "edit",
+   "set": {
+    "id": "enc-new-1",
+    "subject": {
+     "reference": "Patient/pat-013"
+    },
+    "period": {
+     "start": "2026-11-19T10:00:00Z"
+    }
+   }
+  },
+  {
+   "at": 52000,
+   "op": "button",
+   "label": "Create"
+  },
+  {
+   "at": 53000,
+   "op": "go",
+   "path": "/resources/Encounter"
+  },
+  {
+   "at": 54000,
+   "op": "open",
+   "id": "Encounter/enc-new-1"
+  },
+  {
+   "at": 55000,
+   "op": "button",
+   "label": "Delete"
+  },
+  {
+   "at": 56000,
+   "op": "confirm"
+  },
+  {
+   "at": 57000,
+   "op": "go",
+   "path": "/resources/Encounter/enc-new-1"
+  },
+  {
+   "at": 58000,
+   "op": "server",
+   "call": "create",
+   "type": "Encounter",
+   "resource": {
+    "raw": {
+     "resourceType": "Encounter",
+     "id": "enc-new-1",
+     "status": "planned",
+     "class": {
+      "code": "VR"
+     },
+     "subject": {
+      "reference": "Patient/pat-001"
+     }
+    }
+   }
+  },
+  {
+   "at": 59000,
+   "op": "server",
+   "call": "create",
+   "type": "Encounter",
+   "resource": {
+    "raw": {
+     "resourceType": "Encounter",
+     "id": "enc-new-1",
+     "status": "planned",
+     "class": {
+      "code": "VR"
+     }
+    }
+   }
+  },
+  {
+   "at": 60000,
+   "op": "server",
+   "call": "update",
+   "type": "Patient",
+   "id": "pat-099",
+   "readAt": 1,
+   "resource": {
+    "raw": {
+     "resourceType": "Patient",
+     "id": "pat-099"
+    }
+   }
+  },
+  {
+   "at": 61000,
+   "op": "server",
+   "call": "update",
+   "type": "Patient",
+   "id": "pat-001",
+   "readAt": 1,
+   "resource": {
+    "base": "Patient/pat-001"
+   }
+  },
+  {
+   "at": 62000,
+   "op": "server",
+   "call": "update",
+   "type": "Patient",
+   "id": "pat-001",
+   "readAt": 1,
+   "resource": {
+    "base": "Patient/pat-001",
+    "set": {
+     "gender": "x"
+    }
+   }
+  },
+  {
+   "at": 63000,
+   "op": "server",
+   "call": "remove",
+   "key": "Patient/pat-099"
+  },
+  {
+   "at": 64000,
+   "op": "server",
+   "call": "remove",
+   "key": "Encounter/enc-new-1"
+  },
+  {
+   "at": 65000,
+   "op": "server",
+   "call": "create",
+   "type": "Basic",
+   "resource": {
+    "raw": {
+     "resourceType": "Basic"
+    }
+   }
+  },
+  {
+   "at": 66000,
+   "op": "server",
+   "call": "create",
+   "type": "Observation",
+   "resource": {
+    "raw": "not an object"
+   }
+  },
+  {
+   "at": 67000,
+   "op": "go",
+   "path": "/fhirpath"
+  },
+  {
+   "at": 68000,
+   "op": "edit",
+   "value": "name.given.first() + ' ' + name.family"
+  },
+  {
+   "at": 69000,
+   "op": "subject",
+   "value": "Practitioner/prac-03"
+  },
+  {
+   "at": 70000,
+   "op": "edit",
+   "value": "name.where(use = 'official'\n  .given"
+  },
+  {
+   "at": 71000,
+   "op": "edit",
+   "value": "-name"
+  },
+  {
+   "at": 72000,
+   "op": "example",
+   "label": "Mean heart rate"
+  },
+  {
+   "at": 73000,
+   "op": "example",
+   "label": "Older than 65"
+  },
+  {
+   "at": 74000,
+   "op": "subject",
+   "value": "bundle"
+  },
+  {
+   "at": 75000,
+   "op": "edit",
+   "value": "// only a comment"
+  },
+  {
+   "at": 76000,
+   "op": "prefs",
+   "id": "live",
+   "value": false
+  },
+  {
+   "at": 77000,
+   "op": "edit",
+   "value": "entry.count()"
+  },
+  {
+   "at": 78000,
+   "op": "button",
+   "label": "Evaluate"
+  },
+  {
+   "at": 79000,
+   "op": "edit",
+   "value": "entry.resource.ofType(Library).name"
+  },
+  {
+   "at": 80000,
+   "op": "subject",
+   "value": "Library/lib-weight"
+  },
+  {
+   "at": 81000,
+   "op": "button",
+   "label": "Evaluate"
+  },
+  {
+   "at": 82000,
+   "op": "prefs",
+   "id": "live",
+   "value": true
+  },
+  {
+   "at": 83000,
+   "op": "go",
+   "path": "/fhirpath/Observation/obs-003-2-systolic"
+  },
+  {
+   "at": 84000,
+   "op": "edit",
+   "value": "value.value"
+  },
+  {
+   "at": 85000,
+   "op": "subject",
+   "value": "Patient/pat-003"
+  },
+  {
+   "at": 86000,
+   "op": "go",
+   "path": "/cql"
+  },
+  {
+   "at": 87000,
+   "op": "button",
+   "label": "New"
+  },
+  {
+   "at": 88000,
+   "op": "edit",
+   "replace": [
+    "  true",
+    "  exists [Observation]"
+   ]
+  },
+  {
+   "at": 89000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 90000,
+   "op": "button",
+   "label": "Publish"
+  },
+  {
+   "at": 91000,
+   "op": "edit",
+   "replace": [
+    "exists",
+    "not exists"
+   ]
+  },
+  {
+   "at": 92000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 93000,
+   "op": "edit",
+   "replace": [
+    "version '0.1.0'",
+    "version '0.2.0'"
+   ]
+  },
+  {
+   "at": 94000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 95000,
+   "op": "open",
+   "table": 0,
+   "id": "Library/lib-003/_history/1"
+  },
+  {
+   "at": 96000,
+   "op": "edit",
+   "value": "// nothing declared\ndefine \"X\": 1\n"
+  },
+  {
+   "at": 97000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 98000,
+   "op": "button",
+   "label": "Revert"
+  },
+  {
+   "at": 99000,
+   "op": "go",
+   "path": "/cql/lib-hypertension"
+  },
+  {
+   "at": 100000,
+   "op": "open",
+   "table": 0,
+   "id": "Library/lib-hypertension/_history/1"
+  },
+  {
+   "at": 101000,
+   "op": "edit",
+   "replace": [
+    "140 'mm[Hg]')",
+    "135 'mm[Hg]')"
+   ]
+  },
+  {
+   "at": 102000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 103000,
+   "op": "edit",
+   "replace": [
+    "version '1.1.0'",
+    "version '1.2.0'"
+   ]
+  },
+  {
+   "at": 104000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 105000,
+   "op": "button",
+   "label": "Publish"
+  },
+  {
+   "at": 106000,
+   "op": "button",
+   "label": "Library resource"
+  },
+  {
+   "at": 107000,
+   "op": "go",
+   "path": "/cql/lib-nothing"
+  },
+  {
+   "at": 108000,
+   "op": "go",
+   "path": "/cql"
+  },
+  {
+   "at": 109000,
+   "op": "go",
+   "path": "/search"
+  },
+  {
+   "at": 110000,
+   "op": "button",
+   "label": "Next page"
+  },
+  {
+   "at": 111000,
+   "op": "example",
+   "label": "Visits this fall"
+  },
+  {
+   "at": 112000,
+   "op": "button",
+   "label": "Next page"
+  },
+  {
+   "at": 113000,
+   "op": "button",
+   "label": "Previous page"
+  },
+  {
+   "at": 114000,
+   "op": "segment",
+   "index": 0,
+   "value": "bundle"
+  },
+  {
+   "at": 115000,
+   "op": "example",
+   "label": "How many observations"
+  },
+  {
+   "at": 116000,
+   "op": "segment",
+   "index": 0,
+   "value": "table"
+  },
+  {
+   "at": 117000,
+   "op": "edit",
+   "value": "Patient?name=sol&bogus=1&birthdate=1950x"
+  },
+  {
+   "at": 118000,
+   "op": "button",
+   "label": "Search"
+  },
+  {
+   "at": 119000,
+   "op": "edit",
+   "value": "Patient?gender=female"
+  },
+  {
+   "at": 120000,
+   "op": "run",
+   "value": "Patient?gender=female"
+  },
+  {
+   "at": 121000,
+   "op": "segment",
+   "index": 1,
+   "value": "parameters"
+  },
+  {
+   "at": 122000,
+   "op": "open",
+   "table": 1,
+   "id": "birthdate"
+  },
+  {
+   "at": 123000,
+   "op": "edit",
+   "value": "Patient?"
+  },
+  {
+   "at": 124000,
+   "op": "open",
+   "table": 1,
+   "id": "family"
+  },
+  {
+   "at": 125000,
+   "op": "edit",
+   "value": "Library"
+  },
+  {
+   "at": 126000,
+   "op": "open",
+   "table": 1,
+   "id": "_count"
+  },
+  {
+   "at": 127000,
+   "op": "segment",
+   "index": 1,
+   "value": "saved"
+  },
+  {
+   "at": 128000,
+   "op": "open",
+   "table": 1,
+   "id": "saved-2"
+  },
+  {
+   "at": 129000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 130000,
+   "op": "label",
+   "value": "  "
+  },
+  {
+   "at": 131000,
+   "op": "label",
+   "value": "Hypertension, active"
+  },
+  {
+   "at": 132000,
+   "op": "dialog",
+   "wait": 200
+  },
+  {
+   "at": 133000,
+   "op": "wait"
+  },
+  {
+   "at": 134000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 135000,
+   "op": "reorder",
+   "from": 3,
+   "to": 0
+  },
+  {
+   "at": 136000,
+   "op": "remove",
+   "id": "saved-1"
+  },
+  {
+   "at": 137000,
+   "op": "edit",
+   "value": "Encounter?_count=5"
+  },
+  {
+   "at": 138000,
+   "op": "prefs",
+   "id": "page-size",
+   "value": "10"
+  },
+  {
+   "at": 139000,
+   "op": "edit",
+   "value": "Encounter"
+  },
+  {
+   "at": 140000,
+   "op": "button",
+   "label": "Search"
+  },
+  {
+   "at": 141000,
+   "op": "button",
+   "label": "Next page"
+  },
+  {
+   "at": 142000,
+   "op": "button",
+   "label": "Save"
+  },
+  {
+   "at": 143000,
+   "op": "label",
+   "value": "All visits"
+  },
+  {
+   "at": 144000,
+   "op": "dialog",
+   "close": true
+  },
+  {
+   "at": 145000,
+   "op": "go",
+   "path": "/nothing/here"
+  },
+  {
+   "at": 146000,
+   "op": "go",
+   "path": "/overview"
+  },
+  {
+   "at": 147000,
+   "op": "open",
+   "id": "Library/lib-003/_history/4"
+  },
+  {
+   "at": 148000,
+   "op": "go",
+   "path": "/resources/Library"
+  },
+  {
+   "at": 149000,
+   "op": "search",
+   "value": "new"
+  },
+  {
+   "at": 150000,
+   "op": "go",
+   "path": "/resources/Foo/bar"
+  }
+ ]
+}

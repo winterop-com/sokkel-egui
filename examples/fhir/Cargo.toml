@@ -1,0 +1,16 @@
+[package]
+name = "fhir"
+description = "Tidevann's FHIR workbench: a FHIR server's resources checked against their types and kept in versions, search by parameters, FHIRPath evaluated against a resource or the whole server, and CQL libraries in versions with the diff between any two, as sokkel-ui's fhir example keeps it."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-egui.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+# The web's numbers read back to the bit, as `tests/web.rs` compares them.
+serde_json = { workspace = true, features = ["float_roundtrip"] }
