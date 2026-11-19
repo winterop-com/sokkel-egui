@@ -121,7 +121,7 @@ pub struct StudioApp {
     started: i64,
     started_at: Option<f64>,
     elapsed: i64,
-    held: bool,
+    pub(crate) held: bool,
     pub desktop: bool,
 }
 

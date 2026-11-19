@@ -653,7 +653,13 @@ impl StudioApp {
         if run.get() {
             view.runs += 1;
             view.outcome = Some(match execute(&text, tables) {
-                Outcome::Done(result, _) => Outcome::Done(result, view.runs),
+                // a held clock (the tests, the screenshots) times every run as the web's shot does
+                Outcome::Done(mut result, _) => {
+                    if self.held {
+                        result.ms = 1.0;
+                    }
+                    Outcome::Done(result, view.runs)
+                }
                 failed => failed,
             });
         }
