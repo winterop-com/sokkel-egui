@@ -725,6 +725,8 @@ pub struct TopBar<'a> {
     codes: Vec<usize>,
     /// What stands before the trail, such as a search field.
     start: Option<ShellBanner<'a>>,
+    /// The crumbs before the last go somewhere when pressed.
+    linked: bool,
 }
 
 /// The frame's top bar alone, for a screen without the shell, after sokkel-ui's `AppBar`: the
@@ -787,6 +789,8 @@ pub struct TopBarResponse {
     pub response: Response,
     /// Its search button was pressed: open the palette.
     pub search: bool,
+    /// A crumb before the last was pressed, with [`TopBar::linked`]: its index in the trail.
+    pub crumb: Option<usize>,
 }
 
 impl<'a> TopBar<'a> {
@@ -797,7 +801,16 @@ impl<'a> TopBar<'a> {
             mark: None,
             start: None,
             codes: Vec::new(),
+            linked: false,
         }
+    }
+
+    /// The crumbs before the last are links to their places, as the web's crumbs with an `href`:
+    /// the pointer's hand and the foreground's ink over one, its press answered as
+    /// [`TopBarResponse::crumb`].
+    pub fn linked(mut self, linked: bool) -> Self {
+        self.linked = linked;
+        self
     }
 
     /// The crumb at `index` in the code face, as an addressable code is (the web's crumb
@@ -846,6 +859,7 @@ impl<'a> TopBar<'a> {
             pos2(rect.right() - 12.0, rect.bottom()),
         );
         let mut searched = false;
+        let mut crumb_pressed = None;
         // on a phone the last crumb alone, and the palette's button an icon
         let phone = is_phone(ui.ctx());
         let first = if phone { self.trail.len().saturating_sub(1) } else { 0 };
@@ -891,7 +905,29 @@ impl<'a> TopBar<'a> {
                     } else {
                         rich
                     };
-                    ui.label(rich);
+                    if self.linked && i != last {
+                        // drawn in its own ink, which the pointer over it changes
+                        let galley = WidgetText::from(role.rich(&t, *crumb)).into_galley(
+                            ui,
+                            Some(TextWrapMode::Extend),
+                            f32::INFINITY,
+                            role.font(&t),
+                        );
+                        let (place, hit) = ui.allocate_exact_size(galley.size(), Sense::click());
+                        hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Link, true, *crumb));
+                        let ink = if hit.hovered() {
+                            ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+                            t.color("foreground")
+                        } else {
+                            ink
+                        };
+                        ui.painter().galley(place.min, galley, ink);
+                        if hit.clicked() {
+                            crumb_pressed = Some(i);
+                        }
+                    } else {
+                        ui.label(rich);
+                    }
                 }
                 // from the end: the actions last, 6 apart, then the palette's button 12 before them
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -916,6 +952,7 @@ impl<'a> TopBar<'a> {
         TopBarResponse {
             response,
             search: searched,
+            crumb: crumb_pressed,
         }
     }
 }
@@ -1292,6 +1329,7 @@ pub struct Shell<'a> {
     words: ShellWords,
     banner: Option<ShellBanner<'a>>,
     panel: Option<(&'a mut bool, ShellBanner<'a>)>,
+    bottom: Option<ShellBanner<'a>>,
 }
 
 /// What a shell's banner line draws.
@@ -1312,7 +1350,47 @@ impl<'a> Shell<'a> {
             words: ShellWords::default(),
             banner: None,
             panel: None,
+            bottom: None,
         }
+    }
+
+    /// A strip docked across the whole window between the content and the status line, under the
+    /// rail and the side panel, as the web's `bottom`: for what belongs to the whole app rather than
+    /// one screen, such as a player. It is as tall as what it draws, measured as it is drawn, so a
+    /// player grown from its top edge takes its room from the rail and the page; the rail's foot cell
+    /// stays level with the status line under it.
+    pub fn bottom(mut self, bottom: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.bottom = Some(Box::new(bottom));
+        self
+    }
+
+    /// Draws the bottom strip standing on `floor` across `left..right`, as tall as it was when last
+    /// drawn, and answers with where its top is. A strip drawn another height than it was asks for
+    /// the frame to be laid out again.
+    fn place_bottom(&mut self, ui: &mut Ui, left: f32, right: f32, floor: f32) -> f32 {
+        let Some(bottom) = self.bottom.take() else {
+            return floor;
+        };
+        let held_id = egui::Id::unique("sokkel-shell-bottom");
+        let held: f32 = ui.ctx().data(|d| d.get_temp(held_id)).unwrap_or(0.0);
+        let top = floor - held;
+        let area = Rect::from_min_max(pos2(left, top), pos2(right, floor.max(top + 1.0)));
+        let drawn = ui
+            .scope_builder(
+                UiBuilder::new().max_rect(area).layout(Layout::top_down(Align::Min)),
+                |ui| {
+                    ui.spacing_mut().item_spacing.y = 0.0;
+                    bottom(ui);
+                },
+            )
+            .response
+            .rect;
+        let height = drawn.height().max(0.0);
+        if (height - held).abs() > 0.5 {
+            ui.ctx().data_mut(|d| d.insert_temp(held_id, height));
+            ui.ctx().request_discard("the shell's bottom strip changed its height");
+        }
+        top
     }
 
     /// A side panel as the frame's right column while `open`, after the web's `Shell` `panel`: the
@@ -1485,14 +1563,16 @@ impl<'a> Shell<'a> {
         let foot = t.length("spacing-shell-foot");
         let top = t.length("spacing-shell-top");
         let rail_width = Rail::width(self.collapsed);
+        // the bottom strip across the window over the foot row, the rail and the column over it
+        let floor = self.place_bottom(ui, rect.left(), rect.right(), rect.bottom() - foot);
         // the rail runs the window's height, its foot cell level with the status line under the page
-        let rail = Rect::from_min_max(rect.min, pos2(rect.left() + rail_width, rect.bottom() - foot));
+        let rail = Rect::from_min_max(rect.min, pos2(rect.left() + rail_width, floor));
         let rail_foot = Rect::from_min_max(
             pos2(rect.left(), rect.bottom() - foot),
             pos2(rect.left() + rail_width, rect.bottom()),
         );
         // the content's column, less the side panel at its end while it is open
-        let column = Rect::from_min_max(pos2(rail.right(), rect.top()), pos2(rect.right(), rect.bottom() - foot));
+        let column = Rect::from_min_max(pos2(rail.right(), rect.top()), pos2(rect.right(), floor));
         let column = self.place_panel(ui, column);
         let top_bar = Rect::from_min_max(column.min, pos2(column.right(), rect.top() + top));
         let page = Rect::from_min_max(pos2(column.left(), top_bar.bottom()), column.max);
@@ -1542,10 +1622,8 @@ impl<'a> Shell<'a> {
         let top = t.length("spacing-shell-top");
         let finger = t.length("spacing-finger");
         let top_bar = Rect::from_min_max(rect.min, pos2(rect.right(), rect.top() + top));
-        let page = Rect::from_min_max(
-            pos2(rect.left(), top_bar.bottom()),
-            pos2(rect.right(), rect.bottom() - foot),
-        );
+        let floor = self.place_bottom(ui, rect.left(), rect.right(), rect.bottom() - foot);
+        let page = Rect::from_min_max(pos2(rect.left(), top_bar.bottom()), pos2(rect.right(), floor));
         ui.painter()
             .rect_filled(page, CornerRadius::ZERO, t.color("background"));
         let page = self.place_banner(ui, page);

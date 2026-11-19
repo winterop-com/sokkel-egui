@@ -329,6 +329,12 @@ impl<'a> SidePanel<'a> {
 /// A titled block inside a side panel, after sokkel-ui's `PanelSection`: a quiet capital heading
 /// over its content, 8 apart, 16 in and 12 over and under, a rule under it.
 pub fn panel_section(ui: &mut Ui, title: &str, body: impl FnOnce(&mut Ui)) {
+    panel_section_actions(ui, title, |_| {}, body);
+}
+
+/// A [`panel_section`] with controls at its heading's end, as the web's `PanelSection` `actions`:
+/// a small button such as Clear.
+pub fn panel_section_actions(ui: &mut Ui, title: &str, actions: impl FnOnce(&mut Ui), body: impl FnOnce(&mut Ui)) {
     let t = tokens(ui.ctx());
     let drawn = egui::Frame::new()
         .inner_margin(egui::Margin::symmetric(16, 12))
@@ -343,6 +349,7 @@ pub fn panel_section(ui: &mut Ui, title: &str, body: impl FnOnce(&mut Ui)) {
                     .layout(egui::Layout::left_to_right(egui::Align::Center)),
             );
             group_label(&mut head, title);
+            head.with_layout(egui::Layout::right_to_left(egui::Align::Center), actions);
             body(ui);
         })
         .response

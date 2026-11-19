@@ -67,6 +67,8 @@ pub struct Button {
     pub(crate) still: bool,
     /// The label said to a screen reader and not drawn, as `sr-only`: the icon alone.
     pub(crate) unseen_label: bool,
+    /// The icon filled in its ink, as the web's `fill-current` on a play or pause glyph.
+    filled_icon: bool,
 }
 
 impl Button {
@@ -84,6 +86,7 @@ impl Button {
             note: None,
             pressed: None,
             icon_ink: None,
+            filled_icon: false,
             ink: None,
             ring: None,
             still: false,
@@ -140,6 +143,13 @@ impl Button {
     /// A Lucide icon before the label; a busy button shows its spinner in the icon's place.
     pub fn icon(mut self, icon: Icon) -> Self {
         self.icon = Some(icon);
+        self
+    }
+
+    /// The play or pause icon filled in the ink, as the web's `<Play className="fill-current" />`
+    /// on a Play button; other icons are drawn as lines whatever this says.
+    pub fn filled_icon(mut self, filled: bool) -> Self {
+        self.filled_icon = filled;
         self
     }
 
@@ -318,7 +328,12 @@ impl Widget for Button {
             );
         } else if let Some(icon) = self.icon {
             let icon_ink = self.icon_ink.map_or(ink, |own| dim(own, enabled));
-            icons::paint(painter, pos2(x + glyph / 2.0, rect.center().y), icon, glyph, icon_ink);
+            let at = pos2(x + glyph / 2.0, rect.center().y);
+            match icon {
+                Icon::Play if self.filled_icon => super::paint_play(painter, at, glyph, icon_ink),
+                Icon::Pause if self.filled_icon => super::paint_pause(painter, at, glyph, icon_ink),
+                _ => icons::paint(painter, at, icon, glyph, icon_ink),
+            }
         }
         x += lead;
         let pos = pos2(x, rect.center().y - galley.size().y / 2.0);

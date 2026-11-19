@@ -58,6 +58,7 @@ pub struct PageHeader {
     chips: Vec<(String, crate::ChipTone)>,
     meta: Vec<String>,
     meta_row: bool,
+    meta_line: Option<crate::MetaLine>,
     edit: Option<crate::InlineEdit>,
 }
 
@@ -68,6 +69,8 @@ pub struct PageHeaderResponse {
     pub back: bool,
     /// The title saved in place, with [`PageHeader::edit_title`].
     pub renamed: Option<String>,
+    /// A link in the [`PageHeader::meta_line`] was pressed: its index among the line's items.
+    pub meta_link: Option<usize>,
 }
 
 impl PageHeader {
@@ -81,8 +84,17 @@ impl PageHeader {
             chips: Vec::new(),
             meta: Vec::new(),
             meta_row: false,
+            meta_line: None,
             edit: None,
         }
+    }
+
+    /// Small facts under the title and the description, 8 down, as the web's `meta` holding a
+    /// `MetaLine`: its items at the text size with `sm`, a link among them answered as
+    /// [`PageHeaderResponse::meta_link`].
+    pub fn meta_line(mut self, line: crate::MetaLine) -> Self {
+        self.meta_line = Some(line);
+        self
     }
 
     /// The title edited where it stands, as sokkel-ui's `InlineEdit` with `variant="title"` in the
@@ -238,6 +250,11 @@ impl PageHeader {
                         }
                     });
                     ui.spacing_mut().interact_size.y = kept;
+                }
+                if let Some(line) = self.meta_line.take() {
+                    // as the web's meta row in the text's own line height, 6 under what is over it
+                    ui.add_space(6.0);
+                    answer.meta_link = line.show_links(ui).pressed;
                 }
             });
             // the actions at the row's end, 8 apart, level with the title block's foot

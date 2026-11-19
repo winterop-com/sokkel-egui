@@ -279,6 +279,7 @@ pub struct Artwork<'a> {
     wide: bool,
     picture: Option<PicturePaint<'a>>,
     size: Option<egui::Vec2>,
+    framed: bool,
 }
 
 impl<'a> Artwork<'a> {
@@ -294,7 +295,15 @@ impl<'a> Artwork<'a> {
             wide: false,
             picture: None,
             size: None,
+            framed: false,
         }
+    }
+
+    /// Drawn as a cover standing on a page, as the web's `rounded-surface ring-1 ring-border`
+    /// around it: in a `border` ring with the surface's corners, as a card's cover is.
+    pub fn framed(mut self, framed: bool) -> Self {
+        self.framed = framed;
+        self
     }
 
     /// Drawn for a wide frame, as a video's, rather than a square.
@@ -338,6 +347,15 @@ impl Widget for Artwork<'_> {
         let (rect, response) = ui.allocate_exact_size(size, Sense::hover());
         if ui.is_rect_visible(rect) {
             self.paint(ui.painter(), rect);
+            if self.framed {
+                let t = tokens(ui.ctx());
+                ui.painter().rect_stroke(
+                    rect,
+                    t.radius("surface"),
+                    egui::Stroke::new(1.0, t.color("border")),
+                    egui::StrokeKind::Outside,
+                );
+            }
         }
         response
     }

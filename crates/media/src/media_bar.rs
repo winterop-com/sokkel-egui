@@ -532,7 +532,8 @@ impl<'a> MediaBar<'a> {
 
         // the bar: as tall as its size, or as its one line needs
         let width = ui.available_width();
-        let line_needs = if width >= WIDE { 67.0 } else { 95.0 };
+        // the wide line: the transport over the time's row, 8 over and under, under the bar's rule
+        let line_needs = if width >= WIDE { 71.0 } else { 95.0 };
         let height = if grown { shown } else { shown.max(line_needs) };
         let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
         ui.painter().rect_filled(rect, CornerRadius::ZERO, t.color("sidebar"));
@@ -1209,23 +1210,26 @@ fn line_bar(ui: &mut Ui, deck: &mut Deck, rect: Rect, expand: bool) -> bool {
         let middle = Rect::from_min_size(pos2(first.right() + gap, inner.top()), vec2(unit * 1.6, inner.height()));
         let last = Rect::from_min_max(pos2(middle.right() + gap, inner.top()), inner.max);
         // what plays, the cover growing with the bar
-        let side = if rect.height() - 17.0 > 48.0 {
-            rect.height() - 17.0
-        } else {
-            48.0
-        };
+        // 48 on the one line (70 under the rule), growing as the bar is dragged taller
+        let side = (rect.height() - 22.0).max(48.0);
         let art = Rect::from_min_size(pos2(first.left(), first.center().y - side / 2.0), vec2(side, side));
         cover(ui.painter(), deck, art, t.radius("mini"));
         words_at(ui, deck, art.right() + 12.0, first.right(), first.center().y);
         // the transport over the position
+        // the time's row 20 tall, 2 under the transport, as the web's `text-xs` times beside the track
         let (_, play) = sides(ui, TransportSize::Sm);
-        let block = play + 2.0 + 16.0;
+        let block = play + 2.0 + 20.0;
         let top = middle.center().y - block / 2.0;
         let steps = deck.steps_width(ui, TransportSize::Sm, 8.0, true);
         centered_row(ui, middle.center().x, top + play / 2.0, steps, play, 8.0, |ui| {
             deck.transport(ui, TransportSize::Sm, true);
         });
-        let position = Rect::from_min_size(pos2(middle.left(), top + play + 2.0), vec2(middle.width(), 16.0));
+        // the position lays its row out a control tall, so it is given that much around the middle
+        let control = ui.spacing().interact_size.y;
+        let position = Rect::from_center_size(
+            pos2(middle.center().x, top + play + 2.0 + 10.0),
+            vec2(middle.width(), control),
+        );
         place(ui, position, Layout::left_to_right(Align::Center), |ui| {
             deck.scrub(ui, 16.0, false, false);
         });

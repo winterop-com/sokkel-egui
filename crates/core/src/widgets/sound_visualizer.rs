@@ -750,6 +750,53 @@ pub fn band_levels(bins: &[u8], count: usize, sample_rate: f32, range: SoundRang
         .collect()
 }
 
+/// The quietest an analyser's byte reads, in decibels, as Web Audio's `minDecibels` by default.
+const MIN_DECIBELS: f32 = -100.0;
+/// The loudest, as `maxDecibels`.
+const MAX_DECIBELS: f32 = -30.0;
+
+/// The frequency bins an analyser reads from a window of samples, as Web Audio's
+/// `getByteFrequencyData` with its `fftSize` the window's length and no smoothing: the window under
+/// a Blackman window, each bin's magnitude in decibels laid from `minDecibels` (0) to `maxDecibels`
+/// (255). For an app that has the sound as samples rather than a live audio graph, to feed
+/// [`band_levels`]; half as many bins as samples.
+pub fn frequency_bytes(samples: &[f32]) -> Vec<u8> {
+    let n = samples.len();
+    if n < 2 {
+        return Vec::new();
+    }
+    let tau = std::f32::consts::TAU;
+    let windowed: Vec<f32> = samples
+        .iter()
+        .enumerate()
+        .map(|(i, x)| {
+            let a = i as f32 / n as f32;
+            let w = 0.42 - 0.5 * (tau * a).cos() + 0.08 * (2.0 * tau * a).cos();
+            x * w
+        })
+        .collect();
+    (0..n / 2)
+        .map(|k| {
+            // the bin's turn per sample, walked by rotation rather than a sine per sample
+            let step = -tau * k as f32 / n as f32;
+            let (sin, cos) = step.sin_cos();
+            let (mut re, mut im) = (0.0_f32, 0.0_f32);
+            let (mut c, mut s) = (1.0_f32, 0.0_f32);
+            for x in &windowed {
+                re += x * c;
+                im += x * s;
+                let next = c * cos - s * sin;
+                s = c * sin + s * cos;
+                c = next;
+            }
+            let magnitude = (re * re + im * im).sqrt() / n as f32;
+            let decibels = 20.0 * magnitude.max(1e-12).log10();
+            let byte = 255.0 * (decibels - MIN_DECIBELS) / (MAX_DECIBELS - MIN_DECIBELS);
+            byte.clamp(0.0, 255.0) as u8
+        })
+        .collect()
+}
+
 /// Levels stretched or squeezed to `count`, read straight between neighbors.
 pub fn resample(levels: &[f32], count: usize) -> Vec<f32> {
     if count == 0 || levels.is_empty() {

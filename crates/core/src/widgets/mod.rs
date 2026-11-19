@@ -162,7 +162,7 @@ pub use media_controls::{
 };
 pub use media_slider::{MediaRange, MediaSlider, MediaSliderResponse, MediaTone};
 pub use menu::{CommandGroup, CommandPalette, DropdownMenu, MenuItem, PaletteOutcome, PaletteWords, palette_shortcut};
-pub use meta_line::MetaLine;
+pub use meta_line::{MetaLine, MetaLineResponse};
 pub use mini_month::{MiniMonth, MiniMonthResponse, MiniMonthWords};
 pub use not_found::{NotFound, NotFoundWords};
 pub use number_field::{NumberField, NumberFieldWords, read_number, write_number};
@@ -173,7 +173,9 @@ pub use overlay::{
 pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, PageStateWords};
 pub use pane_header::{PaneHeader, PaneHeaderVariant, PaneTitle, section_title_weight};
 pub use panel_menu::{PanelAsked, PanelMenu, PanelWindow, PanelWords, body_drawn, panel_away, quiet_tools, windowed};
-pub use panes::{Inspector, InspectorWords, SidePanel, SubNav, group_label, inspector_section, panel_section};
+pub use panes::{
+    Inspector, InspectorWords, SidePanel, SubNav, group_label, inspector_section, panel_section, panel_section_actions,
+};
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
 pub use problem::{Problem, ProblemTone, ProblemWords};
 pub use run_timeline::{

@@ -617,7 +617,10 @@ fn setting_row_body(
         if below {
             ui.spacing_mut().item_spacing.y = 2.0;
             ui.label(TextRole::Action.rich(t, title).color(t.color("popover-foreground")));
-            ui.add(egui::Label::new(TextRole::Body.rich(t, description).color(t.color("muted-foreground"))).wrap());
+            // a setting with no description, such as a volume, is its title alone
+            if !description.is_empty() {
+                ui.add(egui::Label::new(TextRole::Body.rich(t, description).color(t.color("muted-foreground"))).wrap());
+            }
             ui.add_space(10.0);
             // one line, as tall as the control
             ui.horizontal(control);
@@ -627,7 +630,10 @@ fn setting_row_body(
         if ui.available_width() < 512.0 {
             ui.spacing_mut().item_spacing.y = 2.0;
             ui.label(TextRole::Action.rich(t, title).color(t.color("popover-foreground")));
-            ui.add(egui::Label::new(TextRole::Body.rich(t, description).color(t.color("muted-foreground"))).wrap());
+            // a setting with no description, such as a volume, is its title alone
+            if !description.is_empty() {
+                ui.add(egui::Label::new(TextRole::Body.rich(t, description).color(t.color("muted-foreground"))).wrap());
+            }
             ui.add_space(10.0);
             ui.with_layout(
                 Layout::left_to_right(Align::Min)
@@ -644,7 +650,12 @@ fn setting_row_body(
             ui.with_layout(Layout::top_down(Align::Min), |ui| {
                 ui.spacing_mut().item_spacing.y = 2.0;
                 ui.label(TextRole::Action.rich(t, title).color(t.color("popover-foreground")));
-                ui.add(egui::Label::new(TextRole::Body.rich(t, description).color(t.color("muted-foreground"))).wrap());
+                // a setting with no description, such as a volume, is its title alone
+                if !description.is_empty() {
+                    ui.add(
+                        egui::Label::new(TextRole::Body.rich(t, description).color(t.color("muted-foreground"))).wrap(),
+                    );
+                }
             });
         });
     }
