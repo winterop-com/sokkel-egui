@@ -6,15 +6,31 @@
 //! editor's panes (`editor`).
 //!
 //! `tests/web.rs` holds each against the web's own modules, run under bun.
+//!
+//! The UI over it is the web's one to one: the frame (`app`), the projects (`projects_page`), the
+//! editor (`editor_page`) with its bin (`bin_pane`), preview, inspector and timeline, the export
+//! (`export_dialog`), the dialogs, the settings and the palette. `tests/screens.rs` draws its screens.
 
+pub mod app;
 pub mod backend;
+pub mod bin_pane;
+pub mod dialogs;
 pub mod editor;
+pub mod editor_page;
 pub mod export;
+pub mod export_dialog;
 pub mod history;
+pub mod inspector;
 pub mod js;
 pub mod media;
 pub mod model;
+pub mod palette;
 pub mod playback;
+pub mod preview;
+pub mod projects_page;
 pub mod render;
 pub mod seed;
+pub mod settings;
 pub mod sound;
+
+pub use app::CutApp;

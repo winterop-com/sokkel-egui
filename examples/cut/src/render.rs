@@ -3,7 +3,9 @@
 //! (`in_point + t - start`), and the titles under `t` written over it. Nothing is decoded, so the
 //! preview and the export paint the same frame.
 
-use eframe::egui::{Color32, Painter, Rect};
+use eframe::egui::{
+    Align, Color32, FontId, FontSelection, Painter, Pos2, Rect, RichText, Style, text::LayoutJob, vec2,
+};
 use tidevann_shared::clips::scenes::{Canvas, font, rgba};
 
 use crate::js::{is_space, round, trim};
@@ -36,8 +38,26 @@ pub fn titles_at(edit: &Edit, t: f64) -> Vec<&Clip> {
         .collect()
 }
 
+/// Words at weight 700 standing on their baseline at `at`, as the web's `700` canvas font writes a
+/// title; the canvas writes at the face's own weight.
+fn bold_text(painter: &Painter, at: Pos2, text: &str, face: &FontId, color: Color32) {
+    let mut job = LayoutJob::default();
+    RichText::new(text)
+        .font(face.clone())
+        .variation("wght", 700.0)
+        .color(color)
+        .append_to(&mut job, &Style::default(), FontSelection::Default, Align::Min);
+    let galley = painter.layout_job(job);
+    let baseline = galley
+        .rows
+        .first()
+        .and_then(|row| row.row.glyphs.first().map(|glyph| row.pos.y + glyph.pos.y))
+        .unwrap_or(face.size * 0.8);
+    painter.galley(at - vec2(0.0, baseline), galley, color);
+}
+
 /// A title's words over the lower part of the picture, on a dark band, three lines at most.
-fn draw_title(canvas: &Canvas, clip: &Clip) {
+fn draw_title(painter: &Painter, canvas: &Canvas, clip: &Clip) {
     let Some(text) = clip.text.as_deref().map(trim).filter(|text| !text.is_empty()) else {
         return;
     };
@@ -53,13 +73,8 @@ fn draw_title(canvas: &Canvas, clip: &Clip) {
     let top = h * 0.78 - block;
     canvas.rect(0.0, top - h * 0.03, w, block + h * 0.06, rgba(0.0, 0.0, 0.0, 0.45));
     for (index, line) in lines.iter().enumerate() {
-        canvas.text(
-            w * 0.08,
-            top + (index as f64 + 1.0) * line_height - h * 0.02,
-            line,
-            &face,
-            rgba(255.0, 255.0, 255.0, 1.0),
-        );
+        let at = canvas.at(w * 0.08, top + (index as f64 + 1.0) * line_height - h * 0.02);
+        bold_text(painter, at, line, &face, Color32::WHITE);
     }
 }
 
@@ -74,6 +89,6 @@ pub fn draw_edit_frame(painter: &Painter, rect: Rect, edit: &Edit, t: f64) {
     }
     let canvas = Canvas::new(&painter, rect);
     for title in titles_at(edit, t) {
-        draw_title(&canvas, title);
+        draw_title(&painter, &canvas, title);
     }
 }

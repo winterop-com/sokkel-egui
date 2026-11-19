@@ -58,7 +58,16 @@ pub struct NumberField<'a> {
     help: Option<String>,
     error: Option<String>,
     words: NumberFieldWords,
+    format: Option<Write<'a>>,
+    parse: Option<Read<'a>>,
+    mono: bool,
+    bare: bool,
 }
+
+/// How a number field writes its value, as the web's `format`.
+type Write<'a> = Box<dyn Fn(f64) -> String + 'a>;
+/// How it reads what is typed, as the web's `parse`.
+type Read<'a> = Box<dyn Fn(&str) -> Option<f64> + 'a>;
 
 /// The value a number field holds: always a number, or a number or none.
 enum Held<'a> {
@@ -111,7 +120,38 @@ impl<'a> NumberField<'a> {
             help: None,
             error: None,
             words: NumberFieldWords::default(),
+            format: None,
+            parse: None,
+            mono: false,
+            bare: false,
         }
+    }
+
+    /// How the value is written in the field, as the web's `format`, such as a time as a timecode;
+    /// plainly when not given.
+    pub fn format(mut self, format: impl Fn(f64) -> String + 'a) -> Self {
+        self.format = Some(Box::new(format));
+        self
+    }
+
+    /// How what is typed is read, as the web's `parse`, such as a timecode read back to seconds;
+    /// as a plain number when not given.
+    pub fn parse(mut self, parse: impl Fn(&str) -> Option<f64> + 'a) -> Self {
+        self.parse = Some(Box::new(parse));
+        self
+    }
+
+    /// The number in the code face, as the web's `mono`, for a timecode or an id.
+    pub fn mono(mut self, mono: bool) -> Self {
+        self.mono = mono;
+        self
+    }
+
+    /// The input alone, its label naming it to a screen reader only, as the web's `bare`: for a
+    /// field whose row already says what it is, such as a setting's.
+    pub fn bare(mut self, bare: bool) -> Self {
+        self.bare = bare;
+        self
     }
 
     /// Whole numbers only: a fraction typed is said to be one.
@@ -182,8 +222,12 @@ impl Widget for NumberField<'_> {
     fn ui(mut self, ui: &mut Ui) -> Response {
         let key = self.id.with("typing");
         let shown = self.value.get();
+        let format = self.format.take();
+        let parse = self.parse.take();
+        let write = |value: f64| format.as_ref().map_or_else(|| write_number(value), |f| f(value));
+        let read = |text: &str| parse.as_ref().map_or_else(|| read_number(text), |p| p(text));
         let mut typing = ui.data(|d| d.get_temp::<Typing>(key)).unwrap_or_else(|| Typing {
-            text: shown.map(write_number).unwrap_or_default(),
+            text: shown.map(write).unwrap_or_default(),
             unreadable: false,
         });
         let width = self.width.unwrap_or_else(|| ui.available_width());
@@ -191,20 +235,12 @@ impl Widget for NumberField<'_> {
         let whole = |v: f64| !self.integer || v.fract() == 0.0;
         let issue = if typing.unreadable {
             Some(self.words.unreadable.clone())
-        } else if read_number(&typing.text).is_some_and(|v| !whole(v)) {
+        } else if read(&typing.text).is_some_and(|v| !whole(v)) {
             Some(self.words.whole.clone())
         } else {
             self.error.clone()
         };
-        let mut field = super::Field::new(&self.label)
-            .required(self.required)
-            .hint(self.hint.clone())
-            .help_if(self.help.clone())
-            .error(issue);
-        if let Some(description) = &self.description {
-            field = field.description(description);
-        }
-        let response = field.show(ui, |ui| {
+        let input = |ui: &mut Ui, typing: &mut Typing, value: &mut Held<'_>, changed: &mut bool| {
             let mut text = typing.text.clone();
             let mut response = ui
                 .push_id(self.id, |ui| {
@@ -212,6 +248,7 @@ impl Widget for NumberField<'_> {
                         Input::new(&mut text)
                             .name(&self.label)
                             .width(width)
+                            .mono(self.mono)
                             .suffix(self.suffix.trim()),
                     )
                 })
@@ -232,42 +269,55 @@ impl Widget for NumberField<'_> {
                     steps
                 });
                 if steps != 0.0 {
-                    let from = read_number(&typing.text).or(shown).unwrap_or(0.0);
+                    let from = read(&typing.text).or(shown).unwrap_or(0.0);
                     let next = ((from / self.step).round() + steps) * self.step;
-                    self.value.set(Some(next));
-                    typing.text = write_number(next);
+                    value.set(Some(next));
+                    typing.text = write(next);
                     typing.unreadable = false;
-                    changed = true;
+                    *changed = true;
                 }
             }
             if response.lost_focus() || response.changed() {
                 let empty = typing.text.trim().is_empty();
-                match read_number(&typing.text) {
+                match read(&typing.text) {
                     Some(next) => {
-                        if Some(next) != self.value.get() {
-                            self.value.set(Some(next));
-                            changed = true;
+                        if Some(next) != value.get() {
+                            value.set(Some(next));
+                            *changed = true;
                         }
                         typing.unreadable = false;
                         if response.lost_focus() {
-                            typing.text = write_number(next);
+                            typing.text = write(next);
                         }
                     }
-                    None if empty && matches!(self.value, Held::Maybe(_)) => {
-                        if self.value.get().is_some() {
-                            self.value.set(None);
-                            changed = true;
+                    None if empty && matches!(value, Held::Maybe(_)) => {
+                        if value.get().is_some() {
+                            value.set(None);
+                            *changed = true;
                         }
                         typing.unreadable = false;
                     }
                     None => typing.unreadable = response.lost_focus() || typing.unreadable,
                 }
             }
-            if changed {
+            if *changed {
                 response.mark_changed();
             }
             response
-        });
+        };
+        let response = if self.bare {
+            input(ui, &mut typing, &mut self.value, &mut changed)
+        } else {
+            let mut field = super::Field::new(&self.label)
+                .required(self.required)
+                .hint(self.hint.clone())
+                .help_if(self.help.clone())
+                .error(issue.clone());
+            if let Some(description) = &self.description {
+                field = field.description(description);
+            }
+            field.show(ui, |ui| input(ui, &mut typing, &mut self.value, &mut changed))
+        };
         // away from the field it shows the value as given, so a value set elsewhere shows
         if response.has_focus() || typing.unreadable {
             ui.data_mut(|d| d.insert_temp(key, typing));

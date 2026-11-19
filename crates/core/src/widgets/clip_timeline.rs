@@ -353,6 +353,9 @@ pub struct ClipTimelineResponse {
     pub dropped: Option<ClipDrop>,
     /// What a screen reader is told of the change made this frame.
     pub said: Option<String>,
+    /// The focus is inside the timeline, which answers its own keys (the arrows, Home and End, S,
+    /// Delete and Backspace), so an app's shortcuts on the same keys stand aside.
+    pub focused: bool,
 }
 
 /// The headers' column from 640 wide, and below.
@@ -1251,6 +1254,7 @@ impl<'a> ClipTimeline<'a> {
 
         // the keys, while focus is inside the timeline
         let focused = ui.memory(|m| m.focused());
+        out.focused = focused.is_some_and(|f| ours.contains(&f));
         if let Some(f) = focused.filter(|f| ours.contains(f)) {
             ui.memory_mut(|m| {
                 m.set_focus_lock_filter(

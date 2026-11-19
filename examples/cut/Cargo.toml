@@ -1,6 +1,6 @@
 [package]
 name = "cut"
-description = "Tidevann's cut: a video editor's data on a simulated backend, as sokkel-ui's cut example keeps it: projects, edits with undo and redo, playback, export settings and the clips' sound."
+description = "Tidevann's cut: sokkel-ui's video editor example in egui, one to one: projects, the bin, the preview, the inspector and the timeline, edits with undo and redo, on a simulated backend."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,6 +8,7 @@ publish.workspace = true
 
 [dependencies]
 sokkel-egui.workspace = true
+sokkel-egui-media.workspace = true
 tidevann-shared = { path = "../shared" }
 eframe.workspace = true
 serde.workspace = true

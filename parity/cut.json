@@ -44,7 +44,10 @@
             "viewport": {
                 "width": 1440,
                 "height": 900
-            }
+            },
+            "steps": [
+                "wait:2000"
+            ]
         },
         {
             "name": "cut_settings",
