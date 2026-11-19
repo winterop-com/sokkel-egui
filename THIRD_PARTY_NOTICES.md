@@ -5,6 +5,9 @@
   (Latin, as `@fontsource/ibm-plex-mono` 5.3.0 ships its 500 and 600, converted from WOFF2 to TTF), Copyright 2019 IBM Corp.,
   under the SIL Open Font License 1.1: `crates/core/assets/fonts/IBMPlexSans-OFL.txt` and
   `IBMPlexMono-OFL.txt`.
+- Noto Emoji (monochrome), Copyright 2013 Google LLC, under the SIL Open Font License 1.1, and the
+  emoji icon font (MIT), through egui's `monochrome_emoji_fonts` (`epaint_default_fonts`): the
+  emoji a reaction is drawn with, behind the text faces.
 - Lucide icons, through the `lucide-icons` crate and the icon font it ships (MIT and ISC,
   Copyright Lucide Contributors and Cole Bemis), the same set sokkel-ui draws with lucide-react.
 - The basemap previews in `crates/maps/assets/previews/`, as sokkel-ui-maps ships them: the light

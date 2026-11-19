@@ -4630,6 +4630,7 @@ name = "sokkel-egui-charts"
 version = "0.1.0"
 dependencies = [
  "egui",
+ "serde",
  "sokkel-egui",
 ]
 
@@ -4639,7 +4640,6 @@ version = "0.1.0"
 dependencies = [
  "egui",
  "egui_kittest",
- "serde",
  "serde_json",
  "sokkel-egui",
 ]
@@ -5416,9 +5416,12 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 name = "video"
 version = "0.1.0"
 dependencies = [
+ "eframe",
+ "egui_kittest",
  "serde",
  "serde_json",
  "sokkel-egui",
+ "sokkel-egui-media",
  "tidevann-shared",
 ]
 

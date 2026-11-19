@@ -11,10 +11,13 @@ use egui::{
     style::WidgetVisuals,
 };
 
+pub mod captions;
 mod day;
 mod download;
 pub mod icons;
+pub mod numbers;
 pub mod periods;
+pub mod reactions;
 pub mod text;
 pub mod tokens;
 mod widgets;
@@ -22,6 +25,7 @@ mod widgets;
 pub use day::Day;
 pub use download::download;
 pub use icons::Icon;
+pub use reactions::{Reaction, toggle_reaction};
 pub use text::TextRole;
 pub use tokens::{
     Appearance, Motion, Scheme, Swatch, TextSpec, ThemeInfo, Tokens, densities, density_level, hex, swatch, themes,

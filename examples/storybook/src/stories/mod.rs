@@ -23,6 +23,7 @@ mod primitives;
 pub mod settings;
 mod table;
 mod themes;
+mod watching;
 
 pub struct Story {
     pub path: &'static str,
@@ -539,6 +540,46 @@ pub const STORIES: &[Story] = &[
         path: "Media/Sound visualizer",
         doc: "A picture of what is playing, from levels the app hands it each frame: a spectrum, centered bars, an area and a wave; along a ramp of tokens, mirrored or colored by level; a ring with a cover in its middle, at rest, and faint behind a title.",
         show: media::sound_visualizer,
+    },
+    Story {
+        path: "Media/Video player",
+        doc: "A video's player: the picture the app paints at sixteen by nine on the terminal ground, a cue of the captions over it, and the controls along its foot: the position, the title, back, play and forward, the volume, the captions, the speed, the quality, picture in picture and full screen.",
+        show: watching::video_player,
+    },
+    Story {
+        path: "Media/Up next",
+        doc: "What plays next, over the dimmed picture as a video ends: its artwork, its title and channel, the countdown to playing it by itself, Play now and Cancel.",
+        show: watching::up_next,
+    },
+    Story {
+        path: "Media/Video stats",
+        doc: "How a video is playing, over its picture: the size, the bitrate, the link, the buffer and the frames dropped, the app's own facts after them, and its verdict in the title's place.",
+        show: watching::video_stats,
+    },
+    Story {
+        path: "Media/Channel row",
+        doc: "The channel under a video: its picture and name over how many follow it, Follow turning to Following, and like, dislike, Share, Save, Download and More at the line's end, folding into More as the room runs out; large, it heads the channel's page.",
+        show: watching::channel_row,
+    },
+    Story {
+        path: "Media/Watch layout",
+        doc: "A watch page: the player, what is under it, and what plays next beside both; in theater the player spans both columns and what plays next starts under it.",
+        show: watching::watch_layout,
+    },
+    Story {
+        path: "Patterns/Show more",
+        doc: "A block of text held to a few lines, with Show more under it once it runs past them: a description under a video in a well, with its facts over it.",
+        show: watching::show_more,
+    },
+    Story {
+        path: "Patterns/Comment thread",
+        doc: "The comments under a video: the composer, then each comment with its author, time and words, pinned or by the creator, like, dislike, react and Reply, its reactions, its menu, and its replies folded behind a count.",
+        show: watching::comment_thread,
+    },
+    Story {
+        path: "Patterns/Rail collapsed",
+        doc: "A rail collapsed to its icons, as a video's page asks: each count a round badge at its icon's corner, a channel's color as a dot in its icon's place; beside it the same rail open.",
+        show: watching::rail_collapsed,
     },
 ];
 

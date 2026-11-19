@@ -205,7 +205,8 @@ fn icon_field(ui: &mut Ui, rect: Rect, text: &mut String, icon: Icon, placeholde
     response
 }
 
-/// A search field: a magnifier, the words searched for, filling the width it is given.
+/// A search field: a magnifier, the words searched for, and a clear button once there is text,
+/// filling the width it is given.
 pub struct SearchField<'a> {
     text: &'a mut String,
     placeholder: String,
@@ -213,6 +214,8 @@ pub struct SearchField<'a> {
     keys: Option<String>,
     /// Its width; the room it is given down a column, and 256 in a row such as a toolbar.
     width: Option<f32>,
+    /// The clear button's name.
+    words_clear: String,
 }
 
 impl<'a> SearchField<'a> {
@@ -223,7 +226,14 @@ impl<'a> SearchField<'a> {
             id: egui::Id::unique(id),
             keys: None,
             width: None,
+            words_clear: "Clear the search".into(),
         }
+    }
+
+    /// The clear button's name, said to a screen reader and on hover.
+    pub fn clear_word(mut self, word: impl Into<String>) -> Self {
+        self.words_clear = word.into();
+        self
     }
 
     /// A width of its own.
@@ -257,6 +267,23 @@ impl<'a> SearchField<'a> {
         let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
         let field = self.id.with("field");
         let response = icon_field(ui, rect, self.text, Icon::Search, &self.placeholder, field);
+        // the clear button once there is text: an X of 14 at the field's end, muted, the foreground
+        // under the pointer
+        if !self.text.is_empty() {
+            let at = Rect::from_center_size(pos2(rect.right() - 10.0 - 10.0, rect.center().y), vec2(20.0, 20.0));
+            let hit = ui.interact(at, self.id.with("clear"), Sense::click());
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words_clear));
+            let ink = if hit.hovered() {
+                t.color("foreground")
+            } else {
+                t.color("muted-foreground")
+            };
+            icons::paint(ui.painter(), at.center(), Icon::X, 14.0, ink);
+            if hit.clicked() {
+                self.text.clear();
+                response.request_focus();
+            }
+        }
         if let Some(keys) = &self.keys {
             if self.text.is_empty() && !response.has_focus() {
                 let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);

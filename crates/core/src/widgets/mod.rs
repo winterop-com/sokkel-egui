@@ -12,6 +12,7 @@ mod choice;
 mod clip_timeline;
 mod code_editor;
 mod commands;
+mod comment_thread;
 mod consequences;
 mod contents;
 mod dashboard;
@@ -61,6 +62,7 @@ mod section;
 mod server_menu;
 mod settings;
 mod sheet;
+mod show_more;
 mod sign_in;
 mod sign_in_art;
 mod slider_field;
@@ -82,6 +84,7 @@ mod tree;
 mod tree_select;
 mod uptime;
 mod variables;
+mod video_player;
 mod waveform;
 mod week;
 mod windowed_pane;
@@ -97,7 +100,7 @@ pub use board::{BOARD_COLUMN, Board, BoardCard, BoardColumn, BoardMove, CardResp
 pub use button::{Button, ButtonSize, ButtonVariant, IconButton};
 pub use calendar::{Calendar, CalendarWords, RangeCalendar, WeekStart, calendar_forget};
 pub use chip::{Chip, ChipTone, TagChips};
-pub use chip_bar::ChipBar;
+pub use chip_bar::{ChipBar, ChipBarWords};
 pub use choice::{
     Checkbox, Choice, ChoiceList, Segmented, SegmentedVariant, SwatchGroup, Tabs, TabsVariant, checkbox_list,
 };
@@ -111,6 +114,10 @@ pub use code_editor::{
     CodeSize, CodeVariant, LARGE_DOCUMENT, MarkTone,
 };
 pub use commands::{AppearanceCommandWords, appearance_commands, place_commands, place_of, run_appearance_command};
+pub use comment_thread::{
+    CommentComposer, CommentComposerResponse, CommentComposerWords, CommentThread, CommentThreadResponse,
+    CommentThreadWords, QUICK_REACTIONS, ThreadComment,
+};
 pub use consequences::{Consequence, ConsequenceList, ConsequenceListWords};
 pub use contents::{ContentsEntry, TableOfContents, TableOfContentsWords};
 pub use dashboard::{
@@ -199,6 +206,7 @@ pub use settings::{
     setting_row_below, setting_row_found_by, theme_settings, theme_settings_listed, theme_settings_of,
 };
 pub use sheet::{DetailSheet, DetailSheetWords};
+pub use show_more::{ShowMore, ShowMoreWords};
 pub use sign_in::{SignIn, SignInFact, SignInValues, SignInWords};
 pub use sign_in_art::{FlowEdge, FlowLines, FlowNode, FlowNodes, LevelBars, flow_graph, level_heights, seeded};
 pub use slider_field::{Slider, SliderField};
@@ -224,6 +232,7 @@ pub use tree::{
 };
 pub use tree_select::{TreeSelect, TreeSelectWords};
 pub use uptime::{UptimeBar, UptimeBarWords, UptimeDay, format_uptime, overall_uptime, uptime_color};
+pub use video_player::{VIDEO_SKIP, VideoPlayer, VideoPlayerResponse, VideoPlayerWords, VideoQuality};
 pub use waveform::{AudioScrubber, AudioScrubberResponse, Waveform, static_levels};
 pub use week::{CalendarEvent, PlacedEvent, WeekGrid, WeekGridResponse, layout_day};
 pub use windowed_pane::{WindowedAside, WindowedPane, WindowedPaneWhere, WindowedPaneWords, windowed_pane_button};

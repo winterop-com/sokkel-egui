@@ -30,7 +30,7 @@ pub fn initials(name: &str, count: usize) -> String {
         .to_uppercase()
 }
 
-/// How big an avatar is, as sokkel-ui's sizes: 16, 20, 24, 32 and 36 across.
+/// How big an avatar is, as sokkel-ui's sizes: 16, 20, 24, 32, 36 and 64 across.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum AvatarSize {
     Xxs,
@@ -39,6 +39,8 @@ pub enum AvatarSize {
     Sm,
     Md,
     Lg,
+    /// 64 across, its letters at the page size, as a profile's own page heads with it.
+    Xl,
 }
 
 impl AvatarSize {
@@ -49,6 +51,7 @@ impl AvatarSize {
             AvatarSize::Sm => (24.0, 2, 12.0),
             AvatarSize::Md => (32.0, 2, 14.0),
             AvatarSize::Lg => (36.0, 2, 14.0),
+            AvatarSize::Xl => (64.0, 2, 24.0),
         }
     }
 }
@@ -60,6 +63,7 @@ pub struct PersonAvatar {
     name: String,
     size: AvatarSize,
     primary: bool,
+    color: Option<String>,
 }
 
 impl PersonAvatar {
@@ -68,7 +72,14 @@ impl PersonAvatar {
             name: name.into(),
             size: AvatarSize::Sm,
             primary: false,
+            color: None,
         }
+    }
+
+    /// The kind color it wears, such as `teal`, in place of the one its name picks.
+    pub fn color(mut self, kind: impl Into<String>) -> Self {
+        self.color = Some(kind.into());
+        self
     }
 
     pub fn size(mut self, size: AvatarSize) -> Self {
@@ -84,8 +95,11 @@ impl PersonAvatar {
 }
 
 pub(crate) fn paint_avatar(ui: &Ui, t: &Tokens, rect: Rect, name: &str, size: AvatarSize, primary: bool) {
+    paint_avatar_in(ui, t, rect, name, size, primary, kind_of(name));
+}
+
+fn paint_avatar_in(ui: &Ui, t: &Tokens, rect: Rect, name: &str, size: AvatarSize, primary: bool, kind: &str) {
     let (_, letters, text) = size.box_and_letters();
-    let kind = kind_of(name);
     let (ground, ink) = if primary {
         (t.color("primary"), t.color("primary-foreground"))
     } else {
@@ -115,7 +129,8 @@ impl Widget for PersonAvatar {
         let (rect, response) = ui.allocate_exact_size(vec2(side, side), Sense::hover());
         response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, &self.name));
         if ui.is_rect_visible(rect) {
-            paint_avatar(ui, &t, rect, &self.name, self.size, self.primary);
+            let kind = self.color.as_deref().unwrap_or_else(|| kind_of(&self.name));
+            paint_avatar_in(ui, &t, rect, &self.name, self.size, self.primary, kind);
         }
         response
     }

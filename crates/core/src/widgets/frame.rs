@@ -20,6 +20,9 @@ pub struct RailEntry {
     /// The kinds of [`DragData`](crate::DragData) the entry's row takes when dropped on it, inside a
     /// rail with [`Rail::drops`]: a song onto a playlist.
     pub takes: Vec<String>,
+    /// A color drawn as a dot in the icon's place, for a label, a tag or a channel: a color token's
+    /// name, such as `kind-teal`.
+    pub dot: Option<String>,
 }
 
 impl RailEntry {
@@ -31,7 +34,14 @@ impl RailEntry {
             count: None,
             description: None,
             takes: Vec::new(),
+            dot: None,
         }
+    }
+
+    /// A dot in the token's color in place of the icon, as the web's entry `dot`.
+    pub fn dot(mut self, token: impl Into<String>) -> Self {
+        self.dot = Some(token.into());
+        self
     }
 
     /// Makes the entry's row a place a [`DragData`](crate::DragData) of this kind is dropped on,
@@ -524,10 +534,49 @@ impl Widget for Rail<'_> {
                 } else {
                     t.color("muted-foreground")
                 };
+                // the entry's mark: its color dot (10 across), or its icon
+                let mark = |at: egui::Pos2| match &entry.dot {
+                    Some(token) => {
+                        painter.circle_filled(at, 5.0, t.color(token));
+                    }
+                    None => icons::paint(&painter, at, entry.icon, 16.0, ink),
+                };
                 if narrow {
-                    icons::paint(&painter, bounds.center(), entry.icon, 16.0, ink);
+                    mark(bounds.center());
+                    // the count over the icon's corner: a round critical badge 16 tall, ringed in the
+                    // rail's ground, 4 over the tile and 6 past its end
+                    if let Some(count) = entry.count.filter(|count| *count > 0) {
+                        let spec = t.text("2xs");
+                        let words = if count > 99 {
+                            "99+".to_owned()
+                        } else {
+                            count.to_string()
+                        };
+                        let rich = egui::RichText::new(words)
+                            .size(spec.size)
+                            .line_height(Some(spec.line_height))
+                            .variation("wght", 600.0);
+                        let figure = WidgetText::from(rich).into_galley(
+                            ui,
+                            Some(TextWrapMode::Extend),
+                            f32::INFINITY,
+                            TextRole::Badge.font(&t),
+                        );
+                        let width = (figure.size().x + 8.0).max(16.0);
+                        let badge = Rect::from_min_size(
+                            pos2(bounds.right() + 6.0 - width, bounds.top() - 4.0),
+                            vec2(width, 16.0),
+                        );
+                        painter.rect_filled(badge.expand(2.0), CornerRadius::same(10), t.color("sidebar"));
+                        painter.rect_filled(badge, CornerRadius::same(8), t.color("critical"));
+                        painter.galley(
+                            badge.center() - figure.size() / 2.0,
+                            figure,
+                            t.color("critical-foreground"),
+                        );
+                    }
                 } else {
-                    icons::paint(&painter, pos2(bounds.left() + 12.0 + 8.0, line), entry.icon, 16.0, ink);
+                    mark(pos2(bounds.left() + 12.0 + 8.0, line));
                     let role = if active { TextRole::Action } else { TextRole::Body };
                     let label = galley(ui, role, &entry.label, bounds.width() - 80.0);
                     painter.galley(pos2(bounds.left() + 40.0, line - label.size().y / 2.0), label, ink);

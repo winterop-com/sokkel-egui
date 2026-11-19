@@ -1,6 +1,6 @@
 [package]
 name = "video"
-description = "Tidevann's video: a video site's data on a simulated backend, as sokkel-ui's video example keeps it: the channels and their videos, each video's clip painted from a shared scene with its sound, following, likes, the history and where the viewer stopped, Watch later and playlists, comments, downloads, the player's settings, the search and what plays next."
+description = "Tidevann's video: sokkel-ui's video example in egui, one to one, on a simulated backend: the channels and their videos, each video's clip painted from a shared scene with its sound, following, likes, the history and where the viewer stopped, Watch later and playlists, comments, downloads, the player's settings, the search and what plays next."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,9 +8,13 @@ publish.workspace = true
 
 [dependencies]
 sokkel-egui.workspace = true
+sokkel-egui-media.workspace = true
 tidevann-shared = { path = "../shared" }
+eframe.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]
+egui_kittest.workspace = true
 # The web's numbers read back to the bit, as `tests/web.rs` compares them.
 serde_json = { workspace = true, features = ["float_roundtrip"] }

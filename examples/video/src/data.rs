@@ -113,14 +113,8 @@ pub struct Playlist {
     pub updated: i64,
 }
 
-/// A reaction to a comment, under the emoji as its id.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct CommentReaction {
-    pub id: String,
-    pub label: String,
-    pub count: i64,
-    pub mine: bool,
-}
+/// A reaction to a comment, under the emoji as its id: the core's `Reaction`.
+pub type CommentReaction = sokkel_egui::Reaction;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Comment {
@@ -1270,4 +1264,51 @@ pub fn base36(value: i64) -> String {
     out.reverse();
     let text = String::from_utf8(out).unwrap_or_default();
     if value < 0 { format!("-{text}") } else { text }
+}
+
+/// The rows kept between visits, as the shared backend keeps them in the browser's storage.
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct Kept {
+    pub follows: Vec<Follow>,
+    pub ratings: Vec<Rating>,
+    pub history: Vec<Watched>,
+    pub playlists: Vec<Playlist>,
+    pub comments: Vec<Comment>,
+    pub downloads: Vec<Download>,
+    pub prefs: Option<Prefs>,
+}
+
+impl Data {
+    /// Every collection's rows as kept now.
+    pub fn kept(&self) -> Kept {
+        Kept {
+            follows: self.follows.rows.clone(),
+            ratings: self.ratings.rows.clone(),
+            history: self.history.rows.clone(),
+            playlists: self.playlists.rows.clone(),
+            comments: self.comments.rows.clone(),
+            downloads: self.downloads.rows.clone(),
+            prefs: self.prefs_rows.rows.first().cloned(),
+        }
+    }
+
+    /// The rows kept on an earlier visit put back in place of the seeds, before the first answer:
+    /// what the opening lists answer is these.
+    pub fn restore(&mut self, kept: Kept) {
+        fn put<T: Row>(collection: &mut Collection<T>, rows: Vec<T>) {
+            collection.rows = rows.clone();
+            for (_, pending) in &mut collection.pending {
+                *pending = rows.clone();
+            }
+        }
+        put(&mut self.follows, kept.follows);
+        put(&mut self.ratings, kept.ratings);
+        put(&mut self.history, kept.history);
+        put(&mut self.playlists, kept.playlists);
+        put(&mut self.comments, kept.comments);
+        put(&mut self.downloads, kept.downloads);
+        if let Some(prefs) = kept.prefs {
+            put(&mut self.prefs_rows, vec![prefs]);
+        }
+    }
 }

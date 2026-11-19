@@ -72,6 +72,8 @@ pub struct Button {
     /// The spinner in the icon's place while the button still takes a press, as a read-aloud
     /// loading its audio that a press stops.
     pub(crate) spinning: bool,
+    /// Drawn over a picture: light on dark in either scheme, as a player's own controls are.
+    on_picture: bool,
 }
 
 impl Button {
@@ -95,7 +97,15 @@ impl Button {
             still: false,
             unseen_label: false,
             spinning: false,
+            on_picture: false,
         }
+    }
+
+    /// A ghost button drawn over a picture, as a video's controls and what stands over them: its
+    /// words in `terminal-foreground` and its hover ground `terminal-foreground/15`.
+    pub fn on_picture(mut self, on: bool) -> Self {
+        self.on_picture = on;
+        self
     }
 
     /// A toggle: pressed, it stands on the muted ground, as the web's `Toggle` with
@@ -296,9 +306,16 @@ impl Widget for Button {
         };
         let ground = if self.pressed == Some(true) {
             t.color("muted")
+        } else if self.on_picture {
+            if hot {
+                t.color_at("terminal-foreground", 0.15)
+            } else {
+                none
+            }
         } else {
             ground
         };
+        let border = if self.on_picture { none } else { border };
         let painter = ui.painter();
         painter.rect(
             rect,
@@ -312,6 +329,8 @@ impl Widget for Button {
         let ink = dim(
             if let Some(own) = self.ink {
                 own
+            } else if self.on_picture {
+                t.color("terminal-foreground")
             } else if self.muted && !hot {
                 t.color("muted-foreground")
             } else {
@@ -378,6 +397,7 @@ pub struct IconButton {
     md: bool,
     outline: bool,
     destructive: bool,
+    on_picture: bool,
 }
 
 impl IconButton {
@@ -390,7 +410,15 @@ impl IconButton {
             md: false,
             outline: false,
             destructive: false,
+            on_picture: false,
         }
+    }
+
+    /// Drawn over a picture: the icon in `terminal-muted`, and under the pointer in
+    /// `terminal-foreground` on `terminal-foreground/15`.
+    pub fn on_picture(mut self, on: bool) -> Self {
+        self.on_picture = on;
+        self
     }
 
     /// The icon at `size` rather than the size's own (12 at `xs`, else 16), as a `size-3.5` icon.
@@ -462,12 +490,17 @@ impl egui::Widget for IconButton {
                 egui::StrokeKind::Inside,
             );
         }
-        if hot && self.destructive {
+        if hot && self.on_picture {
+            ui.painter()
+                .rect_filled(rect, radius, t.color_at("terminal-foreground", 0.15));
+        } else if hot && self.destructive {
             ui.painter().rect_filled(rect, radius, t.color_at("critical", 0.10));
         } else if hot {
             ui.painter().rect_filled(rect, radius, t.color("hover"));
         }
         let ink = match (hot, self.destructive) {
+            (true, _) if self.on_picture => t.color("terminal-foreground"),
+            _ if self.on_picture => t.color("terminal-muted"),
             (true, true) => t.color("critical-ink"),
             (true, false) => t.color("foreground"),
             _ if self.outline => t.color("foreground"),
