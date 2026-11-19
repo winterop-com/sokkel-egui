@@ -19,6 +19,7 @@ mod datetime;
 mod display;
 mod document_tabs;
 mod dot;
+mod download_button;
 mod edit_preview;
 mod empty;
 mod entry_grid;
@@ -63,6 +64,10 @@ mod sheet;
 mod sign_in;
 mod sign_in_art;
 mod slider_field;
+/// The visualizer's levels, shapes and constants, after sokkel-ui's `sound.ts`, for an app that
+/// feeds it live data; kept under their module so their plain names stay out of the crate root.
+pub mod sound_visualizer;
+mod star_button;
 mod stat;
 mod stat_panel;
 mod switch;
@@ -114,6 +119,10 @@ pub use datetime::{DateField, DateFieldWords, DateTimeField, DateTimeFieldRespon
 pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton, TextLink, Unfoldable};
 pub use document_tabs::{DocumentTab, DocumentTabs, DocumentTabsResponse, DocumentTabsWords};
 pub use dot::Dot;
+pub use download_button::{
+    DownloadAsked, DownloadButton, DownloadButtonResponse, DownloadButtonWords, DownloadState, ProgressRing,
+    download_share, format_percent,
+};
 pub use edit_preview::{EditPreview, EditPreviewView};
 pub use empty::Empty;
 pub use entry_grid::{EntryColumn, EntryEdit, EntryGrid, EntryGridWords, EntryRow};
@@ -132,8 +141,8 @@ pub use form_fields::{
     RepeatedGroupWords, RepeatedOutcome, TimeField, TimeFieldWords, YesNoField, YesNoFieldWords, read_time,
 };
 pub use frame::{
-    AppBar, DesktopWindow, Rail, RailBody, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords, StatusLine,
-    StatusTone, TopBar, desktop_viewport, is_phone,
+    AppBar, DesktopWindow, Rail, RailBody, RailDrop, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords,
+    StatusLine, StatusTone, TopBar, desktop_viewport, is_phone,
 };
 pub use info::info_tip;
 pub use inline_code::{InlineCode, InlineCodeTone};
@@ -190,6 +199,10 @@ pub use sheet::{DetailSheet, DetailSheetWords};
 pub use sign_in::{SignIn, SignInFact, SignInValues, SignInWords};
 pub use sign_in_art::{FlowEdge, FlowLines, FlowNode, FlowNodes, LevelBars, flow_graph, level_heights, seeded};
 pub use slider_field::{Slider, SliderField};
+pub use sound_visualizer::{
+    SOUND_RAMPS, SoundAlign, SoundKind, SoundRampBy, SoundRange, SoundVisualizer, sound_middle, sound_ramp,
+};
+pub use star_button::{StarButton, StarButtonWords};
 pub use stat::{KpiRow, Stat, StatTiles, sparkline};
 pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_compact, format_value, threshold_color};
 pub use switch::Switch;

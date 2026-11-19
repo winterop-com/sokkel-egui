@@ -17,6 +17,9 @@ pub struct RailEntry {
     pub count: Option<u32>,
     /// A line under the label, small and muted: what the place holds ("Everything at a glance").
     pub description: Option<String>,
+    /// The kinds of [`DragData`](crate::DragData) the entry's row takes when dropped on it, inside a
+    /// rail with [`Rail::drops`]: a song onto a playlist.
+    pub takes: Vec<String>,
 }
 
 impl RailEntry {
@@ -27,7 +30,16 @@ impl RailEntry {
             icon,
             count: None,
             description: None,
+            takes: Vec::new(),
         }
+    }
+
+    /// Makes the entry's row a place a [`DragData`](crate::DragData) of this kind is dropped on,
+    /// inside a rail with [`Rail::drops`], as the web's entry `drop` with its `accepts`; called again
+    /// for each further kind it takes.
+    pub fn takes(mut self, kind: impl Into<String>) -> Self {
+        self.takes.push(kind.into());
+        self
     }
 
     pub fn count(mut self, count: u32) -> Self {
@@ -70,6 +82,14 @@ pub struct Rail<'a> {
     mark: Option<&'static str>,
     words: RailWords,
     body: Option<RailBody<'a>>,
+    drops: Option<&'a mut Option<RailDrop>>,
+}
+
+/// A thing let go on a rail entry that takes it: what was dragged, and the entry's id.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RailDrop {
+    pub entry: String,
+    pub data: crate::DragData,
 }
 
 /// What a rail holds in place of its groups, after sokkel-ui's rail `body`: a heading, a row such
@@ -113,7 +133,18 @@ impl<'a> Rail<'a> {
             mark: None,
             words: RailWords::default(),
             body: None,
+            drops: None,
         }
+    }
+
+    /// The rail takes drops, after sokkel-ui's `RailDrops`: while a [`DragData`](crate::DragData)
+    /// is carried (egui's drag payload, `egui::DragAndDrop::set_payload`) whose kind an entry
+    /// [`takes`](RailEntry::takes), the rail shows its places rather than its body, the entry's
+    /// row is ringed while the thing is over it, and the thing let go there lands in `dropped`.
+    /// A rail without it takes no drops.
+    pub fn drops(mut self, dropped: &'a mut Option<RailDrop>) -> Self {
+        self.drops = Some(dropped);
+        self
     }
 
     /// The app's own content in place of the groups, as the web's `body`: a row at the top ("All
@@ -281,8 +312,22 @@ impl Widget for Rail<'_> {
         // the body in place of the groups while it shows
         let view_id = response.id.with("view");
         let above = self.body.as_ref().is_some_and(|b| b.places_above);
-        let showing_body =
-            !narrow && !above && self.body.is_some() && ui.data(|d| d.get_temp::<bool>(view_id)).unwrap_or(true);
+        // a thing an entry takes, carried: the rail shows its places to drop it on
+        let carried = self
+            .drops
+            .as_ref()
+            .and_then(|_| egui::DragAndDrop::payload::<crate::DragData>(ui.ctx()))
+            .filter(|data| {
+                self.groups
+                    .iter()
+                    .flat_map(|g| &g.entries)
+                    .any(|e| e.takes.contains(&data.kind))
+            });
+        let showing_body = !narrow
+            && !above
+            && carried.is_none()
+            && self.body.is_some()
+            && ui.data(|d| d.get_temp::<bool>(view_id)).unwrap_or(true);
         if showing_body && let Some(body) = self.body.take() {
             let mut y = head.bottom();
             let back = Rect::from_min_max(pos2(rect.left() + 8.0, y), pos2(rect.right() - 9.0, y + row));
@@ -435,6 +480,40 @@ impl Widget for Rail<'_> {
                 } else if hit.hovered() {
                     let corners = if narrow { t.radius("md") } else { row_corners };
                     painter.rect_filled(bounds, corners, t.color("hover"));
+                }
+                // a thing the entry takes, over its row: ringed on the hover ground, and taken once let go
+                if let Some(data) = carried.as_ref().filter(|data| entry.takes.contains(&data.kind))
+                    && ui.rect_contains_pointer(bounds)
+                {
+                    let md = t.radius("md").nw;
+                    let corners = CornerRadius {
+                        nw: 0,
+                        sw: 0,
+                        ne: md,
+                        se: md,
+                    };
+                    // the hover ground once, where the row has not drawn it under the pointer
+                    let ground = if hit.hovered() || active {
+                        egui::Color32::TRANSPARENT
+                    } else {
+                        t.color("hover")
+                    };
+                    painter.rect(
+                        bounds,
+                        corners,
+                        ground,
+                        Stroke::new(2.0, t.color("ring")),
+                        egui::StrokeKind::Inside,
+                    );
+                    if ui.input(|i| i.pointer.any_released())
+                        && let Some(dropped) = self.drops.as_deref_mut()
+                    {
+                        egui::DragAndDrop::clear_payload(ui.ctx());
+                        *dropped = Some(RailDrop {
+                            entry: entry.id.clone(),
+                            data: (**data).clone(),
+                        });
+                    }
                 }
                 // the frame's one keyboard focus look, the button's
                 super::focus_ring(&painter, &t, bounds, t.radius("md"), &hit);

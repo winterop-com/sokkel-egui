@@ -13,6 +13,7 @@ sokkel-egui = { path = "crates/core" }
 sokkel-egui-charts = { path = "crates/charts" }
 sokkel-egui-maps = { path = "crates/maps" }
 sokkel-egui-graph = { path = "crates/graph" }
+sokkel-egui-media = { path = "crates/media" }
 egui = "0.37.0"
 egui_extras = { version = "0.37.0", default-features = false, features = ["svg"] }
 lucide-icons = "1.73"

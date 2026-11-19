@@ -57,6 +57,16 @@ pub struct Button {
     muted: bool,
     note: Option<String>,
     pressed: Option<bool>,
+    /// The icon in an ink of its own, as `<Check className="text-good-ink" />`.
+    pub(crate) icon_ink: Option<Color32>,
+    /// The words and icon in an ink of their own, as `text-critical-ink`.
+    pub(crate) ink: Option<Color32>,
+    /// A progress ring in the icon's place, at this share from 0 to 1.
+    pub(crate) ring: Option<f32>,
+    /// Drawn as a button at rest that takes no press, as a `pointer-events-none` status.
+    pub(crate) still: bool,
+    /// The label said to a screen reader and not drawn, as `sr-only`: the icon alone.
+    pub(crate) unseen_label: bool,
 }
 
 impl Button {
@@ -73,6 +83,11 @@ impl Button {
             muted: false,
             note: None,
             pressed: None,
+            icon_ink: None,
+            ink: None,
+            ring: None,
+            still: false,
+            unseen_label: false,
         }
     }
 
@@ -159,8 +174,8 @@ impl Widget for Button {
         } else {
             6.0
         };
-        let lead = if self.busy || self.icon.is_some() {
-            glyph + gap
+        let lead = if self.busy || self.icon.is_some() || self.ring.is_some() {
+            if self.unseen_label { glyph } else { glyph + gap }
         } else {
             0.0
         };
@@ -176,7 +191,8 @@ impl Widget for Button {
             if self.trailing.is_some() { gap + glyph } else { 0.0 } + note.as_ref().map_or(0.0, |n| gap + n.size().x);
         let pad = if lead > 0.0 || tail > 0.0 { pad - 2.0 } else { pad };
         let radius = CornerRadius::same(control.min(cap).floor() as u8);
-        let galley = WidgetText::from(role.rich(&t, &self.label)).into_galley(
+        let shown = if self.unseen_label { "" } else { self.label.as_str() };
+        let galley = WidgetText::from(role.rich(&t, shown)).into_galley(
             ui,
             Some(TextWrapMode::Extend),
             f32::INFINITY,
@@ -185,7 +201,9 @@ impl Widget for Button {
         let size = vec2(galley.size().x + lead + tail + pad * 2.0, height);
         // a busy button, and one disabled with a reason, keep their place in the tab order so the
         // reason can be read; a plain disabled button leaves it
-        let sense = if enabled && !self.busy {
+        let sense = if self.still {
+            Sense::hover()
+        } else if enabled && !self.busy {
             Sense::click()
         } else if self.busy || self.reason.is_some() {
             Sense::focusable_noninteractive()
@@ -204,7 +222,7 @@ impl Widget for Button {
             return response;
         }
 
-        let hot = response.hovered() && enabled && !self.busy;
+        let hot = response.hovered() && enabled && !self.busy && !self.still;
         let none = Color32::TRANSPARENT;
         let dark = t.dark;
         // fill, border and ink at rest, and the fill under the pointer
@@ -278,7 +296,9 @@ impl Widget for Button {
         focus_ring(painter, &t, rect, radius, &response);
 
         let ink = dim(
-            if self.muted && !hot {
+            if let Some(own) = self.ink {
+                own
+            } else if self.muted && !hot {
                 t.color("muted-foreground")
             } else {
                 ink
@@ -288,8 +308,17 @@ impl Widget for Button {
         let mut x = rect.center().x - (galley.size().x + lead + tail) / 2.0;
         if self.busy {
             super::spinner(ui, painter, pos2(x + glyph / 2.0, rect.center().y), glyph * 0.4, ink);
+        } else if let Some(share) = self.ring {
+            super::download_button::paint_progress_ring(
+                painter,
+                &t,
+                pos2(x + glyph / 2.0, rect.center().y),
+                glyph,
+                share,
+            );
         } else if let Some(icon) = self.icon {
-            icons::paint(painter, pos2(x + glyph / 2.0, rect.center().y), icon, glyph, ink);
+            let icon_ink = self.icon_ink.map_or(ink, |own| dim(own, enabled));
+            icons::paint(painter, pos2(x + glyph / 2.0, rect.center().y), icon, glyph, icon_ink);
         }
         x += lead;
         let pos = pos2(x, rect.center().y - galley.size().y / 2.0);

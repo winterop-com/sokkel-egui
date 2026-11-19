@@ -11,10 +11,12 @@ mod frame;
 mod icon_list;
 mod inputs;
 mod maps;
+mod media;
 mod menus;
 mod overlays;
 mod page;
 mod parts;
+mod players;
 mod primitives;
 pub mod settings;
 mod table;
@@ -162,6 +164,11 @@ pub const STORIES: &[Story] = &[
         show: parts::icon_button,
     },
     Story {
+        path: "Primitives/Actions/Star button",
+        doc: "A favorite toggle on the icon button: an outlined star that fills in the accent once starred, its label saying what a press does. Off and starred at each size, quiet as a row's action and outlined beside a header's buttons.",
+        show: media::star_button,
+    },
+    Story {
         path: "Primitives/Display/Alert",
         doc: "A message that stays on the page, plain or destructive, with an icon beside its title and description.",
         show: display::alert,
@@ -292,6 +299,11 @@ pub const STORIES: &[Story] = &[
         show: parts::description_list,
     },
     Story {
+        path: "Patterns/Download button",
+        doc: "A button that downloads something for keeping: idle, n of m or a share with a cancel and a pause, paused, and kept; a kept copy removed in two presses, a failed try's reason on hover, and the icon alone when compact.",
+        show: media::download_button,
+    },
+    Story {
         path: "Patterns/Data table",
         doc: "The one table: forty runs sorted by rows, with check boxes and the selection bar; a list; and an empty table. Press a head to sort, drag its edge to resize, press a row to open it.",
         show: table::data_table,
@@ -320,6 +332,11 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Shell",
         doc: "The frame every app has: the rail of its places, the top bar with the trail, the page, and the status line across the bottom. Press a place to go there.",
         show: frame::shell,
+    },
+    Story {
+        path: "Patterns/Rail drops",
+        doc: "A rail whose places take drops: drag a song's row onto a playlist, the row ringed while the song is over it, and the drop said once let go.",
+        show: media::rail_drops,
     },
     Story {
         path: "Patterns/Log view",
@@ -425,6 +442,51 @@ pub const STORIES: &[Story] = &[
         path: "Maps/Map",
         doc: "A map with sites and routes in the chart colors. Drag to pan, scroll to zoom; with no tiles (in tests) it draws a graticule.",
         show: maps::map,
+    },
+    Story {
+        path: "Media/Track list",
+        doc: "Songs or episodes: the number or a cover, the title over a second line, a quiet album column, the length in the code face, and the row's own actions. The current row marked, a speaker while it plays; a head over each disc of a set.",
+        show: players::track_list,
+    },
+    Story {
+        path: "Media/Reorderable track list",
+        doc: "A playlist the listener orders: a row's grip drags it, the rest moving aside to show where it lands, and Escape puts it back; with the grip focused the arrows move it a place.",
+        show: players::reorderable_track_list,
+    },
+    Story {
+        path: "Media/Draggable track list",
+        doc: "An album whose rows drag as a whole onto a target elsewhere, the title on a small card following the pointer; a press still plays the row.",
+        show: players::draggable_track_list,
+    },
+    Story {
+        path: "Media/Audio bar",
+        doc: "The player along the foot of a screen as one line: what plays at the left, the transport over the position in the middle, the speed, the volume and the app's own controls at the right; a station, a book with skip buttons, and the two rows a narrow bar folds into.",
+        show: players::audio_bar,
+    },
+    Story {
+        path: "Media/Audio bar layouts",
+        doc: "The bar dragged taller, in each of its layouts: rows, panel and stage, the waveform as the scrubber and the visualizer rising faintly behind the words.",
+        show: players::audio_bar_layouts,
+    },
+    Story {
+        path: "Media/Fullscreen player",
+        doc: "The player's fullscreen view, a dark room in every theme: what plays at full size with a star, the lyrics shown in the visualizer's place from the corner's button, the waveform and the transport.",
+        show: players::fullscreen_player,
+    },
+    Story {
+        path: "Media/Lyrics",
+        doc: "Timed lyrics follow the position, the line sung inked in the middle and the rest faint; a press on a line seeks there. Untimed lyrics read as a page, verse by verse.",
+        show: players::lyrics,
+    },
+    Story {
+        path: "Media/Queue",
+        doc: "What plays next, in the order it plays: dragged into another order or taken out, and shuffle and repeat in the bar rearranging it with the song playing kept.",
+        show: players::queue,
+    },
+    Story {
+        path: "Media/Sound visualizer",
+        doc: "A picture of what is playing, from levels the app hands it each frame: a spectrum, centered bars, an area and a wave; along a ramp of tokens, mirrored or colored by level; a ring with a cover in its middle, at rest, and faint behind a title.",
+        show: media::sound_visualizer,
     },
 ];
 
