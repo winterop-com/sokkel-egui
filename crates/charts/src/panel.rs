@@ -312,7 +312,7 @@ impl TimeSeriesPanel {
 
 /// A chart's height: `height`, or in its panel's window all the window has less what was drawn
 /// under the chart the last time (its legend).
-fn fill_height(ui: &Ui, height: f32) -> f32 {
+pub(crate) fn fill_height(ui: &Ui, height: f32) -> f32 {
     if !sokkel_egui::windowed(ui) {
         return height;
     }
@@ -323,7 +323,7 @@ fn fill_height(ui: &Ui, height: f32) -> f32 {
 }
 
 /// Keeps how much was drawn under a chart since `top`, for [`fill_height`].
-fn drawn_under(ui: &Ui, top: f32) {
+pub(crate) fn drawn_under(ui: &Ui, top: f32) {
     let under = ui.min_rect().bottom() - top;
     ui.data_mut(|d| d.insert_temp(ui.scope_id().with("under-chart"), under));
 }
@@ -333,17 +333,17 @@ fn drawn_under(ui: &Ui, top: f32) {
 /// a `DashboardGrid` it stretches to its row.
 /// What a chart frame's head says, and whether its body has anything to draw.
 #[derive(Clone, Copy, Default)]
-struct Head<'a> {
-    title: &'a str,
-    subtitle: Option<&'a str>,
+pub(crate) struct Head<'a> {
+    pub(crate) title: &'a str,
+    pub(crate) subtitle: Option<&'a str>,
     /// What the panel shows, behind the Info mark beside the title.
-    info: Option<&'a str>,
+    pub(crate) info: Option<&'a str>,
     /// Nothing to draw: the body says so instead, as the web's `empty`.
-    empty: Option<&'a str>,
+    pub(crate) empty: Option<&'a str>,
 }
 
 impl<'a> Head<'a> {
-    fn new(title: &'a str) -> Self {
+    pub(crate) fn new(title: &'a str) -> Self {
         Self {
             title,
             ..Default::default()
@@ -369,7 +369,7 @@ impl Default for PanelWords {
     }
 }
 
-fn chart_frame(ui: &mut Ui, head_of: Head<'_>, body: impl FnOnce(&mut Ui)) {
+pub(crate) fn chart_frame(ui: &mut Ui, head_of: Head<'_>, body: impl FnOnce(&mut Ui)) {
     chart_frame_with(ui, head_of, None, body);
 }
 
@@ -1310,56 +1310,23 @@ impl DonutPanel {
                 None => sokkel_egui::format_value(v, None),
             };
             let painter = ui.painter();
-            let card = t.color("card");
-            let pad = 1f32.to_radians();
-            let mut start = -std::f32::consts::FRAC_PI_2;
-            let pointer = response.hover_pos();
-            let mut hovered = None;
-            for (index, (_, value, token)) in slices.iter().enumerate() {
-                if total <= 0.0 || *value <= 0.0 {
-                    continue;
-                }
-                let sweep = (*value / total) as f32 * std::f32::consts::TAU;
-                let (from, to) = (start + pad / 2.0, start + sweep - pad / 2.0);
-                start += sweep;
-                if to <= from {
-                    continue;
-                }
-                let steps = ((to - from) / 0.03).ceil().max(2.0) as usize;
-                let at = |r: f32, a: f32| pos2(center.x + r * a.cos(), center.y + r * a.sin());
-                let mut points: Vec<egui::Pos2> = (0..=steps)
-                    .map(|i| at(outer, from + (to - from) * i as f32 / steps as f32))
-                    .collect();
-                points.extend(
-                    (0..=steps)
-                        .rev()
-                        .map(|i| at(inner, from + (to - from) * i as f32 / steps as f32)),
-                );
-                let color = t.color(token);
-                let mut mesh = egui::Mesh::default();
-                for i in 0..=steps {
-                    let a = from + (to - from) * i as f32 / steps as f32;
-                    mesh.colored_vertex(at(outer, a), color);
-                    mesh.colored_vertex(at(inner, a), color);
-                }
-                for i in 0..steps as u32 {
-                    let k = i * 2;
-                    mesh.add_triangle(k, k + 1, k + 2);
-                    mesh.add_triangle(k + 1, k + 3, k + 2);
-                }
-                painter.add(egui::Shape::mesh(mesh));
-                painter.add(egui::Shape::closed_line(points, Stroke::new(2.0, card)));
-                if let Some(p) = pointer {
-                    let d = p.distance(center);
-                    let mut angle = (p.y - center.y).atan2(p.x - center.x);
-                    if angle < -std::f32::consts::FRAC_PI_2 {
-                        angle += std::f32::consts::TAU;
-                    }
-                    if d >= inner && d <= outer && angle >= from && angle <= to {
-                        hovered = Some((index, color));
-                    }
-                }
-            }
+            let shapes: Vec<crate::kinds::Slice> = slices
+                .iter()
+                .map(|(_, value, token)| crate::kinds::Slice {
+                    color: t.color(token),
+                    value: *value,
+                })
+                .collect();
+            let hovered = crate::kinds::draw_slices(
+                painter,
+                t.color("card"),
+                center,
+                (inner, outer),
+                &shapes,
+                2.0,
+                response.hover_pos(),
+            )
+            .map(|index| (index, shapes[index].color));
             if let Some(word) = total_word {
                 let figure = WidgetText::from(
                     TextRole::Statistic

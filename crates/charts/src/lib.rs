@@ -12,7 +12,12 @@ use egui::{
 };
 use std::sync::Arc;
 
+pub mod data;
+mod kinds;
 mod panel;
+pub use kinds::{
+    Chart, ChartKind, ChartPanel, ChartSpec, ChartWords, LegendItem, Stack, chart_legend, mix_oklab, token_color,
+};
 pub use panel::{
     BarGauge, BarPanel, BoxPlotPanel, DonutPanel, FunnelPanel, GaugePanel, HeatmapPanel, LegendStat, LegendWords,
     PanelWords, Spread, TimeSeriesPanel, WaterfallPanel, quantile, spread_of,
@@ -32,6 +37,9 @@ pub struct Series {
     pub stack: Option<&'static str>,
     /// A thin dashed line with no area, for a reference such as the period before.
     pub dashed: bool,
+    /// A color already worked out, drawn before `color` and its place's: a chart of rows' series
+    /// in the color its spec gives it.
+    pub paint: Option<Color32>,
 }
 
 impl Series {
@@ -42,6 +50,7 @@ impl Series {
             color: None,
             stack: None,
             dashed: false,
+            paint: None,
         }
     }
 
@@ -70,10 +79,19 @@ impl Series {
         self.color = Some(token);
         self
     }
+
+    /// Drawn in this color, worked out already, instead of its token's or its place's.
+    pub fn painted(mut self, color: Color32) -> Self {
+        self.paint = Some(color);
+        self
+    }
 }
 
 /// The color of `series`, the n-th: its own token, or its place in `SERIES_ORDER`.
 pub fn color_of(t: &Tokens, series: &Series, index: usize) -> Color32 {
+    if let Some(paint) = series.paint {
+        return paint;
+    }
     series
         .color
         .map_or_else(|| series_color(t, index), |token| t.color(token))
@@ -821,6 +839,9 @@ pub struct BarChart {
     stacked: bool,
     horizontal: bool,
     height: f32,
+    /// As the web's bar kind draws a chart of rows: each bar, or each stack, rounded at its far
+    /// end alone by the mark corner, and stacked bars parted by a line in the card.
+    parted: bool,
 }
 
 impl BarChart {
@@ -832,12 +853,55 @@ impl BarChart {
             stacked: false,
             horizontal: false,
             height: 240.0,
+            parted: false,
         }
     }
 
     pub fn series(mut self, series: Series) -> Self {
         self.series.push(series);
         self
+    }
+
+    /// Drawn as the bar kind of a chart of rows draws: see `parted`.
+    pub(crate) fn parted(mut self) -> Self {
+        self.parted = true;
+        self
+    }
+
+    /// A bar's corners and edge: rounded at its far end where it ends its stack (every bar but a
+    /// parted stack's inner ones), and a parted stack's segments edged in the card.
+    fn bar_look(&self, t: &Tokens, index: usize, category: usize, lying: bool) -> (CornerRadius, Stroke) {
+        let far = |r: u8| {
+            if lying {
+                CornerRadius {
+                    nw: 0,
+                    sw: 0,
+                    ne: r,
+                    se: r,
+                }
+            } else {
+                CornerRadius {
+                    nw: r,
+                    ne: r,
+                    sw: 0,
+                    se: 0,
+                }
+            }
+        };
+        if !self.parted {
+            return (far(2), Stroke::NONE);
+        }
+        let r = (t.length("radius") * 0.4).floor().max(0.0) as u8;
+        if !self.stacked {
+            return (far(r), Stroke::NONE);
+        }
+        let ends = !self.series[index + 1..]
+            .iter()
+            .any(|s| s.values.get(category).copied().flatten().is_some_and(|v| v != 0.0));
+        (
+            if ends { far(r) } else { CornerRadius::ZERO },
+            Stroke::new(1.0, t.color("card")),
+        )
     }
 
     pub fn stacked(mut self, stacked: bool) -> Self {
@@ -900,12 +964,6 @@ impl Widget for BarChart {
         }
         let groups = if self.stacked { 1 } else { self.series.len().max(1) };
         let width = (step * 0.7 / groups as f32).min(28.0);
-        let top = CornerRadius {
-            nw: 2,
-            ne: 2,
-            sw: 0,
-            se: 0,
-        };
         for i in 0..count {
             let center = frame.plot.left() + step * (i as f32 + 0.5);
             let mut base = 0.0;
@@ -921,7 +979,8 @@ impl Widget for BarChart {
                     (center - width * groups as f32 / 2.0 + width * index as f32, 0.0, value)
                 };
                 let bar = Rect::from_min_max(pos2(left + 1.0, frame.y(to)), pos2(left + width - 1.0, frame.y(from)));
-                painter.rect_filled(bar, top, color_of(&t, series, index));
+                let (corner, edge) = self.bar_look(&t, index, i, false);
+                painter.rect(bar, corner, color_of(&t, series, index), edge, egui::StrokeKind::Inside);
             }
         }
         if let Some(i) = hovered {
@@ -1056,12 +1115,6 @@ impl BarChart {
         let band = plot.height() / count as f32;
         let groups = if self.stacked { 1 } else { self.series.len().max(1) };
         let thick = (band * 0.7 / groups as f32).min(28.0);
-        let end = CornerRadius {
-            nw: 0,
-            sw: 0,
-            ne: 2,
-            se: 2,
-        };
         for (i, category) in self.categories.iter().enumerate() {
             let middle = plot.top() + band * (i as f32 + 0.5);
             painter.text(
@@ -1084,7 +1137,8 @@ impl BarChart {
                     (middle - thick * groups as f32 / 2.0 + thick * index as f32, 0.0, value)
                 };
                 let bar = Rect::from_min_max(pos2(x(from), y + 1.0), pos2(x(to), y + thick - 1.0));
-                painter.rect_filled(bar, end, color_of(t, series, index));
+                let (corner, edge) = self.bar_look(t, index, i, true);
+                painter.rect(bar, corner, color_of(t, series, index), edge, egui::StrokeKind::Inside);
             }
         }
     }

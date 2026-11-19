@@ -4,6 +4,7 @@
 use eframe::egui::{Stroke, Ui};
 use sokkel_egui::{TextRole, tokens};
 
+mod chart_kinds;
 mod charts;
 mod display;
 mod foundations;
@@ -440,9 +441,39 @@ pub const STORIES: &[Story] = &[
         show: parts::dashboard,
     },
     Story {
+        path: "Charts/Bars from rows",
+        doc: "Bars drawn from rows and a spec: runs by job split by state and stacked, an average lying down, projects side by side in a set order, and states as shares of 100% in colors of their own.",
+        show: chart_kinds::bars,
+    },
+    Story {
+        path: "Charts/Lines and areas from rows",
+        doc: "Lines and areas drawn from rows: an average per project, a sum filled under its line, states stacked as areas, and rows counted where no y is given.",
+        show: chart_kinds::lines,
+    },
+    Story {
+        path: "Charts/Pie and donut",
+        doc: "Each category's share of the whole: a pie in a palette of three, and a ring with its total in the middle. Hover a slice for its figure and share.",
+        show: chart_kinds::slices,
+    },
+    Story {
+        path: "Charts/Heatmap",
+        doc: "A cell per job and weekday shaded by its runs, its scale beside it; and a scale stepped through three tokens.",
+        show: chart_kinds::heatmap,
+    },
+    Story {
+        path: "Charts/Scatter",
+        doc: "A point per run, rows moved against duration: fitted to the points, then by project and sized by retries; and a panel filtered to nothing.",
+        show: chart_kinds::scatter,
+    },
+    Story {
         path: "Maps/Map",
         doc: "A map with sites and routes in the chart colors. Drag to pan, scroll to zoom; with no tiles (in tests) it draws a graticule.",
         show: maps::map,
+    },
+    Story {
+        path: "Maps/Choropleth",
+        doc: "The regions shaded by their figure on a sequential scale, two with no figure hatched; the legend with its breaks, captions and no-data swatch, and the chosen region's card.",
+        show: chart_kinds::choropleth,
     },
     Story {
         path: "Media/Track list",

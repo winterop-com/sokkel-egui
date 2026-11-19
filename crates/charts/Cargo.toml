@@ -9,3 +9,8 @@ publish.workspace = true
 [dependencies]
 sokkel-egui.workspace = true
 egui.workspace = true
+serde = { workspace = true, optional = true }
+
+[features]
+# `Serialize` for the data module's cells, rows and pivots, written as the web's JSON
+serde = ["dep:serde"]

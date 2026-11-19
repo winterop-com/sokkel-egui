@@ -9,7 +9,9 @@
 use egui::{Color32, CornerRadius, Pos2, Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2, WidgetText, pos2, vec2};
 use sokkel_egui::{Icon, TextRole, Tokens, icons, tokens};
 mod popup;
+mod scale;
 pub use popup::{MapPopup, MapPopupResponse, MapPopupRow, MapPopupWords};
+pub use scale::{ClassWords, ScaleFormat, SequentialScale};
 
 use walkers::{
     HttpOptions, HttpTiles, Map, MapMemory, Position, Projector, Style, StyleLayer, TileId, Tiles, lat_lon,
@@ -84,6 +86,10 @@ pub struct MapLegend {
     description: Option<String>,
     rows: Vec<(Color32, String, usize)>,
     ramp: Option<(Vec<Color32>, String, String)>,
+    /// A scale's classes as a stepped ramp, each break written under the edge it stands at.
+    scale: Option<(Vec<Color32>, Vec<String>)>,
+    captions: Option<(String, String)>,
+    no_data: Option<String>,
 }
 
 impl MapLegend {
@@ -93,7 +99,30 @@ impl MapLegend {
             description: None,
             rows: Vec::new(),
             ramp: None,
+            scale: None,
+            captions: None,
+            no_data: None,
         }
+    }
+
+    /// A sequential scale as a stepped ramp 10 tall, each break written under the edge between two
+    /// classes, as the web's `MapLegend` with a `scale` in its `ramp` layout.
+    pub fn scale(mut self, scale: &SequentialScale) -> Self {
+        self.scale = Some((scale.colors.clone(), scale.break_labels()));
+        self
+    }
+
+    /// Words under the two ends of a scale's ramp, such as `Less` and `More`, as the web's `captions`.
+    pub fn captions(mut self, low: impl Into<String>, high: impl Into<String>) -> Self {
+        self.captions = Some((low.into(), high.into()));
+        self
+    }
+
+    /// The swatch an area with no figure is drawn in (hatched), with this label, as the web's
+    /// `noData`; its words default to `No data` there.
+    pub fn no_data(mut self, label: impl Into<String>) -> Self {
+        self.no_data = Some(label.into());
+        self
     }
 
     /// A sequential scale's classes as a stepped ramp 10 tall, with `low` and `high` under its
@@ -123,8 +152,22 @@ impl MapLegend {
         let line = t.text("help").line_height;
         let rows = self.rows.len() as f32;
         let ramp_height = self.ramp.as_ref().map_or(0.0, |_| 10.0 + 4.0 + line);
-        let height =
-            12.0 + line + self.description.as_ref().map_or(0.0, |_| line) + 8.0 + rows * 24.0 + ramp_height + 8.0;
+        // the scale's ramp, its breaks' row 16 tall under it, then the captions' row
+        let small = egui::FontId::new(t.text("2xs").size, egui::FontFamily::Proportional);
+        let small_line = t.text("2xs").line_height;
+        let scale_height = self.scale.as_ref().map_or(0.0, |_| {
+            10.0 + 4.0 + small_line + self.captions.as_ref().map_or(0.0, |_| small_line)
+        });
+        let no_data_height = self.no_data.as_ref().map_or(0.0, |_| 6.0 + line);
+        let height = 12.0
+            + line
+            + self.description.as_ref().map_or(0.0, |_| line)
+            + 8.0
+            + rows * 24.0
+            + ramp_height
+            + scale_height
+            + no_data_height
+            + 8.0;
         let width = 224.0_f32.min(map.width() - 24.0);
         let card = Rect::from_min_size(
             pos2(map.left() + 12.0, map.bottom() - 12.0 - height),
@@ -189,6 +232,61 @@ impl MapLegend {
                 muted,
             );
             y += ramp_height;
+        }
+        if let Some((colors, breaks)) = &self.scale {
+            let bar = Rect::from_min_size(pos2(x, y), vec2(width - 24.0, 10.0));
+            let step = bar.width() / colors.len().max(1) as f32;
+            for (index, color) in colors.iter().enumerate() {
+                let cell = Rect::from_min_size(pos2(bar.left() + step * index as f32, bar.top()), vec2(step, 10.0));
+                painter.rect_filled(cell, CornerRadius::ZERO, *color);
+            }
+            painter.rect_stroke(
+                bar,
+                t.radius("mini"),
+                Stroke::new(1.0, t.color_at("foreground", 0.1)),
+                StrokeKind::Outside,
+            );
+            let row = bar.bottom() + 4.0;
+            for (index, written) in breaks.iter().enumerate() {
+                painter.text(
+                    pos2(bar.left() + step * (index + 1) as f32, row + small_line / 2.0),
+                    egui::Align2::CENTER_CENTER,
+                    written,
+                    small.clone(),
+                    muted,
+                );
+            }
+            if let Some((low, high)) = &self.captions {
+                let under = row + small_line + small_line / 2.0;
+                painter.text(
+                    pos2(bar.left(), under),
+                    egui::Align2::LEFT_CENTER,
+                    low,
+                    small.clone(),
+                    muted,
+                );
+                painter.text(
+                    pos2(bar.right(), under),
+                    egui::Align2::RIGHT_CENTER,
+                    high,
+                    small.clone(),
+                    muted,
+                );
+            }
+            y += scale_height;
+        }
+        if let Some(label) = &self.no_data {
+            let middle = y + 6.0 + line / 2.0;
+            let swatch = Rect::from_center_size(pos2(x + 6.0, middle), vec2(12.0, 12.0));
+            no_data_swatch(&painter, &t, swatch);
+            painter.text(
+                pos2(x + 20.0, middle),
+                egui::Align2::LEFT_CENTER,
+                label,
+                font.clone(),
+                ink,
+            );
+            y += no_data_height;
         }
         for (color, label, count) in &self.rows {
             let middle = y + 12.0;
@@ -529,6 +627,7 @@ impl MapView {
             Basemap::Blank => None,
         };
         let mut points = Vec::new();
+        let mut anchors: Vec<(String, Pos2)> = Vec::new();
         let mut area_hit: Option<String> = None;
         let response = ui
             .allocate_ui(size, |ui| {
@@ -550,7 +649,15 @@ impl MapView {
                         } else if !has_tiles {
                             ground(&painter, &t, response.rect, projector, corners);
                         }
-                        draw_areas(&painter, &t, projector, &self.areas);
+                        // the area under the pointer, outlined
+                        let hovered = response.hover_pos().and_then(|pos| {
+                            let at = projector.unproject(pos.to_vec2());
+                            self.areas
+                                .iter()
+                                .find(|a| a.holds(at.x(), at.y()))
+                                .map(|a| a.id.clone())
+                        });
+                        draw_areas(&painter, &t, projector, &self.areas, hovered.as_deref());
                         // the area under a press, as longitude and latitude
                         if response.clicked()
                             && let Some(pos) = response.interact_pointer_pos()
@@ -563,6 +670,15 @@ impl MapView {
                                 .map(|a| a.id.clone());
                         }
                         overlays(&painter, &t, projector, markers, routes);
+                        // where a popup stands for each area: the middle of its largest outline
+                        anchors = self
+                            .areas
+                            .iter()
+                            .filter_map(|area| {
+                                let (lon, lat) = area.anchor()?;
+                                Some((area.id.clone(), projector.project(lat_lon(lat, lon)).to_pos2()))
+                            })
+                            .collect();
                         points = markers
                             .iter()
                             .map(|m| {
@@ -599,6 +715,7 @@ impl MapView {
             self.selected = None;
         }
         self.points = points.into_iter().map(|(id, at, _)| (id, at)).collect();
+        self.points.extend(anchors);
         self.room = rect;
         self.layer = response.layer_id;
         let t = t_page;
@@ -614,7 +731,7 @@ impl MapView {
         response
     }
 
-    /// Where the marker with this id was drawn on the last frame.
+    /// Where the marker with this id was drawn on the last frame, or the area's card stands.
     pub fn point_of(&self, id: &str) -> Option<Pos2> {
         self.points.iter().find(|(one, _)| one == id).map(|(_, at)| *at)
     }
@@ -705,6 +822,8 @@ impl MapView {
                         Some([w, s, e, n]) => [w.min(m.lon), s.min(m.lat), e.max(m.lon), n.max(m.lat)],
                     })
                 });
+                // with no markers, every area
+                let every = every.or_else(|| areas_bounds(&self.areas));
                 self.pending = Some(self.bounds.or(every));
             }
             Some(label) if label == basemap_words => self.switching = !self.switching,
@@ -1192,6 +1311,29 @@ mod tests {
         assert!(template.starts_with("https://tiles.openfreemap.org/planet/"));
         assert!(template.ends_with("/{z}/{x}/{y}.pbf"));
     }
+
+    #[test]
+    fn areas_are_read_from_geojson() {
+        let geojson = serde_json::json!({
+            "type": "FeatureCollection",
+            "features": [
+                {"type": "Feature", "id": "harbor", "properties": {"name": "Harbor"},
+                 "geometry": {"type": "Polygon", "coordinates": [[[0.0, 0.0], [2.0, 0.0], [2.0, 2.0], [0.0, 0.0]]]}},
+                {"type": "Feature", "properties": {"code": 7, "name": "Juniper"},
+                 "geometry": {"type": "MultiPolygon", "coordinates": [
+                     [[[3.0, 0.0], [4.0, 0.0], [4.0, 1.0], [3.0, 0.0]]],
+                     [[[5.0, 5.0], [6.0, 5.0], [6.0, 6.0], [5.0, 5.0]]]]}},
+                {"type": "Feature", "id": "point", "properties": {},
+                 "geometry": {"type": "Point", "coordinates": [1.0, 1.0]}}
+            ]
+        });
+        let areas = super::areas_from_geojson(&geojson, "code", "name");
+        assert_eq!(areas.len(), 2);
+        assert_eq!((areas[0].id.as_str(), areas[0].label.as_str()), ("harbor", "Harbor"));
+        assert_eq!((areas[1].id.as_str(), areas[1].rings().len()), ("7", 2));
+        assert!(areas[0].holds(1.5, 0.5));
+        assert_eq!(super::areas_bounds(&areas), Some([0.0, 0.0, 6.0, 6.0]));
+    }
 }
 
 /// How an area stands out, as sokkel-ui-maps' `AREA_EMPHASIS`: the selection, what is lit with it,
@@ -1225,6 +1367,9 @@ impl Emphasis {
 pub struct Area {
     pub id: String,
     pub label: String,
+    /// What the area is filled with: its emphasis, or a choropleth's class color, or the hatch
+    /// of no figure.
+    pub fill: AreaFill,
     /// Each polygon's outer ring, as longitude and latitude.
     rings: Vec<Vec<(f64, f64)>>,
     /// Each ring's triangles, as indices into it, cut once when the area is made.
@@ -1242,12 +1387,44 @@ impl Area {
             rings,
             triangles,
             emphasis: Emphasis::Plain,
+            fill: AreaFill::Plain,
         }
     }
 
     pub fn emphasis(mut self, emphasis: Emphasis) -> Self {
         self.emphasis = emphasis;
         self
+    }
+
+    /// Filled as a choropleth fills it: in its class's color, or hatched where it has no figure
+    /// (`None`), as the web's `BoundaryLayer` with a `scale`.
+    pub fn class_color(mut self, color: Option<Color32>) -> Self {
+        self.fill = color.map_or(AreaFill::NoData, AreaFill::Class);
+        self
+    }
+
+    /// Where a card about the area stands: the middle of the bounds of its largest outline, as
+    /// longitude and latitude.
+    pub fn anchor(&self) -> Option<(f64, f64)> {
+        let size = |ring: &Vec<(f64, f64)>| {
+            let (w, s, e, n) = ring
+                .iter()
+                .fold((f64::MAX, f64::MAX, f64::MIN, f64::MIN), |(w, s, e, n), (lon, lat)| {
+                    (w.min(*lon), s.min(*lat), e.max(*lon), n.max(*lat))
+                });
+            ((e - w) * (n - s), ((w + e) / 2.0, (s + n) / 2.0))
+        };
+        self.rings
+            .iter()
+            .filter(|ring| !ring.is_empty())
+            .map(size)
+            .max_by(|a, b| a.0.total_cmp(&b.0))
+            .map(|(_, middle)| middle)
+    }
+
+    /// The outer rings of its polygons, as longitude and latitude.
+    pub fn rings(&self) -> &[Vec<(f64, f64)>] {
+        &self.rings
     }
 
     /// Whether a place, as longitude and latitude, lies inside the area.
@@ -1279,6 +1456,135 @@ impl Area {
             b[3] = b[3].max(*lat);
         }
         Some(b)
+    }
+}
+
+/// The bounds of every area, as `[west, south, east, north]`; none for no areas.
+pub fn areas_bounds(areas: &[Area]) -> Option<[f64; 4]> {
+    areas
+        .iter()
+        .filter_map(Area::bounds)
+        .reduce(|[w, s, e, n], [w2, s2, e2, n2]| [w.min(w2), s.min(s2), e.max(e2), n.max(n2)])
+}
+
+/// What an area is filled with, as the web's `BoundaryLayer` paints it.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum AreaFill {
+    /// Plain boundaries: filled by the area's emphasis.
+    Plain,
+    /// A choropleth's class: this color at 88%, edged in the foreground 22% into the card.
+    Class(Color32),
+    /// A choropleth's area with no figure: the muted ground, hatched.
+    NoData,
+}
+
+/// Areas read from a GeoJSON `FeatureCollection` of polygons and multipolygons, as the web's
+/// `BoundaryLayer` reads its `data`: each feature's id (its `id`, or `id_property` among its
+/// properties), its label from `name_property`, and its polygons' outer rings. A feature whose
+/// geometry cannot be read is left out.
+pub fn areas_from_geojson(geojson: &serde_json::Value, id_property: &str, name_property: &str) -> Vec<Area> {
+    let ring = |value: &serde_json::Value| -> Vec<(f64, f64)> {
+        value
+            .as_array()
+            .map(|points| {
+                points
+                    .iter()
+                    .filter_map(|p| Some((p.get(0)?.as_f64()?, p.get(1)?.as_f64()?)))
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
+    let outer = |polygon: &serde_json::Value| polygon.as_array().and_then(|rings| rings.first()).map(ring);
+    let written = |value: &serde_json::Value| match value {
+        serde_json::Value::String(text) => Some(text.clone()),
+        serde_json::Value::Number(number) => Some(number.to_string()),
+        _ => None,
+    };
+    geojson["features"]
+        .as_array()
+        .map(|features| {
+            features
+                .iter()
+                .filter_map(|feature| {
+                    let geometry = &feature["geometry"];
+                    let coordinates = &geometry["coordinates"];
+                    let rings: Vec<Vec<(f64, f64)>> = match geometry["type"].as_str()? {
+                        "Polygon" => outer(coordinates).into_iter().collect(),
+                        "MultiPolygon" => coordinates.as_array()?.iter().filter_map(outer).collect(),
+                        _ => return None,
+                    };
+                    let rings: Vec<_> = rings.into_iter().filter(|r| r.len() >= 3).collect();
+                    if rings.is_empty() {
+                        return None;
+                    }
+                    let properties = &feature["properties"];
+                    let id = written(&feature["id"]).or_else(|| written(&properties[id_property]))?;
+                    let label = written(&properties[name_property]).unwrap_or_else(|| id.clone());
+                    Some(Area::new(id, label, rings))
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// [`areas_from_geojson`] from GeoJSON text; none where it does not parse.
+pub fn areas_from_geojson_text(text: &str, id_property: &str, name_property: &str) -> Vec<Area> {
+    serde_json::from_str(text).map_or_else(
+        |_| Vec::new(),
+        |value| areas_from_geojson(&value, id_property, name_property),
+    )
+}
+
+/// The no-data swatch: the muted ground hatched in the muted ink 55% into it, as the web's
+/// `NO_DATA_BACKGROUND`.
+fn no_data_swatch(painter: &egui::Painter, t: &Tokens, rect: Rect) {
+    painter.rect_filled(rect, t.radius("mini"), t.color("muted"));
+    let points = [
+        rect.left_top(),
+        rect.right_top(),
+        rect.right_bottom(),
+        rect.left_bottom(),
+    ];
+    hatch(
+        &painter.with_clip_rect(rect),
+        &points,
+        no_data_hatch(t),
+        4.0 * std::f32::consts::SQRT_2,
+        1.0,
+    );
+}
+
+fn no_data_hatch(t: &Tokens) -> Color32 {
+    mix(t.color("muted-foreground"), t.color("muted"), 0.55)
+}
+
+/// Lines up to the right `every` apart across, `width` wide, inside a simple polygon of screen
+/// points: each line cut where it crosses the polygon's edges, its pieces inside kept.
+fn hatch(painter: &egui::Painter, points: &[Pos2], color: Color32, every: f32, width: f32) {
+    if points.len() < 3 {
+        return;
+    }
+    // the lines x + y = c, from the least c to the greatest the polygon reaches
+    let reach = |p: &Pos2| p.x + p.y;
+    let low = points.iter().map(reach).fold(f32::INFINITY, f32::min);
+    let high = points.iter().map(reach).fold(f32::NEG_INFINITY, f32::max);
+    let mut c = (low / every).ceil() * every;
+    let stroke = Stroke::new(width, color);
+    while c <= high {
+        let mut crossings: Vec<f32> = Vec::new();
+        for i in 0..points.len() {
+            let (a, b) = (points[i], points[(i + 1) % points.len()]);
+            let (fa, fb) = (reach(&a) - c, reach(&b) - c);
+            if (fa < 0.0) != (fb < 0.0) {
+                let share = fa / (fa - fb);
+                crossings.push(a.x + (b.x - a.x) * share);
+            }
+        }
+        crossings.sort_by(f32::total_cmp);
+        for [from, to] in crossings.as_chunks::<2>().0 {
+            painter.line_segment([pos2(*from, c - from), pos2(*to, c - to)], stroke);
+        }
+        c += every;
     }
 }
 
@@ -1349,7 +1655,7 @@ fn triangulate(ring: &[(f64, f64)]) -> Vec<[usize; 3]> {
     out
 }
 
-fn draw_areas(painter: &egui::Painter, t: &Tokens, projector: &Projector, areas: &[Area]) {
+fn draw_areas(painter: &egui::Painter, t: &Tokens, projector: &Projector, areas: &[Area], hovered: Option<&str>) {
     let at = |(lon, lat): (f64, f64)| -> Pos2 { projector.project(lat_lon(lat, lon)).to_pos2() };
     // the plain ones first, so a lit or chosen edge stands over its neighbors'
     let mut order: Vec<&Area> = areas.iter().collect();
@@ -1358,20 +1664,61 @@ fn draw_areas(painter: &egui::Painter, t: &Tokens, projector: &Projector, areas:
         Emphasis::Highlighted => 1,
         Emphasis::Selected => 2,
     });
+    let card = t.color("card");
     for area in order {
-        let (fill, edge) = area.emphasis.colors(t);
-        for (ring, triangles) in area.rings.iter().zip(&area.triangles) {
-            let points: Vec<Pos2> = ring.iter().map(|p| at(*p)).collect();
+        let (plain_fill, plain_edge) = area.emphasis.colors(t);
+        let (fill, edge) = match area.fill {
+            AreaFill::Plain => (
+                plain_fill,
+                Stroke::new(if area.emphasis == Emphasis::Plain { 1.0 } else { 1.5 }, plain_edge),
+            ),
+            AreaFill::Class(color) => (
+                color.gamma_multiply(0.88),
+                Stroke::new(0.8, mix(t.color("foreground"), card, 0.22)),
+            ),
+            AreaFill::NoData => (
+                t.color("muted").gamma_multiply(0.88),
+                Stroke::new(0.8, mix(t.color("foreground"), card, 0.22)),
+            ),
+        };
+        let outlines: Vec<Vec<Pos2>> = area
+            .rings
+            .iter()
+            .map(|ring| ring.iter().map(|p| at(*p)).collect())
+            .collect();
+        for (points, triangles) in outlines.iter().zip(&area.triangles) {
             let mut mesh = egui::epaint::Mesh::default();
-            for point in &points {
+            for point in points {
                 mesh.colored_vertex(*point, fill);
             }
             for [a, b, c] in triangles {
                 mesh.add_triangle(*a as u32, *b as u32, *c as u32);
             }
             painter.add(egui::Shape::mesh(mesh));
-            let width = if area.emphasis == Emphasis::Plain { 1.0 } else { 1.5 };
-            painter.add(egui::Shape::closed_line(points, Stroke::new(width, edge)));
+            if area.fill == AreaFill::NoData {
+                hatch(painter, points, no_data_hatch(t).gamma_multiply(0.88), 12.0, 2.0);
+            }
+            painter.add(egui::Shape::closed_line(points.clone(), edge));
+        }
+        // a choropleth's chosen area outlined in the selection over a halo in the card, one lit
+        // with it in the highlight; the area under the pointer in the ink
+        let over = |outline: Stroke| {
+            for points in &outlines {
+                painter.add(egui::Shape::closed_line(points.clone(), outline));
+            }
+        };
+        if area.fill != AreaFill::Plain {
+            match area.emphasis {
+                Emphasis::Selected => {
+                    over(Stroke::new(5.0, card));
+                    over(Stroke::new(2.5, t.color("map-selection")));
+                }
+                Emphasis::Highlighted => over(Stroke::new(1.25, t.color("map-highlight").gamma_multiply(0.9))),
+                Emphasis::Plain => {}
+            }
+        }
+        if hovered == Some(area.id.as_str()) && area.emphasis != Emphasis::Selected {
+            over(Stroke::new(1.25, t.color("foreground").gamma_multiply(0.75)));
         }
     }
 }
