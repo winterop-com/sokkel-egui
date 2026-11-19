@@ -1,0 +1,105 @@
+{
+    "example": "examples/dhis2/web/src",
+    "ported": {
+        "commit": "c95b8911",
+        "files": {
+            "App.tsx": "a1a5ef27672335d9c882ee78862d557dcd7fba3a",
+            "app.css": "08468a4328b280131defef8c12bbd11c2395b4ce",
+            "data/backend.ts": "fff7487f62ff72bee35ce445807e1f78f78b1a0b",
+            "data/check.ts": "95ed481da7c8c7a03ffd599816c8c67aad30a1ba",
+            "data/expression.ts": "7e4bf0f33c279a7bb4bd8a4ec97447775493b267",
+            "data/metadata.ts": "ea78df9759efc56e157561d577fc2c46b6d21217",
+            "data/program.ts": "ff27309859b8d61fe368ab4fed07927cd3d1468f",
+            "data/values.ts": "38a57450892a52be3732eae3ec822c2e54505bdf",
+            "data/versions.ts": "19c4a79a8f4def45e3a20fb1e55d305d4e3f66c9",
+            "main.tsx": "b01e26498c83573c4c24fa9a2e6be7ea8a06e749",
+            "pages/DataElements.tsx": "45ff841cdaed41ce5f0ecd922dce205a548baacb",
+            "pages/Functions.tsx": "576f234f0b0884c1edb4a4a3edf05a68f38b4a96",
+            "pages/Indicator.tsx": "c563baa08e0f84045ad1aa4869d1e0a14ec445ec",
+            "pages/Indicators.tsx": "045ef01b43e9816fb15e102004aa2fb162ea0ae8",
+            "pages/OrgUnits.tsx": "7320b287fc30cf170c8cae760118cc4c64ce92a9",
+            "pages/ProgramRules.tsx": "f87f91437f7fadadfb00c3166901439c7aae26ad",
+            "pages/ValidationRule.tsx": "6e7b6f5e73e91b2f3da98efa4b22ca2272fa341e",
+            "pages/ValidationRules.tsx": "f0381d0c2a8c6de9ec815818f0f8c980ab38e9cc",
+            "themes.ts": "99c72d540f1e2ca0d59e917686a166ae25981115",
+            "ui.tsx": "ea48d700bb8d42de228ad1b4cf17d4fbf7b5c4b9"
+        }
+    },
+    "parts": {},
+    "screens": [
+        {
+            "name": "dhis2_indicators",
+            "route": "indicators",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dhis2_validation_rules",
+            "route": "validation-rules",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dhis2_program_rules",
+            "route": "program-rules",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dhis2_data_elements",
+            "route": "data-elements",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dhis2_org_units",
+            "route": "org-units",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dhis2_functions",
+            "route": "functions",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dhis2_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dhis2_indicator",
+            "route": "indicators/HfLcB4WfnnX",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dhis2_validation_rule",
+            "route": "validation-rules/wkoeUEMtnuV",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "c95b8911dd02bf7925e96b62c93fc8a934d57800"
+}
