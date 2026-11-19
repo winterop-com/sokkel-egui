@@ -3559,6 +3559,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "podcast"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sokkel-egui-media",
+]
+
+[[package]]
 name = "poll-promise"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

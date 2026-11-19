@@ -1,0 +1,16 @@
+[package]
+name = "podcast"
+description = "Tidevann's podcasts: a podcast app's data on a simulated backend, as sokkel-ui's podcast example keeps it: the shows and their episodes, each episode's script and the voices that speak it, following, the queue and the player, downloads, New, the sleep timer, the search and the time listened."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-egui-media = { path = "../../crates/media" }
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+# The web's numbers read back to the bit, as `tests/web.rs` compares them.
+serde_json = { workspace = true, features = ["float_roundtrip"] }

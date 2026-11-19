@@ -1,0 +1,624 @@
+{
+ "now": 1794992400000,
+ "random": 2026,
+ "dayOffsets": [
+  0,
+  -1,
+  -6,
+  -13,
+  1,
+  30
+ ],
+ "dayFroms": [
+  [
+   0,
+   0
+  ],
+  [
+   -1,
+   1700000000000
+  ],
+  [
+   0,
+   1794959999999
+  ],
+  [
+   2,
+   951782400000
+  ]
+ ],
+ "ago": [
+  0,
+  3600000,
+  86400000,
+  86400001,
+  172800000,
+  1123200000,
+  1209600000,
+  5097600000,
+  5184000000,
+  34560000000,
+  -86400000
+ ],
+ "spoken": [
+  0,
+  0.4,
+  12.5,
+  59.4,
+  59.6,
+  60,
+  89,
+  90,
+  3599,
+  3600,
+  3629,
+  3630,
+  7200,
+  12345.6
+ ],
+ "megabytes": [
+  0,
+  0.05,
+  0.25,
+  0.75,
+  1.25,
+  12.345,
+  999.95
+ ],
+ "randomSeeds": [
+  "",
+  "listens",
+  "low-tide-hours-3",
+  "low-tide-hours-3:voice",
+  "x"
+ ],
+ "fullSyllables": [
+  "low-tide-hours-3",
+  "tidevann-weekly-3"
+ ],
+ "spokenScripts": [
+  [
+   "Ada and grace walk out across the empty harbor and count what the tide left behind.",
+   "ada",
+   "low-tide-hours-1:summary"
+  ],
+  [
+   "Will it last? Two more days, and then the wind turns!",
+   "linus",
+   "w"
+  ],
+  [
+   "",
+   "grace",
+   "empty"
+  ],
+  [
+   "...",
+   "margaret",
+   "dots"
+  ]
+ ],
+ "renders": [
+  [
+   "episode",
+   "low-tide-hours-4"
+  ],
+  [
+   "episode",
+   "juniper-weather-3"
+  ],
+  [
+   "spoken",
+   "Why the fog sits in the valley, and why it stays put.",
+   "linus",
+   "fog"
+  ]
+ ],
+ "chapterCases": [
+  [
+   "low-tide-hours-3",
+   [
+    -1,
+    0,
+    2.9,
+    3.1,
+    33.1,
+    33.2,
+    35,
+    36.3,
+    53.3,
+    80,
+    100.3,
+    200
+   ]
+  ],
+  [
+   "juniper-weather-3",
+   [
+    0,
+    10,
+    25.9,
+    29,
+    30,
+    60,
+    84.5
+   ]
+  ]
+ ],
+ "timerSteps": [
+  [
+   -1,
+   null,
+   5,
+   0,
+   true
+  ],
+  [
+   0,
+   5,
+   12,
+   3,
+   true
+  ],
+  [
+   0,
+   5,
+   12,
+   1,
+   true
+  ],
+  [
+   0,
+   5,
+   12,
+   3,
+   false
+  ],
+  [
+   1,
+   12,
+   8,
+   1,
+   true
+  ],
+  [
+   1,
+   null,
+   25,
+   1,
+   true
+  ],
+  [
+   2,
+   20,
+   20.5,
+   1,
+   true
+  ]
+ ],
+ "playedOn": [
+  [
+   0,
+   1,
+   1
+  ],
+  [
+   0,
+   5,
+   1
+  ],
+  [
+   0,
+   5.1,
+   1
+  ],
+  [
+   5,
+   4,
+   1
+  ],
+  [
+   0,
+   0,
+   0
+  ],
+  [
+   0,
+   1,
+   -3
+  ],
+  [
+   0,
+   1.5,
+   0
+  ]
+ ],
+ "queries": [
+  "",
+  "harbor",
+  "Harbor  LOG",
+  "grace ada",
+  "sync-inventory",
+  "weather",
+  "sea and",
+  "nothing here",
+  "the",
+  "island one",
+  "  "
+ ],
+ "matches": [
+  [
+   "",
+   [
+    "x"
+   ]
+  ],
+  [
+   "a b",
+   [
+    "a",
+    "b"
+   ]
+  ],
+  [
+   "ab",
+   [
+    "a",
+    "b"
+   ]
+  ],
+  [
+   "A",
+   [
+    "a"
+   ]
+  ],
+  [
+   "fog",
+   [
+    "Fog signals"
+   ]
+  ]
+ ],
+ "steps": [
+  {
+   "at": 1000,
+   "op": "seek",
+   "to": 30
+  },
+  {
+   "at": 2000,
+   "op": "skip",
+   "by": 10
+  },
+  {
+   "at": 3000,
+   "op": "rate",
+   "rate": 1.5
+  },
+  {
+   "at": 4000,
+   "op": "setPlaying",
+   "on": true
+  },
+  {
+   "at": 5000,
+   "op": "played",
+   "to": 45
+  },
+  {
+   "at": 11000,
+   "op": "played",
+   "to": 52
+  },
+  {
+   "at": 12000,
+   "op": "sleep",
+   "timer": "chapter"
+  },
+  {
+   "at": 13000,
+   "op": "played",
+   "to": 53
+  },
+  {
+   "at": 14000,
+   "op": "played",
+   "to": 54
+  },
+  {
+   "at": 15000,
+   "op": "skip",
+   "by": 15
+  },
+  {
+   "at": 16000,
+   "op": "skip",
+   "by": -30
+  },
+  {
+   "at": 17000,
+   "op": "play",
+   "id": "low-tide-hours-3"
+  },
+  {
+   "at": 18000,
+   "op": "play",
+   "id": "low-tide-hours-3"
+  },
+  {
+   "at": 19000,
+   "op": "play",
+   "id": "low-tide-hours-3"
+  },
+  {
+   "at": 20000,
+   "op": "queueAdd",
+   "id": "harbor-log-3",
+   "where": "next"
+  },
+  {
+   "at": 21000,
+   "op": "queueAdd",
+   "id": "low-tide-hours-3",
+   "where": "end"
+  },
+  {
+   "at": 22000,
+   "op": "queueAdd",
+   "id": "tidevann-weekly-3",
+   "where": "end"
+  },
+  {
+   "at": 23000,
+   "op": "queueMove",
+   "from": 0,
+   "to": 2
+  },
+  {
+   "at": 24000,
+   "op": "queueMove",
+   "from": 0,
+   "to": 5
+  },
+  {
+   "at": 25000,
+   "op": "queueRemove",
+   "id": "field-notes-larkspur-3"
+  },
+  {
+   "at": 26000,
+   "op": "star",
+   "id": "tidevann-weekly-3",
+   "starred": true
+  },
+  {
+   "at": 27000,
+   "op": "star",
+   "id": "low-tide-hours-1",
+   "starred": false
+  },
+  {
+   "at": 28000,
+   "op": "download",
+   "id": "islands-one-by-one-3"
+  },
+  {
+   "at": 29000,
+   "op": "download",
+   "id": "harbor-log-2"
+  },
+  {
+   "at": 30000,
+   "op": "removeDownload",
+   "id": "low-tide-hours-4"
+  },
+  {
+   "at": 40000,
+   "op": "volume",
+   "volume": 0.5
+  },
+  {
+   "at": 41000,
+   "op": "muted",
+   "muted": true
+  },
+  {
+   "at": 42000,
+   "op": "ended"
+  },
+  {
+   "at": 43000,
+   "op": "sleep",
+   "timer": 5
+  },
+  {
+   "at": 44000,
+   "op": "played",
+   "to": 30
+  },
+  {
+   "at": 350000,
+   "op": "away"
+  },
+  {
+   "at": 351000,
+   "op": "sleep",
+   "timer": "end"
+  },
+  {
+   "at": 352000,
+   "op": "setPlaying",
+   "on": true
+  },
+  {
+   "at": 353000,
+   "op": "ended"
+  },
+  {
+   "at": 354000,
+   "op": "play",
+   "id": "tidevann-weekly-3",
+   "from": 20
+  },
+  {
+   "at": 355000,
+   "op": "played",
+   "to": 26.5
+  },
+  {
+   "at": 356000,
+   "op": "markPlayed",
+   "id": "tidevann-weekly-3",
+   "played": true
+  },
+  {
+   "at": 357000,
+   "op": "markPlayed",
+   "id": "low-tide-hours-1",
+   "played": false
+  },
+  {
+   "at": 358000,
+   "op": "play",
+   "id": "low-tide-hours-1"
+  },
+  {
+   "at": 359000,
+   "op": "rate",
+   "rate": 1.25
+  },
+  {
+   "at": 361000,
+   "op": "played",
+   "to": 10.25
+  },
+  {
+   "at": 380000,
+   "op": "prefs",
+   "patch": {
+    "continueQueue": false
+   }
+  },
+  {
+   "at": 381000,
+   "op": "ended"
+  },
+  {
+   "at": 382000,
+   "op": "playNext"
+  },
+  {
+   "at": 383000,
+   "op": "queueClear"
+  },
+  {
+   "at": 384000,
+   "op": "playNext"
+  },
+  {
+   "at": 385000,
+   "op": "checkForNew"
+  },
+  {
+   "at": 387000,
+   "op": "prefs",
+   "patch": {
+    "inbox": false,
+    "autoDownload": false
+   }
+  },
+  {
+   "at": 388000,
+   "op": "subscribe",
+   "id": "islands-one-by-one"
+  },
+  {
+   "at": 389000,
+   "op": "unsubscribe",
+   "id": "harbor-log"
+  },
+  {
+   "at": 390000,
+   "op": "prefs",
+   "patch": {
+    "inbox": true,
+    "autoDownload": true
+   }
+  },
+  {
+   "at": 391000,
+   "op": "subscribe",
+   "id": "rivers-and-deltas"
+  },
+  {
+   "at": 392000,
+   "op": "checkForNew",
+   "wait": 3000
+  },
+  {
+   "at": 396000,
+   "op": "archive",
+   "id": "low-tide-hours-4"
+  },
+  {
+   "at": 397000,
+   "op": "archiveAll"
+  },
+  {
+   "at": 398000,
+   "op": "removeAllDownloads"
+  },
+  {
+   "at": 399000,
+   "op": "setPlaying",
+   "on": false
+  },
+  {
+   "at": 400000,
+   "op": "away"
+  },
+  {
+   "at": 401000,
+   "op": "clearStats"
+  },
+  {
+   "at": 402000,
+   "op": "setPlaying",
+   "on": true
+  },
+  {
+   "at": 420000,
+   "op": "setPlaying",
+   "on": false
+  },
+  {
+   "at": 421000,
+   "op": "prefs",
+   "patch": {
+    "speed": 1.5,
+    "skip": 30
+   }
+  },
+  {
+   "at": 422000,
+   "op": "play",
+   "id": "field-notes-larkspur-3"
+  },
+  {
+   "at": 424000,
+   "op": "download",
+   "id": "field-notes-larkspur-3",
+   "wait": 6000
+  },
+  {
+   "at": 431000,
+   "op": "ended"
+  },
+  {
+   "at": 432000,
+   "op": "checkForNew",
+   "wait": 1500
+  }
+ ]
+}
