@@ -1077,6 +1077,7 @@ impl StatusApp {
                         .collect();
                     let theirs = incident.assignee == on_call;
                     DescriptionList::new()
+                        .stacked()
                         .item("Severity", |ui| {
                             ui.add(Segmented::new(&mut severity, ["Minor", "Major", "Critical"]));
                         })
@@ -2481,7 +2482,8 @@ impl StatusApp {
                         health.words(),
                         overall_uptime(&uptime[index]).map_or("no data".to_owned(), format_uptime)
                     ))
-                    .trend(readings.iter().map(|r| r.p95), t.color(health.tone()));
+                    .trend(readings.iter().map(|r| r.p95), t.color(health.tone()))
+                    .selectable(true);
                 if stat.tile(ui, width).clicked() {
                     opened = Some(service.id);
                 }

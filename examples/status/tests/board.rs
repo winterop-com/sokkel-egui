@@ -39,8 +39,14 @@ fn all_opens_the_incidents() {
 #[test]
 fn a_tile_opens_its_service() {
     let mut harness = render();
-    // the tile is the first "api" on the page; the uptime list names it again below
-    harness.get_all_by_label("api").next().expect("the api tile").click();
+    // the tile is a button named by its label and its value ("api 180 ms p95")
+    harness
+        .get(
+            egui_kittest::kittest::By::new()
+                .role(egui::accesskit::Role::Button)
+                .label_contains("api "),
+        )
+        .click();
     harness.run_steps(3);
     assert_eq!(harness.state().place, "services");
     assert_eq!(harness.state().service.as_deref(), Some("api"));

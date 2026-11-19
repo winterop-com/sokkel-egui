@@ -19,12 +19,18 @@ pub enum BadgeVariant {
     Link,
 }
 
-/// A short label, 20 tall, in the chip corner: a count, a version, a kind.
+/// A short value as a chip, 20 tall, in the chip corner: a state, a version, a count, a tag,
+/// after sokkel-ui's `Badge`. Its variant says how loud it is; a kind draws it in a kind color.
+/// Drawn as a link (`href` or `link`) it takes focus, washes on hover and answers a click.
 #[must_use = "add it with `ui.add(...)`"]
 pub struct Badge {
     label: String,
     variant: BadgeVariant,
+    kind: Option<&'static str>,
     icon: Option<Icon>,
+    icon_after: bool,
+    href: Option<String>,
+    link: bool,
 }
 
 impl Badge {
@@ -32,7 +38,11 @@ impl Badge {
         Self {
             label: label.into(),
             variant: BadgeVariant::Default,
+            kind: None,
             icon: None,
+            icon_after: false,
+            href: None,
+            link: false,
         }
     }
 
@@ -41,29 +51,60 @@ impl Badge {
         self
     }
 
-    /// A 12px Lucide icon before the label.
+    /// One of the six kind colors (`blue`, `green`, `jade`, `pink`, `teal`, `violet`), laid over
+    /// the variant: its wash at 12%, its edge at 30%, its ink. [`crate::kind_of`] picks one
+    /// steadily from a name, so the same value always wears the same color.
+    pub fn kind(mut self, kind: &'static str) -> Self {
+        self.kind = Some(kind);
+        self
+    }
+
+    /// A 12px Lucide icon before the words.
     pub fn icon(mut self, icon: Icon) -> Self {
         self.icon = Some(icon);
+        self.icon_after = false;
         self
+    }
+
+    /// A 12px Lucide icon after the words.
+    pub fn icon_after(mut self, icon: Icon) -> Self {
+        self.icon = Some(icon);
+        self.icon_after = true;
+        self
+    }
+
+    /// Drawn as a link to `href`: it takes focus, washes on hover, and opens the address on a
+    /// click.
+    pub fn href(mut self, href: impl Into<String>) -> Self {
+        self.href = Some(href.into());
+        self.link = true;
+        self
+    }
+
+    /// Drawn as a link whose click the app answers (the response's `clicked`), as sokkel-ui's
+    /// `render` draws it as another element.
+    pub fn link(mut self, link: bool) -> Self {
+        self.link = link;
+        self
+    }
+}
+
+impl BadgeVariant {
+    fn key(self) -> &'static str {
+        match self {
+            Self::Default => "default",
+            Self::Secondary => "secondary",
+            Self::Destructive => "destructive",
+            Self::Outline => "outline",
+            Self::Ghost => "ghost",
+            Self::Link => "link",
+        }
     }
 }
 
 impl Widget for Badge {
     fn ui(self, ui: &mut Ui) -> Response {
         let t = tokens(ui.ctx());
-        let none = Color32::TRANSPARENT;
-        let (fill, border, ink) = match self.variant {
-            BadgeVariant::Default => (t.color("primary"), none, t.color("primary-foreground")),
-            BadgeVariant::Secondary => (t.color("secondary"), none, t.color("secondary-foreground")),
-            BadgeVariant::Destructive => (
-                t.color_at("destructive", if t.dark { 0.2 } else { 0.1 }),
-                none,
-                t.color("destructive"),
-            ),
-            BadgeVariant::Outline => (none, t.color("border"), t.color("foreground")),
-            BadgeVariant::Ghost => (none, none, t.color("foreground")),
-            BadgeVariant::Link => (none, none, t.color("primary")),
-        };
         let role = TextRole::Badge;
         let galley = WidgetText::from(role.rich(&t, &self.label)).into_galley(
             ui,
@@ -71,10 +112,51 @@ impl Widget for Badge {
             f32::INFINITY,
             role.font(&t),
         );
-        let lead = if self.icon.is_some() { 12.0 + 4.0 } else { 0.0 };
-        let (rect, response) = ui.allocate_exact_size(vec2(galley.size().x + lead + 12.0, 20.0), Sense::hover());
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, &self.label));
+        let icon_room = if self.icon.is_some() { 12.0 + 4.0 } else { 0.0 };
+        let sense = if self.link { Sense::click() } else { Sense::hover() };
+        let (rect, response) = ui.allocate_exact_size(vec2(galley.size().x + icon_room + 12.0, 20.0), sense);
+        let role_kind = if self.link { egui::Role::Link } else { egui::Role::Label };
+        response.widget_info(|| egui::WidgetInfo::labeled(role_kind, true, &self.label));
+        let hovered = response.hovered();
+        if self.link && hovered {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+        }
+        if self.link
+            && response.clicked()
+            && let Some(href) = &self.href
+        {
+            ui.ctx().open_url(egui::OpenUrl::new_tab(href));
+        }
         if ui.is_rect_visible(rect) {
+            // the variant's paint, or the kind's laid over it; ghost and link answer hover
+            let variant = match self.kind {
+                Some(kind) => format!("kind-{kind}"),
+                None => self.variant.key().to_owned(),
+            };
+            let state = if hovered && t.paint(&format!("badge.{variant}.hover.container")).is_some() {
+                "hover"
+            } else {
+                "rest"
+            };
+            let key = format!("badge.{variant}.{state}.container");
+            let paint = t.paint(&key).unwrap_or_default();
+            let none = Color32::TRANSPARENT;
+            let mut fill = paint.ground.unwrap_or(none);
+            let border = paint.edge.unwrap_or(none);
+            let mut ink = paint.ink.unwrap_or_else(|| t.color("foreground"));
+            // drawn as a link, the filled variants and outline wash on hover too (`[a]:hover`)
+            if self.link && hovered && self.kind.is_none() {
+                match self.variant {
+                    BadgeVariant::Default => fill = t.color_at("primary", 0.8),
+                    BadgeVariant::Secondary => fill = t.color_at("secondary", 0.8),
+                    BadgeVariant::Destructive => fill = t.color_at("destructive", 0.2),
+                    BadgeVariant::Outline => {
+                        fill = t.color("hover");
+                        ink = t.color("muted-foreground");
+                    }
+                    BadgeVariant::Ghost | BadgeVariant::Link => {}
+                }
+            }
             let painter = ui.painter();
             painter.rect(
                 rect,
@@ -84,11 +166,27 @@ impl Widget for Badge {
                 StrokeKind::Inside,
             );
             let mut x = rect.left() + 6.0;
-            if let Some(icon) = self.icon {
-                icons::paint(painter, pos2(x + 6.0, rect.center().y), icon, 12.0, ink);
-                x += lead;
+            let paint_icon = |x: f32| {
+                if let Some(icon) = self.icon {
+                    icons::paint(painter, pos2(x + 6.0, rect.center().y), icon, 12.0, ink);
+                }
+            };
+            if !self.icon_after {
+                paint_icon(x);
+                x += icon_room;
             }
-            painter.galley(pos2(x, rect.center().y - galley.size().y / 2.0), galley, ink);
+            let text_rect = egui::Rect::from_min_size(pos2(x, rect.center().y - galley.size().y / 2.0), galley.size());
+            painter.galley(text_rect.min, galley, ink);
+            if self.icon_after {
+                paint_icon(text_rect.right() + 4.0);
+            }
+            if hovered && self.variant == BadgeVariant::Link && self.kind.is_none() {
+                let y = text_rect.bottom() - 2.0;
+                painter.hline(text_rect.x_range(), y, Stroke::new(1.0, ink));
+            }
+            if self.link {
+                super::focus_ring(painter, &t, rect, t.radius("chip"), &response);
+            }
         }
         response
     }
@@ -513,18 +611,28 @@ impl Widget for TextLink {
     }
 }
 
-/// A row that unfolds what is under it, after sokkel-ui's `Unfoldable`: a chevron that turns, the
-/// heading at medium weight, and an aside at its end; open, its content 8 under it, in from the
-/// chevron.
+/// A heading that opens what is under it, after sokkel-ui's `Unfoldable`: the whole heading row
+/// is the control, its chevron turning, washing under the pointer as a menu row does. The row
+/// reaches 4 past the column on each side, padded 4, so its chevron stands at the column's start
+/// and its heading and what it holds line up 22 in. A summary under a shut heading says what is
+/// folded away; facts can stand at the row's end; [`Unfoldable::show_static`] draws a row with
+/// nothing to unfold, lined up with the rest. Held open while forced.
 pub struct Unfoldable<'a> {
     id: egui::Id,
     heading: String,
     open_first: bool,
+    open: Option<&'a mut bool>,
     aside: Option<super::section::Tools<'a>>,
+    summary: Option<String>,
+    wrap_summary: bool,
     dot: Option<egui::Color32>,
+    ink: Option<egui::Color32>,
     forced: bool,
     quiet: bool,
 }
+
+/// The summary's and the content's start: the chevron's 14 and the row's 8.
+const UNFOLD_INDENT: f32 = 22.0;
 
 impl<'a> Unfoldable<'a> {
     pub fn new(id: impl egui::AsIdSalt, heading: impl Into<String>) -> Self {
@@ -532,8 +640,12 @@ impl<'a> Unfoldable<'a> {
             id: egui::Id::unique(id),
             heading: heading.into(),
             open_first: false,
+            open: None,
             aside: None,
+            summary: None,
+            wrap_summary: false,
             dot: None,
+            ink: None,
             forced: false,
             quiet: false,
         }
@@ -552,8 +664,15 @@ impl<'a> Unfoldable<'a> {
         self
     }
 
-    /// Held open whatever the reader chose, as a filter does while it is typed: the row no longer
-    /// presses, its chevron turned and faint.
+    /// The heading's ink: the ink of the surface it stands on (`popover-foreground` in a popup,
+    /// `sidebar-foreground` on the rail). Without it the heading takes the ui's text color.
+    pub fn ink(mut self, ink: egui::Color32) -> Self {
+        self.ink = Some(ink);
+        self
+    }
+
+    /// Held open whatever the reader chose, as a filter does while it is typed: the row is static
+    /// meanwhile, its chevron turned down in faint, and the reader's own choice returns after.
     pub fn forced(mut self, forced: bool) -> Self {
         self.forced = forced;
         self
@@ -565,48 +684,95 @@ impl<'a> Unfoldable<'a> {
         self
     }
 
-    /// Small parts at the row's end, such as a state's chip.
+    /// Open as the app holds it: a press on the row turns `open`, as the web's `open` with
+    /// `onOpenChange`; without it the part holds its own.
+    pub fn open(mut self, open: &'a mut bool) -> Self {
+        self.open = Some(open);
+        self
+    }
+
+    /// A line under the heading while it is shut, saying in short what the folded part holds.
+    pub fn summary(mut self, summary: impl Into<String>) -> Self {
+        self.summary = Some(summary.into());
+        self
+    }
+
+    /// Let a long summary wrap onto more lines instead of being cut to one.
+    pub fn wrap_summary(mut self, wrap: bool) -> Self {
+        self.wrap_summary = wrap;
+        self
+    }
+
+    /// Facts at the row's end, outside the button's name, such as a count or a state's chip.
     pub fn aside(mut self, aside: impl FnOnce(&mut egui::Ui) + 'a) -> Self {
         self.aside = Some(Box::new(aside));
         self
     }
 
+    /// The row alone, with nothing to unfold: no chevron and no button, its heading where an
+    /// unfoldable row's stands, so a list of mixed rows lines up.
+    pub fn show_static(self, ui: &mut egui::Ui) {
+        self.draw(ui, None::<fn(&mut egui::Ui)>);
+    }
+
     pub fn show(self, ui: &mut egui::Ui, content: impl FnOnce(&mut egui::Ui)) {
+        self.draw(ui, Some(content));
+    }
+
+    fn draw(mut self, ui: &mut egui::Ui, content: Option<impl FnOnce(&mut egui::Ui)>) {
         let t = tokens(ui.ctx());
-        let mut chosen: bool = ui.data(|d| d.get_temp(self.id)).unwrap_or(self.open_first);
-        let forced = self.forced;
-        let mut open = chosen || forced;
+        let held = self.open.as_deref().copied();
+        let mut chosen: bool = held.unwrap_or_else(|| ui.data(|d| d.get_temp(self.id)).unwrap_or(self.open_first));
+        let unfolds = content.is_some();
+        let forced = self.forced && unfolds;
+        let control = unfolds && !forced;
+        let mut open = unfolds && (chosen || forced);
         let width = ui.available_width();
+        let ink = self.ink.unwrap_or_else(|| ui.visuals().text_color());
         ui.vertical(|ui| {
             ui.spacing_mut().item_spacing.y = 8.0;
-            let line = TextRole::Body.line_height(&t).max(20.0) + 8.0;
-            let (row, _) = ui.allocate_exact_size(vec2(width, line), Sense::hover());
+            // text.sm's line padded 4 above and below, a finger tall on a phone while it unfolds
+            let sm = t.text("sm");
+            let mut line = sm.line_height + 8.0;
+            if control && super::is_phone(ui.ctx()) {
+                line = line.max(t.length("spacing-finger"));
+            }
+            let (column, _) = ui.allocate_exact_size(vec2(width, line), Sense::hover());
+            // the row reaches 4 past the column on each side
+            let row = column.expand2(vec2(4.0, 0.0));
             let mut aside_width = 0.0;
-            if let Some(aside) = self.aside {
+            if let Some(aside) = self.aside.take() {
                 let mut child = ui.new_child(
                     egui::UiBuilder::new()
-                        .max_rect(row)
+                        .max_rect(row.shrink2(vec2(4.0, 0.0)))
                         .layout(egui::Layout::right_to_left(egui::Align::Center)),
                 );
                 child.spacing_mut().item_spacing.x = 8.0;
+                child.style_mut().override_text_style = None;
                 aside(&mut child);
                 aside_width = child.min_rect().width() + 8.0;
             }
             let face = egui::Rect::from_min_max(row.min, pos2(row.right() - aside_width, row.bottom()));
-            let sense = if forced { Sense::hover() } else { Sense::click() };
+            let sense = if control { Sense::click() } else { Sense::hover() };
             let hit = ui.interact(face, self.id.with("row"), sense);
-            hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, !forced, open, &self.heading));
-            if hit.hovered() && !forced {
-                ui.painter().rect_filled(face, t.radius("md"), t.color("hover"));
+            if control {
+                hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, open, &self.heading));
+                if hit.hovered() {
+                    ui.painter().rect_filled(face, t.radius("md"), t.color("hover"));
+                }
+            } else {
+                hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, &self.heading));
             }
-            icons::paint(
-                ui.painter(),
-                pos2(face.left() + 4.0 + 7.0, face.center().y),
-                if open { Icon::ChevronDown } else { Icon::ChevronRight },
-                14.0,
-                t.color(if forced { "faint" } else { "muted-foreground" }),
-            );
-            let mut start = face.left() + 4.0 + 14.0 + 8.0;
+            if unfolds {
+                icons::paint(
+                    ui.painter(),
+                    pos2(face.left() + 4.0 + 7.0, face.center().y),
+                    if open { Icon::ChevronDown } else { Icon::ChevronRight },
+                    14.0,
+                    t.color(if forced { "faint" } else { "muted-foreground" }),
+                );
+            }
+            let mut start = face.left() + 4.0 + UNFOLD_INDENT;
             if let Some(color) = self.dot {
                 ui.painter()
                     .circle_filled(pos2(start + 5.0, face.center().y), 5.0, color);
@@ -616,33 +782,72 @@ impl<'a> Unfoldable<'a> {
                 (TextRole::Help.rich(&t, &self.heading), t.color("muted-foreground"))
             } else {
                 (
-                    TextRole::Body.rich(&t, &self.heading).variation("wght", 500.0),
-                    t.color("foreground"),
+                    egui::RichText::new(&self.heading)
+                        .size(sm.size)
+                        .line_height(Some(sm.line_height))
+                        .variation("wght", 500.0),
+                    ink,
                 )
             };
             let galley = WidgetText::from(heading).into_galley(
                 ui,
                 Some(TextWrapMode::Truncate),
                 (face.right() - start - 4.0).max(1.0),
-                TextRole::Body.font(&t),
+                egui::FontId::proportional(sm.size),
             );
             ui.painter()
                 .galley(pos2(start, face.center().y - galley.size().y / 2.0), galley, ink);
-            super::focus_ring_inset(ui.painter(), &t, face, t.radius("md"), &hit);
-            if hit.clicked() {
+            if control && hit.has_focus() {
+                // the ring inside the row's edge, flush with it
+                ui.painter().rect_stroke(
+                    face,
+                    t.radius("md"),
+                    Stroke::new(t.length("focus-ring-width"), t.color("ring")),
+                    StrokeKind::Inside,
+                );
+            }
+            if control && hit.clicked() {
                 chosen = !chosen;
                 open = chosen;
             }
-            if open {
+            if !open && let Some(summary) = &self.summary {
+                // 6 up into the column's gap, under the heading's start
+                ui.add_space(-6.0);
+                let wrap = if self.wrap_summary {
+                    TextWrapMode::Wrap
+                } else {
+                    TextWrapMode::Truncate
+                };
+                let galley = WidgetText::from(TextRole::Help.rich(&t, summary)).into_galley(
+                    ui,
+                    Some(wrap),
+                    (width - UNFOLD_INDENT).max(1.0),
+                    TextRole::Help.font(&t),
+                );
+                let (rect, _) = ui.allocate_exact_size(vec2(width, galley.size().y), Sense::hover());
+                ui.painter().galley(
+                    pos2(rect.left() + UNFOLD_INDENT, rect.top()),
+                    galley,
+                    t.color("muted-foreground"),
+                );
+            }
+            if open && let Some(content) = content {
                 ui.horizontal(|ui| {
-                    ui.add_space(22.0);
+                    ui.add_space(UNFOLD_INDENT);
                     ui.vertical(|ui| {
-                        ui.set_width(width - 22.0);
+                        ui.set_width(width - UNFOLD_INDENT);
                         content(ui);
                     });
                 });
             }
         });
-        ui.data_mut(|d| d.insert_temp(self.id, chosen));
+        match self.open {
+            Some(held) => {
+                *held = chosen;
+            }
+            None => ui.data_mut(|d| {
+                d.insert_temp(self.id, chosen);
+            }),
+        }
     }
 }

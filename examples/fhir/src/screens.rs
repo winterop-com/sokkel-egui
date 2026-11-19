@@ -188,7 +188,7 @@ fn overview(ui: &mut Ui, app: &App, views: &mut Views, acts: &mut Vec<Act>) {
                 .gap(24.0)
                 .show(ui, stats.len(), |ui, index, width| {
                     let (kind, value) = &stats[index];
-                    if Stat::new(kind, value).tile(ui, width).clicked() {
+                    if Stat::new(kind, value).selectable(true).tile(ui, width).clicked() {
                         acts.push(Act::go(pages::stat_route(kind)));
                     }
                 });

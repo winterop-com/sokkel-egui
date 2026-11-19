@@ -267,6 +267,7 @@ impl RecordsApp {
             .map(|i| IssueEntry {
                 label: i.label.clone(),
                 text: i.text.clone(),
+                warning: false,
             })
             .collect();
         let note = match fill.seed {

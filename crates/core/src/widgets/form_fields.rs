@@ -257,113 +257,303 @@ impl<'a> YesNoField<'a> {
     }
 }
 
-/// One issue in a form's list: the field it belongs to, and what it says.
-#[derive(Clone, Debug)]
+/// One issue in a form's list: the field it belongs to, what it says, and whether it is only a
+/// warning (allowed) rather than an error that stops the submit.
+#[derive(Clone, Debug, Default)]
 pub struct IssueEntry {
     pub label: String,
     pub text: String,
+    pub warning: bool,
 }
 
-/// How many errors a form has, as a small control in the critical tint by its verbs, after
-/// sokkel-ui's `IssueCount`: an alert and the count, opening the list of them above it, each going
-/// to its field. Answers with the index of the issue chosen.
+/// The words an issue count says: its counts in words, for its accessible name.
+#[derive(Clone, Debug)]
+pub struct IssueCountWords {
+    /// How many issues stop the submit: `2 errors`.
+    pub errors: fn(usize) -> String,
+    /// How many warnings: `1 warning`.
+    pub warnings: fn(usize) -> String,
+}
+
+impl Default for IssueCountWords {
+    fn default() -> Self {
+        Self {
+            errors: |count| {
+                let n = crate::numbers::locale_number(count as f64);
+                if count == 1 {
+                    format!("{n} error")
+                } else {
+                    format!("{n} errors")
+                }
+            },
+            warnings: |count| {
+                let n = crate::numbers::locale_number(count as f64);
+                if count == 1 {
+                    format!("{n} warning")
+                } else {
+                    format!("{n} warnings")
+                }
+            },
+        }
+    }
+}
+
+/// A form's issues as one control beside its verb, after sokkel-ui's `IssueCount`: a figure for
+/// each kind, the errors in the critical ink and the warnings in the warning ink behind a rule, on
+/// the tint of the worst. With a list it is a button that opens the issues above it, each going to
+/// its field; with none it is a status. Nothing is drawn at zero. Answers with the index of the
+/// issue chosen.
 pub struct IssueCount<'a> {
     id: egui::Id,
+    critical: usize,
+    warning: usize,
     list: &'a [IssueEntry],
+    default_open: bool,
+    words: IssueCountWords,
 }
 
 impl<'a> IssueCount<'a> {
+    /// The count of `list`'s issues, its errors and its warnings counted from it.
     pub fn new(id: impl egui::AsIdSalt, list: &'a [IssueEntry]) -> Self {
         Self {
             id: egui::Id::unique(id),
+            critical: list.iter().filter(|e| !e.warning).count(),
+            warning: list.iter().filter(|e| e.warning).count(),
             list,
+            default_open: false,
+            words: IssueCountWords::default(),
         }
     }
 
+    /// Counts with nothing to open: the face is a status.
+    pub fn counts(id: impl egui::AsIdSalt, critical: usize, warning: usize) -> Self {
+        Self::new(id, &[]).critical(critical).warning(warning)
+    }
+
+    /// How many issues stop the submit.
+    pub fn critical(mut self, count: usize) -> Self {
+        self.critical = count;
+        self
+    }
+
+    /// How many warnings.
+    pub fn warning(mut self, count: usize) -> Self {
+        self.warning = count;
+        self
+    }
+
+    /// Start with the list open.
+    pub fn default_open(mut self, open: bool) -> Self {
+        self.default_open = open;
+        self
+    }
+
+    pub fn words(mut self, words: IssueCountWords) -> Self {
+        self.words = words;
+        self
+    }
+
     pub fn show(self, ui: &mut Ui) -> Option<usize> {
-        if self.list.is_empty() {
+        let tone = if self.critical > 0 {
+            "critical"
+        } else if self.warning > 0 {
+            "warning"
+        } else {
             return None;
-        }
+        };
         let t = tokens(ui.ctx());
-        let count = self.list.len();
-        let said = count.to_string();
-        let digits = WidgetText::from(TextRole::Help.rich(&t, &said).variation("wght", 500.0)).into_galley(
-            ui,
-            Some(egui::TextWrapMode::Extend),
-            f32::INFINITY,
-            TextRole::Help.font(&t),
-        );
-        let width = 8.0 + 14.0 + 4.0 + digits.size().x + 8.0;
-        let (rect, face) = ui.allocate_exact_size(egui::vec2(width, t.density("control-sm")), egui::Sense::click());
-        let label = format!("{count} {}", if count == 1 { "error" } else { "errors" });
-        face.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &label));
+        let said = [
+            (self.critical > 0).then(|| (self.words.errors)(self.critical)),
+            (self.warning > 0).then(|| (self.words.warnings)(self.warning)),
+        ]
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
+        .join(", ");
+        // each kind's figure: its mark, 4, its count, padded 8 across
+        let figures: Vec<(Icon, egui::Color32, std::sync::Arc<egui::Galley>)> = [
+            (self.critical, Icon::CircleAlert, "critical-ink"),
+            (self.warning, Icon::TriangleAlert, "warning-ink"),
+        ]
+        .into_iter()
+        .filter(|(count, ..)| *count > 0)
+        .map(|(count, icon, ink)| {
+            let digits = WidgetText::from(TextRole::Help.rich(&t, count.to_string()).variation("wght", 500.0))
+                .into_galley(
+                    ui,
+                    Some(egui::TextWrapMode::Extend),
+                    f32::INFINITY,
+                    TextRole::Help.font(&t),
+                );
+            (icon, t.color(ink), digits)
+        })
+        .collect();
+        let width: f32 = figures.iter().map(|(.., d)| 8.0 + 14.0 + 4.0 + d.size().x + 8.0).sum();
+        let opens = !self.list.is_empty();
+        let mut height = t.density("control-sm");
+        if opens && super::is_phone(ui.ctx()) {
+            height = height.max(t.length("spacing-finger"));
+        }
+        let sense = if opens {
+            egui::Sense::click()
+        } else {
+            egui::Sense::hover()
+        };
+        let (rect, face) = ui.allocate_exact_size(egui::vec2(width, height), sense);
+        let role = if opens { egui::Role::Button } else { egui::Role::Status };
+        face.widget_info(|| egui::WidgetInfo::labeled(role, true, &said));
         let open_id = self.id.with("open");
-        let mut open: bool = ui.data(|d| d.get_temp(open_id)).unwrap_or(false);
-        let lit = face.hovered() || open;
+        let mut open: bool = opens && ui.data(|d| d.get_temp(open_id)).unwrap_or(self.default_open);
+        let lit = opens && (face.hovered() || open);
+        let radius = t.radius("control");
+        let (rest, edge) = if tone == "critical" { (0.08, 0.4) } else { (0.08, 0.45) };
         ui.painter().rect(
             rect,
-            t.radius("control"),
-            t.color_at("critical", if lit { 0.12 } else { 0.08 }),
-            egui::Stroke::new(1.0, t.color_at("critical", 0.4)),
+            radius,
+            t.color_at(tone, if lit { 0.12 } else { rest }),
+            egui::Stroke::new(1.0, t.color_at(tone, edge)),
             egui::StrokeKind::Inside,
         );
-        let ink = t.color("critical-ink");
-        icons::paint(
-            ui.painter(),
-            egui::pos2(rect.left() + 8.0 + 7.0, rect.center().y),
-            Icon::CircleAlert,
-            14.0,
-            ink,
-        );
-        ui.painter().galley(
-            egui::pos2(rect.left() + 8.0 + 14.0 + 4.0, rect.center().y - digits.size().y / 2.0),
-            digits,
-            ink,
-        );
+        let mut x = rect.left();
+        for (index, (icon, ink, digits)) in figures.into_iter().enumerate() {
+            if index > 0 {
+                // the warnings' figure behind a rule in its own ink at 25 percent
+                ui.painter().vline(
+                    x + 0.5,
+                    rect.y_range().shrink(1.0),
+                    egui::Stroke::new(1.0, ink.gamma_multiply(0.25)),
+                );
+            }
+            icons::paint(
+                ui.painter(),
+                egui::pos2(x + 8.0 + 7.0, rect.center().y),
+                icon,
+                14.0,
+                ink,
+            );
+            let digits_width = digits.size().x;
+            ui.painter().galley(
+                egui::pos2(x + 8.0 + 14.0 + 4.0, rect.center().y - digits.size().y / 2.0),
+                digits,
+                ink,
+            );
+            x += 8.0 + 14.0 + 4.0 + digits_width + 8.0;
+        }
+        if face.has_focus() {
+            ui.painter().rect_stroke(
+                rect,
+                radius,
+                egui::Stroke::new(t.length("focus-ring-width"), t.color_at("ring", 0.5)),
+                egui::StrokeKind::Outside,
+            );
+        }
+        if !opens {
+            return None;
+        }
+        let entry_id = |index: usize| self.id.with(("entry", index));
+        let just_opened = face.clicked() && !open;
         if face.clicked() {
             open = !open;
+            if open {
+                // the focus on the first issue, once the list is laid out
+                ui.data_mut(|d| d.insert_temp(self.id.with("focus-first"), true));
+            }
         }
         let mut chosen = None;
         if open {
-            let width = 352.0;
-            let rows: f32 = self.list.len() as f32 * 44.0 + 12.0;
+            let screen = ui.ctx().content_rect().width();
+            let width = 352.0_f32.min(screen - 32.0).max(120.0);
+            let focused = (0..self.list.len()).find(|i| ui.memory(|m| m.has_focus(entry_id(*i))));
+            if let Some(at) = focused {
+                let count = self.list.len();
+                let (down, up) = ui.input_mut(|i| {
+                    (
+                        i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowDown),
+                        i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowUp),
+                    )
+                });
+                if down {
+                    ui.memory_mut(|m| m.request_focus(entry_id((at + 1) % count)));
+                } else if up {
+                    ui.memory_mut(|m| m.request_focus(entry_id((at + count - 1) % count)));
+                }
+            }
             let area = egui::Area::new(self.id.with("list"))
                 .order(egui::Order::Foreground)
-                .fixed_pos(egui::pos2(rect.left(), rect.top() - 6.0 - rows))
+                .pivot(egui::Align2::LEFT_BOTTOM)
+                .fixed_pos(egui::pos2(rect.left(), rect.top() - 6.0))
                 .show(ui.ctx(), |ui| {
                     super::popup_frame(&t).inner_margin(6.0).show(ui, |ui| {
-                        ui.set_width(width - 12.0);
+                        let inner = width - 12.0;
+                        ui.set_width(inner);
                         ui.spacing_mut().item_spacing.y = 4.0;
                         for (index, entry) in self.list.iter().enumerate() {
-                            let (row, hit) =
-                                ui.allocate_exact_size(egui::vec2(width - 12.0, 40.0), egui::Sense::click());
-                            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &entry.text));
-                            if hit.hovered() {
+                            // its mark, 16, 8 before the field's label over the issue's words
+                            let words_width = inner - 8.0 - 16.0 - 8.0 - 8.0;
+                            let label = WidgetText::from(TextRole::Help.rich(&t, &entry.label)).into_galley(
+                                ui,
+                                Some(egui::TextWrapMode::Wrap),
+                                words_width,
+                                TextRole::Help.font(&t),
+                            );
+                            let sm = t.text("sm");
+                            let text = WidgetText::from(
+                                egui::RichText::new(&entry.text).size(sm.size).line_height(Some(20.0)),
+                            )
+                            .into_galley(
+                                ui,
+                                Some(egui::TextWrapMode::Wrap),
+                                words_width,
+                                egui::FontId::proportional(sm.size),
+                            );
+                            let height = 6.0 + label.size().y + text.size().y + 6.0;
+                            let (row, _) = ui.allocate_exact_size(egui::vec2(inner, height), egui::Sense::hover());
+                            let hit = ui.interact(row, entry_id(index), egui::Sense::click());
+                            let name = format!("{}: {}", entry.label, entry.text);
+                            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &name));
+                            let first_id = self.id.with("focus-first");
+                            if index == 0 && !ui.is_sizing_pass() && ui.data(|d| d.get_temp(first_id)).unwrap_or(false)
+                            {
+                                hit.request_focus();
+                                ui.data_mut(|d| d.remove::<bool>(first_id));
+                            }
+                            if hit.has_focus() {
+                                ui.memory_mut(|m| {
+                                    m.set_focus_lock_filter(
+                                        entry_id(index),
+                                        egui::EventFilter {
+                                            vertical_arrows: true,
+                                            ..Default::default()
+                                        },
+                                    )
+                                });
+                            }
+                            if hit.hovered() || hit.has_focus() {
                                 ui.painter().rect_filled(row, t.radius("md"), t.color("hover"));
                             }
+                            let (mark, ink) = if entry.warning {
+                                (Icon::TriangleAlert, t.color("warning-ink"))
+                            } else {
+                                (Icon::CircleAlert, t.color("critical-ink"))
+                            };
                             icons::paint(
                                 ui.painter(),
-                                egui::pos2(row.left() + 8.0 + 8.0, row.top() + 6.0 + 10.0),
-                                Icon::CircleAlert,
+                                egui::pos2(row.left() + 8.0 + 8.0, row.top() + 6.0 + 2.0 + 8.0),
+                                mark,
                                 16.0,
                                 ink,
                             );
                             let x = row.left() + 8.0 + 16.0 + 8.0;
-                            ui.painter().text(
-                                egui::pos2(x, row.top() + 4.0),
-                                egui::Align2::LEFT_TOP,
-                                &entry.label,
-                                TextRole::Help.font(&t),
-                                t.color("muted-foreground"),
-                            );
-                            ui.painter().text(
-                                egui::pos2(x, row.top() + 20.0),
-                                egui::Align2::LEFT_TOP,
-                                &entry.text,
-                                TextRole::Body.font(&t),
+                            let label_height = label.size().y;
+                            ui.painter()
+                                .galley(egui::pos2(x, row.top() + 6.0), label, t.color("muted-foreground"));
+                            ui.painter().galley(
+                                egui::pos2(x, row.top() + 6.0 + label_height),
+                                text,
                                 t.color("popover-foreground"),
                             );
-                            if hit.clicked() {
+                            // the key that opened the list chooses nothing in it
+                            if hit.clicked() && !just_opened {
                                 chosen = Some(index);
                             }
                         }
@@ -373,7 +563,11 @@ impl<'a> IssueCount<'a> {
                 && ui
                     .input(|i| i.pointer.interact_pos())
                     .is_some_and(|p| !area.response.rect.contains(p) && !rect.contains(p));
-            if outside || chosen.is_some() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+            if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                // shut, the focus back on the face
+                open = false;
+                face.request_focus();
+            } else if outside || chosen.is_some() {
                 open = false;
             }
         }

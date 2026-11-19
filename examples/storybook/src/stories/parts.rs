@@ -243,6 +243,55 @@ pub fn timeline(_: &mut State, ui: &mut Ui) {
 }
 
 pub fn description_list(state: &mut State, ui: &mut Ui) {
+    ui.allocate_ui(vec2(720.0, 0.0), |ui| {
+        section(ui, "Side by side, two columns, a missing value and a wide fact");
+        DescriptionList::new()
+            .columns(2)
+            .code("Job", "import-orders")
+            .text("State", "failed")
+            .text("Started by", "schedule, every hour")
+            .numeric("Started", "2026-11-04 14:02")
+            .numeric("Duration", "4.2s")
+            .text("Retried from", "")
+            .code("Run", "run_01JCF8Q2T7W4M3")
+            .wide()
+            .show(ui);
+        section(ui, "In a line");
+        DescriptionList::new()
+            .layout(sokkel_egui::DescriptionLayout::Row)
+            .code("Job", "nightly-export")
+            .text("State", "succeeded")
+            .numeric("Duration", "12.8s")
+            .text("Started by", "grace")
+            .text("Project", "harbor")
+            .show(ui);
+        ui.horizontal_top(|ui| {
+            ui.spacing_mut().item_spacing.x = 32.0;
+            ui.allocate_ui(vec2(344.0, 0.0), |ui| {
+                ui.vertical(|ui| {
+                    section(ui, "Terms as wide as the longest");
+                    DescriptionList::new()
+                        .term_width_auto()
+                        .code("Job", "send-digest")
+                        .text("Every", "day at 07:00")
+                        .text("Skip when the last run failed", "on")
+                        .text("Owner", "margaret")
+                        .show(ui);
+                });
+            });
+            ui.allocate_ui(vec2(344.0, 0.0), |ui| {
+                ui.vertical(|ui| {
+                    section(ui, "Small, a long term wrapping");
+                    DescriptionList::new()
+                        .small(true)
+                        .code("Service", "scheduler")
+                        .text("Skip when the last run failed", "on")
+                        .text("Note", "Rebuilt after the schema for orders gained the site field.")
+                        .show(ui);
+                });
+            });
+        });
+    });
     ui.set_max_width(384.0);
     section(ui, "Stacked, values changed in place");
     let tags: Vec<String> = ["storage", "worker", "Frankfurt"]
@@ -251,6 +300,7 @@ pub fn description_list(state: &mut State, ui: &mut Ui) {
         .collect();
     let shown = &mut state.notify;
     DescriptionList::new()
+        .stacked()
         .item("Touches", |ui| {
             ui.add(TagChips::new(&tags));
         })
@@ -296,6 +346,50 @@ pub fn stats(_: &mut State, ui: &mut Ui) {
         Stat::new("Requests", "7,245").unit("/s").note("api p95 180 ms"),
     ])
     .show(ui);
+    let t = tokens(ui.ctx());
+    section(ui, "Plain");
+    ui.horizontal_top(|ui| {
+        ui.spacing_mut().item_spacing.x = 40.0;
+        ui.add(
+            Stat::new("Runs today", "1,284")
+                .large(true)
+                .change("+12%", Some(true))
+                .note("vs last week"),
+        );
+        ui.add(
+            Stat::new("Failed", 3)
+                .dot(t.color("status-failed"))
+                .change("+2", Some(false)),
+        );
+        ui.add(Stat::new("p95", 180).unit("ms").change("-0.4s", None));
+        ui.add(Stat::new("Queue", 42).trend([30.0, 34.0, 33.0, 38.0, 41.0, 40.0, 42.0], t.color("primary")));
+    });
+    section(ui, "Tiles");
+    sokkel_egui::Columns::new(3)
+        .min(160.0)
+        .gap(12.0)
+        .show(ui, 6, |ui, index, width| {
+            let tile = match index {
+                0 => Stat::new("Succeeded", "1,281")
+                    .dot(t.color("status-succeeded"))
+                    .change("+12%", Some(true)),
+                1 => Stat::new("Failed", 3)
+                    .dot(t.color("status-failed"))
+                    .emphasis(true)
+                    .change("+2", Some(false))
+                    .note("rebuild-index at validate")
+                    .selectable(true),
+                2 => Stat::new("Waiting", 12)
+                    .dot(t.color("status-waiting"))
+                    .note("in the harbor queue"),
+                3 => Stat::new("Duration", "4.2").unit("min").change("-0.4s", None),
+                4 => Stat::new("Rows", "48,210").trend([30.0, 34.0, 33.0, 38.0, 41.0, 40.0, 42.0], t.color("good")),
+                _ => Stat::new("Exports", 96)
+                    .href("https://tidevann.example/runs")
+                    .note("Opens the list"),
+            };
+            tile.tile(ui, width);
+        });
 }
 
 /// Sixty readings, two seconds apart, of a calm service.

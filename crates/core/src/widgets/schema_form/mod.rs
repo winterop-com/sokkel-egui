@@ -165,6 +165,7 @@ impl SchemaFormResponse {
             .map(|issue| IssueEntry {
                 label: issue.label.clone(),
                 text: issue.text.clone(),
+                warning: false,
             })
             .collect()
     }

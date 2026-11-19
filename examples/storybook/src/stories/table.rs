@@ -1,5 +1,7 @@
 use eframe::egui::Ui;
-use sokkel_egui::{Cell, ChipTone, Column, DataTable, Icon, ItemCard, MenuItem, TableState, TableVariant, tokens};
+use sokkel_egui::{
+    Cell, ChipTone, Column, DataTable, Icon, ItemCard, MenuItem, TableState, TableVariant, TextRole, tokens,
+};
 
 use super::{State, section};
 
@@ -149,7 +151,11 @@ pub fn data_table_cards(state: &mut State, ui: &mut Ui) {
         .height(330.0)
         .cards(240.0, 236.0, |ui, index, width| {
             let (name, dataset, icon) = CHARTS[index];
-            let card = ItemCard::new(name).title_lines(1).description(dataset).icon(icon);
+            let card = ItemCard::new(name)
+                .selectable(true)
+                .title_lines(1)
+                .description(dataset)
+                .icon(icon);
             if matches!(icon, Icon::ChartColumn) {
                 card.media(|ui| bars(ui, &[0.9, 0.55, 0.3, 0.25, 0.2]))
             } else {
@@ -186,15 +192,55 @@ pub fn item_card(_: &mut State, ui: &mut Ui) {
             .description("Runs by job")
             .icon(Icon::ChartColumn)
             .media(|ui| bars(ui, &[0.9, 0.55, 0.3, 0.25, 0.2]))
+            .selectable(true)
             .show(ui, 256.0, 0.0);
         ItemCard::new("Rows moved by project, every project of the workspace")
             .title_lines(1)
-            .description("A title held to one line")
+            .description("A title held to one line, its whole text on hover")
             .icon(Icon::ChartPie)
             .show(ui, 256.0, 0.0);
         ItemCard::new("Rows moved by project, every project of the workspace")
             .description("A title of two lines, the default")
             .icon(Icon::SquareSigma)
+            .show(ui, 256.0, 0.0);
+    });
+    section(
+        ui,
+        "A code, a status that wraps, facts in columns, chosen, a menu, a code alone",
+    );
+    let menu = [
+        MenuItem::action("Rename").icon(Icon::Pencil),
+        MenuItem::action("Delete").icon(Icon::Trash2).destructive(),
+    ];
+    let mut chosen = None;
+    let t = tokens(ui.ctx());
+    ui.horizontal_top(|ui| {
+        ui.spacing_mut().item_spacing.x = 16.0;
+        ItemCard::new("nightly-export")
+            .code("job_01JCF8Q2")
+            .status(|ui| {
+                ui.add(sokkel_egui::Chip::new("succeeded").tone(ChipTone::Status("succeeded")));
+                ui.label(TextRole::Help.rich(&t, "every night at 02:00").color(t.color("muted-foreground")));
+                ui.label(TextRole::Help.rich(&t, "harbor").color(t.color("muted-foreground")));
+                ui.label(TextRole::Help.rich(&t, "owned by grace").color(t.color("muted-foreground")));
+            })
+            .description(
+                "Exports every order of the day to the harbor bucket, then hands the file to send-digest, which mails it to the team before the morning stand-up begins.",
+            )
+            .fact("Runs", "1,284")
+            .fact("Failed", "3")
+            .fact("Duration", "4.2 min")
+            .selectable(true)
+            .show(ui, 256.0, 0.0);
+        ItemCard::new("sync-inventory")
+            .description("Chosen from a set: the primary edge and the check")
+            .selected(true)
+            .selectable(true)
+            .menu(&menu, &mut chosen)
+            .show(ui, 256.0, 0.0);
+        ItemCard::from_code("rebuild-index")
+            .description("A card with no name: its code is its title")
+            .fact("Documents", "48,210")
             .show(ui, 256.0, 0.0);
     });
 }

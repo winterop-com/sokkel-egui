@@ -390,6 +390,7 @@ fn run_detail(ui: &mut Ui, run: &mut Run) {
         })
         .show(ui, |ui| {
             DescriptionList::new()
+                .stacked()
                 .text("When", when)
                 .item("Project", |ui| {
                     ui.add(TagChips::new(&project));

@@ -25,6 +25,7 @@ mod players;
 mod primitives;
 mod runner;
 pub mod settings;
+mod spec;
 mod table;
 mod themes;
 mod watching;
@@ -192,7 +193,7 @@ pub const STORIES: &[Story] = &[
     },
     Story {
         path: "Primitives/Display/Badge",
-        doc: "A short label in the chip corner, in each variant, with and without an icon.",
+        doc: "A short value as a chip: each variant, an icon before or after the words, the six kind colors, and drawn as a link.",
         show: display::badge,
     },
     Story {
@@ -322,7 +323,7 @@ pub const STORIES: &[Story] = &[
     },
     Story {
         path: "Patterns/Description list",
-        doc: "Terms over their values, each value words or a control changed in place.",
+        doc: "Facts as terms and values: side by side in two columns with a missing value and a wide fact, in a line, terms as wide as the longest, small, and stacked with values changed in place.",
         show: parts::description_list,
     },
     Story {
@@ -347,7 +348,7 @@ pub const STORIES: &[Story] = &[
     },
     Story {
         path: "Patterns/Item card",
-        doc: "The card for one thing: a picture of it over its words, an icon before its title, and a title held to one line and cut short.",
+        doc: "The card for one thing: a picture over its words, an icon before its title, a title cut short; a code, a status that wraps, three lines of description and facts in columns; a chosen card with its menu; and a card whose code is its title.",
         show: table::item_card,
     },
     Story {
@@ -437,7 +438,7 @@ pub const STORIES: &[Story] = &[
     },
     Story {
         path: "Patterns/Stat",
-        doc: "Key figures in a row, each a stat ruled from the next.",
+        doc: "Key figures in a row, each a stat ruled from the next; plain stats (the first large) with a dot, a unit, a change and a trend; and tiles, one emphasized, two of them controls.",
         show: parts::stats,
     },
     Story {
@@ -714,6 +715,56 @@ pub const STORIES: &[Story] = &[
         path: "Charts/Treemap",
         doc: "Rows sized by a figure in nested rectangles, by source, then format, then model, squarified, after the web's treemap.",
         show: runner::treemap,
+    },
+    Story {
+        path: "Patterns/API link",
+        doc: "The request behind a screen: the methods in their inks, the path as a link with a copy that takes the whole address, the whole chip opening the address, and a long path cut to its room.",
+        show: spec::api_link,
+    },
+    Story {
+        path: "Patterns/Unfoldable",
+        doc: "Headings that open what is under them: shut with a summary, open, a long summary wrapping, facts at the row's end, held open while forced, and a static row lined up with the rest, all against the column's edge.",
+        show: spec::unfoldable,
+    },
+    Story {
+        path: "Patterns/Issue count",
+        doc: "A form's issues beside its verb: errors, warnings, both behind a rule, counts with nothing to open as a status, and a list open above the face, each issue naming its field.",
+        show: spec::issue_count,
+    },
+    Story {
+        path: "Patterns/Server menu",
+        doc: "The server an app talks to: up, down and checking, a state of the app's own, a quiet face well and wrong, a face that opens the app's own pane, and the menu open on degraded with the checks behind it.",
+        show: spec::server_menu,
+    },
+    Story {
+        path: "Patterns/Sortable grid",
+        doc: "Cards the reader puts in order, as many across as fit: each card the grip, or moved by a grip of its own. A dragged card's cell stays at 40 percent where it lands, a copy following the pointer; the arrows move a focused card.",
+        show: spec::sortable_grid,
+    },
+    Story {
+        path: "Patterns/Data table editing",
+        doc: "An editable table's active cell in each cellFocus: a line along its foot (the default), a ring inside its edge, the cell washed with a quiet ring, and a quiet foot line with its row washed; the counts edit as numbers.",
+        show: spec::table_editing,
+    },
+    Story {
+        path: "Patterns/Data table bands",
+        doc: "Counts entered by row and column, as a tally is: columns under band heads with a rule where each band starts and ends, rows in groups whose heads sum each count column, the counts edited in place as numbers.",
+        show: spec::table_bands,
+    },
+    Story {
+        path: "Primitives/Inputs/Secret field",
+        doc: "A field for a secret: not set, masked as it is typed with Show; set, sealed with when it was set and Replace; open for a new secret with Cancel; refused; and read only.",
+        show: spec::secret_field,
+    },
+    Story {
+        path: "Patterns/Prompt dialog",
+        doc: "A dialog that asks for one value: a new project's name, refused by the app's check as it is typed, after taking the value failed and said why in the status slot, the value kept.",
+        show: spec::prompt_dialog,
+    },
+    Story {
+        path: "Patterns/Prompt dialog secret",
+        doc: "A prompt for a secret, masked with its reveal: empty, so Submit is shut and says why.",
+        show: spec::prompt_secret,
     },
 ];
 

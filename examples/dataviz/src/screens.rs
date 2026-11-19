@@ -651,6 +651,7 @@ fn builder_preview(
                 .show(ui, suggestions.len(), |ui, index, width| {
                     let one = &suggestions[index];
                     let mut card = ItemCard::new(&one.title)
+                        .selectable(true)
                         .description(&one.reason)
                         .icon(view_icon(one.spec.view));
                     if crate::chart_view::is_charted(one.spec.view) {
@@ -956,6 +957,7 @@ fn charts_page(ui: &mut Ui, app: &VisualizerApp, frame: &Frame, views: &mut View
                 let dataset = datasets.iter().find(|one| one.id == chart.dataset_id);
                 let icon = view_icon(chart.spec.view);
                 ItemCard::new(&chart.name)
+                    .selectable(true)
                     .title_lines(1)
                     .description(charts::card_description(chart, datasets))
                     .icon(icon)

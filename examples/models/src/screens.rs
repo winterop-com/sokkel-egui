@@ -379,6 +379,7 @@ fn library_page(ui: &mut Ui, app: &ModelsApp, views: &mut Views, acts: &mut Vec<
                 }
                 let held = library::memory_chip(loaded.iter().find(|one| one.id == model.id));
                 ItemCard::new(&model.name)
+                    .selectable(true)
                     .code(format!("{} · {}", model.publisher, model.quant))
                     .description(tags.join(" · "))
                     .status(move |ui| chip(ui, &held))

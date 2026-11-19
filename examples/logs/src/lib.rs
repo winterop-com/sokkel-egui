@@ -316,6 +316,7 @@ fn line_detail(ui: &mut Ui, line: &Line) {
             );
             let service = vec![line.service.to_owned()];
             DescriptionList::new()
+                .stacked()
                 .text("Time", line.clock())
                 .item("Level", |ui| {
                     if let Cell::Chip(words, tone) = level_chip(line.level) {

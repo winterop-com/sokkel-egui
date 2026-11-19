@@ -283,7 +283,7 @@ fn channel_page(
     }
     if about {
         ui.label(TextRole::Body.rich(&t, channel.about).color(t.color("foreground")));
-        let mut list = DescriptionList::new();
+        let mut list = DescriptionList::new().stacked();
         for (term, value) in &shown.about {
             list = list.text(*term, value.clone());
         }

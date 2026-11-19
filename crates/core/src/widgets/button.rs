@@ -500,7 +500,18 @@ impl egui::Widget for IconButton {
         } else {
             egui::Sense::hover()
         };
-        let (rect, response) = ui.allocate_exact_size(egui::vec2(side, side), sense);
+        // `icon-xs` keeps its drawn size on a phone and takes a finger-square hit area
+        let finger = self.xs && super::is_phone(ui.ctx());
+        let (rect, mut response) = ui.allocate_exact_size(
+            egui::vec2(side, side),
+            if finger { egui::Sense::hover() } else { sense },
+        );
+        if finger {
+            let side = t.length("spacing-finger");
+            let hit = egui::Rect::from_center_size(rect.center(), egui::vec2(side, side));
+            response = ui.interact(hit, response.id.with("finger"), sense);
+            response.rect = rect;
+        }
         response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, self.enabled, &self.label));
         let hot = response.hovered() && self.enabled;
         let on = self.pressed == Some(true);

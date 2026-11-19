@@ -282,6 +282,7 @@ impl RecordsApp {
                 let site = home.site.clone();
                 let registration = registration.clone();
                 DescriptionList::new()
+                    .stacked()
                     .columns(2)
                     .code("Identifier", &home.identifier)
                     .text("Registered", when(home.registered_at))
@@ -323,6 +324,7 @@ impl RecordsApp {
             .description("The answers the registration holds, as the server stores them.")
             .show(ui, |ui| {
                 DescriptionList::new()
+                    .stacked()
                     .columns(2)
                     .text(label("born", "Born"), home.born.to_string())
                     .text(label("size", "People"), home.size.to_string())
@@ -342,6 +344,7 @@ impl RecordsApp {
             .show(ui, |ui| {
                 let status = home.status;
                 DescriptionList::new()
+                    .stacked()
                     .columns(2)
                     .text("Program", PROGRAM_WATER.1)
                     .item("State", move |ui| {

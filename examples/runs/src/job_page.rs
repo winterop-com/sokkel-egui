@@ -326,7 +326,7 @@ fn schedule_list(ui: &mut Ui, job: &Job, schedule: Option<&Schedule>, next: Opti
     };
     DescriptionList::new()
         .side(96.0)
-        .item("Runs", |ui| {
+        .editable("Runs", |ui| {
             if let Some(label) = InlineEdit::new(("job-runs", &job.id), "Runs", cadence_now)
                 .select(cadences)
                 .show(ui)
@@ -335,7 +335,7 @@ fn schedule_list(ui: &mut Ui, job: &Job, schedule: Option<&Schedule>, next: Opti
                 edits.borrow_mut().push(Edit::Cadence(cadence));
             }
         })
-        .item("At", |ui| {
+        .editable("At", |ui| {
             let edit = InlineEdit::new(("job-at", &job.id), "At", at)
                 .disabled(none)
                 .placeholder("No schedule")
@@ -349,7 +349,7 @@ fn schedule_list(ui: &mut Ui, job: &Job, schedule: Option<&Schedule>, next: Opti
                 edits.borrow_mut().push(Edit::At(at));
             }
         })
-        .item("From", |ui| {
+        .editable("From", |ui| {
             let edit = InlineEdit::new(("job-from", &job.id), "From", starts)
                 .disabled(none)
                 .placeholder("No schedule")
@@ -370,7 +370,7 @@ fn schedule_list(ui: &mut Ui, job: &Job, schedule: Option<&Schedule>, next: Opti
 fn settings_list(ui: &mut Ui, job: &Job, edits: &RefCell<Vec<Edit>>) {
     DescriptionList::new()
         .side(96.0)
-        .item("Owner", |ui| {
+        .editable("Owner", |ui| {
             if let Some(owner) = InlineEdit::new(("job-owner", &job.id), "Owner", job.owner.word())
                 .select(PEOPLE.map(|p| p.word()))
                 .show(ui)
@@ -379,7 +379,7 @@ fn settings_list(ui: &mut Ui, job: &Job, edits: &RefCell<Vec<Edit>>) {
                 edits.borrow_mut().push(Edit::Owner(*person));
             }
         })
-        .item("Project", |ui| {
+        .editable("Project", |ui| {
             if let Some(project) = InlineEdit::new(("job-project", &job.id), "Project", job.project.word())
                 .select(PROJECTS.map(|p| p.word()))
                 .show(ui)
@@ -388,7 +388,7 @@ fn settings_list(ui: &mut Ui, job: &Job, edits: &RefCell<Vec<Edit>>) {
                 edits.borrow_mut().push(Edit::Project(*project));
             }
         })
-        .item("Retries", |ui| {
+        .editable("Retries", |ui| {
             if let Some(retries) = InlineEdit::new(("job-retries", &job.id), "Retries", job.retries.to_string())
                 .validate(at_most_ten)
                 .show(ui)
@@ -398,7 +398,7 @@ fn settings_list(ui: &mut Ui, job: &Job, edits: &RefCell<Vec<Edit>>) {
                     .push(Edit::Retries(retries.trim().parse().unwrap_or(0)));
             }
         })
-        .item("Timeout", |ui| {
+        .editable("Timeout", |ui| {
             let value = job.timeout.map(|m| m.to_string()).unwrap_or_default();
             if let Some(timeout) = InlineEdit::new(("job-timeout", &job.id), "Timeout", value)
                 .placeholder("None")
@@ -409,7 +409,7 @@ fn settings_list(ui: &mut Ui, job: &Job, edits: &RefCell<Vec<Edit>>) {
                 edits.borrow_mut().push(Edit::Timeout(timeout.trim().parse().ok()));
             }
         })
-        .item("Description", |ui| {
+        .editable("Description", |ui| {
             if let Some(description) = InlineEdit::new(("job-description", &job.id), "Description", &job.description)
                 .placeholder("None")
                 .multiline(true)

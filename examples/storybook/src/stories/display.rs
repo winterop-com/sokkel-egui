@@ -46,6 +46,38 @@ pub fn badge(_: &mut State, ui: &mut Ui) {
         );
         ui.add(Badge::new("larkspur").icon(Icon::Folder).variant(BadgeVariant::Outline));
     });
+    section(ui, "Icon after the words");
+    ui.horizontal(|ui| {
+        ui.add(
+            Badge::new("open")
+                .icon_after(Icon::ArrowUpRight)
+                .variant(BadgeVariant::Outline),
+        );
+        ui.add(
+            Badge::new("next run")
+                .icon_after(Icon::ChevronRight)
+                .variant(BadgeVariant::Secondary),
+        );
+    });
+    section(ui, "Kind");
+    ui.horizontal(|ui| {
+        for kind in ["blue", "green", "jade", "pink", "teal", "violet"] {
+            ui.add(Badge::new(kind).kind(kind));
+        }
+    });
+    section(ui, "Kind picked from a name");
+    ui.horizontal(|ui| {
+        for project in ["harbor", "juniper", "larkspur"] {
+            ui.add(Badge::new(project).kind(sokkel_egui::kind_of(project)));
+        }
+    });
+    section(ui, "Drawn as a link");
+    ui.horizontal(|ui| {
+        ui.add(Badge::new("v2.4.0").link(true));
+        ui.add(Badge::new("worker").variant(BadgeVariant::Secondary).link(true));
+        ui.add(Badge::new("scheduler").variant(BadgeVariant::Outline).link(true));
+        ui.add(Badge::new("docs").variant(BadgeVariant::Link).link(true));
+    });
 }
 
 pub fn card(_: &mut State, ui: &mut Ui) {

@@ -469,15 +469,45 @@ impl Timeline {
     }
 }
 
-/// A term over its value, after sokkel-ui's `DescriptionList` with `layout="stacked"`: the term in
-/// the small muted words, the value 2 under it (words, or any control), each pair 8 under the one
-/// before it.
+/// How a description list sets its pairs, as sokkel-ui's `DescriptionList` `layout`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum DescriptionLayout {
+    /// Each term in a column beside its value.
+    #[default]
+    Side,
+    /// Each term over its value.
+    Stacked,
+    /// The pairs one after another in a line that wraps, for a strip of facts under a title.
+    Row,
+}
+
+/// A fact's value: words, a code, nothing (a dash in faint), or what the app draws.
+enum FactValue<'a> {
+    Text(String),
+    Code(String),
+    Missing,
+    /// What the app draws; `true` for a value edited in place, whose box reaches into the gap.
+    Drawn(Tools<'a>, bool),
+}
+
+struct Fact<'a> {
+    term: String,
+    value: FactValue<'a>,
+    wide: bool,
+}
+
+/// Facts about one thing as terms and values, after sokkel-ui's `DescriptionList`: side by side
+/// by default, each term in a column 96 wide (or as wide as the longest term) 12 before its value;
+/// stacked, each term 2 over its value; or in a row that wraps. The terms are small and muted, the
+/// values `text.sm` on 20 lines (`sm`: `text.xs` on 16), a code in the code face, a missing value a
+/// dash in faint.
 pub struct DescriptionList<'a> {
-    items: Vec<(String, Tools<'a>)>,
-    /// Each term beside its value in a column this wide, as the web's `termWidth`.
-    side: Option<f32>,
-    /// Stacked pairs two to a row, 24 apart, as the web's `columns={2}`.
+    items: Vec<Fact<'a>>,
+    layout: DescriptionLayout,
+    /// The term column's width side by side; `None` for as wide as the longest term.
+    term_width: Option<f32>,
     two: bool,
+    small: bool,
     /// The terms in the mono face, as terms that are names in code.
     mono: bool,
 }
@@ -492,41 +522,51 @@ impl<'a> DescriptionList<'a> {
     pub fn new() -> Self {
         Self {
             items: Vec::new(),
-            side: None,
+            layout: DescriptionLayout::Side,
+            term_width: Some(96.0),
             two: false,
+            small: false,
             mono: false,
         }
     }
 
-    /// Each term beside its value rather than over it, its column `width` wide, as the web's
-    /// default layout with a `termWidth`: the term muted in the small words, level with the value.
-    pub fn side(mut self, width: f32) -> Self {
-        self.side = Some(width);
+    /// How the pairs are set: side by side (the default), stacked, or in a row that wraps.
+    pub fn layout(mut self, layout: DescriptionLayout) -> Self {
+        self.layout = layout;
         self
     }
 
-    /// A pair whose value is a code, in the mono face.
-    pub fn code(self, term: impl Into<String>, value: impl Into<String>) -> Self {
-        let value = value.into();
-        self.item(term, move |ui| {
-            let t = tokens(ui.ctx());
-            let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
-            ui.label(egui::RichText::new(value).font(mono).color(t.color("foreground")));
-        })
+    /// Each term over its value, as the web's `layout="stacked"`.
+    pub fn stacked(self) -> Self {
+        self.layout(DescriptionLayout::Stacked)
     }
 
-    /// A pair whose value is plain words.
-    pub fn text(self, term: impl Into<String>, value: impl Into<String>) -> Self {
-        let value = value.into();
-        self.item(term, move |ui| {
-            let t = tokens(ui.ctx());
-            ui.label(TextRole::Body.rich(&t, value).color(t.color("foreground")));
-        })
+    /// Each term beside its value, its column `width` wide, as the web's default layout with a
+    /// `termWidth`.
+    pub fn side(mut self, width: f32) -> Self {
+        self.layout = DescriptionLayout::Side;
+        self.term_width = Some(width);
+        self
     }
 
-    /// A pair whose value is drawn by `value`, such as a select or a switch.
-    pub fn item(mut self, term: impl Into<String>, value: impl FnOnce(&mut Ui) + 'a) -> Self {
-        self.items.push((term.into(), Box::new(value)));
+    /// Side by side, the term column as wide as the longest term (at most two fifths of the list),
+    /// as the web's `termWidth="auto"`.
+    pub fn term_width_auto(mut self) -> Self {
+        self.layout = DescriptionLayout::Side;
+        self.term_width = None;
+        self
+    }
+
+    /// The values at `text.xs` on 16 lines with tighter gaps, for a narrow inspector, as the web's
+    /// `size="sm"`.
+    pub fn small(mut self, small: bool) -> Self {
+        self.small = small;
+        self
+    }
+
+    /// The side and stacked pairs two to a row from `md`, one below it, as the web's `columns={2}`.
+    pub fn columns(mut self, columns: usize) -> Self {
+        self.two = columns >= 2;
         self
     }
 
@@ -537,84 +577,312 @@ impl<'a> DescriptionList<'a> {
         self
     }
 
-    /// The stacked pairs two to a row, 24 apart, as the web's `columns={2}`.
-    pub fn columns(mut self, columns: usize) -> Self {
-        self.two = columns >= 2;
+    /// A pair whose value is a code, in the code face at the list's size; empty, a dash in faint.
+    pub fn code(mut self, term: impl Into<String>, value: impl Into<String>) -> Self {
+        let value = value.into();
+        let value = if value.is_empty() {
+            FactValue::Missing
+        } else {
+            FactValue::Code(value)
+        };
+        self.push(term.into(), value);
         self
+    }
+
+    /// A pair whose value is plain words; empty, a dash in faint.
+    pub fn text(mut self, term: impl Into<String>, value: impl Into<String>) -> Self {
+        let value = value.into();
+        let value = if value.is_empty() {
+            FactValue::Missing
+        } else {
+            FactValue::Text(value)
+        };
+        self.push(term.into(), value);
+        self
+    }
+
+    /// A pair whose value may be missing: a dash in faint when it is.
+    pub fn maybe(self, term: impl Into<String>, value: Option<impl Into<String>>) -> Self {
+        match value {
+            Some(value) => self.text(term, value),
+            None => self.text(term, String::new()),
+        }
+    }
+
+    /// A pair whose value is a number, time or duration, as the web's `numeric`. The web sets its
+    /// figures at one width; egui's text has no OpenType features, so the figures are the face's own.
+    pub fn numeric(self, term: impl Into<String>, value: impl Into<String>) -> Self {
+        self.text(term, value)
+    }
+
+    /// A pair whose value is drawn by `value`, such as a select or a switch.
+    pub fn item(mut self, term: impl Into<String>, value: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.push(term.into(), FactValue::Drawn(Box::new(value), false));
+        self
+    }
+
+    /// A pair whose value is edited in place (an `InlineEdit`): its box reaches 11 into the gap
+    /// before it, so its text starts where a plain value's does.
+    pub fn editable(mut self, term: impl Into<String>, value: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.push(term.into(), FactValue::Drawn(Box::new(value), true));
+        self
+    }
+
+    /// The pair added last takes the list's full width: side by side its value goes under its
+    /// term; in a two-column stacked list it spans both columns.
+    pub fn wide(mut self) -> Self {
+        if let Some(last) = self.items.last_mut() {
+            last.wide = true;
+        }
+        self
+    }
+
+    fn push(&mut self, term: String, value: FactValue<'a>) {
+        self.items.push(Fact {
+            term,
+            value,
+            wide: false,
+        });
     }
 
     pub fn show(self, ui: &mut Ui) {
         let t = tokens(ui.ctx());
-        if self.two && self.side.is_none() {
-            let width = ui.available_width();
-            let column = (width - 24.0) / 2.0;
-            let mut items = self.items.into_iter();
-            ui.vertical(|ui| {
-                ui.spacing_mut().item_spacing.y = 8.0;
-                loop {
-                    let pair: Vec<_> = items.by_ref().take(2).collect();
-                    if pair.is_empty() {
-                        break;
-                    }
-                    ui.horizontal_top(|ui| {
-                        ui.spacing_mut().item_spacing.x = 24.0;
-                        for (term, value) in pair {
-                            ui.allocate_ui_with_layout(
-                                egui::vec2(column, 0.0),
-                                egui::Layout::top_down(egui::Align::Min),
-                                |ui| {
-                                    ui.set_width(column);
-                                    ui.spacing_mut().item_spacing.y = 2.0;
-                                    ui.label(TextRole::Help.rich(&t, term).color(t.color("muted-foreground")));
-                                    value(ui);
-                                },
-                            );
-                        }
-                    });
+        let small = self.small;
+        let ink = ui.visuals().text_color();
+        let (value_size, line) = if small {
+            (t.text("help").size, 16.0)
+        } else {
+            (t.text("sm").size, 20.0)
+        };
+        let ctx = ui.ctx().clone();
+        let mono = self.mono;
+        let term_rich = |term: &str| {
+            let rich = if mono {
+                egui::RichText::new(term).font(crate::mono_font(&ctx, crate::mono_size(&t, t.text("help").size), 400.0))
+            } else {
+                TextRole::Help.rich(&t, term)
+            };
+            rich.line_height(Some(line))
+        };
+        let lay_term = |ui: &Ui, term: &str, width: f32| {
+            WidgetText::from(term_rich(term)).into_galley(
+                ui,
+                Some(TextWrapMode::Wrap),
+                width.max(1.0),
+                TextRole::Help.font(&t),
+            )
+        };
+        // a value's words, its code or its dash, wrapping in `width`
+        let lay_value = |ui: &Ui,
+                         value: &FactValue,
+                         width: f32|
+         -> Option<(std::sync::Arc<egui::Galley>, egui::Color32)> {
+            let (rich, color) = match value {
+                FactValue::Text(text) => (egui::RichText::new(text).size(value_size), ink),
+                FactValue::Code(code) => (
+                    egui::RichText::new(code).font(crate::mono_font(ui.ctx(), crate::mono_size(&t, value_size), 400.0)),
+                    ink,
+                ),
+                FactValue::Missing => (egui::RichText::new("\u{2014}").size(value_size), t.color("faint")),
+                FactValue::Drawn(..) => return None,
+            };
+            let galley = WidgetText::from(rich.line_height(Some(line))).into_galley(
+                ui,
+                Some(TextWrapMode::Wrap),
+                width.max(1.0),
+                egui::FontId::proportional(value_size),
+            );
+            Some((galley, color))
+        };
+        let width = ui.available_width();
+        let row_gap = if small { 4.0 } else { 8.0 };
+        let two = self.two && !super::is_phone(ui.ctx());
+        let term_ink = t.color("muted-foreground");
+        let reaches = self.layout != DescriptionLayout::Row;
+        // draw a value at `at`, `room` wide; returns its height
+        let draw_value = |ui: &mut Ui, value: FactValue<'_>, at: egui::Pos2, room: f32| -> f32 {
+            match value {
+                FactValue::Drawn(draw, edited) => {
+                    // an edited value's box reaches into the gap: its edge and padding, 11
+                    let reach = if edited && reaches { 11.0 } else { 0.0 };
+                    let at = pos2(at.x - reach, at.y);
+                    let room = room + reach;
+                    let mut child = ui.new_child(
+                        egui::UiBuilder::new()
+                            .max_rect(Rect::from_min_size(at, vec2(room.max(1.0), f32::INFINITY)))
+                            .layout(egui::Layout::top_down(egui::Align::Min)),
+                    );
+                    child.spacing_mut().interact_size.y = 0.0;
+                    draw(&mut child);
+                    child.min_rect().height()
                 }
-            });
-            return;
-        }
-        if let Some(width) = self.side {
-            // each row as tall as its value, the term level with the value's middle, 8 between rows
-            ui.vertical(|ui| {
-                ui.spacing_mut().item_spacing = egui::vec2(0.0, 8.0);
-                // a row as tall as its value, not held to a control's height
-                ui.spacing_mut().interact_size.y = 0.0;
-                for (term, value) in self.items {
-                    ui.horizontal(|ui| {
-                        ui.spacing_mut().item_spacing.x = 0.0;
-                        let (cell, _) = ui.allocate_exact_size(egui::vec2(width, 0.0), egui::Sense::hover());
-                        let drawn = ui.scope(|ui| value(ui)).response.rect;
-                        let face = if self.mono {
-                            egui::FontId::monospace(TextRole::Help.font(&t).size)
-                        } else {
-                            TextRole::Help.font(&t)
-                        };
-                        // level with the value's first line: its middle, or a control's middle when
-                        // the value runs onto more lines
-                        let first = drawn.center().y.min(drawn.top() + t.density("control") / 2.0);
-                        ui.painter().text(
-                            egui::pos2(cell.left(), first),
-                            egui::Align2::LEFT_CENTER,
-                            term,
-                            face,
-                            t.color("muted-foreground"),
-                        );
-                    });
+                other => {
+                    let (galley, color) = lay_value(ui, &other, room).expect("a laid value");
+                    let height = galley.size().y;
+                    ui.painter().galley(at, galley, color);
+                    height
                 }
-            });
-            return;
-        }
-        ui.vertical(|ui| {
-            ui.spacing_mut().item_spacing.y = 8.0;
-            for (term, value) in self.items {
-                ui.vertical(|ui| {
-                    ui.spacing_mut().item_spacing.y = 2.0;
-                    ui.label(TextRole::Help.rich(&t, term).color(t.color("muted-foreground")));
-                    value(ui);
-                });
             }
-        });
+        };
+        match self.layout {
+            DescriptionLayout::Row => {
+                // the pairs in a line that wraps: 20 apart (sm 16), 4 between lines (sm 2), a term
+                // and its value 6 apart
+                let (gap, line_gap) = if small { (16.0, 2.0) } else { (20.0, 4.0) };
+                let top = ui.cursor().top();
+                let left = ui.cursor().left();
+                let (mut x, mut y, mut tallest) = (0.0_f32, 0.0_f32, 0.0_f32);
+                for fact in self.items {
+                    let term = WidgetText::from(term_rich(&fact.term)).into_galley(
+                        ui,
+                        Some(TextWrapMode::Extend),
+                        f32::INFINITY,
+                        TextRole::Help.font(&t),
+                    );
+                    let value_width = match &fact.value {
+                        FactValue::Drawn(..) => (width - x - term.size().x - 6.0).max(width / 4.0),
+                        other => lay_value(ui, other, f32::INFINITY).map_or(0.0, |(g, _)| g.size().x),
+                    };
+                    let pair = term.size().x + 6.0 + value_width;
+                    if x > 0.0 && x + pair > width {
+                        x = 0.0;
+                        y += tallest + line_gap;
+                        tallest = 0.0;
+                    }
+                    let at = pos2(left + x, top + y);
+                    let term_width = term.size().x;
+                    let term_height = term.size().y;
+                    ui.painter().galley(at, term, term_ink);
+                    let room = match fact.value {
+                        FactValue::Drawn(..) => (width - x - term_width - 6.0).max(1.0),
+                        _ => value_width + 1.0,
+                    };
+                    let height = draw_value(ui, fact.value, pos2(at.x + term_width + 6.0, at.y), room);
+                    tallest = tallest.max(height).max(term_height);
+                    x += pair + gap;
+                }
+                ui.allocate_space(vec2(width, y + tallest));
+            }
+            DescriptionLayout::Stacked => {
+                let column_gap = if small { 16.0 } else { 24.0 };
+                let columns = if two { 2 } else { 1 };
+                let column = (width - (columns - 1) as f32 * column_gap) / columns as f32;
+                let left = ui.cursor().left();
+                let mut y = ui.cursor().top();
+                let mut items = self.items.into_iter().peekable();
+                let mut first = true;
+                while items.peek().is_some() {
+                    // a wide fact spans the row; else up to `columns` side by side
+                    let mut row = Vec::new();
+                    while row.len() < columns
+                        && let Some(next) = items.peek()
+                    {
+                        if next.wide && !row.is_empty() {
+                            break;
+                        }
+                        let fact = items.next().expect("peeked");
+                        let wide = fact.wide;
+                        row.push(fact);
+                        if wide {
+                            break;
+                        }
+                    }
+                    if !first {
+                        y += row_gap;
+                    }
+                    first = false;
+                    let mut tallest = 0.0_f32;
+                    for (index, fact) in row.into_iter().enumerate() {
+                        let room = if fact.wide { width } else { column };
+                        let x = left + index as f32 * (column + column_gap);
+                        let term = lay_term(ui, &fact.term, room);
+                        let term_height = term.size().y;
+                        ui.painter().galley(pos2(x, y), term, term_ink);
+                        let height = draw_value(ui, fact.value, pos2(x, y + term_height + 2.0), room);
+                        tallest = tallest.max(term_height + 2.0 + height);
+                    }
+                    y += tallest;
+                }
+                let used = (y - ui.cursor().top()).max(0.0);
+                ui.allocate_space(vec2(width, used));
+            }
+            DescriptionLayout::Side => {
+                let pair_gap = if small { 8.0 } else { 12.0 };
+                let column_gap = if small { 16.0 } else { 24.0 };
+                let columns = if two { 2 } else { 1 };
+                let pair_width = (width - (columns - 1) as f32 * column_gap) / columns as f32;
+                // the term column: as given, or as wide as the longest term, at most two fifths
+                let term_width = self.term_width.unwrap_or_else(|| {
+                    self.items
+                        .iter()
+                        .filter(|f| !f.wide)
+                        .map(|f| {
+                            WidgetText::from(term_rich(&f.term))
+                                .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Help.font(&t))
+                                .size()
+                                .x
+                                .ceil()
+                        })
+                        .fold(0.0, f32::max)
+                        .min(width * 0.4)
+                });
+                let value_width = pair_width - term_width - pair_gap;
+                let left = ui.cursor().left();
+                let mut y = ui.cursor().top();
+                let mut items = self.items.into_iter().peekable();
+                let mut first = true;
+                while items.peek().is_some() {
+                    let mut row = Vec::new();
+                    while row.len() < columns
+                        && let Some(next) = items.peek()
+                    {
+                        if next.wide && !row.is_empty() {
+                            break;
+                        }
+                        let fact = items.next().expect("peeked");
+                        let wide = fact.wide;
+                        row.push(fact);
+                        if wide {
+                            break;
+                        }
+                    }
+                    if !first {
+                        y += row_gap;
+                    }
+                    first = false;
+                    let mut tallest = 0.0_f32;
+                    for (index, fact) in row.into_iter().enumerate() {
+                        let x = left + index as f32 * (pair_width + column_gap);
+                        if fact.wide {
+                            // its value under its term, across the full width
+                            let term = lay_term(ui, &fact.term, width);
+                            let term_height = term.size().y;
+                            ui.painter().galley(pos2(x, y), term, term_ink);
+                            let height = draw_value(ui, fact.value, pos2(x, y + term_height + 2.0), width);
+                            tallest = tallest.max(term_height + 2.0 + height);
+                            continue;
+                        }
+                        // the term wraps in its column, its first line level with the value's
+                        let term = lay_term(ui, &fact.term, term_width);
+                        let term_height = term.size().y;
+                        let value_x = x + term_width + pair_gap;
+                        let drawn = matches!(fact.value, FactValue::Drawn(..));
+                        let height = draw_value(ui, fact.value, pos2(value_x, y), value_width);
+                        let term_top = if drawn {
+                            // a control's first line: its middle, or a control's middle when taller
+                            let middle = (height / 2.0).min(t.density("control") / 2.0);
+                            y + (middle - line / 2.0).max(0.0)
+                        } else {
+                            y
+                        };
+                        ui.painter().galley(pos2(x, term_top), term, term_ink);
+                        tallest = tallest.max(height).max(term_top - y + term_height);
+                    }
+                    y += tallest;
+                }
+                let used = (y - ui.cursor().top()).max(0.0);
+                ui.allocate_space(vec2(width, used));
+            }
+        }
     }
 }

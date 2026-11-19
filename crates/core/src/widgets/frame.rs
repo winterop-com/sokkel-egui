@@ -410,18 +410,8 @@ impl Widget for Rail<'_> {
                     );
                     y += 30.0;
                 } else {
-                    // upper case, tracked, at 500, in faint
-                    let spec = t.text("help");
-                    let rich = TextRole::Help
-                        .rich(&t, title.to_uppercase())
-                        .variation("wght", 500.0)
-                        .extra_letter_spacing(spec.size * 0.025);
-                    let label = WidgetText::from(rich).into_galley(
-                        ui,
-                        Some(TextWrapMode::Truncate),
-                        rect.width() - 32.0,
-                        TextRole::Help.font(&t),
-                    );
+                    // the group label, laid where the rail puts it
+                    let label = super::group_label_galley(ui, title, rect.width() - 32.0);
                     painter.galley(pos2(rect.left() + 16.0, y), label, t.color("faint"));
                     y += 30.0;
                 }
@@ -701,17 +691,7 @@ fn draw_rail_body(ui: &mut Ui, t: &crate::Tokens, rect: Rect, id: egui::Id, mut 
     if let Some(title) = &body.title {
         // 16 over the heading's 20 line, 6 under it, as `pt-4 pb-1.5`
         y += 16.0;
-        let spec = t.text("help");
-        let rich = TextRole::Help
-            .rich(t, title.to_uppercase())
-            .variation("wght", 500.0)
-            .extra_letter_spacing(spec.size * 0.025);
-        let label = WidgetText::from(rich).into_galley(
-            ui,
-            Some(TextWrapMode::Truncate),
-            rect.width() - 32.0,
-            TextRole::Help.font(t),
-        );
+        let label = super::group_label_galley(ui, title, rect.width() - 32.0);
         painter.galley(pos2(rect.left() + 16.0, y), label, t.color("faint"));
         y += 20.0 + 6.0;
     }

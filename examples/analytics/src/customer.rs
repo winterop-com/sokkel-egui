@@ -268,7 +268,7 @@ impl AnalyticsApp {
                         .text("Signed up", about.1.clone())
                         .text("First project", about.2.clone())
                         .text("Invited a teammate", about.3.clone())
-                        .item("Looked after by", |ui| {
+                        .editable("Looked after by", |ui| {
                             if let Some(owner) =
                                 InlineEdit::new(("owner", &about.5), "Looked after by", about.4.clone())
                                     .select(PEOPLE.iter().map(|p| p.name()))

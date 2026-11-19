@@ -57,10 +57,12 @@ mod panes;
 mod person;
 mod problem;
 mod progress;
+mod prompt;
 mod run_timeline;
 pub(crate) mod schema_form;
 mod search;
 mod search_results;
+mod secret_field;
 mod section;
 mod server_menu;
 mod settings;
@@ -158,8 +160,9 @@ pub use filters::{
     SavedView, SavedViews, SavedViewsAsked, SavedViewsWords, filter_rows, matches_filter, operator_word, same_filters,
 };
 pub use form_fields::{
-    ComputedField, ComputedFieldWords, IssueCount, IssueEntry, PeriodPicker, PeriodPickerWords, RepeatedGroup,
-    RepeatedGroupWords, RepeatedOutcome, TimeField, TimeFieldWords, YesNoField, YesNoFieldWords, read_time,
+    ComputedField, ComputedFieldWords, IssueCount, IssueCountWords, IssueEntry, PeriodPicker, PeriodPickerWords,
+    RepeatedGroup, RepeatedGroupWords, RepeatedOutcome, TimeField, TimeFieldWords, YesNoField, YesNoFieldWords,
+    read_time,
 };
 pub use frame::{
     AppBar, DesktopWindow, Rail, RailBody, RailDrop, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords,
@@ -169,7 +172,7 @@ pub use info::info_tip;
 pub use inline_code::{InlineCode, InlineCodeTone};
 pub use inline_edit::{InlineEdit, InlineEditLook, InlineEditWords};
 pub use item::{Item, ItemDescription, ItemSize, ItemVariant, item_group};
-pub use item_card::{CardFact, ItemCard, SortableGrid, SortableOutcome};
+pub use item_card::{CardFact, ItemCard, ItemCardWords, SortableGrid, SortableHandle, SortableOutcome, SortableWords};
 pub use json_schema::json_schema_2020_12;
 pub use json_tree::{JsonTree, JsonTreeWords};
 pub use layout::{AsideWidth, Columns, Gap, Split, SplitPane, Stack};
@@ -195,11 +198,13 @@ pub use page::{Page, PageHeader, PageHeaderResponse, PageState, PageStateTone, P
 pub use pane_header::{PaneHeader, PaneHeaderVariant, PaneTitle, section_title_weight};
 pub use panel_menu::{PanelAsked, PanelMenu, PanelWindow, PanelWords, body_drawn, panel_away, quiet_tools, windowed};
 pub use panes::{
-    Inspector, InspectorWords, SidePanel, SubNav, group_label, inspector_section, panel_section, panel_section_actions,
+    Inspector, InspectorWords, SidePanel, SubNav, group_label, group_label_galley, group_label_text, inspector_section,
+    panel_section, panel_section_actions,
 };
 pub use person::{AccountAction, AccountMenu, AccountWords, AvatarSize, PersonAvatar, initials, kind_of};
 pub use problem::{Problem, ProblemTone, ProblemWords};
 pub use progress::{Check, CheckList, CheckStatus, Progress, check_tree, worst_status};
+pub use prompt::{PromptAnswer, PromptCheck, PromptDialog, PromptWords};
 pub use run_timeline::{
     RunTimeline, RunTimelineResponse, RunTimelineWords, TimelineLane, TimelineRun, format_shift, timeline_ticks,
 };
@@ -213,8 +218,9 @@ pub use search_results::{
     KIND_FACET, SearchChosen, SearchFacet, SearchFacetValue, SearchGroup, SearchResult, SearchResults,
     SearchResultsResponse, SearchResultsWords, toggle_chosen,
 };
-pub use section::{DescriptionList, PersonRow, Section, Timeline, TimelineEvent};
-pub use server_menu::{ServerMenu, ServerMenuResponse, ServerMenuWords, ServerState};
+pub use secret_field::{SecretField, SecretFieldWords};
+pub use section::{DescriptionLayout, DescriptionList, PersonRow, Section, Timeline, TimelineEvent};
+pub use server_menu::{ServerCheck, ServerMenu, ServerMenuResponse, ServerMenuWords, ServerOwnState, ServerState};
 pub use settings::{
     SettingRow, SettingsDialog, SettingsOutcome, SettingsSection, SettingsWords, ThemeWords, setting_row,
     setting_row_below, setting_row_found_by, theme_settings, theme_settings_listed, theme_settings_of,
@@ -233,8 +239,8 @@ pub use stat::{KpiRow, Stat, StatTiles, sparkline};
 pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_compact, format_value, threshold_color};
 pub use switch::Switch;
 pub use table::{
-    Cell, CellEdit, CellRun, Column, DataTable, RowActions, RowCard, StackLayout, StackPlace, TableOutput, TableState,
-    TableVariant, TableWords, Validate,
+    Aggregate, Cell, CellEdit, CellFocus, CellRun, Column, DataTable, RowActions, RowCard, StackLayout, StackPlace,
+    TableOutput, TableState, TableVariant, TableWords, Validate, sum_aggregate,
 };
 pub use table_edit::{EditWords, Editor};
 pub use text_field::{Input, TextField};
@@ -333,6 +339,20 @@ pub const PAINTS_READ: &[&str] = &[
     "text-field.base.focus.control",
     "text-field.base.invalid.control",
     "text-field.base.invalid+focus.control",
+    "badge.default.rest.container",
+    "badge.secondary.rest.container",
+    "badge.destructive.rest.container",
+    "badge.outline.rest.container",
+    "badge.ghost.rest.container",
+    "badge.ghost.hover.container",
+    "badge.link.rest.container",
+    "badge.link.hover.container",
+    "badge.kind-blue.rest.container",
+    "badge.kind-green.rest.container",
+    "badge.kind-jade.rest.container",
+    "badge.kind-pink.rest.container",
+    "badge.kind-teal.rest.container",
+    "badge.kind-violet.rest.container",
 ];
 
 /// A popup's surface (a select's list, a menu, a submenu, the account menu): the popover's

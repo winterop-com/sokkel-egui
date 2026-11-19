@@ -206,6 +206,7 @@ fn file(ui: &mut Ui, entry: &Entry) {
     Stack::new(Gap::Section).show(ui, |ui| {
         Section::new(&entry.name).show(ui, |ui| {
             DescriptionList::new()
+                .stacked()
                 .text("Size", format_size(entry.bytes))
                 .text("Modified", &entry.modified)
                 .text("Owner", entry.owner)

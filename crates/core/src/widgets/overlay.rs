@@ -24,12 +24,29 @@ pub fn tooltip_shown(response: Response, text: impl Into<String>) -> Response {
 }
 
 fn show_tooltip(response: Response, text: String, always: bool) -> Response {
+    let t = tokens(&response.ctx);
+    tooltip_with(&response, always, RectAlign::BOTTOM, |ui| {
+        ui.set_max_width(320.0);
+        ui.label(TextRole::Help.rich(&t, &text).color(t.color("background")));
+    });
+    response
+}
+
+/// A tooltip whose content the part draws (on the tooltip's `foreground` ground, its words in
+/// `background`), shown as [`tooltip`] shows one: after the delay under the pointer, on focus, on
+/// a tap, `align`ed to the trigger. True while it shows.
+pub(crate) fn tooltip_with(
+    response: &Response,
+    always: bool,
+    align: RectAlign,
+    add: impl FnOnce(&mut egui::Ui),
+) -> bool {
     let ctx = response.ctx.clone();
     let t = tokens(&ctx);
     let id = response.id.with("tooltip");
     let rest = ctx.data(|d| d.get_temp::<f64>(id));
     let now = ctx.input(|i| i.time);
-    let held = tap_held(&ctx, &response, id, now, &t);
+    let held = tap_held(&ctx, response, id, now, &t);
     let show = if held {
         true
     } else if response.hovered() {
@@ -47,16 +64,14 @@ fn show_tooltip(response: Response, text: String, always: bool) -> Response {
         .fill(super::ground(&t, "tooltip.base.rest.box", "foreground"))
         .corner_radius(t.radius("md"))
         .inner_margin(Margin::symmetric(12, 6));
-    let shown = Popup::from_response(&response)
+    let shown = Popup::from_response(response)
         .kind(PopupKind::Tooltip)
         .open(show)
         .frame(frame)
         .gap(6.0)
-        .align(RectAlign::BOTTOM)
-        .show(|ui| {
-            ui.set_max_width(320.0);
-            ui.label(TextRole::Help.rich(&t, &text).color(t.color("background")));
-        });
+        .align(align)
+        .show(add);
+    let showing = shown.is_some();
     // the arrow, 10 wide, from the tooltip's side that faces the trigger toward it
     if let Some(shown) = shown {
         let tip = shown.response.rect;
@@ -77,7 +92,7 @@ fn show_tooltip(response: Response, text: String, always: bool) -> Response {
             Stroke::NONE,
         ));
     }
-    response
+    showing
 }
 
 /// A tap by touch or pen on the trigger, as 0.28.1's `tap`: a press that ends on the trigger
@@ -537,7 +552,9 @@ pub struct Dialog {
     description: Option<String>,
     width: f32,
     /// A full-screen sheet on a phone; a confirm dialog stays a box sized to its words.
-    sheet: bool,
+    pub(crate) sheet: bool,
+    /// Held between the body and the footer: a problem line saying why the dialog's work failed.
+    status: Option<String>,
 }
 
 impl Dialog {
@@ -548,7 +565,15 @@ impl Dialog {
             description: None,
             width: 512.0,
             sheet: true,
+            status: None,
         }
+    }
+
+    /// Why the dialog's work failed, in its status slot between the body and the footer: a
+    /// problem line in the critical ink, as sokkel-ui's `DialogShell` `status` with a `ProblemLine`.
+    pub fn status(mut self, status: Option<impl Into<String>>) -> Self {
+        self.status = status.map(Into::into);
+        self
     }
 
     pub fn description(mut self, description: impl Into<String>) -> Self {
@@ -570,7 +595,7 @@ impl Dialog {
     }
 
     /// The dialog with no body: its title and description, 16 over the footer.
-    fn draw(self, ctx: &Context, body: Option<impl FnOnce(&mut Ui)>, footer: impl FnOnce(&mut Ui)) -> bool {
+    pub(crate) fn draw(self, ctx: &Context, body: Option<impl FnOnce(&mut Ui)>, footer: impl FnOnce(&mut Ui)) -> bool {
         let t = tokens(ctx);
         // below 768 a sheet over the whole window, with no corners, edge or shadow
         let sheet = self.sheet && super::is_phone(ctx);
@@ -620,6 +645,10 @@ impl Dialog {
                             .max_height(room.max(t.density("control")))
                             .auto_shrink([false, true])
                             .show(ui, body);
+                    }
+                    if let Some(status) = &self.status {
+                        ui.add_space(8.0);
+                        problem_line(ui, &t, status);
                     }
                 });
                 // a sheet's footer stands at the window's foot
@@ -949,4 +978,34 @@ pub fn unsaved_changes(ctx: &Context, id: impl egui::AsIdSalt, words: &UnsavedCh
         .destructive(true)
         .show(ctx)
         .map(|answer| answer == ConfirmAnswer::Confirm)
+}
+
+/// A problem said in one line with no box, as sokkel-ui's `ProblemLine`: a circled alert, 16 and
+/// 2 down, 6 before the words in `text.sm`, all in the critical ink, wrapping. Announced as an alert.
+pub(crate) fn problem_line(ui: &mut Ui, t: &crate::Tokens, text: &str) -> Response {
+    let ink = t.color("critical-ink");
+    let sm = t.text("sm");
+    ui.horizontal_top(|ui| {
+        ui.spacing_mut().item_spacing.x = 6.0;
+        let (mark, _) = ui.allocate_exact_size(vec2(16.0, 20.0), Sense::hover());
+        crate::icons::paint(
+            ui.painter(),
+            pos2(mark.center().x, mark.top() + 2.0 + 8.0),
+            Icon::CircleAlert,
+            16.0,
+            ink,
+        );
+        let words = ui.add(
+            egui::Label::new(
+                egui::RichText::new(text)
+                    .size(sm.size)
+                    .line_height(Some(20.0))
+                    .color(ink),
+            )
+            .wrap(),
+        );
+        words.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Alert, true, text));
+        words
+    })
+    .inner
 }

@@ -42,6 +42,7 @@ impl RecordsApp {
                         .show(ui, listed.len(), |ui, index, width| {
                             let form = listed[index];
                             let card = ItemCard::new(form.title)
+                                .selectable(true)
                                 .code(form.id)
                                 .description(form.description)
                                 .status(|ui| {

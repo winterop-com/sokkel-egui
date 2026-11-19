@@ -62,6 +62,7 @@ impl RecordsApp {
                             .note(state.note())
                             .emphasis(lit)
                             .large(lit)
+                            .selectable(true)
                         })
                         .collect();
                     if let Some(at) = StatTiles::new("overview-states", 4, 120.0, 12.0).show(ui, tiles) {
@@ -124,9 +125,10 @@ impl RecordsApp {
                     let (status, words) = match state {
                         ServerState::Up => ("succeeded", "answering"),
                         ServerState::Down => ("failed", "not answering"),
-                        ServerState::Checking => ("queued", "checking"),
+                        ServerState::Checking | ServerState::Own(_) => ("queued", "checking"),
                     };
                     DescriptionList::new()
+                        .stacked()
                         .columns(2)
                         .text("Name", SERVER.name)
                         .code("Version", SERVER.version)

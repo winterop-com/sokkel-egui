@@ -135,6 +135,7 @@ impl RecordsApp {
             .description("The server the app reads and files through.")
             .show(ui, |ui| {
                 DescriptionList::new()
+                    .stacked()
                     .columns(2)
                     .code("Version", SERVER.version)
                     .code("Base", SERVER.base)

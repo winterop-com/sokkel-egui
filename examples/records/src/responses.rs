@@ -380,7 +380,7 @@ impl RecordsApp {
             Section::new("Received")
                 .description("The record as it arrived, not a view of what the register holds now.")
                 .show(ui, |ui| {
-                    DescriptionList::new()
+                    DescriptionList::new().stacked()
                         .columns(2)
                         .text("Received", when(receipt.received_at))
                         .code("Receipt ID", &receipt.receipt)
@@ -407,7 +407,7 @@ impl RecordsApp {
             Section::new("Filed for")
                 .description("Where and when the record is for, read off the stored record.")
                 .show(ui, |ui| {
-                    let mut list = DescriptionList::new().columns(2).item("Place", move |ui| {
+                    let mut list = DescriptionList::new().stacked().columns(2).item("Place", move |ui| {
                         if ui.add(TextLink::new(place_name(&receipt.place))).clicked() {
                             *go.borrow_mut() = Some(format!("places/{}", receipt.place));
                         }

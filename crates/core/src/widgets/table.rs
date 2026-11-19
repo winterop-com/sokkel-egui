@@ -32,6 +32,25 @@ pub struct Column {
     pub validate: Option<Validate>,
     /// Where its cells go when the rows stack.
     pub stack: StackPlace,
+    /// The band it sits under: neighbors with the same band share one head above theirs, a rule
+    /// where each band starts and ends.
+    pub band: Option<String>,
+    /// What a group's head says in this column for the group's rows, as the web's `aggregate`.
+    pub aggregate: Option<Aggregate>,
+}
+
+/// What a group head says in a column for its rows: given the rows given and the indexes of the
+/// group's rows, and the column's index.
+pub type Aggregate = fn(rows: &[Vec<Cell>], group: &[usize], column: usize) -> String;
+
+/// The sum of a column's figures over a group's rows, its thousands grouped, as a tally's total.
+pub fn sum_aggregate(rows: &[Vec<Cell>], group: &[usize], column: usize) -> String {
+    let total: f64 = group
+        .iter()
+        .filter_map(|i| rows.get(*i).and_then(|row| row.get(column)))
+        .filter_map(|cell| cell.draft().replace(',', "").trim().parse::<f64>().ok())
+        .sum();
+    crate::numbers::locale_number(total)
 }
 
 /// Where a column's cells go in a stacked row, as sokkel-ui's column `stack`.
@@ -76,7 +95,22 @@ impl Column {
             edit: None,
             validate: None,
             stack: StackPlace::Line,
+            band: None,
+            aggregate: None,
         }
+    }
+
+    /// The band the column sits under, such as one option of a cut whose other options are the
+    /// columns beside it.
+    pub fn band(mut self, band: impl Into<String>) -> Self {
+        self.band = Some(band.into());
+        self
+    }
+
+    /// What a group's head says in this column for its rows, such as [`sum_aggregate`].
+    pub fn aggregate(mut self, aggregate: Aggregate) -> Self {
+        self.aggregate = Some(aggregate);
+        self
     }
 
     /// Where the column's cells go when the rows stack: `StackPlace::Lead` before the title.
@@ -434,6 +468,14 @@ impl TableState {
     pub fn edit(&mut self, row: usize, column: usize) {
         self.pending = Some((row, column));
     }
+
+    /// Make the cell at `row` and `column` the active one, the table holding the focus, as a press
+    /// on it would: it is marked as the table's `cell_focus` draws it.
+    pub fn focus_cell(&mut self, row: usize, column: usize) {
+        self.active = Some((row, column));
+        self.focused = true;
+        self.head = None;
+    }
 }
 
 /// A table's look: `Table` with a head as tall as a row, `List` with the compact panel head.
@@ -573,6 +615,74 @@ pub struct DataTable<'a> {
     actions_hover: bool,
     bulk: Option<Bulk<'a>>,
     slot: Option<Slot<'a>>,
+    cell_focus: CellFocus,
+}
+
+/// How an editable table marks its active cell while it has the focus, as sokkel-ui's
+/// `cellFocus`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum CellFocus {
+    /// A line 2 tall in `ring` along the cell's foot, inside it.
+    #[default]
+    Underline,
+    /// A ring 2 wide in `ring` inside the cell's edge.
+    Ring,
+    /// The cell on `hover` with a ring 1 wide in `border-strong` inside its edge.
+    Soft,
+    /// A line 1 tall in `border-strong` along the cell's foot, inside it, and its row on `hover`.
+    Row,
+}
+
+/// The rules where each band starts and ends, across `row`: a 1px `border` line half the gap
+/// before a column whose band differs from the one before it.
+fn band_rules(
+    painter: &egui::Painter,
+    t: &crate::Tokens,
+    columns: &[Column],
+    hidden: &BTreeSet<usize>,
+    places: &[(f32, f32)],
+    row: Rect,
+) {
+    let shown: Vec<usize> = (0..columns.len()).filter(|i| !hidden.contains(i)).collect();
+    for pair in shown.windows(2) {
+        let (before, here) = (&columns[pair[0]].band, &columns[pair[1]].band);
+        if before != here && (before.is_some() || here.is_some()) {
+            let x = (places[pair[1]].0 - GAP / 2.0).round() + 0.5;
+            painter.vline(x, row.y_range(), Stroke::new(1.0, t.color("border")));
+        }
+    }
+}
+
+/// Mark the active cell `cell` as `focus` draws it.
+fn mark_cell(painter: &egui::Painter, t: &crate::Tokens, cell: Rect, focus: CellFocus) {
+    let foot = |height: f32, color| {
+        painter.rect_filled(
+            Rect::from_min_max(pos2(cell.left(), cell.bottom() - height), cell.max),
+            CornerRadius::ZERO,
+            color,
+        );
+    };
+    match focus {
+        CellFocus::Underline => foot(2.0, t.color("ring")),
+        CellFocus::Ring => {
+            painter.rect_stroke(
+                cell,
+                CornerRadius::ZERO,
+                Stroke::new(2.0, t.color("ring")),
+                egui::StrokeKind::Inside,
+            );
+        }
+        CellFocus::Soft => {
+            // its `hover` ground is laid under the cell's content before it is drawn
+            painter.rect_stroke(
+                cell,
+                CornerRadius::ZERO,
+                Stroke::new(1.0, t.color("border-strong")),
+                egui::StrokeKind::Inside,
+            );
+        }
+        CellFocus::Row => foot(1.0, t.color("border-strong")),
+    }
 }
 
 /// How the app draws a `Cell::Slot`: in a child of the cell's room, given the row's index in the
@@ -627,6 +737,7 @@ impl<'a> DataTable<'a> {
             chevron: false,
             words: TableWords::default(),
             reorder: false,
+            cell_focus: CellFocus::default(),
             actions: None,
             empty: None,
             footer: true,
@@ -757,6 +868,12 @@ impl<'a> DataTable<'a> {
 
     pub fn words(mut self, words: TableWords) -> Self {
         self.words = words;
+        self
+    }
+
+    /// How the active cell of an editable table is marked: a line along its foot by default.
+    pub fn cell_focus(mut self, focus: CellFocus) -> Self {
+        self.cell_focus = focus;
         self
     }
 
@@ -922,7 +1039,7 @@ impl<'a> DataTable<'a> {
             .map(|c| c.title.clone())
             .unwrap_or_default();
         let moved = match editor {
-            Editor::Text => {
+            Editor::Text | Editor::Number => {
                 let moved = table_edit::text(ui, place, &mut open, id);
                 ui.ctx().accesskit_node_builder(id, |b| b.set_label(name));
                 moved
@@ -2024,9 +2141,70 @@ impl<'a> DataTable<'a> {
                         .clamp(1, 2);
                     head_height + (lines - 1) as f32 * line
                 };
+                // columns under bands: a line of band heads above theirs
+                let banded = !stacked && self.heads && self.columns.iter().any(|c| c.band.is_some());
+                if banded {
+                    let band_height = match self.variant {
+                        TableVariant::Table => row_height,
+                        TableVariant::List => t.density("panel-head"),
+                    };
+                    let (row, _) = ui.allocate_exact_size(vec2(ui.available_width(), band_height), Sense::hover());
+                    let top = CornerRadius { sw: 0, se: 0, ..radius };
+                    ui.painter()
+                        .rect_filled(row, top, t.color_or("table-head-ground", t.color("card")));
+                    ui.painter().hline(
+                        row.x_range(),
+                        row.bottom() - 0.5,
+                        Stroke::new(1.0, t.color_or("table-head-line", t.color("border"))),
+                    );
+                    let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
+                    let places = self.layout(row.left() + pad + select_width, row.right() - self.end_pad(pad) - end);
+                    let shown: Vec<usize> = (0..self.columns.len())
+                        .filter(|i| !self.state.hidden.contains(i))
+                        .collect();
+                    let mut at = 0;
+                    while at < shown.len() {
+                        let band = &self.columns[shown[at]].band;
+                        let mut until = at + 1;
+                        while until < shown.len() && self.columns[shown[until]].band == *band {
+                            until += 1;
+                        }
+                        if let Some(band) = band {
+                            let left = places[shown[at]].0;
+                            let (x, w) = places[shown[until - 1]];
+                            let galley = WidgetText::from(TextRole::ColumnHead.rich(&t, band)).into_galley(
+                                ui,
+                                Some(TextWrapMode::Truncate),
+                                (x + w - left).max(1.0),
+                                TextRole::ColumnHead.font(&t),
+                            );
+                            let cut = galley.elided;
+                            let place =
+                                Rect::from_min_size(pos2(left, row.center().y - galley.size().y / 2.0), galley.size());
+                            ui.painter().galley(
+                                place.min,
+                                galley,
+                                t.color_or("table-head-ink", t.color("muted-foreground")),
+                            );
+                            let hit = ui.interact(place, self.id.with(("band", at)), Sense::hover());
+                            hit.widget_info(|| {
+                                egui::WidgetInfo::labeled(egui::Role::ColumnHeader, true, band.as_str())
+                            });
+                            if cut {
+                                hit.on_hover_text(band.as_str());
+                            }
+                        }
+                        at = until;
+                    }
+                    band_rules(ui.painter(), &t, self.columns, &self.state.hidden, &places, row);
+                }
                 let (head, _) = ui.allocate_exact_size(vec2(ui.available_width(), head_height), Sense::hover());
                 if !stacked && self.heads {
-                    let top = CornerRadius { sw: 0, se: 0, ..radius };
+                    let top = if banded {
+                        CornerRadius::ZERO
+                    } else {
+                        CornerRadius { sw: 0, se: 0, ..radius }
+                    };
                     ui.painter()
                         .rect_filled(head, top, t.color_or("table-head-ground", t.color("card")));
                     ui.painter().hline(
@@ -2037,6 +2215,7 @@ impl<'a> DataTable<'a> {
                     let upper = t.word("table-head-transform") == Some("uppercase");
                     let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
                     let places = self.layout(head.left() + pad + select_width, head.right() - self.end_pad(pad) - end);
+                    band_rules(ui.painter(), &t, self.columns, &self.state.hidden, &places, head);
                     if self.selectable {
                         let all = !self.rows.is_empty() && self.state.selected.len() == self.rows.len();
                         let some = !self.state.selected.is_empty() && !all;
@@ -2261,8 +2440,51 @@ impl<'a> DataTable<'a> {
                             if last_group.as_ref() != Some(key) {
                                 last_group = Some(key.clone());
                                 let shut = self.state.folded.contains(key);
-                                let held = order.iter().filter(|i| groups[**i] == *key).count();
-                                if group_head(ui, &t, key, held, shut, pad + select_width, &self.words) {
+                                let members: Vec<usize> =
+                                    order.iter().copied().filter(|i| groups[*i] == *key).collect();
+                                let held = members.len();
+                                // each aggregating column's words for the group, in its place
+                                let room = ui.available_rect_before_wrap();
+                                let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
+                                let places = self
+                                    .layout(room.left() + pad + select_width, room.right() - self.end_pad(pad) - end);
+                                let shown: Vec<usize> = (0..self.columns.len())
+                                    .filter(|i| !self.state.hidden.contains(i))
+                                    .collect();
+                                // the label spans the columns up to the first after the first that aggregates
+                                let span_end = shown
+                                    .iter()
+                                    .skip(1)
+                                    .find(|c| self.columns[**c].aggregate.is_some())
+                                    .map(|c| places[*c].0 - GAP);
+                                let aggregates: Vec<(f32, f32, bool, String)> = if stacked {
+                                    Vec::new()
+                                } else {
+                                    shown
+                                        .iter()
+                                        .skip(1)
+                                        .filter_map(|c| {
+                                            let column = &self.columns[*c];
+                                            let said = (column.aggregate?)(self.rows, &members, *c);
+                                            Some((places[*c].0, places[*c].1, column.numeric, said))
+                                        })
+                                        .collect()
+                                };
+                                let head = GroupHead {
+                                    key,
+                                    held,
+                                    shut,
+                                    start: pad + select_width,
+                                    label_end: span_end,
+                                    aggregates: &aggregates,
+                                };
+                                let rect = ui.available_rect_before_wrap();
+                                let pressed = group_head(ui, &t, &head, &self.words);
+                                if !stacked && self.columns.iter().any(|c| c.band.is_some()) {
+                                    let row = Rect::from_min_size(rect.min, vec2(rect.width(), t.density("row")));
+                                    band_rules(ui.painter(), &t, self.columns, &self.state.hidden, &places, row);
+                                }
+                                if pressed {
                                     if shut {
                                         self.state.folded.remove(key);
                                     } else {
@@ -2308,7 +2530,8 @@ impl<'a> DataTable<'a> {
                         let opened = self.state.opened == Some(index);
                         let ground = if selected || opened {
                             t.color("secondary")
-                        } else if row.hovered() || dragging == Some(position) {
+                        } else if row.hovered() || ui.rect_contains_pointer(rect) || dragging == Some(position) {
+                            // the pointer anywhere over the row, its cells' controls too, as `hover:`
                             t.color("hover")
                         } else if position % 2 == 1 {
                             zebra
@@ -2324,10 +2547,11 @@ impl<'a> DataTable<'a> {
                                     Some(Editor::Select(_))
                                 )
                         });
-                        if typed_open
-                            || (self.state.focused
-                                && self.state.open.is_none()
-                                && self.state.active.map(|a| a.0) == Some(index))
+                        if self.cell_focus == CellFocus::Row
+                            && (typed_open
+                                || (self.state.focused
+                                    && self.state.open.is_none()
+                                    && self.state.active.map(|a| a.0) == Some(index)))
                         {
                             ui.painter().rect_filled(rect, CornerRadius::ZERO, t.color("hover"));
                         }
@@ -2385,12 +2609,30 @@ impl<'a> DataTable<'a> {
                         }
                         let places =
                             self.layout(rect.left() + pad + select_width, rect.right() - self.end_pad(pad) - end);
+                        if !stacked {
+                            band_rules(ui.painter(), &t, self.columns, &self.state.hidden, &places, rect);
+                        }
                         for (c, column) in self.columns.iter().enumerate().filter(|_| !stacked) {
                             if self.state.hidden.contains(&c) {
                                 continue;
                             }
                             let (x, w) = places[c];
                             let mut cell = Rect::from_min_size(pos2(x, rect.top()), vec2(w, rect.height()));
+                            // the cell's whole box, as the web's cell with its padding: to the row's
+                            // padding at its ends, half the gap between columns
+                            let first_shown = (0..c).all(|i| self.state.hidden.contains(&i));
+                            let last_shown = (c + 1..self.columns.len()).all(|i| self.state.hidden.contains(&i));
+                            let cell_box = Rect::from_min_max(
+                                pos2(if first_shown { x - pad } else { x - GAP / 2.0 }, rect.top()),
+                                pos2(
+                                    if last_shown {
+                                        x + w + self.end_pad(pad)
+                                    } else {
+                                        x + w + GAP / 2.0
+                                    },
+                                    rect.bottom() - 1.0,
+                                ),
+                            );
                             if c == 0 && self.detail.is_some() {
                                 // the control that opens the row's detail, 20 square and 4 before the cell
                                 let control = Rect::from_min_size(pos2(x, rect.center().y - 10.0), vec2(20.0, 20.0));
@@ -2465,6 +2707,12 @@ impl<'a> DataTable<'a> {
                                     }
                                 } else {
                                     let hit = ui.interact(place, self.id.with(("edit", index, c)), Sense::click());
+                                    if self.cell_focus == CellFocus::Soft
+                                        && self.state.focused
+                                        && self.state.active == Some(here)
+                                    {
+                                        ui.painter().rect_filled(cell_box, CornerRadius::ZERO, t.color("hover"));
+                                    }
                                     match self.state.refused.get(&(keys[index], c)) {
                                         Some((draft, error)) => table_edit::refused(ui, place, draft, error),
                                         None => {
@@ -2487,13 +2735,11 @@ impl<'a> DataTable<'a> {
                                         self.state.focused = true;
                                         self.state.head = None;
                                     }
-                                    if self.state.focused && self.state.active == Some(here) {
-                                        ui.painter().rect_stroke(
-                                            place,
-                                            CornerRadius::ZERO,
-                                            Stroke::new(2.0, t.color("ring")),
-                                            egui::StrokeKind::Inside,
-                                        );
+                                    if self.state.focused
+                                        && self.state.active == Some(here)
+                                        && !self.state.refused.contains_key(&(keys[index], c))
+                                    {
+                                        mark_cell(ui.painter(), &t, cell_box, self.cell_focus);
                                     }
                                 }
                             } else if let (Cell::Slot { .. }, Some(slot)) = (&self.rows[index][c], &self.slot) {
@@ -2788,7 +3034,7 @@ impl<'a> DataTable<'a> {
             // cell empty
             let editor = self.columns.get(column).and_then(|c| c.edit.clone());
             let typed = match editor {
-                Some(Editor::Text) => ui.input_mut(|i| {
+                Some(Editor::Text | Editor::Number) => ui.input_mut(|i| {
                     let text = i.events.iter().find_map(|e| match e {
                         egui::Event::Text(text) if !text.is_empty() => Some(text.clone()),
                         _ => None,
@@ -3303,15 +3549,27 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
 /// A group's head as a line of the table, on the panel's ground: the control that folds it, the
 /// key in the column heads' words and how many rows it holds, small in the code face; whether it
 /// was pressed.
-fn group_head(
-    ui: &mut Ui,
-    t: &crate::Tokens,
-    key: &str,
+/// A group's head as a table line draws it: its key, how many rows it holds, whether it is shut,
+/// where its control starts, where its label must end (before the first column that aggregates),
+/// and each aggregating column's start, width, alignment and words.
+struct GroupHead<'h> {
+    key: &'h str,
     held: usize,
     shut: bool,
     start: f32,
-    words: &TableWords,
-) -> bool {
+    label_end: Option<f32>,
+    aggregates: &'h [(f32, f32, bool, String)],
+}
+
+fn group_head(ui: &mut Ui, t: &crate::Tokens, head: &GroupHead<'_>, words: &TableWords) -> bool {
+    let GroupHead {
+        key,
+        held,
+        shut,
+        start,
+        label_end,
+        aggregates,
+    } = *head;
     let height = t.density("row");
     let (rect, row) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
     let said = if shut { &words.show_group } else { &words.hide_group };
@@ -3335,12 +3593,28 @@ fn group_head(
         t.color("muted-foreground"),
     );
     let x = control.right() + 4.0;
+    let label_room = label_end.unwrap_or(rect.right()) - x - 48.0;
     let label = WidgetText::from(TextRole::ColumnHead.rich(t, key)).into_galley(
         ui,
         Some(TextWrapMode::Truncate),
-        (rect.right() - x - 48.0).max(1.0),
+        label_room.max(1.0),
         TextRole::ColumnHead.font(t),
     );
+    // each aggregating column's words for the group, at its place, cut to one line
+    for (left, width, end, said) in aggregates {
+        let galley = WidgetText::from(TextRole::ColumnHead.rich(t, said)).into_galley(
+            ui,
+            Some(TextWrapMode::Truncate),
+            width.max(1.0),
+            TextRole::ColumnHead.font(t),
+        );
+        let at = if *end { left + width - galley.size().x } else { *left };
+        ui.painter().galley(
+            pos2(at, rect.center().y - galley.size().y / 2.0),
+            galley,
+            t.color_or("table-head-ink", t.color("foreground")),
+        );
+    }
     let width = label.size().x;
     ui.painter().galley(
         pos2(x, rect.center().y - label.size().y / 2.0),
@@ -3560,6 +3834,8 @@ fn settle(
         && Day::parse(open.draft.trim()).is_none()
     {
         Some(words.unreadable_date.clone())
+    } else if matches!(column.edit, Some(Editor::Number)) && table_edit::read_number(&open.draft).is_err() {
+        Some(words.not_number.clone())
     } else {
         column.validate.and_then(|validate| validate(&open.draft))
     };
@@ -3579,6 +3855,8 @@ fn settle(
         column: open.column,
         value: if matches!(column.edit, Some(Editor::Date(_))) {
             open.draft.trim().to_owned()
+        } else if matches!(column.edit, Some(Editor::Number)) {
+            table_edit::read_number(&open.draft).ok().flatten().unwrap_or_default()
         } else {
             open.draft.clone()
         },

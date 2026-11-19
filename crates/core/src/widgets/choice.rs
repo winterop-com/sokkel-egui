@@ -554,10 +554,55 @@ impl<'a> ChoiceList<'a> {
     }
 
     /// Draws the list; true when another choice was made, `value` then holding it.
+    ///
+    /// The list is one Tab stop, at the chosen choice (the first when none is): the arrows move to
+    /// the next or the one before and choose it, wrapping, and Space chooses the focused one.
     pub fn show(self, ui: &mut egui::Ui, value: &mut String) -> bool {
         let t = crate::tokens(ui.ctx());
         let width = ui.available_width();
         let mut changed = false;
+        let ink = ui.visuals().text_color();
+        let list_id = ui.make_persistent_id(("choice-list", self.label));
+        let ids: Vec<egui::Id> = (0..self.choices.len()).map(|i| list_id.with(i)).collect();
+        // the one Tab stop: the chosen choice, or the first
+        let stop = self.choices.iter().position(|c| c.value == value.as_str()).unwrap_or(0);
+        let focused = ids.iter().position(|id| ui.memory(|m| m.has_focus(*id)));
+        // arrows move and choose, wrapping; Space chooses the focused choice
+        if let Some(at) = focused
+            && !self.choices.is_empty()
+        {
+            let count = self.choices.len();
+            let (next, before, space) = ui.input_mut(|i| {
+                (
+                    i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowDown)
+                        || i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowRight),
+                    i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowUp)
+                        || i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowLeft),
+                    i.key_pressed(egui::Key::Space),
+                )
+            });
+            let to = if next {
+                Some((at + 1) % count)
+            } else if before {
+                Some((at + count - 1) % count)
+            } else if space {
+                Some(at)
+            } else {
+                None
+            };
+            if let Some(to) = to {
+                if value != self.choices[to].value {
+                    *value = self.choices[to].value.to_owned();
+                    changed = true;
+                }
+                ui.memory_mut(|m| m.request_focus(ids[to]));
+            }
+        }
+        let stop = self
+            .choices
+            .iter()
+            .position(|c| c.value == value.as_str())
+            .unwrap_or(stop);
         ui.vertical(|ui| {
             ui.spacing_mut().item_spacing.y = 2.0;
             for (index, choice) in self.choices.iter().enumerate() {
@@ -566,14 +611,19 @@ impl<'a> ChoiceList<'a> {
                 let sample = self.swatches.as_ref().map(|all| all.get(index).copied().flatten());
                 let lead = if sample.is_some() { 28.0 + 8.0 } else { 0.0 };
                 let weight = if sample.is_some() { 400.0 } else { 500.0 };
-                let label =
-                    egui::WidgetText::from(crate::TextRole::Body.rich(&t, choice.label).variation("wght", weight))
-                        .into_galley(
-                            ui,
-                            Some(egui::TextWrapMode::Wrap),
-                            (text - lead).max(1.0),
-                            crate::TextRole::Body.font(&t),
-                        );
+                let sm = t.text("sm");
+                let label = egui::WidgetText::from(
+                    egui::RichText::new(choice.label)
+                        .size(sm.size)
+                        .line_height(Some(sm.line_height))
+                        .variation("wght", weight),
+                )
+                .into_galley(
+                    ui,
+                    Some(egui::TextWrapMode::Wrap),
+                    (text - lead).max(1.0),
+                    egui::FontId::proportional(sm.size),
+                );
                 let line = choice.description.map(|d| {
                     egui::WidgetText::from(crate::TextRole::Help.rich(&t, d)).into_galley(
                         ui,
@@ -583,18 +633,38 @@ impl<'a> ChoiceList<'a> {
                     )
                 });
                 let height = 16.0 + label.size().y + line.as_ref().map_or(0.0, |l| l.size().y);
-                let (rect, response) = ui.allocate_exact_size(egui::vec2(width, height), egui::Sense::click());
+                let (rect, _) = ui.allocate_exact_size(egui::vec2(width, height), egui::Sense::hover());
+                // only the Tab stop takes focus from Tab; every row takes the pointer
+                let sense = if index == stop {
+                    egui::Sense::click()
+                } else {
+                    egui::Sense::CLICK
+                };
+                let response = ui.interact(rect, ids[index], sense);
                 response
                     .widget_info(|| egui::WidgetInfo::selected(egui::Role::RadioButton, true, chosen, choice.label));
+                if response.has_focus() {
+                    ui.memory_mut(|m| {
+                        m.set_focus_lock_filter(
+                            ids[index],
+                            egui::EventFilter {
+                                horizontal_arrows: true,
+                                vertical_arrows: true,
+                                ..Default::default()
+                            },
+                        )
+                    });
+                }
                 let painter = ui.painter();
                 if chosen {
                     painter.rect_filled(rect, t.radius("control"), t.color("secondary"));
                 } else if response.hovered() {
                     painter.rect_filled(rect, t.radius("control"), t.color("hover"));
                 }
-                // the radio: level with the words' first line where a line follows them, centered otherwise
+                // the radio: level with the label's first line (2 down) where a description
+                // follows it, centered on the row otherwise
                 let middle = if line.is_some() {
-                    rect.top() + 8.0 + label.size().y / 2.0
+                    rect.top() + 8.0 + 2.0 + 8.0
                 } else {
                     rect.center().y
                 };
@@ -603,6 +673,9 @@ impl<'a> ChoiceList<'a> {
                     painter.circle_filled(dot, 8.0, t.color("primary"));
                     painter.circle_filled(dot, 4.0, t.color("primary-foreground"));
                 } else {
+                    if t.dark {
+                        painter.circle_filled(dot, 8.0, t.color_at("input", 0.3));
+                    }
                     painter.circle_stroke(dot, 7.5, egui::Stroke::new(1.0, t.color("input")));
                 }
                 super::focus_ring(
@@ -622,7 +695,7 @@ impl<'a> ChoiceList<'a> {
                         sample,
                     );
                 }
-                painter.galley(egui::pos2(x + lead, rect.top() + 8.0), label, t.color("foreground"));
+                painter.galley(egui::pos2(x + lead, rect.top() + 8.0), label, ink);
                 if let Some(line) = line {
                     painter.galley(
                         egui::pos2(x, rect.top() + 8.0 + label_height),
@@ -630,14 +703,19 @@ impl<'a> ChoiceList<'a> {
                         t.color("muted-foreground"),
                     );
                 }
-                if response.clicked() && !chosen {
-                    *value = choice.value.to_owned();
-                    changed = true;
+                // a press chooses (the pointer's, or a screen reader's); of the keys only Space
+                // does, never Enter
+                if response.clicked() && !ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    if !chosen {
+                        *value = choice.value.to_owned();
+                        changed = true;
+                    }
+                    ui.memory_mut(|m| m.request_focus(ids[index]));
                 }
             }
         })
         .response
-        .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Unknown, true, self.label));
+        .widget_info(|| egui::WidgetInfo::labeled(egui::Role::RadioGroup, true, self.label));
         changed
     }
 }

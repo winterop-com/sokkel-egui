@@ -7,10 +7,15 @@ use egui::{Color32, Galley, Rect, Response, Sense, Shape, Stroke, TextWrapMode, 
 
 use crate::{Icon, TextRole, icons, tokens};
 
-/// One number with what it counts: its label over it, a unit and a change beside it, a note under
-/// it. The change is inked by whether it is good, which the caller says, since a rise in failures
-/// and a rise in runs mean opposite things.
+/// One number with what it counts, after sokkel-ui's `Stat`: its label over it (after a dot), a
+/// unit and a change beside it, a note and a trend under it. The change is inked by whether it is
+/// good, which the caller says, since a rise in failures and a rise in runs mean opposite things.
+///
+/// Added with `ui.add(...)` it is the plain stat, sitting in whatever holds it; [`Stat::tile`]
+/// draws it as a card of its own. Either is a control only with [`Stat::href`] or
+/// [`Stat::selectable`]: then the whole stat is one press, named by its label and value.
 #[derive(Clone, Debug)]
+#[must_use = "add it with `ui.add(...)` or draw it with `.tile(ui, width)`"]
 pub struct Stat {
     label: String,
     value: String,
@@ -21,9 +26,20 @@ pub struct Stat {
     trend: Option<(Vec<f64>, Color32)>,
     emphasis: bool,
     large: bool,
+    href: Option<String>,
+    selectable: bool,
     min_height: f32,
     /// A state as a chip in place of the number, as the web's `value={<StatusChip />}`.
     chip: Option<(String, crate::ChipTone)>,
+}
+
+/// A stat's pieces laid out for its width.
+struct Laid {
+    label: Arc<Galley>,
+    value: Arc<Galley>,
+    unit: Option<Arc<Galley>>,
+    change: Option<Arc<Galley>>,
+    note: Option<Arc<Galley>>,
 }
 
 impl Stat {
@@ -38,6 +54,8 @@ impl Stat {
             trend: None,
             emphasis: false,
             large: false,
+            href: None,
+            selectable: false,
             min_height: 0.0,
             chip: None,
         }
@@ -50,7 +68,7 @@ impl Stat {
         self
     }
 
-    /// A dot before the label in `color`, such as a state's.
+    /// A dot before the label in `color`, such as a state's: small in a plain stat, large in a tile.
     pub fn dot(mut self, color: Color32) -> Self {
         self.dot = Some(color);
         self
@@ -68,104 +86,24 @@ impl Stat {
         self
     }
 
-    /// Edges a tile in its dot's color: the number that asks for work.
+    /// Edges a tile in its dot's color at 55% alpha: the number that asks for work.
     pub fn emphasis(mut self, emphasis: bool) -> Self {
         self.emphasis = emphasis;
         self
     }
 
-    /// The stat as a card of its own, `width` wide, pressed as one (`Stat` `variant="tile"` with an
-    /// `href`): the label in the label's type after its dot, the number at the statistic's size, 4
-    /// further down, the note in the help's type, and the trend 4 under it.
-    pub fn tile(self, ui: &mut Ui, width: f32) -> Response {
-        let t = tokens(ui.ctx());
-        let inner = width - 32.0;
-        let lay = |rich: egui::RichText, role: TextRole, wrap: TextWrapMode| {
-            WidgetText::from(rich).into_galley(ui, Some(wrap), inner.max(1.0), role.font(&t))
-        };
-        // a large dot, 10 across, 8 before the label
-        let lead = if self.dot.is_some() { 18.0 } else { 0.0 };
-        let label = WidgetText::from(TextRole::Label.rich(&t, &self.label)).into_galley(
-            ui,
-            Some(TextWrapMode::Truncate),
-            (inner - lead).max(1.0),
-            TextRole::Label.font(&t),
-        );
-        let role = if self.large {
-            TextRole::StatisticHero
-        } else {
-            TextRole::Statistic
-        };
-        let value = lay(role.rich(&t, &self.value), role, TextWrapMode::Truncate);
-        let unit = self
-            .unit
-            .as_ref()
-            .map(|unit| lay(TextRole::Body.rich(&t, unit), TextRole::Body, TextWrapMode::Extend));
-        let note = self
-            .note
-            .as_ref()
-            .map(|note| lay(TextRole::Help.rich(&t, note), TextRole::Help, TextWrapMode::Wrap));
-        let height = 16.0
-            + label.size().y
-            + 8.0
-            + value.size().y
-            + note.as_ref().map_or(0.0, |n| 4.0 + n.size().y)
-            + self.trend.as_ref().map_or(0.0, |_| 8.0 + SPARK.y)
-            + 16.0;
-        let (rect, response) = ui.allocate_exact_size(vec2(width, height.max(self.min_height)), Sense::click());
-        response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.label));
-        let painter = ui.painter();
-        let radius = t.radius("surface");
-        let hot = response.hovered();
-        painter.rect_filled(rect, radius, if hot { t.color("hover") } else { t.color("card") });
-        let edge = match (self.emphasis, self.dot) {
-            (true, Some(dot)) => dot.gamma_multiply(0.55),
-            _ if hot => t.color_at("foreground", 0.25),
-            _ => t.color("border-strong"),
-        };
-        painter.rect_stroke(rect, radius, Stroke::new(1.0, edge), egui::StrokeKind::Inside);
-        let mut y = rect.top() + 16.0;
-        let x = rect.left() + 16.0;
-        if let Some(dot) = self.dot {
-            painter.circle_filled(pos2(x + 5.0, y + label.size().y / 2.0), 5.0, dot);
-        }
-        painter.galley(pos2(x + lead, y), label.clone(), t.color("foreground"));
-        y += label.size().y + 8.0;
-        let line = baseline(&value);
-        if let Some((label, tone)) = &self.chip {
-            // the chip on the number's line, sitting where the figures would
-            let chip = crate::Chip::new(label).tone(*tone);
-            let at = egui::Rect::from_min_size(pos2(x, y + value.size().y - 20.0 - 2.0), vec2(inner, 20.0));
-            ui.scope_builder(egui::UiBuilder::new().max_rect(at), |ui| ui.add(chip));
-            y += value.size().y;
-            if let Some(note) = note {
-                y += 4.0;
-                ui.painter().galley(pos2(x, y), note, t.color("muted-foreground"));
-            }
-            super::focus_ring(ui.painter(), &t, rect, radius, &response);
-            return response;
-        }
-        painter.galley(pos2(x, y), value.clone(), t.color("card-foreground"));
-        if let Some(unit) = unit {
-            painter.galley(
-                pos2(x + value.size().x + 8.0, y + line - baseline(&unit)),
-                unit,
-                t.color("muted-foreground"),
-            );
-        }
-        y += value.size().y;
-        if let Some(note) = note {
-            y += 4.0;
-            let height = note.size().y;
-            painter.galley(pos2(x, y), note, t.color("muted-foreground"));
-            y += height;
-        }
-        if let Some((values, ink)) = &self.trend {
-            y += 8.0;
-            sparkline(painter, Rect::from_min_size(pos2(x, y), SPARK), values, *ink);
-        }
-        super::focus_ring(painter, &t, rect, radius, &response);
-        response
+    /// Where the stat leads, such as a list filtered to what it counts: the stat becomes one
+    /// control, and a press opens the address.
+    pub fn href(mut self, href: impl Into<String>) -> Self {
+        self.href = Some(href.into());
+        self
+    }
+
+    /// The stat as one control whose press the app answers (the response's `clicked`), as the
+    /// web's `onSelect`.
+    pub fn selectable(mut self, selectable: bool) -> Self {
+        self.selectable = selectable;
+        self
     }
 
     /// What the number is counted in, after it: `/s`, `ms`.
@@ -175,7 +113,7 @@ impl Stat {
     }
 
     /// The change against an earlier period, written for a reader (`+12%`), and whether it is an
-    /// improvement; `None` leaves it neutral.
+    /// improvement; `None` leaves it neutral. A change written with a minus turns the arrow down.
     pub fn change(mut self, change: impl Into<String>, good: Option<bool>) -> Self {
         self.change = Some((change.into(), good));
         self
@@ -187,93 +125,289 @@ impl Stat {
         self
     }
 
-    /// How tall the stat stands `width` wide: its label's line, 4, the number's, and 4 and its note.
-    fn height(&self, ui: &Ui, width: f32) -> f32 {
-        let (label, value, _, note) = self.galleys(ui, width);
-        label.size().y + 4.0 + value.size().y + note.map_or(0.0, |n| 4.0 + n.size().y)
+    fn interactive(&self) -> bool {
+        self.href.is_some() || self.selectable
     }
 
-    fn galleys(&self, ui: &Ui, width: f32) -> Laid {
-        let t = tokens(ui.ctx());
-        let lay = |rich: egui::RichText, role: TextRole, wrap: TextWrapMode| {
-            WidgetText::from(rich).into_galley(ui, Some(wrap), width.max(1.0), role.font(&t))
+    /// The name a screen reader says: the label and the value.
+    fn name(&self) -> String {
+        let value = match (&self.chip, &self.unit) {
+            (Some((chip, _)), _) => chip.clone(),
+            (None, Some(unit)) => format!("{} {unit}", self.value),
+            (None, None) => self.value.clone(),
         };
-        let label = lay(
-            TextRole::Help.rich(&t, &self.label),
-            TextRole::Help,
-            TextWrapMode::Truncate,
-        );
-        // the number at the page's size, semibold, as `text-page font-semibold`
-        let value = lay(
-            TextRole::PageTitle.rich(&t, &self.value).variation("wght", 600.0),
-            TextRole::PageTitle,
-            TextWrapMode::Truncate,
-        );
-        let unit = self
-            .unit
-            .as_ref()
-            .map(|unit| lay(TextRole::Body.rich(&t, unit), TextRole::Body, TextWrapMode::Extend));
-        let note = self
-            .note
-            .as_ref()
-            .map(|note| lay(TextRole::Help.rich(&t, note), TextRole::Help, TextWrapMode::Wrap));
-        (label, value, unit, note)
+        format!("{} {value}", self.label)
     }
 
-    /// Draw it with its top-left at `at`, `width` wide.
-    fn paint(&self, ui: &Ui, at: egui::Pos2, width: f32) {
+    /// Lay the pieces out `width` wide, as a plain stat or a tile.
+    fn lay(&self, ui: &Ui, width: f32, tile: bool) -> Laid {
+        let t = tokens(ui.ctx());
+        let lay = |rich: egui::RichText, size: f32, wrap: TextWrapMode, width: f32| {
+            WidgetText::from(rich).into_galley(ui, Some(wrap), width.max(1.0), egui::FontId::proportional(size))
+        };
+        let lead = self.dot.map_or(0.0, |_| self.dot_size(tile) + 8.0);
+        let label = if tile {
+            lay(
+                TextRole::Label.rich(&t, &self.label),
+                t.text("label").size,
+                TextWrapMode::Truncate,
+                width - lead,
+            )
+        } else {
+            lay(
+                TextRole::Help.rich(&t, &self.label),
+                t.text("help").size,
+                TextWrapMode::Truncate,
+                width - lead,
+            )
+        };
+        // a tile's number at the statistic's role, the hero's when large; plain, `text-page
+        // font-semibold`: the page's size at 600, with none of the page title's tracking. Never
+        // cut short: as the web's, a number wider than its room runs into the padding.
+        let value = if self.large || tile {
+            let role = if self.large {
+                TextRole::StatisticHero
+            } else {
+                TextRole::Statistic
+            };
+            lay(
+                role.rich(&t, &self.value),
+                role.font(&t).size,
+                TextWrapMode::Extend,
+                width,
+            )
+        } else {
+            let page = t.text("page");
+            lay(
+                egui::RichText::new(&self.value)
+                    .size(page.size)
+                    .line_height(Some(page.line_height))
+                    .variation("wght", 600.0),
+                page.size,
+                TextWrapMode::Extend,
+                width,
+            )
+        };
+        let sm = t.text("sm");
+        let unit = self.unit.as_ref().map(|unit| {
+            lay(
+                egui::RichText::new(unit)
+                    .size(sm.size)
+                    .line_height(Some(sm.line_height))
+                    .variation("wght", sm.weight),
+                sm.size,
+                TextWrapMode::Extend,
+                f32::INFINITY,
+            )
+        });
+        let change = self.change.as_ref().map(|(change, _)| {
+            lay(
+                TextRole::Help.rich(&t, change).variation("wght", 500.0),
+                t.text("help").size,
+                TextWrapMode::Extend,
+                f32::INFINITY,
+            )
+        });
+        let note = self.note.as_ref().map(|note| {
+            lay(
+                TextRole::Help.rich(&t, note),
+                t.text("help").size,
+                TextWrapMode::Wrap,
+                width,
+            )
+        });
+        Laid {
+            label,
+            value,
+            unit,
+            change,
+            note,
+        }
+    }
+
+    /// The dot's size: 6 beside a plain stat's small label, 10 in a tile.
+    fn dot_size(&self, tile: bool) -> f32 {
+        if tile { 10.0 } else { 6.0 }
+    }
+
+    /// How wide the number's line runs: the value, and the unit and the change 8 after it.
+    fn line_width(laid: &Laid) -> f32 {
+        let mut x = laid.value.size().x;
+        if let Some(unit) = &laid.unit {
+            x += 8.0 + unit.size().x;
+        }
+        if let Some(change) = &laid.change {
+            x += 8.0 + 14.0 + 2.0 + change.size().x;
+        }
+        x
+    }
+
+    /// How tall the stat stands, laid out: the label's line, 4 (8 in a tile), the number's, 4 and
+    /// the note, and 8 and the trend.
+    fn stack_height(&self, laid: &Laid, tile: bool) -> f32 {
+        laid.label.size().y
+            + if tile { 8.0 } else { 4.0 }
+            + laid.value.size().y
+            + laid.note.as_ref().map_or(0.0, |n| 4.0 + n.size().y)
+            + self.trend.as_ref().map_or(0.0, |_| 8.0 + SPARK.y)
+    }
+
+    /// The stat as a card of its own, `width` wide (`Stat` `variant="tile"`): the label in the
+    /// label's type after its dot, the number at the statistic's size, 4 further down, the change
+    /// after it, the note in the help's type, and the trend under it. A control only with
+    /// [`Stat::href`] or [`Stat::selectable`].
+    pub fn tile(self, ui: &mut Ui, width: f32) -> Response {
+        let t = tokens(ui.ctx());
+        let inner = width - 32.0;
+        let laid = self.lay(ui, inner, true);
+        let height = 16.0 + self.stack_height(&laid, true) + 16.0;
+        let interactive = self.interactive();
+        let sense = if interactive { Sense::click() } else { Sense::hover() };
+        let (rect, response) = ui.allocate_exact_size(vec2(width, height.max(self.min_height)), sense);
+        self.answer(ui, &response);
+        let radius = t.radius("surface");
+        let hot = interactive && response.hovered();
+        let painter = ui.painter();
+        painter.rect_filled(rect, radius, if hot { t.color("hover") } else { t.color("card") });
+        let edge = match (self.emphasis, self.dot) {
+            (true, Some(dot)) => dot.gamma_multiply(0.55),
+            _ if hot => t.color_at("foreground", 0.25),
+            _ => t.color("border-strong"),
+        };
+        painter.rect_stroke(rect, radius, Stroke::new(1.0, edge), egui::StrokeKind::Inside);
+        self.paint(ui, &laid, pos2(rect.left() + 16.0, rect.top() + 16.0), true);
+        if interactive {
+            super::focus_ring(ui.painter(), &t, rect, radius, &response);
+        }
+        response
+    }
+
+    /// Say what the stat is, and follow its address on a press.
+    fn answer(&self, ui: &Ui, response: &Response) {
+        let interactive = self.interactive();
+        let name = self.name();
+        let role = match (&self.href, interactive) {
+            (Some(_), _) => egui::Role::Link,
+            (None, true) => egui::Role::Button,
+            (None, false) => egui::Role::Label,
+        };
+        response.widget_info(|| egui::WidgetInfo::labeled(role, true, &name));
+        if interactive && response.hovered() {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+        }
+        if response.clicked()
+            && let Some(href) = &self.href
+        {
+            ui.ctx().open_url(egui::OpenUrl::new_tab(href));
+        }
+    }
+
+    /// Draw the laid-out stat with its top-left at `at`.
+    fn paint(&self, ui: &Ui, laid: &Laid, at: egui::Pos2, tile: bool) {
         let t = tokens(ui.ctx());
         let painter = ui.painter();
-        let (label, value, unit, note) = self.galleys(ui, width);
         let mut y = at.y;
-        painter.galley(pos2(at.x, y), label.clone(), t.color("muted-foreground"));
-        y += label.size().y + 4.0;
-        let line = baseline(&value);
-        let mut x = at.x + value.size().x;
-        painter.galley(pos2(at.x, y), value.clone(), t.color("foreground"));
-        // the unit and the change 8 after the number, on its baseline
-        if let Some(unit) = unit {
-            x += 8.0;
-            painter.galley(
-                pos2(x, y + line - baseline(&unit)),
-                unit.clone(),
-                t.color("muted-foreground"),
-            );
-            x += unit.size().x;
+        let mut x = at.x;
+        if let Some(dot) = self.dot {
+            let size = self.dot_size(tile);
+            painter.circle_filled(pos2(x + size / 2.0, y + laid.label.size().y / 2.0), size / 2.0, dot);
+            x += size + 8.0;
         }
-        if let Some((change, good)) = &self.change {
-            x += 8.0;
-            let ink = match good {
-                None => t.color("muted-foreground"),
-                Some(true) => t.color("good"),
-                Some(false) => t.color("critical"),
+        let (label_ink, note_ink) = if tile {
+            (t.color("foreground"), t.color("muted-foreground"))
+        } else {
+            (t.color("muted-foreground"), t.color("faint"))
+        };
+        painter.galley(pos2(x, y), laid.label.clone(), label_ink);
+        y += laid.label.size().y + if tile { 8.0 } else { 4.0 };
+        if let Some((label, tone)) = &self.chip {
+            // the chip on the number's line, sitting where the figures would
+            let center = y + laid.value.size().y - 2.0 - 10.0;
+            super::chip::paint_at(ui, at.x, center, label, *tone);
+        } else {
+            let value_ink = if tile {
+                t.color("card-foreground")
+            } else {
+                t.color("foreground")
             };
-            let rising = !change.starts_with('-');
-            let rich = TextRole::Help.rich(&t, change).variation("wght", 500.0);
-            let words = WidgetText::from(rich).into_galley(
-                ui,
-                Some(TextWrapMode::Extend),
-                f32::INFINITY,
-                TextRole::Help.font(&t),
-            );
-            let top = y + line - baseline(&words);
-            icons::paint(
-                painter,
-                pos2(x + 7.0, top + words.size().y / 2.0),
-                if rising {
-                    Icon::ArrowUpRight
-                } else {
-                    Icon::ArrowDownRight
-                },
-                14.0,
-                ink,
-            );
-            painter.galley(pos2(x + 16.0, top), words, ink);
+            let line = baseline(&laid.value);
+            painter.galley(pos2(at.x, y), laid.value.clone(), value_ink);
+            // the unit and the change 8 after the number, on its baseline
+            let mut x = at.x + laid.value.size().x;
+            if let Some(unit) = &laid.unit {
+                x += 8.0;
+                painter.galley(
+                    pos2(x, y + line - baseline(unit)),
+                    unit.clone(),
+                    t.color("muted-foreground"),
+                );
+                x += unit.size().x;
+            }
+            if let (Some((change, good)), Some(words)) = (&self.change, &laid.change) {
+                x += 8.0;
+                let ink = match good {
+                    None => t.color("muted-foreground"),
+                    Some(true) => t.color("good"),
+                    Some(false) => t.color("critical"),
+                };
+                let top = y + line - baseline(words);
+                // the arrow, 14, then the change 2 after it
+                icons::paint(
+                    painter,
+                    pos2(x + 7.0, top + words.size().y / 2.0),
+                    if change.starts_with('-') {
+                        Icon::ArrowDownRight
+                    } else {
+                        Icon::ArrowUpRight
+                    },
+                    14.0,
+                    ink,
+                );
+                painter.galley(pos2(x + 16.0, top), words.clone(), ink);
+            }
         }
-        y += value.size().y;
-        if let Some(note) = note {
-            painter.galley(pos2(at.x, y + 4.0), note, t.color("faint"));
+        y += laid.value.size().y;
+        if let Some(note) = &laid.note {
+            y += 4.0;
+            painter.galley(pos2(at.x, y), note.clone(), note_ink);
+            y += note.size().y;
         }
+        if let Some((values, ink)) = &self.trend {
+            // the column's 4 and the trend's own 4 above it
+            y += 8.0;
+            sparkline(painter, Rect::from_min_size(pos2(at.x, y), SPARK), values, *ink);
+        }
+    }
+}
+
+impl egui::Widget for Stat {
+    /// The plain stat: as wide as its longest line (within the room it is given), on the ground it
+    /// stands on.
+    fn ui(self, ui: &mut Ui) -> Response {
+        let room = ui.available_width();
+        let laid = self.lay(ui, room, false);
+        let lead = self.dot.map_or(0.0, |_| self.dot_size(false) + 8.0);
+        let width = (lead + laid.label.size().x)
+            .max(Self::line_width(&laid))
+            .max(laid.note.as_ref().map_or(0.0, |n| n.size().x))
+            .max(self.trend.as_ref().map_or(0.0, |_| SPARK.x))
+            .min(room);
+        let height = self.stack_height(&laid, false);
+        let sense = if self.interactive() {
+            Sense::click()
+        } else {
+            Sense::hover()
+        };
+        let (rect, response) = ui.allocate_exact_size(vec2(width, height), sense);
+        self.answer(ui, &response);
+        if ui.is_rect_visible(rect) {
+            self.paint(ui, &laid, rect.min, false);
+            if self.interactive() {
+                let t = tokens(ui.ctx());
+                super::focus_ring(ui.painter(), &t, rect, t.radius("control"), &response);
+            }
+        }
+        response
     }
 }
 
@@ -318,9 +452,6 @@ fn baseline(galley: &Galley) -> f32 {
         .unwrap_or(galley.size().y)
 }
 
-/// A stat laid out: its label, its value, its unit and its note.
-type Laid = (Arc<Galley>, Arc<Galley>, Option<Arc<Galley>>, Option<Arc<Galley>>);
-
 /// A row of stats in one box, after sokkel-ui's `KpiRow`: as many equal columns as stats (two on a
 /// phone), each 16 in, ruled apart, the box as tall as its tallest.
 pub struct KpiRow {
@@ -346,18 +477,27 @@ impl KpiRow {
         let rows: Vec<&[Stat]> = self.items.chunks(columns).collect();
         let heights: Vec<f32> = rows
             .iter()
-            .map(|row| row.iter().map(|s| s.height(ui, cell - 32.0)).fold(0.0, f32::max) + 32.0)
+            .map(|row| {
+                row.iter()
+                    .map(|s| s.stack_height(&s.lay(ui, cell - 32.0, false), false))
+                    .fold(0.0, f32::max)
+                    + 32.0
+            })
             .collect();
         let (rect, response) = ui.allocate_exact_size(vec2(width, heights.iter().sum()), Sense::hover());
         let radius = t.radius("surface");
         ui.painter().rect_filled(rect, radius, t.color("card"));
         let rule = Stroke::new(1.0, t.color("border"));
+        // a number wider than its cell runs on, cut only at the box's edge (`overflow-hidden`)
+        let mut inside = ui.new_child(egui::UiBuilder::new().max_rect(rect));
+        inside.set_clip_rect(rect.intersect(ui.clip_rect()));
         let mut top = rect.top();
         for (r, row) in rows.iter().enumerate() {
             let height = heights[r];
             for (c, stat) in row.iter().enumerate() {
                 let left = rect.left() + c as f32 * cell;
-                stat.paint(ui, pos2(left + 16.0, top + 16.0), cell - 32.0);
+                let laid = stat.lay(ui, cell - 32.0, false);
+                stat.paint(&inside, &laid, pos2(left + 16.0, top + 16.0), false);
                 if c + 1 < row.len() {
                     ui.painter().vline(left + cell - 0.5, top..=top + height, rule);
                 }

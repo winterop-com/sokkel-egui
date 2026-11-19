@@ -35,16 +35,28 @@ fn slug(path: &str) -> String {
     path.to_lowercase().replace(['/', ' '], "_")
 }
 
+/// `STORY=<part of a path>` draws only the stories whose path holds it, to record one story alone.
+fn chosen(path: &str) -> bool {
+    std::env::var("STORY").map_or(true, |only| path.contains(only.as_str()))
+}
+
 #[test]
 fn every_story() {
     let mut results = SnapshotResults::new();
-    for story in STORIES {
+    let only = std::env::var("STORY").is_ok();
+    for story in STORIES.iter().filter(|story| chosen(story.path)) {
         let mut harness = render("tidevann", Scheme::Light, story.path);
         results.add(harness.try_snapshot(slug(story.path)));
     }
-    for story in STORIES.iter().filter(|story| story.path.starts_with("Foundations/")) {
+    for story in STORIES
+        .iter()
+        .filter(|story| story.path.starts_with("Foundations/") && chosen(story.path))
+    {
         let mut harness = render("tidevann", Scheme::Dark, story.path);
         results.add(harness.try_snapshot(format!("{}_dark", slug(story.path))));
+    }
+    if only {
+        return;
     }
     let mut harness = render("steel", Scheme::Light, "Themes/Sample");
     results.add(harness.try_snapshot("themes_sample_steel"));

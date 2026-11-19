@@ -14,6 +14,9 @@ use crate::{Day, Icon, TextRole, Tokens, icons, tokens};
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Editor {
     Text,
+    /// A number, typed: empty for none; a value that does not read as one is refused with the
+    /// words' `not_number`. Saved as its digits (`1234.5`), commas dropped.
+    Number,
     /// A `YYYY-MM-DD` day, typed or picked from a calendar whose weeks start on the day given.
     Date(WeekStart),
     /// One of the options, from a list opened over the cell.
@@ -24,6 +27,8 @@ pub enum Editor {
 #[derive(Clone, Debug)]
 pub struct EditWords {
     pub unreadable_date: String,
+    /// A number cell's refusal of what does not read as a number.
+    pub not_number: String,
     pub pick_date: String,
     pub clear: String,
 }
@@ -32,6 +37,7 @@ impl Default for EditWords {
     fn default() -> Self {
         Self {
             unreadable_date: "Enter a date".into(),
+            not_number: "Enter a number".into(),
             pick_date: "Choose a date".into(),
             clear: "Clear".into(),
         }
@@ -491,4 +497,30 @@ pub(crate) fn refused(ui: &mut Ui, cell: Rect, draft: &str, error: &str) {
         t.color("foreground"),
     );
     alert(ui, &t, cell, Some(error));
+}
+
+/// A number cell's draft read as a number: `None` for empty, the number's digits for one (commas
+/// dropped), an error for what does not read as one.
+pub(crate) fn read_number(draft: &str) -> Result<Option<String>, ()> {
+    let plain: String = draft.trim().chars().filter(|c| *c != ',').collect();
+    if plain.is_empty() {
+        return Ok(None);
+    }
+    plain
+        .parse::<f64>()
+        .map_err(|_| ())
+        .and_then(|n| if n.is_finite() { Ok(Some(plain)) } else { Err(()) })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::read_number;
+
+    #[test]
+    fn a_number_cell_reads_its_draft() {
+        assert_eq!(read_number("7"), Ok(Some("7".into())));
+        assert_eq!(read_number(" 1,234.5 "), Ok(Some("1234.5".into())));
+        assert_eq!(read_number(""), Ok(None));
+        assert_eq!(read_number("seven"), Err(()));
+    }
 }

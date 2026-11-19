@@ -365,11 +365,27 @@ pub fn panel_section_actions(ui: &mut Ui, title: &str, actions: impl FnOnce(&mut
 /// capitals, tracked a little, in the faint ink.
 pub fn group_label(ui: &mut Ui, title: &str) {
     let t = tokens(ui.ctx());
+    ui.add(egui::Label::new(group_label_text(&t, title)).truncate());
+}
+
+/// A group label's words as rich text (text.xs at 500, in capitals, tracked 0.025em, in faint),
+/// for a part that lays the label out itself, as the rail does.
+pub fn group_label_text(t: &crate::Tokens, title: &str) -> egui::RichText {
     let spec = t.text("help");
-    let rich = TextRole::Help
-        .rich(&t, title.to_uppercase())
+    TextRole::Help
+        .rich(t, title.to_uppercase())
         .variation("wght", 500.0)
         .extra_letter_spacing(spec.size * 0.025)
-        .color(t.color("faint"));
-    ui.add(egui::Label::new(rich).truncate());
+        .color(t.color("faint"))
+}
+
+/// A group label laid out in `width`, cut to one line, for a part that paints it where it goes.
+pub fn group_label_galley(ui: &Ui, title: &str, width: f32) -> std::sync::Arc<egui::Galley> {
+    let t = tokens(ui.ctx());
+    egui::WidgetText::from(group_label_text(&t, title)).into_galley(
+        ui,
+        Some(egui::TextWrapMode::Truncate),
+        width,
+        TextRole::Help.font(&t),
+    )
 }
