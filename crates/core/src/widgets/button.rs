@@ -69,6 +69,9 @@ pub struct Button {
     pub(crate) unseen_label: bool,
     /// The icon filled in its ink, as the web's `fill-current` on a play or pause glyph.
     filled_icon: bool,
+    /// The spinner in the icon's place while the button still takes a press, as a read-aloud
+    /// loading its audio that a press stops.
+    pub(crate) spinning: bool,
 }
 
 impl Button {
@@ -91,6 +94,7 @@ impl Button {
             ring: None,
             still: false,
             unseen_label: false,
+            spinning: false,
         }
     }
 
@@ -184,7 +188,7 @@ impl Widget for Button {
         } else {
             6.0
         };
-        let lead = if self.busy || self.icon.is_some() || self.ring.is_some() {
+        let lead = if self.busy || self.spinning || self.icon.is_some() || self.ring.is_some() {
             if self.unseen_label { glyph } else { glyph + gap }
         } else {
             0.0
@@ -316,7 +320,7 @@ impl Widget for Button {
             enabled,
         );
         let mut x = rect.center().x - (galley.size().x + lead + tail) / 2.0;
-        if self.busy {
+        if self.busy || self.spinning {
             super::spinner(ui, painter, pos2(x + glyph / 2.0, rect.center().y), glyph * 0.4, ink);
         } else if let Some(share) = self.ring {
             super::download_button::paint_progress_ring(
@@ -332,6 +336,7 @@ impl Widget for Button {
             match icon {
                 Icon::Play if self.filled_icon => super::paint_play(painter, at, glyph, icon_ink),
                 Icon::Pause if self.filled_icon => super::paint_pause(painter, at, glyph, icon_ink),
+                Icon::Square if self.filled_icon => super::speak_button::paint_square(painter, at, glyph, icon_ink),
                 _ => icons::paint(painter, at, icon, glyph, icon_ink),
             }
         }

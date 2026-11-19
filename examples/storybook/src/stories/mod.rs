@@ -10,6 +10,7 @@ mod foundations;
 mod frame;
 mod icon_list;
 mod inputs;
+mod listening;
 mod maps;
 mod media;
 mod menus;
@@ -477,6 +478,26 @@ pub const STORIES: &[Story] = &[
         path: "Media/Lyrics",
         doc: "Timed lyrics follow the position, the line sung inked in the middle and the rest faint; a press on a line seeks there. Untimed lyrics read as a page, verse by verse.",
         show: players::lyrics,
+    },
+    Story {
+        path: "Media/Chapter list",
+        doc: "The chapters of a book or an episode: each start under its title in the code face, the length at the end, the chapter playing marked with the time left in it or a line along its foot; a press seeks to a chapter.",
+        show: listening::chapter_list,
+    },
+    Story {
+        path: "Media/Transcript",
+        doc: "An episode's words as they are said, beside its chapters over the player: the line said inked and kept in the middle, the speaker written where the voice changes, each line under its time; a press on a line, a chapter or the bar seeks them all. The bar steps through chapters.",
+        show: listening::transcript,
+    },
+    Story {
+        path: "Media/Sleep timer",
+        doc: "A moon at the player's end that sets when playback stops: off, after minutes with the time left counting beside it, or at the end of the chapter or the episode.",
+        show: listening::sleep_timer,
+    },
+    Story {
+        path: "Media/Speak button",
+        doc: "A button that reads a text aloud with audio the app fetches on the first press: waiting, loading, playing and failed, as an icon and with its words.",
+        show: listening::speak_button,
     },
     Story {
         path: "Media/Queue",

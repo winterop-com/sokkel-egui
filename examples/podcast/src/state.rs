@@ -202,6 +202,28 @@ impl Podcasts {
         podcasts
     }
 
+    /// The rows kept between visits put back, as the backend would answer them on a new visit: the
+    /// shows and episodes, the player's row with the episode it holds (not yet loaded), the
+    /// settings and the time listened.
+    pub fn restore(
+        &mut self,
+        shows: Vec<ShowState>,
+        episodes: Vec<EpisodeState>,
+        player: PlayerRow,
+        prefs: Prefs,
+        listens: Vec<Listen>,
+    ) {
+        self.shows = shows;
+        self.episodes = episodes;
+        self.element.rate = player.rate;
+        self.element.volume = player.volume;
+        self.element.muted = player.muted;
+        self.player = player;
+        self.prefs = prefs;
+        self.listens = listens;
+        self.settle();
+    }
+
     // --- What the pages read -----------------------------------------------------------------------
 
     pub fn current(&self) -> Option<&str> {

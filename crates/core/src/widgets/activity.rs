@@ -286,10 +286,20 @@ impl<'a> BarList<'a> {
                 .size()
                 .x
         };
+        // the chosen label is set heavier, and measured so, as it is not cut short
         let labels = self
             .items
             .iter()
-            .map(|i| measure(&i.label, TextRole::Body))
+            .map(|i| {
+                let mut rich = TextRole::Body.rich(&t, &i.label);
+                if i.chosen {
+                    rich = rich.variation("wght", 500.0);
+                }
+                WidgetText::from(rich)
+                    .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Body.font(&t))
+                    .size()
+                    .x
+            })
             .fold(0.0, f32::max);
         let values = self
             .items

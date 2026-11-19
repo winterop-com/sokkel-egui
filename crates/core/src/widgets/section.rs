@@ -142,9 +142,14 @@ impl<'a> Section<'a> {
                         .galley(pos2(x, top + line), description, t.color("muted-foreground"));
                 }
                 if let Some(actions) = self.actions {
-                    // level with the title's line, at the head's end
-                    let end =
-                        egui::Rect::from_min_max(pos2(head.left() + pad, top), pos2(head.right() - pad, top + line));
+                    // centered on the title's line, at the head's end, with room for a control
+                    // taller than the line
+                    let middle = top + line / 2.0;
+                    let half = (t.density("panel-head") / 2.0).max(line / 2.0);
+                    let end = egui::Rect::from_min_max(
+                        pos2(head.left() + pad, middle - half),
+                        pos2(head.right() - pad, middle + half),
+                    );
                     let mut tools = ui.new_child(
                         egui::UiBuilder::new()
                             .id_salt("section-actions")

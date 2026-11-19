@@ -952,6 +952,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be1e0bca6c3637f992fc1cc7cbc52a78c1ef6db076dbf1059c4323d6a2048376"
 
 [[package]]
+name = "dataviz"
+version = "0.1.0"
+dependencies = [
+ "miniz_oxide 0.8.9",
+ "serde",
+ "serde_json",
+ "sokkel-egui",
+]
+
+[[package]]
 name = "deranged"
 version = "0.5.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3565,8 +3575,11 @@ dependencies = [
 name = "podcast"
 version = "0.1.0"
 dependencies = [
+ "eframe",
+ "egui_kittest",
  "serde",
  "serde_json",
+ "sokkel-egui",
  "sokkel-egui-media",
 ]
 
@@ -4640,6 +4653,7 @@ version = "0.1.0"
 dependencies = [
  "egui",
  "egui_kittest",
+ "serde",
  "sokkel-egui",
 ]
 

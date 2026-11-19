@@ -23,6 +23,8 @@ pub struct Track {
     pub title: String,
     /// A second line under the title, such as the artist where it differs from the album's.
     pub subtitle: Option<String>,
+    /// The second line in the code face, as a time is written.
+    pub mono_subtitle: bool,
     /// The number at the row's start, such as the track's place on its album.
     pub number: Option<String>,
     /// A drawn cover at the row's start, in place of the number.
@@ -41,6 +43,7 @@ impl Track {
             id: id.into(),
             title: title.into(),
             subtitle: None,
+            mono_subtitle: false,
             number: None,
             artwork: None,
             meta: None,
@@ -51,6 +54,12 @@ impl Track {
 
     pub fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
         self.subtitle = Some(subtitle.into());
+        self
+    }
+
+    /// The second line in the code face, as a chapter's start is written.
+    pub fn mono_subtitle(mut self, mono: bool) -> Self {
+        self.mono_subtitle = mono;
         self
     }
 
@@ -968,11 +977,14 @@ impl RowPaint<'_> {
 
         // the length at the end, at least 48 wide
         let mono = mono_font(painter.ctx(), mono_size(t, t.text("xs").size), 400.0);
-        let length = match (self.progress, self.played) {
-            (Some(TrackProgress::Left), Some(at)) => format_remaining(at, track.duration),
-            _ => format_time(track.duration),
-        };
-        let length = painter.layout_no_wrap(length, mono, t.color("muted-foreground"));
+        let length = painter.layout_no_wrap(
+            match (self.progress, self.played) {
+                (Some(TrackProgress::Left), Some(at)) => format_remaining(at, track.duration),
+                _ => format_time(track.duration),
+            },
+            mono.clone(),
+            t.color("muted-foreground"),
+        );
         let length_left = right - length.size().x.max(48.0);
         painter.galley(
             pos2(right - length.size().x, rect.center().y - length.size().y / 2.0),
@@ -1014,12 +1026,14 @@ impl RowPaint<'_> {
         };
         let title = one_line(painter, style, title, room);
         let sub = track.subtitle.as_ref().map(|s| {
-            one_line(
-                painter,
-                style,
-                TextRole::Help.rich(t, s).color(t.color("muted-foreground")),
-                room,
-            )
+            let rich = if track.mono_subtitle {
+                egui::RichText::new(s)
+                    .font(mono)
+                    .line_height(Some(TextRole::Help.line_height(t)))
+            } else {
+                TextRole::Help.rich(t, s)
+            };
+            one_line(painter, style, rich.color(t.color("muted-foreground")), room)
         });
         let block = TextRole::Body.line_height(t) + sub.as_ref().map_or(0.0, |_| TextRole::Help.line_height(t));
         let top = rect.center().y - block / 2.0;

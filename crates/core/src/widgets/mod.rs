@@ -67,6 +67,7 @@ mod slider_field;
 /// The visualizer's levels, shapes and constants, after sokkel-ui's `sound.ts`, for an app that
 /// feeds it live data; kept under their module so their plain names stay out of the crate root.
 pub mod sound_visualizer;
+mod speak_button;
 mod star_button;
 mod stat;
 mod stat_panel;
@@ -204,6 +205,7 @@ pub use slider_field::{Slider, SliderField};
 pub use sound_visualizer::{
     SOUND_RAMPS, SoundAlign, SoundKind, SoundRampBy, SoundRange, SoundVisualizer, sound_middle, sound_ramp,
 };
+pub use speak_button::{SpeakButton, SpeakButtonWords, SpeakPress, SpeakState, paint_square, speak_press};
 pub use star_button::{StarButton, StarButtonWords};
 pub use stat::{KpiRow, Stat, StatTiles, sparkline};
 pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_compact, format_value, threshold_color};

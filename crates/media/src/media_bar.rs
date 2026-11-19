@@ -15,6 +15,7 @@ use sokkel_egui::{
 use crate::artwork::{Artwork, ArtworkCover};
 use crate::bar_growth::{LINE, PHONE, TALL, WIDE, glow, grows, panel_growth, rows_growth, stage_growth};
 pub use crate::bar_growth::{MediaBarLayout, Tier, rows_height_for};
+use crate::chapters::{chapter_index, next_chapter_start, previous_chapter_start, seek_point};
 use crate::queue::RepeatMode;
 use crate::track_list::one_line;
 
@@ -63,6 +64,9 @@ pub struct MediaBarWords {
     pub pause: String,
     pub previous: String,
     pub next: String,
+    /// Previous and next while they step through chapters.
+    pub previous_chapter: String,
+    pub next_chapter: String,
     /// `Back {seconds} seconds`.
     pub skip_back: String,
     /// `Forward {seconds} seconds`.
@@ -81,6 +85,8 @@ pub struct MediaBarWords {
     /// `Track {number} of {count}`, and `Track {number}` without a count.
     pub track_of: String,
     pub track: String,
+    /// `Chapter {number} of {count}`: the place while previous and next step through chapters.
+    pub chapter_of: String,
     pub fullscreen: String,
     pub exit_fullscreen: String,
     pub now_playing: String,
@@ -95,6 +101,8 @@ impl Default for MediaBarWords {
             pause: "Pause".into(),
             previous: "Previous".into(),
             next: "Next".into(),
+            previous_chapter: "Previous chapter".into(),
+            next_chapter: "Next chapter".into(),
             skip_back: "Back {seconds} seconds".into(),
             skip_forward: "Forward {seconds} seconds".into(),
             speed: "Playback speed".into(),
@@ -110,6 +118,7 @@ impl Default for MediaBarWords {
             resize: "Resize the player".into(),
             track_of: "Track {number} of {count}".into(),
             track: "Track {number}".into(),
+            chapter_of: "Chapter {number} of {count}".into(),
             fullscreen: "Fullscreen".into(),
             exit_fullscreen: "Exit fullscreen".into(),
             now_playing: "Now playing".into(),
@@ -139,6 +148,10 @@ pub struct MediaBarResponse {
     pub repeat: Option<RepeatMode>,
     /// The height the top edge was dragged to, or put back to.
     pub size: Option<f32>,
+    /// The title pressed as a link (with `linked`), such as to open what plays.
+    pub title: bool,
+    /// The line under the title pressed as a link (with `linked` and a `subtitle`).
+    pub subtitle: bool,
     pub fullscreen: Option<bool>,
     pub lyrics_shown: Option<bool>,
     /// The id of the visualizer's look picked in the fullscreen view.
@@ -196,6 +209,8 @@ pub struct MediaBar<'a> {
     shuffle: Option<bool>,
     repeat: Option<RepeatMode>,
     skip: Option<MediaSkip>,
+    chapters: Option<&'a [f64]>,
+    linked: bool,
     extra: Option<Draw<'a>>,
     layout: MediaBarLayout,
     size: Option<f32>,
@@ -244,6 +259,8 @@ impl<'a> MediaBar<'a> {
             shuffle: None,
             repeat: None,
             skip: None,
+            chapters: None,
+            linked: false,
             extra: None,
             layout: MediaBarLayout::Rows,
             size: None,
@@ -387,6 +404,25 @@ impl<'a> MediaBar<'a> {
         self
     }
 
+    /// Where each chapter starts, in seconds from the start, in order (as [`chapter_starts`]
+    /// makes them). Previous and next then step through the chapters and say so, asking to seek:
+    /// previous to the chapter's start, or to the one before within its first three seconds, next to
+    /// the next one's, which the last chapter has none of; the place over the large title counts
+    /// chapters.
+    ///
+    /// [`chapter_starts`]: crate::chapter_starts
+    pub fn chapters(mut self, starts: &'a [f64]) -> Self {
+        self.chapters = Some(starts);
+        self
+    }
+
+    /// The title and the subtitle in the one-line bar as links, as the web's anchors: under the
+    /// pointer they are underlined, and a press comes back as the response's `title` or `subtitle`.
+    pub fn linked(mut self, linked: bool) -> Self {
+        self.linked = linked;
+        self
+    }
+
     /// Controls at the bar's end, such as a queue button.
     pub fn extra(mut self, draw: impl FnMut(&mut Ui) + 'a) -> Self {
         self.extra = Some(Box::new(draw));
@@ -486,17 +522,34 @@ impl<'a> MediaBar<'a> {
             .lyrics_shown
             .unwrap_or_else(|| ui.data(|d| d.get_temp(lyrics_id)).unwrap_or(false));
 
-        let place = self.track_number.map(|n| match self.track_count {
-            Some(c) => self
-                .words
-                .track_of
-                .replace("{number}", &n.to_string())
-                .replace("{count}", &c.to_string()),
-            None => self.words.track.replace("{number}", &n.to_string()),
-        });
+        // previous and next step through the chapters given, counting them and seeking between them
+        let marked = self.chapters.filter(|starts| !starts.is_empty() && !self.live);
+        let mut words = self.words;
+        let mut steps = (self.previous, self.next);
+        let place = match marked {
+            Some(starts) => {
+                let index = chapter_index(starts, self.position);
+                words.previous = words.previous_chapter.clone();
+                words.next = words.next_chapter.clone();
+                steps = (true, next_chapter_start(starts, self.position).is_some());
+                (index >= 0).then(|| {
+                    words
+                        .chapter_of
+                        .replace("{number}", &(index + 1).to_string())
+                        .replace("{count}", &starts.len().to_string())
+                })
+            }
+            None => self.track_number.map(|n| match self.track_count {
+                Some(c) => words
+                    .track_of
+                    .replace("{number}", &n.to_string())
+                    .replace("{count}", &c.to_string()),
+                None => words.track.replace("{number}", &n.to_string()),
+            }),
+        };
         let mut deck = Deck {
             id,
-            words: self.words,
+            words,
             title: self.title,
             subtitle: self.subtitle,
             artist: self.artist,
@@ -518,9 +571,10 @@ impl<'a> MediaBar<'a> {
             level: if self.muted { 0.0 } else { self.volume },
             muted: self.muted,
             mutable: self.mutable,
-            previous: self.previous,
-            next: self.next,
+            previous: steps.0,
+            next: steps.1,
             skip: self.skip,
+            linked: self.linked,
             rate: self.rate,
             rates: self.rates,
             rate_menu: self.rate_menu,
@@ -633,6 +687,16 @@ impl<'a> MediaBar<'a> {
                 deck.out.visualizer_option = Some(option);
             }
         }
+        if let Some(starts) = marked {
+            let duration = self.duration;
+            let point = |seconds: f64| seek_point(seconds, duration);
+            if std::mem::take(&mut deck.out.previous) {
+                deck.out.seek = point(previous_chapter_start(starts, self.position));
+            }
+            if std::mem::take(&mut deck.out.next) {
+                deck.out.seek = next_chapter_start(starts, self.position).and_then(point);
+            }
+        }
         deck.out
     }
 }
@@ -661,6 +725,7 @@ struct Deck<'a> {
     previous: bool,
     next: bool,
     skip: Option<MediaSkip>,
+    linked: bool,
     rate: f64,
     rates: &'a [f64],
     rate_menu: bool,
@@ -1171,13 +1236,26 @@ fn words(ui: &Ui, deck: &Deck, tier: Tier, rect: Rect, center: bool) {
     }
 }
 
+/// Words laid out at `at` pressed as a link: the pointing hand and an underline in `ink` under the
+/// pointer, as the web's `hover:underline` anchor. Gives whether it was pressed.
+fn link(ui: &Ui, id: Id, galley: &egui::Galley, at: egui::Pos2, ink: Color32) -> bool {
+    let rect = Rect::from_min_size(at, galley.size());
+    let response = ui.interact(rect, id, Sense::click());
+    if response.hovered() {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+        let y = rect.bottom() - 2.0;
+        ui.painter().hline(rect.x_range(), y, Stroke::new(1.0, ink));
+    }
+    response.clicked()
+}
+
 /// The one-line bar, drawn by every layout until it grows. Gives whether fullscreen was asked.
 fn line_bar(ui: &mut Ui, deck: &mut Deck, rect: Rect, expand: bool) -> bool {
     let t = tokens(ui.ctx());
     let wide = rect.width() >= WIDE;
     let mut asked = false;
     let line = deck.by_line();
-    let words_at = |ui: &Ui, deck: &Deck, left: f32, right: f32, y: f32| {
+    let words_at = |ui: &Ui, deck: &mut Deck, left: f32, right: f32, y: f32| {
         let width = (right - left).max(0.0);
         let title = one_line(
             ui.painter(),
@@ -1196,8 +1274,31 @@ fn line_bar(ui: &mut Ui, deck: &mut Deck, rect: Rect, expand: bool) -> bool {
         let block = title.size().y + sub.as_ref().map_or(0.0, |s| s.size().y);
         let top = y - block / 2.0;
         let h = title.size().y;
+        if deck.linked
+            && link(
+                ui,
+                deck.id.with("title-link"),
+                &title,
+                pos2(left, top),
+                t.color("foreground"),
+            )
+        {
+            deck.out.title = true;
+        }
         ui.painter().galley(pos2(left, top), title, t.color("foreground"));
         if let Some(sub) = sub {
+            if deck.linked
+                && deck.subtitle.is_some()
+                && link(
+                    ui,
+                    deck.id.with("subtitle-link"),
+                    &sub,
+                    pos2(left, top + h),
+                    t.color("muted-foreground"),
+                )
+            {
+                deck.out.subtitle = true;
+            }
             ui.painter()
                 .galley(pos2(left, top + h), sub, t.color("muted-foreground"));
         }
