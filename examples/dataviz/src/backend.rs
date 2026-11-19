@@ -13,7 +13,6 @@
 
 use sokkel_egui::Filter;
 
-use crate::chart_data::Cell;
 use crate::model::{
     Board, BoardItem, Column, ColumnType, DataRow, Dataset, DatasetSource, PanelSpan, Preferences, SavedChart,
     ViewSpec, counted, fresh_id, iso_time,
@@ -21,6 +20,7 @@ use crate::model::{
 use crate::parse::{ParsedTable, normalize, rows_of, to_csv};
 use crate::seed::{seed_boards, seed_charts, seed_datasets};
 use crate::share::{SharedChart, shared_dataset};
+use sokkel_egui_charts::data::Cell;
 
 /// Changes a row by a change, which takes its type from the row's.
 fn apply<T, F: FnOnce(&mut T)>(row: &mut T, change: F) {
@@ -1173,6 +1173,27 @@ impl Backend {
             },
         );
         self.pending += 1;
+    }
+
+    /// The rows kept on an earlier visit in place of the seed's, listed as the seed's would have
+    /// been: eframe's storage keeps what the browser's would.
+    pub fn restore(
+        &mut self,
+        datasets: Vec<Dataset>,
+        charts: Vec<SavedChart>,
+        boards: Vec<Board>,
+        preferences: Vec<Preferences>,
+    ) {
+        fn put<T: Row>(collection: &mut Collection<T>, rows: Vec<T>) {
+            for (_, listed) in &mut collection.pending {
+                *listed = rows.clone();
+            }
+            collection.rows = rows;
+        }
+        put(&mut self.datasets, datasets);
+        put(&mut self.charts, charts);
+        put(&mut self.boards, boards);
+        put(&mut self.preferences, preferences);
     }
 
     // --- A shared chart --------------------------------------------------------------------------

@@ -141,6 +141,7 @@ pub struct Select<'a> {
     default_open: bool,
     swatches: Option<Vec<Option<Swatch>>>,
     dots: Option<Vec<egui::Color32>>,
+    dot_rows: Option<Vec<Vec<egui::Color32>>>,
     small: bool,
     bare: bool,
     codes: Option<Vec<String>>,
@@ -162,6 +163,7 @@ impl<'a> Select<'a> {
             default_open: false,
             swatches: None,
             dots: None,
+            dot_rows: None,
             small: false,
             bare: false,
             codes: None,
@@ -221,8 +223,25 @@ impl Select<'_> {
         self
     }
 
+    /// A row of dots of 10, 6 apart, before each option's label, as a palette's colors drawn as a
+    /// `Row` of sokkel-ui's `Dot`s in a select's items.
+    pub fn dot_rows(mut self, rows: impl IntoIterator<Item = Vec<egui::Color32>>) -> Self {
+        self.dot_rows = Some(rows.into_iter().collect());
+        self
+    }
+
+    /// Paints a row of dots from `left` on the line through `y`.
+    fn paint_dot_row(painter: &egui::Painter, left: f32, y: f32, dots: &[egui::Color32]) {
+        for (at, dot) in dots.iter().enumerate() {
+            painter.circle_filled(pos2(left + 5.0 + at as f32 * 16.0, y), 5.0, *dot);
+        }
+    }
+
     fn lead(&self) -> f32 {
-        if self.swatches.is_some() {
+        if let Some(rows) = &self.dot_rows {
+            let most = rows.iter().map(Vec::len).max().unwrap_or(0) as f32;
+            most * 16.0 - 6.0 + 8.0
+        } else if self.swatches.is_some() {
             36.0
         } else if self.dots.is_some() {
             18.0
@@ -338,6 +357,9 @@ impl Widget for Select<'_> {
         if let Some(dot) = self.dots.as_ref().and_then(|d| d.get(*self.chosen)) {
             painter.circle_filled(pos2(rect.left() + 10.0 + 5.0, rect.center().y), 5.0, *dot);
         }
+        if let Some(row) = self.dot_rows.as_ref().and_then(|d| d.get(*self.chosen)) {
+            Self::paint_dot_row(painter, rect.left() + 10.0, rect.center().y, row);
+        }
         if let Some(swatches) = &self.swatches {
             paint_swatch(
                 painter,
@@ -417,6 +439,9 @@ impl Widget for Select<'_> {
                     if let Some(dot) = self.dots.as_ref().and_then(|d| d.get(index)) {
                         ui.painter()
                             .circle_filled(pos2(row.left() + 8.0 + 5.0, row.center().y), 5.0, *dot);
+                    }
+                    if let Some(dots) = self.dot_rows.as_ref().and_then(|d| d.get(index)) {
+                        Self::paint_dot_row(ui.painter(), row.left() + 8.0, row.center().y, dots);
                     }
                     if let Some(swatches) = &self.swatches {
                         paint_swatch(

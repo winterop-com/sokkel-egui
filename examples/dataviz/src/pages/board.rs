@@ -6,10 +6,10 @@ use serde::Serialize;
 use sokkel_egui::Filter;
 
 use crate::backend::Backend;
-use crate::chart_data::Cell;
 use crate::model::{Board, BoardItem, ColumnType, Dataset, PanelSpan, SavedChart, counted};
 use crate::parse::file_name;
 use crate::shape::{FieldSpec, filters_for, naturally, shape, typed_rows};
+use sokkel_egui_charts::data::Cell;
 
 /// The filters a board offers: every column of its charts' datasets, once by name, with the values
 /// a name holds across all of them.

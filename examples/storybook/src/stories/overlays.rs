@@ -58,6 +58,30 @@ pub fn select(state: &mut State, ui: &mut Ui) {
     ui.add(Select::new(&mut state.service, ["api", "worker", "scheduler"], "Service").default_open(true));
 }
 
+pub fn select_swatches(state: &mut State, ui: &mut Ui) {
+    let t = sokkel_egui::tokens(ui.ctx());
+    let palettes: [(&str, [&str; 5]); 3] = [
+        ("Theme", ["chart-2", "chart-3", "chart-4", "kind-teal", "kind-pink"]),
+        (
+            "Cool",
+            ["kind-teal", "kind-blue", "kind-violet", "kind-jade", "chart-2"],
+        ),
+        ("Warm", ["kind-pink", "chart-5", "chart-4", "chart-3", "kind-violet"]),
+    ];
+    let rows: Vec<Vec<eframe::egui::Color32>> = palettes
+        .iter()
+        .map(|(_, tokens)| tokens.iter().map(|token| t.color(token)).collect())
+        .collect();
+    section(ui, "Open, each palette's colors before its name");
+    ui.add(
+        Select::new(&mut state.palette, palettes.iter().map(|(name, _)| *name), "Colors")
+            .width(200.0)
+            .dot_rows(rows)
+            .default_open(true),
+    );
+    ui.add_space(140.0);
+}
+
 pub fn tooltips(_: &mut State, ui: &mut Ui) {
     section(ui, "On hover and focus");
     ui.horizontal(|ui| {

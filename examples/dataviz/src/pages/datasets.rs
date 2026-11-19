@@ -38,14 +38,14 @@ pub fn search<'a>(datasets: &'a [Dataset], query: &str) -> Vec<&'a Dataset> {
 /// A dataset's rows as CSV, each column under its name.
 pub fn dataset_csv(dataset: &Dataset) -> String {
     let names: Vec<String> = dataset.columns.iter().map(|column| column.name.clone()).collect();
-    let rows: Vec<Vec<crate::chart_data::Cell>> = dataset
+    let rows: Vec<Vec<sokkel_egui_charts::data::Cell>> = dataset
         .rows
         .iter()
         .map(|row| {
             dataset
                 .columns
                 .iter()
-                .map(|column| crate::chart_data::Cell::text(row.text(&column.id)))
+                .map(|column| sokkel_egui_charts::data::Cell::text(row.text(&column.id)))
                 .collect()
         })
         .collect();

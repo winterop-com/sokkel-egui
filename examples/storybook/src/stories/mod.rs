@@ -65,6 +65,9 @@ pub struct State {
     pub tree_query: String,
     pub arranged: Vec<sokkel_egui::DashboardLayoutItem>,
     pub arrange_edit: sokkel_egui::DashboardEdit,
+    pub cards: sokkel_egui::TableState,
+    pub hovered: sokkel_egui::TableState,
+    pub palette: usize,
 }
 
 impl Default for State {
@@ -111,6 +114,13 @@ impl Default for State {
             tree_query: String::new(),
             arranged: parts::arranged_default(),
             arrange_edit: sokkel_egui::DashboardEdit::default(),
+            cards: {
+                let mut cards = sokkel_egui::TableState::sorted(0, true);
+                cards.grid = true;
+                cards
+            },
+            hovered: sokkel_egui::TableState::default(),
+            palette: 1,
         }
     }
 }
@@ -232,6 +242,11 @@ pub const STORIES: &[Story] = &[
         show: overlays::select,
     },
     Story {
+        path: "Primitives/Inputs/Select swatches",
+        doc: "A select whose options each show a palette's colors as a row of dots before the name.",
+        show: overlays::select_swatches,
+    },
+    Story {
         path: "Primitives/Inputs/Switch",
         doc: "On, off and disabled, each beside the words it switches; and as SwitchField, a form's row with the switch at its right edge, a help mark that says what it does, and shut.",
         show: primitives::switch,
@@ -312,6 +327,16 @@ pub const STORIES: &[Story] = &[
         show: table::data_table,
     },
     Story {
+        path: "Patterns/Data table cards",
+        doc: "The rows as cards in a grid, each at least 240 wide: the bar's toggle between the table and the grid, the sort as a menu, and a row's actions at its card's corner; then a table whose row actions show only on the row pointed at.",
+        show: table::data_table_cards,
+    },
+    Story {
+        path: "Patterns/Item card",
+        doc: "The card for one thing: a picture of it over its words, an icon before its title, and a title held to one line and cut short.",
+        show: table::item_card,
+    },
+    Story {
         path: "Patterns/Files",
         doc: "A file's contents drawn for its kind: a CSV as a table of its first rows, text and code as their lines numbered under the name, and a kind with no preview saying so.",
         show: parts::files,
@@ -365,6 +390,11 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Page header",
         doc: "A page's head: its title with a count or a code, a description, and the page's actions at the end of the row.",
         show: page::page_header,
+    },
+    Story {
+        path: "Patterns/Page header editable",
+        doc: "A page's head whose title and description are edited where they stand, the count beside the title.",
+        show: page::page_header_editable,
     },
     Story {
         path: "Patterns/Page state",

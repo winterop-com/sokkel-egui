@@ -3,7 +3,10 @@
 
 use egui::{Rect, Response, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
 
-use crate::{TextRole, tokens};
+use crate::{Icon, TextRole, tokens};
+
+/// What a card shows over its words, drawn in the room given.
+type Media<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
 
 /// A fact at a card's foot: what it is, and its value.
 pub struct CardFact {
@@ -13,8 +16,12 @@ pub struct CardFact {
 
 /// The card for one thing: a form, a project, a job. Its title is the thing's name, its code
 /// under it once in the code face; a status line and a description follow, and facts sit at the
-/// foot over a rule. Pressed as one, it washes on hover and draws the focus ring.
+/// foot over a rule. A picture of it (`media`) can stand over the words, and an icon before the
+/// title. Pressed as one, it washes on hover and draws the focus ring.
 pub struct ItemCard<'a> {
+    icon: Option<Icon>,
+    media: Option<Media<'a>>,
+    title_lines: usize,
     title: String,
     code: Option<String>,
     description: Option<String>,
@@ -26,6 +33,9 @@ pub struct ItemCard<'a> {
 impl<'a> ItemCard<'a> {
     pub fn new(title: impl Into<String>) -> Self {
         Self {
+            icon: None,
+            media: None,
+            title_lines: 2,
             title: title.into(),
             code: None,
             description: None,
@@ -59,6 +69,26 @@ impl<'a> ItemCard<'a> {
         self
     }
 
+    /// An icon before the title, in a 32 square on the muted ground, as the web's `icon`.
+    pub fn icon(mut self, icon: Icon) -> Self {
+        self.icon = Some(icon);
+        self
+    }
+
+    /// A picture of the thing over the words, as the web's `media`: drawn by `media` in a band as
+    /// wide as the card and 9/16 of that tall, on the muted ground, clipped to it.
+    pub fn media(mut self, media: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.media = Some(Box::new(media));
+        self
+    }
+
+    /// The most lines the title takes, cut short with an ellipsis past them (2 by default), as the
+    /// web's `titleLines`.
+    pub fn title_lines(mut self, lines: usize) -> Self {
+        self.title_lines = lines.max(1);
+        self
+    }
+
     /// Marks the chosen card of a set.
     pub fn selected(mut self, selected: bool) -> Self {
         self.selected = selected;
@@ -69,12 +99,25 @@ impl<'a> ItemCard<'a> {
     pub fn show(self, ui: &mut Ui, width: f32, height: f32) -> Response {
         let t = tokens(ui.ctx());
         let inner = (width - 32.0).max(1.0);
-        let title = WidgetText::from(TextRole::SectionTitle.rich(&t, &self.title)).into_galley(
-            ui,
-            Some(TextWrapMode::Wrap),
-            inner,
-            TextRole::SectionTitle.font(&t),
-        );
+        // the icon's square and 12 after it, as the web's `mr-1` and the header's `gap-2`
+        let lead = if self.icon.is_some() { 32.0 + 12.0 } else { 0.0 };
+        // the title in its role's face and weight, cut short past its lines
+        let mut job = (*WidgetText::from(TextRole::SectionTitle.rich(&t, &self.title)).into_layout_job(
+            ui.style(),
+            egui::FontSelection::FontId(TextRole::SectionTitle.font(&t)),
+            egui::Align::Min,
+        ))
+        .clone();
+        job.wrap.max_width = inner - lead;
+        job.wrap.max_rows = self.title_lines;
+        job.wrap.break_anywhere = false;
+        job.wrap.overflow_character = Some('\u{2026}');
+        let title = ui.fonts_mut(|f| f.layout_job(job));
+        let media_height = if self.media.is_some() {
+            (width * 9.0 / 16.0).round()
+        } else {
+            0.0
+        };
         let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
         let code = self.code.as_ref().map(|c| {
             WidgetText::from(egui::RichText::new(c).font(mono.clone())).into_galley(
@@ -94,7 +137,12 @@ impl<'a> ItemCard<'a> {
         });
         // the body: 16 in, the heading, then 8 to the status and the description
         let status_height = if self.status.is_some() { 20.0 } else { 0.0 };
-        let mut body = title.size().y + code.as_ref().map_or(0.0, |c| c.size().y + 4.0);
+        let heading = if self.icon.is_some() {
+            title.size().y.max(32.0)
+        } else {
+            title.size().y
+        };
+        let mut body = heading + code.as_ref().map_or(0.0, |c| c.size().y + 4.0);
         if self.status.is_some() {
             body += 8.0 + status_height;
         }
@@ -106,7 +154,7 @@ impl<'a> ItemCard<'a> {
         } else {
             1.0 + 10.0 + 36.0 + 10.0
         };
-        let natural = 16.0 + body + 16.0 + foot;
+        let natural = media_height + 16.0 + body + 16.0 + foot;
         let (rect, response) = ui.allocate_exact_size(vec2(width, height.max(natural)), Sense::click());
         response.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, self.selected, &self.title));
         let painter = ui.painter().clone();
@@ -120,12 +168,39 @@ impl<'a> ItemCard<'a> {
         } else {
             Stroke::new(1.0, t.color("border-strong"))
         };
+        // the picture over the words, on the muted ground under the card's top corners
+        if let Some(media) = self.media {
+            let band = Rect::from_min_size(rect.min, vec2(width, media_height));
+            let top = egui::CornerRadius { sw: 0, se: 0, ..radius };
+            painter.rect_filled(band, top, t.color("muted"));
+            let mut child = ui.new_child(
+                egui::UiBuilder::new()
+                    .max_rect(band)
+                    .layout(egui::Layout::top_down(egui::Align::Min)),
+            );
+            child.set_clip_rect(band.intersect(ui.clip_rect()));
+            media(&mut child);
+        }
         painter.rect_stroke(rect, radius, edge, egui::StrokeKind::Inside);
         let x = rect.left() + 16.0;
-        let mut y = rect.top() + 16.0;
+        let mut y = rect.top() + media_height + 16.0;
         let title_height = title.size().y;
-        painter.galley(pos2(x, y), title, t.color("card-foreground"));
-        y += title_height;
+        if let Some(icon) = self.icon {
+            let square = Rect::from_min_size(pos2(x, y), vec2(32.0, 32.0));
+            painter.rect_filled(square, t.radius("control"), t.color("muted"));
+            crate::icons::paint(&painter, square.center(), icon, 16.0, t.color("foreground"));
+            // a title of one line stands level with the square's middle
+            let at = if title_height < 32.0 {
+                y + (32.0 - title_height) / 2.0
+            } else {
+                y
+            };
+            painter.galley(pos2(x + 32.0 + 12.0, at), title, t.color("card-foreground"));
+            y += title_height.max(32.0);
+        } else {
+            painter.galley(pos2(x, y), title, t.color("card-foreground"));
+            y += title_height;
+        }
         if let Some(code) = code {
             y += 4.0;
             let h = code.size().y;

@@ -60,6 +60,7 @@ pub struct PageHeader {
     meta_row: bool,
     meta_line: Option<crate::MetaLine>,
     edit: Option<crate::InlineEdit>,
+    edit_description: Option<crate::InlineEdit>,
 }
 
 /// What a page header was asked this frame.
@@ -69,6 +70,8 @@ pub struct PageHeaderResponse {
     pub back: bool,
     /// The title saved in place, with [`PageHeader::edit_title`].
     pub renamed: Option<String>,
+    /// The description saved in place, with [`PageHeader::edit_description`].
+    pub described: Option<String>,
     /// A link in the [`PageHeader::meta_line`] was pressed: its index among the line's items.
     pub meta_link: Option<usize>,
 }
@@ -86,6 +89,7 @@ impl PageHeader {
             meta_row: false,
             meta_line: None,
             edit: None,
+            edit_description: None,
         }
     }
 
@@ -105,6 +109,20 @@ impl PageHeader {
             crate::InlineEdit::new(("page-title", &self.title), label, self.title.clone())
                 .title()
                 .validate(validate),
+        );
+        self
+    }
+
+    /// The description edited where it stands, as sokkel-ui's `InlineEdit` with
+    /// `editor="multiline"` in the header's `description`: `label` names its editor, and
+    /// `placeholder` stands for an empty one. The description saved comes back as
+    /// [`PageHeaderResponse::described`].
+    pub fn edit_description(mut self, label: impl Into<String>, placeholder: impl Into<String>) -> Self {
+        let value = self.description.take().unwrap_or_default();
+        self.edit_description = Some(
+            crate::InlineEdit::new(("page-description", &self.title), label, value)
+                .multiline(true)
+                .placeholder(placeholder),
         );
         self
     }
@@ -187,7 +205,20 @@ impl PageHeader {
                 // an editable title stands as its own inline edit
                 let edit = self.edit.take();
                 if let Some(edit) = edit {
-                    answer.renamed = edit.show(ui);
+                    // the count 8 after the title's editor, standing on its line
+                    ui.horizontal_top(|ui| {
+                        ui.spacing_mut().item_spacing.x = 8.0;
+                        answer.renamed = edit.show(ui);
+                        if let Some(count) = &self.count {
+                            // on the title's baseline: its line's foot less the count's
+                            let title = t.text(TextRole::PageTitle.key()).line_height;
+                            let help = t.text(TextRole::Help.key()).line_height;
+                            ui.vertical(|ui| {
+                                ui.add_space((2.0 + title - help - 2.0).max(0.0));
+                                ui.label(TextRole::Help.rich(&t, count).color(t.color("muted-foreground")));
+                            });
+                        }
+                    });
                 } else {
                     // the title, and the count 8 after it standing on the title's baseline
                     let title = egui::WidgetText::from(TextRole::PageTitle.rich(&t, &self.title)).into_galley(
@@ -224,6 +255,12 @@ impl PageHeader {
                 if let Some(code) = &self.code {
                     let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
                     ui.label(egui::RichText::new(code).font(mono).color(t.color("muted-foreground")));
+                }
+                if let Some(edit) = self.edit_description.take() {
+                    ui.add_space(4.0);
+                    let zero = ui.fonts_mut(|f| f.glyph_width(&TextRole::Body.font(&t), '0'));
+                    ui.set_max_width(65.0 * zero);
+                    answer.described = edit.show(ui);
                 }
                 if let Some(description) = &self.description {
                     ui.add_space(4.0);

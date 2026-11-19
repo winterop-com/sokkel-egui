@@ -18,6 +18,29 @@ pub fn page_header(_: &mut State, ui: &mut Ui) {
     });
 }
 
+pub fn page_header_editable(_: &mut State, ui: &mut Ui) {
+    section(
+        ui,
+        "A title and a description edited in place, the count beside the title",
+    );
+    PageHeader::new("Runs in October")
+        .count("248 rows, 7 columns")
+        .description("How Tidevann's jobs ran through the month, one row a run.")
+        .edit_title("Name", |value| {
+            value.trim().is_empty().then(|| "A dataset needs a name.".to_owned())
+        })
+        .edit_description("Description", "Add a description")
+        .show(ui, |ui| {
+            ui.add(Button::new("New chart").icon(Icon::ChartColumn));
+        });
+    section(ui, "No description yet");
+    PageHeader::new("Harbor arrivals")
+        .count("1,080 rows")
+        .edit_title("Name", |_| None)
+        .edit_description("Description", "Add a description")
+        .show(ui, |_| {});
+}
+
 pub fn page_state(_: &mut State, ui: &mut Ui) {
     section(ui, "Loading");
     PageState::loading().show(ui);

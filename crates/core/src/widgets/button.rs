@@ -378,7 +378,12 @@ impl Widget for Button {
                 pos2(words_end + gap + glyph / 2.0, rect.center().y),
                 icon,
                 glyph,
-                dim(t.color("muted-foreground"), enabled),
+                // on a filled ground the button's own ink, else the quiet one
+                if matches!(self.variant, ButtonVariant::Default | ButtonVariant::Destructive) {
+                    ink
+                } else {
+                    dim(t.color("muted-foreground"), enabled)
+                },
             );
         }
         response

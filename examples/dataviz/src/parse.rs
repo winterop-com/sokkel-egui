@@ -5,10 +5,10 @@
 
 use serde::Serialize;
 
-use crate::chart_data::Cell;
 use crate::js::{self, Json};
 use crate::model::{Column, ColumnType, DataRow};
 use crate::seed::REGION_NAMES;
+use sokkel_egui_charts::data::Cell;
 
 /// A table read from a file or pasted text, before it becomes a dataset: its columns' names and
 /// each row's values as text.

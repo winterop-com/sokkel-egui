@@ -11,12 +11,14 @@ use std::collections::HashSet;
 use serde::Serialize;
 use sokkel_egui::{Filter, FilterField, FilterType, FilterValue, filter_rows};
 
-use crate::chart_data::{self, Cell, Combine, PivotSpec, Row, aggregate, pivot, quantile};
 use crate::js;
 use crate::model::{
     Aggregate, Column, ColumnType, Dataset, DateBin, Decimals, NumberStyle, Preferences, SortOrder, ViewKind, ViewSpec,
 };
 use crate::parse::{day_of, number_of};
+use sokkel_egui_charts::data::{
+    self as chart_data, Aggregate as Combine, Cell, PivotSpec, Row, aggregate, pivot, quantile,
+};
 
 /// A cell's text read as its column's type: a number, a day as `YYYY-MM-DD`, text, or none.
 pub fn typed(text: Option<&str>, column: &Column) -> Cell {
@@ -368,7 +370,7 @@ pub fn shape(dataset: &Dataset, spec: &ViewSpec, filters: &[Filter]) -> Shaped {
         let combine: Combine = if how == Aggregate::Count {
             Combine::Sum
         } else {
-            how.into()
+            how.combine()
         };
         let line: Vec<f64> = buckets
             .iter()
@@ -460,14 +462,12 @@ pub fn shape(dataset: &Dataset, spec: &ViewSpec, filters: &[Filter]) -> Shaped {
         }
         chart_rows.push(out);
     }
-    let combine: Combine = how.into();
+    let combine: Combine = how.combine();
+    let measure_field: Vec<String> = y.map(|y| y.name.clone()).into_iter().collect();
     let totals = pivot(&PivotSpec {
-        rows: &chart_rows,
-        x: &xx.name,
-        y: y.map(|y| y.name.as_str()),
-        series: None,
-        aggregate: combine,
-        order: None,
+        y: &measure_field,
+        aggregate: &[combine],
+        ..PivotSpec::new(&chart_rows, &xx.name)
     });
     let figure = |name: &str| -> Option<f64> {
         let at = totals.categories.iter().position(|one| one == name)?;
@@ -504,12 +504,11 @@ pub fn shape(dataset: &Dataset, spec: &ViewSpec, filters: &[Filter]) -> Shaped {
             .collect()
     };
     let split = pivot(&PivotSpec {
-        rows: &shown,
-        x: &xx.name,
-        y: y.map(|y| y.name.as_str()),
+        y: &measure_field,
         series: series.map(|series| series.name.as_str()),
-        aggregate: combine,
+        aggregate: &[combine],
         order: Some(&kept),
+        ..PivotSpec::new(&shown, &xx.name)
     });
     let measure = measure_name(dataset, spec);
     let mut names = vec![xx.name.clone()];
@@ -577,7 +576,7 @@ fn js_less(a: &Cell, b: &Cell) -> bool {
 fn reading_of(values: &[Cell], how: Aggregate) -> Cell {
     if values.iter().all(|value| matches!(value, Cell::Number(_))) {
         let numbers: Vec<f64> = values.iter().filter_map(Cell::as_number).collect();
-        return aggregate(&numbers, how.into()).into();
+        return aggregate(&numbers, how.combine()).into();
     }
     if values.is_empty() {
         return Cell::Null;

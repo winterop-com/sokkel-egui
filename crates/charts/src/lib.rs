@@ -119,6 +119,13 @@ fn axis_font(t: &Tokens) -> FontId {
     FontId::new(t.length("chart-text-size"), FontFamily::Proportional)
 }
 
+/// How many steps a value axis up the side of a chart `height` tall draws: two below 140 (the
+/// height rounded to 24, as the web measures its room), so a short chart's labels keep apart, and
+/// five above, as sokkel-ui's `EChart` sets `splitNumber`.
+pub(crate) fn steps_for(height: f32) -> usize {
+    if (height / 24.0).round() * 24.0 < 140.0 { 2 } else { 5 }
+}
+
 /// A step for about `ticks` intervals between 0 and `max`, rounded as ECharts rounds its axis
 /// interval: 1, 2, 3 or 5 times a power of ten.
 fn nice_step(max: f64, ticks: usize) -> f64 {
@@ -264,7 +271,7 @@ impl Frame {
         let ink = t.color("muted-foreground");
         let rule = t.color("border");
         let max = if max > 0.0 { max } else { 1.0 };
-        let step = nice_step(max, 5);
+        let step = nice_step(max, steps_for(rect.height()));
         let top = (max / step - 1e-9).ceil().max(1.0) * step;
         let ticks = (top / step).round() as usize;
         let widest = (0..=ticks)

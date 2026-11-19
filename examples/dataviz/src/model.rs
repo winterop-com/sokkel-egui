@@ -276,6 +276,18 @@ impl Aggregate {
         Aggregate::ALL.into_iter().find(|one| one.id() == id)
     }
 
+    /// The charts' data module's way of combining figures, the same one.
+    pub fn combine(self) -> sokkel_egui_charts::data::Aggregate {
+        use sokkel_egui_charts::data::Aggregate as Combine;
+        match self {
+            Aggregate::Sum => Combine::Sum,
+            Aggregate::Avg => Combine::Avg,
+            Aggregate::Count => Combine::Count,
+            Aggregate::Min => Combine::Min,
+            Aggregate::Max => Combine::Max,
+        }
+    }
+
     pub fn label(self) -> &'static str {
         match self {
             Aggregate::Sum => "Sum",

@@ -5,9 +5,9 @@
 use serde::Serialize;
 use sokkel_egui::{Filter, filter_rows};
 
-use crate::chart_data::Cell;
 use crate::model::{Column, Dataset, Preferences, SavedChart, counted};
 use crate::shape::{TypedRow, filter_fields, filter_fields_of, format_figure, typed_rows};
+use sokkel_egui_charts::data::Cell;
 
 /// A type as the rows' heads say it after the column's name: `Rainfall · number`.
 pub fn header(column: &Column) -> String {

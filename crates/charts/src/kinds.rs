@@ -912,6 +912,11 @@ fn heatmap_chart(ui: &mut Ui, t: &Arc<Tokens>, spec: &ChartSpec, height: f32) ->
 /// A value axis' ticks: from a round start to a round end about five steps apart, reaching zero
 /// unless `fit`, as ECharts' value axis with `scale`.
 pub(crate) fn value_ticks(low: f64, high: f64, fit: bool) -> (f64, f64, f64) {
+    value_ticks_in(low, high, fit, 5)
+}
+
+/// The ticks of a value axis of about `steps` steps.
+pub(crate) fn value_ticks_in(low: f64, high: f64, fit: bool, steps: usize) -> (f64, f64, f64) {
     let (mut low, mut high) = (low, high);
     if !fit {
         low = low.min(0.0);
@@ -926,7 +931,7 @@ pub(crate) fn value_ticks(low: f64, high: f64, fit: bool) -> (f64, f64, f64) {
             high += pad;
         }
     }
-    let step = crate::nice_step(high - low, 5);
+    let step = crate::nice_step(high - low, steps);
     let start = (low / step + 1e-9).floor() * step;
     let end = (high / step - 1e-9).ceil() * step;
     (start, end.max(start + step), step)
@@ -977,7 +982,7 @@ fn scatter_chart(ui: &mut Ui, t: &Arc<Tokens>, spec: &ChartSpec, height: f32) ->
     let (x0, x1) = extent(&xs).unwrap_or((0.0, 1.0));
     let (y0, y1) = extent(&ys).unwrap_or((0.0, 1.0));
     let (xa, xb, xs_step) = value_ticks(x0, x1, spec.fit);
-    let (ya, yb, ys_step) = value_ticks(y0, y1, spec.fit);
+    let (ya, yb, ys_step) = value_ticks_in(y0, y1, spec.fit, crate::steps_for(height));
     let painter = ui.painter();
     let font = axis_font(t);
     let ink = t.color("muted-foreground");

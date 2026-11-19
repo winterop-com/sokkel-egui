@@ -352,6 +352,9 @@ pub struct TableState {
     /// The page shown of a paged table, from 0, and its rows to a page; 0 until it is first drawn.
     pub page: usize,
     pub page_size: usize,
+    /// The rows shown as cards in a grid, in a table that draws them (`DataTable::cards`), as the
+    /// web's `view="grid"`.
+    pub grid: bool,
 }
 
 impl TableState {
@@ -399,6 +402,11 @@ pub struct TableWords {
     pub show_group: String,
     pub hide_group: String,
     pub edit: EditWords,
+    /// The bar's choice of the table and of the cards' grid, in a table that draws cards.
+    pub table_view: String,
+    pub grid_view: String,
+    /// A card's button that opens its row's actions.
+    pub actions: String,
 }
 
 impl Default for TableWords {
@@ -418,6 +426,9 @@ impl Default for TableWords {
             show_group: "Show group".into(),
             hide_group: "Hide group".into(),
             edit: EditWords::default(),
+            table_view: "Table".into(),
+            grid_view: "Grid".into(),
+            actions: "More actions".into(),
         }
     }
 }
@@ -495,6 +506,8 @@ pub struct DataTable<'a> {
     detail: Option<RowDetail<'a>>,
     groups: Option<Vec<String>>,
     fits: bool,
+    cards: Option<Cards<'a>>,
+    actions_hover: bool,
 }
 
 /// What a row opens into under it, drawn for its index in the rows given.
@@ -502,6 +515,16 @@ pub type RowDetail<'a> = Box<dyn Fn(usize, &mut Ui) + 'a>;
 
 /// What a table's toolbar line draws.
 type Toolbar<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
+
+/// A row drawn as a card, for its index in the rows given, `width` wide: its press.
+pub type RowCard<'a> = Box<dyn Fn(&mut Ui, usize, f32) -> Response + 'a>;
+
+/// The cards' grid: each card at least `min` wide and `height` tall, and how one is drawn.
+struct Cards<'a> {
+    min: f32,
+    height: f32,
+    card: RowCard<'a>,
+}
 
 /// How wide a row's grip is, in the first column before its content.
 const GRIP: f32 = 22.0;
@@ -551,7 +574,35 @@ impl<'a> DataTable<'a> {
             detail: None,
             groups: None,
             fits: false,
+            cards: None,
+            actions_hover: false,
         }
+    }
+
+    /// The rows as cards in a grid too, as the web's `card` with `view` and `onViewChange`: each
+    /// card at least `min` wide (`cardWidth`) and `height` tall (`cardHeight`), drawn by `card` for
+    /// a row's index in the rows given and its width, its press opening the row. The bar offers
+    /// the table and the grid, `TableState::grid` holding which is shown; in the grid the bar sorts
+    /// by a menu, as a stacked table's does, and a row's actions stand at its card's corner.
+    pub fn cards(mut self, min: f32, height: f32, card: impl Fn(&mut Ui, usize, f32) -> Response + 'a) -> Self {
+        self.cards = Some(Cards {
+            min,
+            height,
+            card: Box::new(card),
+        });
+        self
+    }
+
+    /// A row's actions button shown only while the row is pointed at, has the focus or its menu is
+    /// open, as the web's `actionButton="hover"`.
+    pub fn actions_on_hover(mut self, hover: bool) -> Self {
+        self.actions_hover = hover;
+        self
+    }
+
+    /// Whether the rows stand as cards now.
+    fn gridded(&self) -> bool {
+        self.cards.is_some() && self.state.grid
     }
 
     /// A check box on every row and one over them in the head.
@@ -1066,7 +1117,11 @@ impl<'a> DataTable<'a> {
                 .layout(egui::Layout::right_to_left(egui::Align::Center)),
         );
         child.spacing_mut().item_spacing.x = 16.0;
-        if !stacked && self.columns.len() > 1 {
+        if self.cards.is_some() {
+            self.view_toggle(&mut child, t);
+        }
+        let gridded = self.gridded();
+        if !stacked && !gridded && self.columns.len() > 1 {
             let trigger = child.add(super::IconButton::new(Icon::Columns3, &self.words.columns));
             egui::Popup::menu(&trigger)
                 .id(self.id.with("columns"))
@@ -1114,7 +1169,7 @@ impl<'a> DataTable<'a> {
                 });
         }
         let sortable: Vec<usize> = (0..self.columns.len())
-            .filter(|c| self.columns[*c].sortable && stacked)
+            .filter(|c| self.columns[*c].sortable && (stacked || gridded))
             .collect();
         if let Some(&first) = sortable.first() {
             // the column it sorts by, or "Sort" while the rows stand in their own order
@@ -1152,6 +1207,133 @@ impl<'a> DataTable<'a> {
                 .font(mono)
                 .color(t.color("muted-foreground")),
         );
+    }
+
+    /// The bar's choice of the table or the grid: two icon buttons in one muted group, the one
+    /// shown raised on the card's ground, as the web's view toggle.
+    fn view_toggle(&mut self, ui: &mut Ui, t: &crate::Tokens) {
+        const CELL: f32 = 24.0;
+        let (group, _) = ui.allocate_exact_size(vec2(2.0 * CELL + 6.0, CELL + 4.0), Sense::hover());
+        ui.painter().rect_filled(group, t.radius("control"), t.color("muted"));
+        for (at, (icon, label, grid)) in [
+            (Icon::Table2, &self.words.table_view, false),
+            (Icon::LayoutGrid, &self.words.grid_view, true),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let cell = Rect::from_min_size(
+                pos2(group.left() + 2.0 + at as f32 * (CELL + 2.0), group.top() + 2.0),
+                vec2(CELL, CELL),
+            );
+            let hit = ui.interact(cell, self.id.with(("view", at)), Sense::click());
+            hit.widget_info(|| {
+                egui::WidgetInfo::selected(egui::Role::Button, true, self.state.grid == grid, label.as_str())
+            });
+            let chosen = self.state.grid == grid;
+            if chosen {
+                let corners = CornerRadius::same(t.radius("control").nw.saturating_sub(2));
+                ui.painter().add(t.shadow("elevation-raised").as_shape(cell, corners));
+                ui.painter().rect_filled(cell, corners, t.color("card"));
+            } else if hit.hovered() {
+                ui.painter().rect_filled(cell, t.radius("control"), t.color("hover"));
+            }
+            let ink = if chosen || hit.hovered() {
+                t.color("foreground")
+            } else {
+                t.color("muted-foreground")
+            };
+            crate::icons::paint(ui.painter(), cell.center(), icon, 14.0, ink);
+            super::focus_ring(ui.painter(), t, cell, t.radius("control"), &hit);
+            if hit.clicked() {
+                self.state.grid = grid;
+            }
+        }
+    }
+
+    /// The rows as cards in a grid, 16 in and 16 apart, as many across as fit at their least width,
+    /// stretched to fill the row: each card drawn by the table's `card`, a press on it opening its
+    /// row, and the row's actions behind a small button at its top corner.
+    fn card_grid(&mut self, ui: &mut Ui, t: &crate::Tokens, order: &[usize], out: &mut TableOutput) {
+        let Some(cards) = self.cards.take() else { return };
+        const GAP: f32 = 16.0;
+        let room = ui.available_width() - 2.0 * GAP;
+        let across = (((room + GAP) / (cards.min + GAP)).floor() as usize).max(1);
+        let width = (room - GAP * (across - 1) as f32) / across as f32;
+        // a stretched table's grid scrolls in the room left, another's in its height
+        let most = if self.stretch {
+            ui.available_height()
+        } else {
+            self.height
+        };
+        egui::ScrollArea::vertical()
+            .id_salt(self.id.with("grid"))
+            .auto_shrink([false, true])
+            .max_height(most)
+            .show(ui, |ui| {
+                ui.add_space(GAP);
+                for line in order.chunks(across) {
+                    // a line as tall as its tallest card, `height` at least
+                    let row = Rect::from_min_size(ui.cursor().min, vec2(ui.available_width(), cards.height));
+                    let mut tallest = cards.height;
+                    for (at, &index) in line.iter().enumerate() {
+                        let place = Rect::from_min_size(
+                            pos2(row.left() + GAP + at as f32 * (width + GAP), row.top()),
+                            vec2(width, cards.height),
+                        );
+                        let mut child = ui.new_child(
+                            egui::UiBuilder::new()
+                                .max_rect(place)
+                                .id_salt(("card", index))
+                                .layout(egui::Layout::top_down(egui::Align::Min)),
+                        );
+                        let pressed = (cards.card)(&mut child, index, width);
+                        tallest = tallest.max(pressed.rect.height());
+                        if pressed.clicked() {
+                            self.state.opened = Some(index);
+                        }
+                        // the row's actions at the card's top corner, 10 in
+                        if let Some(actions) = &self.actions {
+                            let items = actions(index);
+                            if !items.is_empty() {
+                                let button = Rect::from_min_size(
+                                    pos2(place.right() - 10.0 - 20.0, place.top() + 10.0),
+                                    vec2(20.0, 20.0),
+                                );
+                                let trigger = ui.interact(button, self.id.with(("card-menu", index)), Sense::click());
+                                trigger.widget_info(|| {
+                                    egui::WidgetInfo::labeled(egui::Role::Button, true, self.words.actions.as_str())
+                                });
+                                let ground = if trigger.hovered() {
+                                    t.color("hover")
+                                } else {
+                                    t.color("card")
+                                };
+                                ui.painter().rect_filled(button, t.radius("control"), ground);
+                                ui.painter().rect_stroke(
+                                    button,
+                                    t.radius("control"),
+                                    Stroke::new(1.0, t.color("border")),
+                                    egui::StrokeKind::Inside,
+                                );
+                                crate::icons::paint(
+                                    ui.painter(),
+                                    button.center(),
+                                    Icon::Ellipsis,
+                                    12.0,
+                                    t.color("foreground"),
+                                );
+                                if let Some(chosen) = DropdownMenu::new(&items).show(&trigger) {
+                                    out.action = Some((index, chosen));
+                                }
+                            }
+                        }
+                    }
+                    ui.allocate_exact_size(vec2(row.width(), tallest), Sense::hover());
+                    ui.add_space(GAP);
+                }
+            });
+        self.cards = Some(cards);
     }
 
     /// The rows as labeled cards (`StackLayout::Labeled`), 16 in and 16 apart: each card 12 across
@@ -1704,7 +1886,7 @@ impl<'a> DataTable<'a> {
                 ui.set_width(width - 2.0);
                 if self.stretch {
                     // the frame to the room's bottom, less its edge and the footer's line
-                    ui.set_min_height(room - 2.0 - if self.footer { 26.0 } else { 0.0 });
+                    ui.set_min_height((room - 2.0 - if self.footer { 26.0 } else { 0.0 }).max(0.0));
                 }
                 ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
                 if self.bar {
@@ -1715,6 +1897,11 @@ impl<'a> DataTable<'a> {
                     && let Some(empty) = self.empty.take()
                 {
                     empty(ui);
+                    return;
+                }
+                // the cards' grid in place of the rows, while it is chosen
+                if self.gridded() && !self.rows.is_empty() {
+                    self.card_grid(ui, &t, &order, &mut out);
                     return;
                 }
                 // labeled cards in place of the rows
@@ -2093,7 +2280,7 @@ impl<'a> DataTable<'a> {
                         if self.chevron && !stacked {
                             icons::paint(
                                 ui.painter(),
-                                pos2(rect.right() - pad - 16.0, rect.center().y),
+                                pos2(rect.right() - self.end_pad(pad) - 16.0, rect.center().y),
                                 Icon::ChevronRight,
                                 16.0,
                                 t.color("faint"),
@@ -2239,6 +2426,9 @@ impl<'a> DataTable<'a> {
                             // stacked, the menu stands at the row's end on the title's line, a 24 box
                             let middle = if stacked {
                                 pos2(rect.right() - pad - 12.0, rect.top() + 8.0 + 12.0)
+                            } else if self.chevron {
+                                // before the chevron, 22 from its middle, as the web's end column
+                                pos2(rect.right() - self.end_pad(pad) - 16.0 - 22.0, rect.center().y)
                             } else {
                                 place.center()
                             };
@@ -2248,13 +2438,23 @@ impl<'a> DataTable<'a> {
                             if trigger.hovered() {
                                 ui.painter().rect_filled(button, t.radius("control"), t.color("hover"));
                             }
-                            icons::paint(
-                                ui.painter(),
-                                button.center(),
-                                Icon::Ellipsis,
-                                16.0,
-                                t.color("muted-foreground"),
-                            );
+                            // a menu shown on hover stands out of sight until its row is pointed
+                            // at, has the focus, or is open
+                            let menu_open =
+                                egui::Popup::is_id_open(ui.ctx(), egui::Popup::default_response_id(&trigger));
+                            let seen = !self.actions_hover
+                                || ui.rect_contains_pointer(rect)
+                                || trigger.has_focus()
+                                || menu_open;
+                            if seen {
+                                icons::paint(
+                                    ui.painter(),
+                                    button.center(),
+                                    Icon::Ellipsis,
+                                    16.0,
+                                    t.color("muted-foreground"),
+                                );
+                            }
                             let items = actions(index);
                             if let Some(chosen) = DropdownMenu::new(&items).show(&trigger) {
                                 out.action = Some((index, chosen));

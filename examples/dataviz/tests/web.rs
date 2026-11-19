@@ -13,7 +13,6 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::OnceLock;
 
-use dataviz::chart_data::Cell;
 use dataviz::model::{
     Aggregate, ColumnType, DataRow, Dataset, DatasetSource, DateBin, Decimals, NumberStyle, PALETTES, Preferences,
     SortOrder, THEME_TOKENS, ViewKind, ViewSpec, counted_as, operator_from_id, operator_id, order_boards, palette_of,
@@ -26,6 +25,7 @@ use dataviz::themes::CARRIED;
 use dataviz::views::{VIEWS, view_label};
 use serde_json::{Value, json};
 use sokkel_egui::Filter;
+use sokkel_egui_charts::data::Cell;
 
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")

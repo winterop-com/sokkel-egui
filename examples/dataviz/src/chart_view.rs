@@ -4,9 +4,9 @@
 
 use serde::Serialize;
 
-use crate::chart_data::{Cell, Row};
 use crate::model::{Aggregate, Preferences, ViewKind, ViewSpec, palette_of};
 use crate::shape::Shaped;
+use sokkel_egui_charts::data::{Cell, Row};
 
 /// The chart kind each charted view is drawn by.
 pub fn chart_kind(view: ViewKind) -> Option<&'static str> {
