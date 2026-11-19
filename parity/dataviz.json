@@ -1,0 +1,101 @@
+{
+    "example": "examples/dataviz/web/src",
+    "ported": {
+        "commit": "c95b8911",
+        "files": {
+            "App.tsx": "bc8329f9c73dd8b46a857ae5305f524a2f62e210",
+            "ChartView.tsx": "1f8a09fd2dabe5c54b8c9bd0fd76a3f2c44e8f2c",
+            "ImportDialog.tsx": "34d06dba2d8d15a55f98044dde798c60e98ea988",
+            "Visualizer.tsx": "a0e54c5ec11143dd821031dcfbe8f990607aacc1",
+            "app.css": "7863eb23f4dded094c0bdf076ae94a3adc86fedc",
+            "backend.ts": "d6d729e4316ff5fbbd9d85c557322d5a656203b5",
+            "dialogs.tsx": "c126a0c68b2379749e5ad57ec279da0a5e21cf3c",
+            "inputs.tsx": "7f4489c026dd66484609a37485c7d0a147525fd6",
+            "main.tsx": "8e1586e9aecb2296bd5ea1219b340e93205a88e6",
+            "model.ts": "c748839ed901ec018ab4612280ba24b5c1492dc6",
+            "pages/Board.tsx": "80cc2e97462bf4edf8e9829fe4dcc5867a9e3b92",
+            "pages/Boards.tsx": "c4a795392f54f0a020b29670384b4160ddd16868",
+            "pages/Builder.tsx": "471b35c6d0097d8b8e262b09ea26a5a1188de47f",
+            "pages/Charts.tsx": "caef3a756e45bef8c40a3ce2261c0159b19f5eaa",
+            "pages/Dataset.tsx": "b14b343053e8c3d14532f0349618871eb415dd76",
+            "pages/Datasets.tsx": "8611e6cc5d797bd8bcaddf634fa70f10f4f32b5e",
+            "pages/Settings.tsx": "e42c59fd15409c3d571d7f7863a72eb01dc00103",
+            "pages/Shared.tsx": "b72af9610b846e1b98a4722e25b87805f89eb933",
+            "parse.ts": "4f8294c0e56f3c4581a7d7dc0fbe1d01d1878028",
+            "seed.ts": "f074a8a8767d94aaf474e144fbc59ebf1522806c",
+            "shape.ts": "a3f558caf94b0ba49d53baffdfab625cfafcedb4",
+            "share.ts": "60a6a11bc8ad0bbf64ad5fc5d56d3c074e4b3038",
+            "themes.ts": "5f98ff7e6680d7dd2807416aff0c7de32b2852b1",
+            "views.ts": "f0b7c866fa3c0754849b606cba1789fae38ef3e8"
+        }
+    },
+    "parts": {},
+    "screens": [
+        {
+            "name": "dataviz_datasets",
+            "route": "datasets",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dataviz_dataset",
+            "route": "datasets/ds-rainfall",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dataviz_build",
+            "route": "build",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dataviz_charts",
+            "route": "charts",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dataviz_chart",
+            "route": "charts/ch-rain-map",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dataviz_boards",
+            "route": "boards",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dataviz_board",
+            "route": "boards/bd-weather",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        },
+        {
+            "name": "dataviz_settings",
+            "route": "settings",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            }
+        }
+    ],
+    "today": "2026-11-18",
+    "shot": "c95b8911dd02bf7925e96b62c93fc8a934d57800"
+}
