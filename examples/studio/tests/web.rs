@@ -61,9 +61,8 @@ fn web() -> &'static Value {
                     written.push(b'\n');
                     std::fs::write(&kept_path, written).expect("the web's answer is kept");
                 } else {
-                    assert_eq!(
-                        kept.as_ref(),
-                        Some(&fresh),
+                    assert!(
+                        kept.as_ref().is_some_and(|kept| alike(kept, &fresh)),
                         "web/data.json is not what the web gives now; run with STUDIO_WEB_KEEP=1 to keep it"
                     );
                 }
@@ -551,4 +550,23 @@ fn runs_go_as_the_web_runs_them() {
             .collect::<Vec<_>>(),
     });
     same(&ours, web(), &["looks", "refusals", "afterRuns"]);
+}
+
+/// Whether the kept answer is still the web's. JavaScriptCore may round a `Math` function's result
+/// one unit in the last place differently once its JIT has optimized the code, which happens
+/// sooner on a busy machine, so a number may move by a few units in its last place between two
+/// runs of the same web code; everything else must be the same. The Rust is held to the kept
+/// answer exactly.
+fn alike(kept: &Value, fresh: &Value) -> bool {
+    match (kept, fresh) {
+        (Value::Number(a), Value::Number(b)) => match (a.as_f64(), b.as_f64()) {
+            (Some(a), Some(b)) => a == b || (a - b).abs() <= a.abs().max(b.abs()) * 8.0 * f64::EPSILON,
+            _ => a == b,
+        },
+        (Value::Array(a), Value::Array(b)) => a.len() == b.len() && a.iter().zip(b).all(|(a, b)| alike(a, b)),
+        (Value::Object(a), Value::Object(b)) => {
+            a.len() == b.len() && a.iter().all(|(key, a)| b.get(key).is_some_and(|b| alike(a, b)))
+        }
+        _ => kept == fresh,
+    }
 }
