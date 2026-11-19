@@ -11,17 +11,30 @@
 //! `d2:validatePattern` tests a value with.
 //!
 //! `tests/web.rs` holds each against the web's own modules, run under bun.
+//!
+//! The UI over it is the web's one to one: the frame with the rail, the top bar with the server
+//! menu, the status line, the palette, Settings and the questions (`workbench`), the list pages and
+//! the organization units (`screens`), an indicator and a validation rule (`detail`), the program's
+//! rules beside its form (`program_page`), and an expression in its field, colored, checked and
+//! completed by the dhis2 add-on's languages (`editor`). `tests/screens.rs` draws its screens.
 
 pub mod app;
 pub mod backend;
 pub mod check;
+pub mod detail;
+pub mod editor;
 pub mod expression;
 pub mod js;
 pub mod metadata;
 pub mod pages;
 pub mod pattern;
 pub mod program;
+pub mod program_page;
+pub mod screens;
 pub mod themes;
 pub mod ui;
 pub mod values;
 pub mod versions;
+pub mod workbench;
+
+pub use workbench::WorkbenchApp;

@@ -95,11 +95,24 @@ impl<'a> Section<'a> {
                         TextRole::Help.font(&t),
                     )
                 });
+                // the description keeps clear of the actions at the head's end, 12 before them, as
+                // the web's head row lays its words beside them; their width as last drawn
+                let tools_id = ui.scope_id().with("section-actions-width");
+                let tools_width: f32 = if self.actions.is_some() {
+                    ui.data(|d| d.get_temp(tools_id)).unwrap_or(0.0)
+                } else {
+                    0.0
+                };
+                let words_width = if tools_width > 0.0 {
+                    (inner - tools_width - 12.0).max(inner / 2.0)
+                } else {
+                    inner
+                };
                 let description = self.description.as_ref().map(|d| {
                     WidgetText::from(TextRole::Help.rich(&t, d)).into_galley(
                         ui,
                         Some(TextWrapMode::Wrap),
-                        inner.max(1.0),
+                        words_width.max(1.0),
                         TextRole::Help.font(&t),
                     )
                 });
@@ -158,6 +171,11 @@ impl<'a> Section<'a> {
                     );
                     tools.spacing_mut().item_spacing.x = 8.0;
                     actions(&mut tools);
+                    let drawn = tools.min_rect().width();
+                    if (drawn - tools_width).abs() > 0.5 {
+                        ui.data_mut(|d| d.insert_temp(tools_id, drawn));
+                        ui.ctx().request_repaint();
+                    }
                 }
                 // the body, padded unless flush
                 let margin = if self.flush { 0 } else { pad as i8 };

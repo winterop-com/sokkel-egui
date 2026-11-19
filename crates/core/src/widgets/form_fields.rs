@@ -152,6 +152,7 @@ pub struct YesNoField<'a> {
     description: Option<String>,
     help: Option<String>,
     error: Option<String>,
+    issues: Vec<(super::IssueTone, String)>,
     words: YesNoFieldWords,
 }
 
@@ -165,6 +166,7 @@ impl<'a> YesNoField<'a> {
             description: None,
             help: None,
             error: None,
+            issues: Vec::new(),
             words: YesNoFieldWords::default(),
         }
     }
@@ -194,6 +196,12 @@ impl<'a> YesNoField<'a> {
         self
     }
 
+    /// What is wrong with the answer, each in its tone, on the field's issue mark.
+    pub fn issues(mut self, issues: impl IntoIterator<Item = (super::IssueTone, String)>) -> Self {
+        self.issues = issues.into_iter().collect();
+        self
+    }
+
     pub fn words(mut self, words: YesNoFieldWords) -> Self {
         self.words = words;
         self
@@ -205,7 +213,8 @@ impl<'a> YesNoField<'a> {
         let mut field = Field::new(&self.label)
             .required(self.required)
             .help_if(self.help.clone())
-            .error(self.error.clone());
+            .error(self.error.clone())
+            .issues(self.issues.clone());
         if let Some(description) = &self.description {
             field = field.description(description);
         }
@@ -732,6 +741,7 @@ pub struct PeriodPicker<'a> {
     kind: crate::periods::PeriodType,
     value: &'a mut Option<String>,
     today: crate::Day,
+    width: Option<f32>,
     words: PeriodPickerWords,
 }
 
@@ -747,8 +757,15 @@ impl<'a> PeriodPicker<'a> {
             kind,
             value,
             today,
+            width: None,
             words: PeriodPickerWords::default(),
         }
+    }
+
+    /// The picker this wide rather than across its room, as one among a section's actions.
+    pub fn width(mut self, width: f32) -> Self {
+        self.width = Some(width);
+        self
     }
 
     pub fn words(mut self, words: PeriodPickerWords) -> Self {
@@ -785,9 +802,9 @@ impl<'a> PeriodPicker<'a> {
                 .unwrap_or(usize::MAX)
         };
         let mut issue = None;
-        ui.vertical(|ui| {
+        let width = self.width.unwrap_or_else(|| ui.available_width());
+        ui.allocate_ui_with_layout(egui::vec2(width, 0.0), egui::Layout::top_down(egui::Align::Min), |ui| {
             ui.spacing_mut().item_spacing.y = 6.0;
-            let width = ui.available_width();
             let picked = ui.add(
                 crate::Select::new(&mut at, labels, &self.words.placeholder)
                     .codes(codes)

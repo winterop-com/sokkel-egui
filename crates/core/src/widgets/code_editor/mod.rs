@@ -28,6 +28,8 @@ use egui::{
 
 use crate::{Icon, Tokens, icons, tokens};
 
+pub use highlight::{Kind as CodeTag, Token as CodeToken};
+
 use document::ReadDocument;
 use edit::{Fold, Offsets, WikiLink};
 use highlight::{Kind, Token};
@@ -45,6 +47,9 @@ pub enum CodeLanguage {
     Jinja,
     #[default]
     Text,
+    /// A language a plugin installed by `register_plugins` gives, by its name; colored as text
+    /// until one of that name is installed.
+    Plugin(&'static str),
 }
 
 impl CodeLanguage {
@@ -59,6 +64,7 @@ impl CodeLanguage {
             Self::Shell => "shell",
             Self::Jinja => "Jinja",
             Self::Text => "text",
+            Self::Plugin(name) => name,
         }
     }
 }
@@ -265,6 +271,54 @@ const HOVER_WAIT: f32 = 0.3;
 /// What a word is, as the app says it.
 type Describe<'a> = Box<dyn Fn(&str) -> Option<String> + 'a>;
 
+/// The words offered for the word being typed and what is before it on its line.
+type Complete<'a> = Box<dyn Fn(&str, &str) -> Vec<CodeCompletion> + 'a>;
+
+/// How a document is read: its language, and the plugin's reading when the language is one.
+#[derive(Clone)]
+struct Reading {
+    language: CodeLanguage,
+    plugin: Option<crate::plugins::Highlight>,
+    /// How many times plugins were installed, so a language installed again reads anew.
+    generation: u64,
+}
+
+impl Reading {
+    fn of(ctx: &egui::Context, language: CodeLanguage) -> Self {
+        let plugin = match language {
+            CodeLanguage::Plugin(name) => crate::plugins::plugin_language(ctx, name).map(|one| one.highlight),
+            _ => None,
+        };
+        Self {
+            language,
+            plugin,
+            generation: crate::plugins::generation(ctx),
+        }
+    }
+
+    fn tokens(&self, text: &str) -> Vec<Token> {
+        match &self.plugin {
+            Some(read) => {
+                // a plugin's tokens kept in order, inside the text and apart
+                let mut out: Vec<Token> = Vec::new();
+                for one in read(text) {
+                    let from = one.from.max(out.last().map_or(0, |last| last.to));
+                    let to = one.to.min(text.len());
+                    if to > from && text.is_char_boundary(from) && text.is_char_boundary(to) {
+                        out.push(Token {
+                            from,
+                            to,
+                            kind: one.kind,
+                        });
+                    }
+                }
+                out
+            }
+            None => highlight::tokens(self.language, text),
+        }
+    }
+}
+
 /// The code editor; see the module's documentation.
 #[must_use = "show it with `.show(ui)`"]
 pub struct CodeEditor<'a> {
@@ -281,6 +335,7 @@ pub struct CodeEditor<'a> {
     placeholder: Option<String>,
     marks: &'a [CodeMark],
     completions: &'a [CodeCompletion],
+    complete: Option<Complete<'a>>,
     hover: Option<Describe<'a>>,
     links: Option<&'a [String]>,
     schema: Option<&'a serde_json::Value>,
@@ -311,6 +366,7 @@ impl<'a> CodeEditor<'a> {
             placeholder: None,
             marks: &[],
             completions: &[],
+            complete: None,
             hover: None,
             links: None,
             schema: None,
@@ -385,6 +441,14 @@ impl<'a> CodeEditor<'a> {
     /// language's or the schema's of the same label.
     pub fn completions(mut self, words: &'a [CodeCompletion]) -> Self {
         self.completions = words;
+        self
+    }
+
+    /// The words offered as they are typed, worked out for the word being typed (letters, digits,
+    /// `_`, a leading `$` or `@`) and what stands before it on its line, as the web's completion
+    /// source: inside `#{` one list, after a dot another. Given, it stands in for `completions`.
+    pub fn complete(mut self, source: impl Fn(&str, &str) -> Vec<CodeCompletion> + 'a) -> Self {
+        self.complete = Some(Box::new(source));
         self
     }
 
@@ -545,12 +609,13 @@ fn hash_of(parts: impl Hash) -> u64 {
     h.finish()
 }
 
-fn analyse(text: &str, language: CodeLanguage, cache: &mut Analysis) {
-    let key = hash_of((text, language));
+fn analyse(text: &str, reading: &Reading, cache: &mut Analysis) {
+    let language = reading.language;
+    let key = hash_of((text, language, reading.generation));
     if cache.key == key && cache.key != 0 {
         return;
     }
-    let tokens = highlight::tokens(language, text);
+    let tokens = reading.tokens(text);
     let large = text.len() > LARGE_DOCUMENT;
     *cache = Analysis {
         key,
@@ -815,6 +880,7 @@ fn layout(text: &str, analysis: &Analysis, hidden: &[(usize, usize)], look: &Loo
 struct Sources<'s> {
     language: CodeLanguage,
     completions: &'s [CodeCompletion],
+    complete: Option<&'s Complete<'s>>,
     links: Option<&'s [String]>,
     schema: Option<&'s serde_json::Value>,
     words: &'s CodeEditorWords,
@@ -872,9 +938,18 @@ fn offers(text: &str, caret: usize, explicit: bool, sources: &Sources, tokens: &
     }
     let after_dot = before[..from].ends_with('.');
     let mut results: Vec<(usize, Vec<Item>)> = Vec::new();
-    if !sources.completions.is_empty() && (from < caret || explicit || after_dot) {
-        let items = sources
-            .completions
+    let worked: Vec<CodeCompletion>;
+    let completions = match sources.complete {
+        Some(complete) if from < caret || explicit || after_dot => {
+            let line_start = before[..from].rfind('\n').map_or(0, |at| at + 1);
+            worked = complete(&before[from..], &before[line_start..from]);
+            worked.as_slice()
+        }
+        Some(_) => &[],
+        None => sources.completions,
+    };
+    if !completions.is_empty() && (from < caret || explicit || after_dot) {
+        let items = completions
             .iter()
             .map(|c| app_item(c, c.apply.clone().unwrap_or_else(|| c.label.clone())))
             .collect();
@@ -982,7 +1057,7 @@ fn offers(text: &str, caret: usize, explicit: bool, sources: &Sources, tokens: &
         }
     }
     let (first_from, _) = *results.first()?;
-    let own: Vec<String> = sources.completions.iter().map(|c| c.label.clone()).collect();
+    let own: Vec<String> = completions.iter().map(|c| c.label.clone()).collect();
     let mut items: Vec<Item> = Vec::new();
     for (i, (at, list)) in results.into_iter().enumerate() {
         if at != first_from {
@@ -1057,11 +1132,12 @@ impl CodeEditor<'_> {
         let char_width = ui.fonts_mut(|f| f.glyph_width(&regular, '0'));
 
         let focused = ctx.memory(|m| m.has_focus(text_id));
+        let reading = Reading::of(&ctx, self.language);
         let mut run = false;
         let mut saved = false;
         let mut explicit = false;
 
-        analyse(self.text, self.language, &mut st.analysis);
+        analyse(self.text, &reading, &mut st.analysis);
 
         // --- keys, before the text sees them
         if focused {
@@ -1192,7 +1268,7 @@ impl CodeEditor<'_> {
                 }
             }
             if folding {
-                analyse(self.text, self.language, &mut st.analysis);
+                analyse(self.text, &reading, &mut st.analysis);
                 let caret_line = selection_of(&ctx, text_id, self.text)
                     .map(|(_, h)| Offsets::new(self.text).line_of(h))
                     .unwrap_or(0);
@@ -1272,7 +1348,7 @@ impl CodeEditor<'_> {
         }
 
         // --- the gutters
-        analyse(self.text, self.language, &mut st.analysis);
+        analyse(self.text, &reading, &mut st.analysis);
         st.folded.retain(|l| st.analysis.folds.iter().any(|f| f.line == *l));
         if !folding {
             st.folded.clear();
@@ -1340,11 +1416,10 @@ impl CodeEditor<'_> {
             wrap: self.wrap && !one_line,
         };
         let folded_lines = st.folded.clone();
-        let language = self.language;
         let mut cache = st.analysis.clone();
         let mut layouter = |ui: &Ui, buffer: &dyn egui::TextBuffer, wrap_width: f32| {
             let text = buffer.as_str();
-            analyse(text, language, &mut cache);
+            analyse(text, &reading, &mut cache);
             let offsets = Offsets::new(text);
             let hidden: Vec<(usize, usize)> = cache
                 .folds
@@ -1942,6 +2017,7 @@ impl CodeEditor<'_> {
             let sources = Sources {
                 language: self.language,
                 completions: self.completions,
+                complete: self.complete.as_ref(),
                 links: if following { self.links } else { None },
                 schema: if schema_language { self.schema } else { None },
                 words: &self.words,

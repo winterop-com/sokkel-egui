@@ -55,7 +55,7 @@ mod panes;
 mod person;
 mod problem;
 mod run_timeline;
-mod schema_form;
+pub(crate) mod schema_form;
 mod search;
 mod search_results;
 mod section;
@@ -111,7 +111,7 @@ pub use clip_timeline::{
 };
 pub use code_editor::{
     ActiveLine, CodeCompletion, CodeEditor, CodeEditorResponse, CodeEditorWords, CodeLanguage, CodeMark, CodeProblem,
-    CodeSize, CodeVariant, LARGE_DOCUMENT, MarkTone,
+    CodeSize, CodeTag, CodeToken, CodeVariant, LARGE_DOCUMENT, MarkTone,
 };
 pub use commands::{AppearanceCommandWords, appearance_commands, place_commands, place_of, run_appearance_command};
 pub use comment_thread::{
@@ -136,8 +136,8 @@ pub use empty::Empty;
 pub use entry_grid::{EntryColumn, EntryEdit, EntryGrid, EntryGridWords, EntryRow};
 pub(crate) use fields::search_field;
 pub use fields::{
-    DueState, DueText, Field, FormBar, QuickAdd, SearchField, SwitchField, due_state, field, form_bar, pane_toolbar,
-    toolbar,
+    DueState, DueText, Field, FieldWords, FormBar, QuickAdd, SaveBar, SaveBarResponse, SaveBarWords, SearchField,
+    SwitchField, due_state, field, form_bar, pane_toolbar, toolbar,
 };
 pub use file_preview::{FileKind, FilePreview, FilePreviewWords, format_size, parse_csv};
 pub use filters::{
@@ -219,7 +219,7 @@ pub use stat::{KpiRow, Stat, StatTiles, sparkline};
 pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_compact, format_value, threshold_color};
 pub use switch::Switch;
 pub use table::{
-    Cell, CellEdit, Column, DataTable, RowActions, RowCard, StackLayout, StackPlace, TableOutput, TableState,
+    Cell, CellEdit, CellRun, Column, DataTable, RowActions, RowCard, StackLayout, StackPlace, TableOutput, TableState,
     TableVariant, TableWords, Validate,
 };
 pub use table_edit::{EditWords, Editor};

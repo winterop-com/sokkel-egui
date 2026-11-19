@@ -3,9 +3,11 @@
 
 use super::CodeLanguage;
 
-/// What a token is, as CodeMirror's highlight tags group them.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Kind {
+/// What a token is, as CodeMirror's highlight tags group them: each drawn in its `code-*` color,
+/// as sokkel-ui's `HIGHLIGHT` draws them. A plugin's language names its tokens by these
+/// (`CodeTag`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Kind {
     Keyword,
     Operator,
     Punctuation,
@@ -39,7 +41,7 @@ pub(crate) enum Kind {
 
 impl Kind {
     /// The color token the kind is drawn in; none for the text's own ink.
-    pub(crate) fn ink(self) -> Option<&'static str> {
+    pub fn ink(self) -> Option<&'static str> {
         Some(match self {
             Kind::Keyword => "code-keyword",
             Kind::Operator => "code-operator",
@@ -73,9 +75,9 @@ impl Kind {
     }
 }
 
-/// One token: a byte range and its kind.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct Token {
+/// One token: a byte range and its kind, as a plugin's language gives them too (`CodeToken`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct Token {
     pub from: usize,
     pub to: usize,
     pub kind: Kind,
@@ -85,6 +87,7 @@ pub(crate) struct Token {
 pub(crate) fn tokens(language: CodeLanguage, text: &str) -> Vec<Token> {
     let mut out = Out::default();
     match language {
+        CodeLanguage::Plugin(_) => {}
         CodeLanguage::Json => json(text, &mut out),
         CodeLanguage::Yaml => yaml(text, &mut out),
         CodeLanguage::Jq => jq(text, &mut out),

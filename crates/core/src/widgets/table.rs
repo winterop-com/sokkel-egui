@@ -240,6 +240,9 @@ pub enum Cell {
         text: String,
         color: egui::Color32,
     },
+    /// Words in runs, each in its own ink token and face, as a cell of spans: a muted formula with
+    /// its joining word in the faint ink, or a rule with its operator in the code face.
+    Runs(Vec<CellRun>),
     /// A figure written as `text` and sorted by `value`, as a column's `sortValue` sorts by the
     /// number rather than the words: `144 ms`.
     Number {
@@ -247,6 +250,52 @@ pub enum Cell {
         text: String,
     },
     Empty,
+}
+
+/// One run of a `Cell::Runs`: its words, the color token they are drawn in, and whether in the code
+/// face.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CellRun {
+    pub text: String,
+    pub ink: &'static str,
+    pub mono: bool,
+}
+
+impl CellRun {
+    pub fn new(text: impl Into<String>, ink: &'static str) -> Self {
+        Self {
+            text: text.into(),
+            ink,
+            mono: false,
+        }
+    }
+
+    /// In the code face.
+    pub fn mono(mut self) -> Self {
+        self.mono = true;
+        self
+    }
+}
+
+/// The runs as one text, each in its ink and face, at `role`'s size.
+fn runs_job(t: &crate::Tokens, runs: &[CellRun], role: TextRole, style: &egui::Style) -> egui::text::LayoutJob {
+    let mut job = egui::text::LayoutJob::default();
+    for run in runs {
+        let rich = if run.mono {
+            egui::RichText::new(&run.text)
+                .font(egui::FontId::monospace(role.font(t).size))
+                .line_height(Some(role.line_height(t)))
+        } else {
+            role.rich(t, &run.text)
+        };
+        rich.color(t.color(run.ink))
+            .append_to(&mut job, style, egui::FontSelection::Default, egui::Align::Center);
+    }
+    job
+}
+
+fn runs_text(runs: &[CellRun]) -> String {
+    runs.iter().map(|run| run.text.as_str()).collect()
 }
 
 impl Cell {
@@ -275,6 +324,7 @@ impl Cell {
             Cell::Tags(tags) | Cell::OutlineTags(tags) => tags.join(" "),
             Cell::Relative { at, now } => super::relative_time(at - now),
             Cell::Clock { clock, .. } => clock.clone(),
+            Cell::Runs(runs) => runs_text(runs),
             Cell::Check(_) | Cell::Switch { .. } | Cell::Button { .. } | Cell::Trend(..) | Cell::Empty => String::new(),
         }
     }
@@ -309,6 +359,7 @@ impl Cell {
             // read back keeps every digit
             Cell::Number { value, .. } => format!("{:024.6}", value + 1e12),
             Cell::Marked { text, .. } | Cell::Swatch { text, .. } => text.clone(),
+            Cell::Runs(runs) => runs_text(runs),
             Cell::Empty => String::new(),
         }
     }
@@ -2786,6 +2837,20 @@ fn paint_cell(
             t.color("muted-foreground"),
         ),
         Cell::Muted(label) => text(ui, TextRole::Body.rich(t, label), t.color("muted-foreground")),
+        Cell::Runs(runs) => {
+            let job = runs_job(t, runs, TextRole::Body, ui.style());
+            let galley = WidgetText::from(job).into_galley(ui, Some(mode), room, TextRole::Body.font(t));
+            let x = if numeric {
+                rect.right() - galley.size().x
+            } else {
+                rect.left()
+            };
+            ui.painter().galley(
+                pos2(x, rect.center().y - galley.size().y / 2.0),
+                galley,
+                t.color("foreground"),
+            );
+        }
         Cell::Dot(color, _) => {
             ui.painter()
                 .circle_filled(pos2(rect.left() + 4.0, rect.center().y), 4.0, t.color(color));
@@ -3133,6 +3198,7 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Relative { .. } => text(ui, TextRole::Help.rich(t, cell.draft()), quiet, at.x, room),
         Cell::Struck(label) => text(ui, TextRole::Help.rich(t, label).strikethrough(), quiet, at.x, room),
         Cell::Muted(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
+        Cell::Runs(runs) => text(ui, TextRole::Help.rich(t, runs_text(runs)), quiet, at.x, room),
         Cell::Dot(color, _) => {
             ui.painter().circle_filled(pos2(at.x + 4.0, at.y), 4.0, t.color(color));
             8.0
@@ -3267,6 +3333,12 @@ fn cell_height(ui: &Ui, t: &crate::Tokens, cell: &Cell, room: f32) -> f32 {
         | Cell::Number { text: label, .. } => lay(TextRole::Body.rich(t, label), TextRole::Body),
         Cell::Mono(label) | Cell::MutedCode(label) => lay(code_rich(t, label, TextRole::Help), TextRole::Body),
         Cell::Code(label) => lay(code_rich(t, label, TextRole::Body), TextRole::Body),
+        Cell::Runs(runs) => {
+            WidgetText::from(runs_job(t, runs, TextRole::Body, ui.style()))
+                .into_galley(ui, Some(TextWrapMode::Wrap), room, TextRole::Body.font(t))
+                .size()
+                .y
+        }
         Cell::Lines { title, detail, .. } => {
             lay(TextRole::Body.rich(t, title), TextRole::Body) + lay(TextRole::Help.rich(t, detail), TextRole::Help)
         }

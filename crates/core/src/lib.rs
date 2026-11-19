@@ -17,6 +17,7 @@ mod download;
 pub mod icons;
 pub mod numbers;
 pub mod periods;
+pub mod plugins;
 pub mod reactions;
 pub mod text;
 pub mod tokens;

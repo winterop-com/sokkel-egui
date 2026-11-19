@@ -74,6 +74,44 @@ pub fn field(state: &mut State, ui: &mut Ui) {
     ui.add(TextField::new("Schedule", &mut state.schedule).error(invalid.then_some("There is no hour 25.")));
 }
 
+pub fn field_issues(_: &mut State, ui: &mut Ui) {
+    ui.set_max_width(448.0);
+    section(ui, "A warning on a yes or no");
+    let mut treated = Some(false);
+    sokkel_egui::YesNoField::new("Water treated", &mut treated)
+        .issues([(
+            sokkel_egui::IssueTone::Warning,
+            "Untreated river water: say why in Reason not treated.".to_owned(),
+        )])
+        .show(ui);
+    section(ui, "An error and a warning");
+    let mut reason = String::new();
+    sokkel_egui::Field::new("Reason not treated")
+        .issues([
+            (
+                sokkel_egui::IssueTone::Critical,
+                "Say why the water was not treated.".to_owned(),
+            ),
+            (
+                sokkel_egui::IssueTone::Warning,
+                "Name the site that was asked.".to_owned(),
+            ),
+        ])
+        .show(ui, |ui| {
+            ui.add(sokkel_egui::Input::new(&mut reason).name("Reason not treated"));
+        });
+    section(ui, "A warning on a number");
+    let mut failed = Some(4.0);
+    ui.add(
+        sokkel_egui::NumberField::optional("story-samples-failed", "Samples failed", &mut failed)
+            .integer(true)
+            .issues([(
+                sokkel_egui::IssueTone::Warning,
+                "More samples failed than the target allows.".to_owned(),
+            )]),
+    );
+}
+
 pub fn switch(state: &mut State, ui: &mut Ui) {
     let t = tokens(ui.ctx());
     section(ui, "On and off");

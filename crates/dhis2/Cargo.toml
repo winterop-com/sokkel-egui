@@ -1,0 +1,10 @@
+[package]
+name = "sokkel-egui-dhis2"
+description = "DHIS2's expression languages, for indicators, validation rules, predictors, program rules and program indicators, for sokkel-egui's code editor."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-egui.workspace = true

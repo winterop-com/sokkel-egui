@@ -947,16 +947,18 @@ impl<'a> TopBar<'a> {
                     } else {
                         (TextRole::Body, t.color("muted-foreground"))
                     };
-                    let rich = role.rich(&t, *crumb).color(ink);
-                    let rich = if self.codes.contains(&i) {
+                    let plain = role.rich(&t, *crumb);
+                    let plain = if self.codes.contains(&i) {
                         let spec = t.text(role.key());
-                        rich.font(crate::mono_font(ui.ctx(), crate::mono_size(&t, spec.size), spec.weight))
+                        plain.font(crate::mono_font(ui.ctx(), crate::mono_size(&t, spec.size), spec.weight))
                     } else {
-                        rich
+                        plain
                     };
+                    let rich = plain.clone().color(ink);
                     if self.linked && i != last {
-                        // drawn in its own ink, which the pointer over it changes
-                        let galley = WidgetText::from(role.rich(&t, *crumb)).into_galley(
+                        // drawn in its own ink, which the pointer over it changes, in the code face
+                        // when it is a code
+                        let galley = WidgetText::from(plain).into_galley(
                             ui,
                             Some(TextWrapMode::Extend),
                             f32::INFINITY,

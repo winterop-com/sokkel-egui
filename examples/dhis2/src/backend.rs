@@ -846,6 +846,15 @@ impl Backend {
         backend
     }
 
+    /// The rows eframe's storage kept put back on a new visit, as the web's backend keeps its
+    /// collections in the browser between visits; listed again as the app lists them.
+    pub fn restore(&mut self, indicators: Vec<Indicator>, rules: Vec<ValidationRule>, program_rules: Vec<ProgramRule>) {
+        self.indicators.rows = indicators;
+        self.validation_rules.rows = rules;
+        self.program_rules.rows = program_rules;
+        self.list_all();
+    }
+
     /// Every collection listed, as a page that reads them does when it is drawn.
     pub fn list_all(&mut self) {
         self.indicators.list(&mut self.clock);

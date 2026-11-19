@@ -13,7 +13,7 @@
 mod draw;
 mod issues;
 mod map;
-mod mark;
+pub(crate) mod mark;
 mod read;
 
 use std::collections::{BTreeMap, BTreeSet};

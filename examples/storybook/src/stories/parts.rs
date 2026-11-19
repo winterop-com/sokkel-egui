@@ -175,6 +175,14 @@ pub fn form_bar_story(_: &mut State, ui: &mut Ui) {
     });
 }
 
+pub fn save_bar(_: &mut State, ui: &mut Ui) {
+    section(ui, "Three edits unsaved");
+    sokkel_egui::SaveBar::new(3).show(ui);
+    ui.add_space(24.0);
+    section(ui, "While the save is on its way");
+    sokkel_egui::SaveBar::new(1).busy(true).show(ui);
+}
+
 pub fn banner(_: &mut State, ui: &mut Ui) {
     for (title, tone, words) in [
         ("Good", BannerTone::Good, "All systems operational, as of 09:00:04"),

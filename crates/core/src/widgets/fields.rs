@@ -656,6 +656,104 @@ impl Default for FormBar {
     }
 }
 
+/// The words a save bar says.
+#[derive(Clone, Debug)]
+pub struct SaveBarWords {
+    /// How many edits are unsaved, `{count}` standing for the count: one and more.
+    pub unsaved_one: String,
+    pub unsaved_other: String,
+    pub discard: String,
+    pub save: String,
+    pub saving: String,
+}
+
+impl Default for SaveBarWords {
+    fn default() -> Self {
+        Self {
+            unsaved_one: "1 unsaved change".into(),
+            unsaved_other: "{count} unsaved changes".into(),
+            discard: "Discard".into(),
+            save: "Save".into(),
+            saving: "Saving".into(),
+        }
+    }
+}
+
+/// What a save bar was asked this frame.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SaveBarResponse {
+    pub save: bool,
+    pub discard: bool,
+}
+
+/// The bar at the foot of a page while its edits are not yet saved, after sokkel-ui's `SaveBar`:
+/// a [`FormBar`] with a dot in the warning color and how many edits there are at its start,
+/// Discard and Save at its end, both held while a save is on its way. With no edits it draws
+/// nothing.
+pub struct SaveBar {
+    count: usize,
+    busy: bool,
+    words: SaveBarWords,
+}
+
+impl SaveBar {
+    pub fn new(count: usize) -> Self {
+        Self {
+            count,
+            busy: false,
+            words: SaveBarWords::default(),
+        }
+    }
+
+    /// A save is on its way: Save says Saving, and neither button takes a press.
+    pub fn busy(mut self, busy: bool) -> Self {
+        self.busy = busy;
+        self
+    }
+
+    pub fn words(mut self, words: SaveBarWords) -> Self {
+        self.words = words;
+        self
+    }
+
+    pub fn show(self, ui: &mut egui::Ui) -> SaveBarResponse {
+        let mut out = SaveBarResponse::default();
+        if self.count == 0 {
+            return out;
+        }
+        let t = crate::tokens(ui.ctx());
+        let said = if self.count == 1 {
+            self.words.unsaved_one.clone()
+        } else {
+            self.words.unsaved_other.replace("{count}", &self.count.to_string())
+        };
+        FormBar::new().show_with(
+            ui,
+            |ui| {
+                let (dot, _) = ui.allocate_exact_size(vec2(8.0, 8.0), egui::Sense::hover());
+                ui.painter().circle_filled(dot.center(), 4.0, t.color("warning"));
+                ui.label(crate::TextRole::Body.rich(&t, &said).color(t.color("foreground")));
+            },
+            |ui| {
+                let save = super::Button::new(if self.busy {
+                    &self.words.saving
+                } else {
+                    &self.words.save
+                })
+                .size(super::ButtonSize::Sm)
+                .enabled(!self.busy);
+                out.save = ui.add(save).clicked();
+                let discard = super::Button::new(&self.words.discard)
+                    .size(super::ButtonSize::Sm)
+                    .variant(super::ButtonVariant::Ghost)
+                    .enabled(!self.busy);
+                out.discard = ui.add(discard).clicked();
+            },
+        );
+        out
+    }
+}
+
 /// The heights of the four parts of the fields in one row of a fields grid: the label line, the
 /// description, the control and the help, so the fields beside each other line up.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -679,7 +777,25 @@ pub struct Field {
     hint: Option<String>,
     required: bool,
     error: Option<String>,
+    issues: Vec<(super::IssueTone, String)>,
+    words: FieldWords,
     help_ui: Option<super::section::Tools<'static>>,
+}
+
+/// The words a field's issue mark says before each issue, for a screen reader.
+#[derive(Clone, Debug)]
+pub struct FieldWords {
+    pub critical: String,
+    pub warning: String,
+}
+
+impl Default for FieldWords {
+    fn default() -> Self {
+        Self {
+            critical: "Error: ".into(),
+            warning: "Warning: ".into(),
+        }
+    }
 }
 
 impl Field {
@@ -691,8 +807,23 @@ impl Field {
             hint: None,
             required: false,
             error: None,
+            issues: Vec::new(),
+            words: FieldWords::default(),
             help_ui: None,
         }
+    }
+
+    /// What is wrong with the value, each in its tone, as the web's `issues`: the control edged in
+    /// the worst tone and the issue mark at its end, which opens the list. An `error` is listed
+    /// first, as a critical issue.
+    pub fn issues(mut self, issues: impl IntoIterator<Item = (super::IssueTone, String)>) -> Self {
+        self.issues = issues.into_iter().collect();
+        self
+    }
+
+    pub fn words(mut self, words: FieldWords) -> Self {
+        self.words = words;
+        self
     }
 
     /// Help drawn by the caller under the control, in the help's type and ink, such as a reason
@@ -795,7 +926,47 @@ impl Field {
                     ui.add_space(6.0);
                 }
                 let inner = ui.scope(|ui| control(ui));
-                if let Some(error) = &self.error {
+                if !self.issues.is_empty() {
+                    use super::schema_form::mark::{MarkWords, Shown, issue_mark, paint_edge, worst};
+                    let shown: Vec<Shown> = self
+                        .error
+                        .iter()
+                        .map(|text| (super::IssueTone::Critical, text.clone()))
+                        .chain(self.issues.iter().cloned())
+                        .map(|(tone, text)| Shown {
+                            tone,
+                            text,
+                            detail: None,
+                            fix: None,
+                        })
+                        .collect();
+                    let rect = inner.response.rect;
+                    // a control across the field's width (an input, an editor) wears the edge; the
+                    // mark stands at the field's end either way
+                    let end = ui.max_rect().right();
+                    if let Some(tone) = worst(&shown)
+                        && rect.right() >= end - 1.0
+                    {
+                        paint_edge(ui, &t, rect, tone);
+                    }
+                    let side = t.density("control-sm");
+                    let spot = egui::Rect::from_center_size(
+                        egui::pos2(end - 4.0 - side / 2.0, rect.center().y),
+                        egui::vec2(side, side),
+                    );
+                    let id = ui.scope_id().with(("issues", &self.label));
+                    let open: bool = ui.data(|d| d.get_temp(id)).unwrap_or(false);
+                    let words = MarkWords {
+                        critical: &self.words.critical,
+                        warning: &self.words.warning,
+                        use_fix: |_| String::new(),
+                    };
+                    let out = issue_mark(ui, id, spot, &shown, open, &words);
+                    let now = if out.toggled { !open } else { open && !out.closed };
+                    if now != open {
+                        ui.data_mut(|d| d.insert_temp(id, now));
+                    }
+                } else if let Some(error) = &self.error {
                     let rect = inner.response.rect;
                     let control_rect = egui::Rect::from_min_max(
                         egui::pos2(rect.left(), rect.top()),

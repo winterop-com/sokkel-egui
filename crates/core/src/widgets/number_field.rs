@@ -57,6 +57,7 @@ pub struct NumberField<'a> {
     description: Option<String>,
     help: Option<String>,
     error: Option<String>,
+    issues: Vec<(super::IssueTone, String)>,
     words: NumberFieldWords,
     format: Option<Write<'a>>,
     parse: Option<Read<'a>>,
@@ -119,6 +120,7 @@ impl<'a> NumberField<'a> {
             description: None,
             help: None,
             error: None,
+            issues: Vec::new(),
             words: NumberFieldWords::default(),
             format: None,
             parse: None,
@@ -182,6 +184,12 @@ impl<'a> NumberField<'a> {
     }
 
     /// The app's own word on the value, such as one past the range a form takes.
+    /// What is wrong with the value, each in its tone, on the field's issue mark.
+    pub fn issues(mut self, issues: impl IntoIterator<Item = (super::IssueTone, String)>) -> Self {
+        self.issues = issues.into_iter().collect();
+        self
+    }
+
     pub fn error(mut self, error: Option<impl Into<String>>) -> Self {
         self.error = error.map(Into::into);
         self
@@ -312,7 +320,8 @@ impl Widget for NumberField<'_> {
                 .required(self.required)
                 .hint(self.hint.clone())
                 .help_if(self.help.clone())
-                .error(issue.clone());
+                .error(issue.clone())
+                .issues(self.issues.clone());
             if let Some(description) = &self.description {
                 field = field.description(description);
             }

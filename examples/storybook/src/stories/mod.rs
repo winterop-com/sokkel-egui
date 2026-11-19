@@ -6,6 +6,7 @@ use sokkel_egui::{TextRole, tokens};
 
 mod chart_kinds;
 mod charts;
+mod dhis2;
 mod display;
 mod foundations;
 mod frame;
@@ -227,6 +228,11 @@ pub const STORIES: &[Story] = &[
         show: primitives::field,
     },
     Story {
+        path: "Primitives/Inputs/Field issues",
+        doc: "Fields holding issues in their tones, the worst edging the control and marked at the field's end, its list opened from the mark: a warning on a yes or no, an error and a warning on a text, a warning on a number.",
+        show: primitives::field_issues,
+    },
+    Story {
         path: "Primitives/Inputs/Text area",
         doc: "A field of several lines, growing with its text.",
         show: parts::text_area,
@@ -327,6 +333,11 @@ pub const STORIES: &[Story] = &[
         show: table::data_table,
     },
     Story {
+        path: "Patterns/Data table runs",
+        doc: "Cells written in runs of their own inks and faces: a formula with its joining word faint, and a rule with its operator in the code face.",
+        show: table::data_table_runs,
+    },
+    Story {
         path: "Patterns/Data table cards",
         doc: "The rows as cards in a grid, each at least 240 wide: the bar's toggle between the table and the grid, the sort as a menu, and a row's actions at its card's corner; then a table whose row actions show only on the row pointed at.",
         show: table::data_table_cards,
@@ -345,6 +356,11 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Form bar",
         doc: "A form's actions at its end, a note at its start.",
         show: parts::form_bar_story,
+    },
+    Story {
+        path: "Patterns/Save bar",
+        doc: "The bar at a page's foot while edits are unsaved: how many, Discard and Save; then the same while the save is on its way.",
+        show: parts::save_bar,
     },
     Story {
         path: "Patterns/App bar",
@@ -595,6 +611,11 @@ pub const STORIES: &[Story] = &[
         path: "Media/Watch layout",
         doc: "A watch page: the player, what is under it, and what plays next beside both; in theater the player spans both columns and what plays next starts under it.",
         show: watching::watch_layout,
+    },
+    Story {
+        path: "Dhis2/Expression editor",
+        doc: "DHIS2's expression languages in the code editor: an indicator's numerator with a finding underlined and listed on the field's issue mark, and a program rule's condition with its program functions and variables.",
+        show: dhis2::expression_editor,
     },
     Story {
         path: "Patterns/Show more",

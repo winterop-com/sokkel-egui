@@ -198,3 +198,38 @@ pub fn item_card(_: &mut State, ui: &mut Ui) {
             .show(ui, 256.0, 0.0);
     });
 }
+
+pub fn data_table_runs(_: &mut State, ui: &mut Ui) {
+    use sokkel_egui::CellRun;
+    let heads = [
+        Column::new("Name", 200.0).fill(),
+        Column::new("Formula", 280.0).fill_share(2.0),
+    ];
+    let formula = |top: &str, joint: &str, bottom: &str, mono: bool| {
+        let joint = CellRun::new(joint, if mono { "foreground" } else { "faint" });
+        Cell::Runs(vec![
+            CellRun::new(format!("{top} "), "muted-foreground"),
+            if mono { joint.mono() } else { joint },
+            CellRun::new(format!(" {bottom}"), "muted-foreground"),
+        ])
+    };
+    let rows = vec![
+        vec![
+            Cell::Strong("Exports finished".into()),
+            formula("{nightly-export succeeded}", "over", "{nightly-export runs}", false),
+        ],
+        vec![
+            Cell::Strong("Retries within runs".into()),
+            formula("{sync-inventory retries}", "<=", "{sync-inventory runs} * 0.1", true),
+        ],
+    ];
+    section(ui, "Formulas in runs of their own inks");
+    let id = eframe::egui::Id::unique("story-runs-table");
+    let mut state: TableState = ui.data(|d| d.get_temp(id)).unwrap_or_default();
+    DataTable::new("runs-table", &heads, &rows, &mut state)
+        .auto_rows()
+        .footer(false)
+        .height(240.0)
+        .show(ui);
+    ui.data_mut(|d| d.insert_temp(id, state));
+}

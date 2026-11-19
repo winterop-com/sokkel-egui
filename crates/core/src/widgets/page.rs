@@ -24,9 +24,26 @@ impl Page {
     }
 
     pub fn show<R>(ui: &mut Ui, content: impl FnOnce(&mut Ui) -> R) -> R {
-        let t = tokens(ui.ctx());
         // the room the page's scroller gives, its thin track included, as the web's `100cqi`
         let room = ui.available_width() + super::frame::SCROLL_GUTTER;
+        Self::show_in(ui, room, content)
+    }
+
+    /// The page in a scroller of its own inside a pane of a wider page (a split pane's side, the
+    /// room beside a column), its inset read from `container`, the width of the shell's page it
+    /// stands in, as the web's `cqi` reads the page's container rather than the pane.
+    pub fn scroll_in<R>(ui: &mut Ui, container: f32, content: impl FnOnce(&mut Ui) -> R) -> R {
+        egui::ScrollArea::vertical()
+            .id_salt("sokkel-page")
+            .auto_shrink([false, false])
+            .show(ui, |ui| Self::show_in(ui, container, content))
+            .inner
+    }
+
+    /// The page's padding for a page whose container is `container` wide.
+    pub fn show_in<R>(ui: &mut Ui, container: f32, content: impl FnOnce(&mut Ui) -> R) -> R {
+        let t = tokens(ui.ctx());
+        let room = container;
         let inset = if room >= 640.0 {
             t.density("page-inset-wide")
         } else {
@@ -176,6 +193,9 @@ impl PageHeader {
         let t = tokens(ui.ctx());
         let ink = t.color_or("page-title-ink", t.color("foreground"));
         let mut answer = PageHeaderResponse::default();
+        // the words keep clear of the actions, 16 before them (`gap-x-4`): their width as last drawn
+        let actions_id = ui.scope_id().with("page-header-actions");
+        let actions_width: f32 = ui.data(|d| d.get_temp(actions_id)).unwrap_or(0.0);
         ui.horizontal_top(|ui| {
             // the back button on the title's line, the title 8 after it
             if let Some(label) = &self.back {
@@ -199,7 +219,11 @@ impl PageHeader {
                 super::focus_ring(ui.painter(), &t, button, t.radius("control"), &hit);
                 answer.back = hit.clicked();
             }
+            let room = ui.available_width();
             let block = ui.vertical(|ui| {
+                if actions_width > 0.0 {
+                    ui.set_max_width((room - actions_width - 16.0).max(room / 2.0));
+                }
                 // the code right under the title, the description 4 under what is over it
                 ui.spacing_mut().item_spacing.y = 0.0;
                 // an editable title stands as its own inline edit
@@ -259,14 +283,14 @@ impl PageHeader {
                 if let Some(edit) = self.edit_description.take() {
                     ui.add_space(4.0);
                     let zero = ui.fonts_mut(|f| f.glyph_width(&TextRole::Body.font(&t), '0'));
-                    ui.set_max_width(65.0 * zero);
+                    ui.set_max_width((65.0 * zero).min(ui.max_rect().width()));
                     answer.described = edit.show(ui);
                 }
                 if let Some(description) = &self.description {
                     ui.add_space(4.0);
                     // `max-w-prose`: 65 widths of "0" in the body's type
                     let zero = ui.fonts_mut(|f| f.glyph_width(&TextRole::Body.font(&t), '0'));
-                    ui.set_max_width(65.0 * zero);
+                    ui.set_max_width((65.0 * zero).min(ui.max_rect().width()));
                     ui.label(TextRole::Body.rich(&t, description).color(t.color("muted-foreground")));
                 }
                 if !self.chips.is_empty() || !self.meta.is_empty() {
@@ -301,7 +325,14 @@ impl PageHeader {
                 Layout::right_to_left(Align::Max),
                 |ui| {
                     ui.spacing_mut().item_spacing.x = 8.0;
+                    let end = ui.cursor().right();
                     actions(ui);
+                    let drawn = (end - ui.min_rect().left()).max(0.0);
+                    let drawn = if ui.min_rect().width() > 0.0 { drawn } else { 0.0 };
+                    if (drawn - actions_width).abs() > 0.5 {
+                        ui.data_mut(|d| d.insert_temp(actions_id, drawn));
+                        ui.ctx().request_repaint();
+                    }
                 },
             );
         });
