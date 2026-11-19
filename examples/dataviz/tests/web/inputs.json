@@ -1,0 +1,6131 @@
+{
+ "now": 1795084200000,
+ "random": 20261119,
+ "origin": "https://tidevann.example.org",
+ "pathname": "/dataviz/",
+ "combos": [
+  [
+   "ds-rainfall",
+   {
+    "view": "bar",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "bar",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "bar",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "bar",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "bar",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "line",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c3"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "line",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "line",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "line",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "line",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "area",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "area",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c3"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "area",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "area",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "area",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "scatter",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c3",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "scatter",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c4",
+    "y": "c3",
+    "series": "c2",
+    "color": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "scatter",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c4",
+    "size": "c3"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "scatter",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c3",
+    "series": "c2",
+    "color": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "scatter",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "y": "c4",
+    "series": "c2",
+    "x": "c3"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "pie",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c1"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "pie",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "pie",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "pie",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c3"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "pie",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "heatmap",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "heatmap",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "heatmap",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "heatmap",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "heatmap",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c3"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "map",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "map",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "map",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "map",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "map",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "table",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c3"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "table",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "table",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "table",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "table",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "stat",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "stat",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "stat",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "stat",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "stat",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "bar",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "bar",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "bar",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "bar",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "bar",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c5",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "bar",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "line",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "line",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "line",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "line",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c4",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "line",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "line",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "area",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "area",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "area",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "area",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c4",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "area",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c5",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "area",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "scatter",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "scatter",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c2",
+    "y": "c4",
+    "series": "c3",
+    "color": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "scatter",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c4",
+    "y": "c5",
+    "size": "c4"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "scatter",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c5",
+    "y": "c4",
+    "series": "c3",
+    "color": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "scatter",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c4",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "scatter",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "y": "c4",
+    "x": "c5",
+    "color": "c2",
+    "size": "c4"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "pie",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c1",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "pie",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "pie",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "pie",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c4",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "pie",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c5",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "pie",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "heatmap",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "heatmap",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "heatmap",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "heatmap",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "heatmap",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c5",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "heatmap",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "map",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "map",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "map",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "map",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c4",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "map",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c5",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "map",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "table",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "table",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "table",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "table",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c4",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "table",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c5",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "table",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "stat",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "stat",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "stat",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "stat",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c4",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "stat",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "stat",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "bar",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c1",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "bar",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c2",
+    "y": "c6",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "bar",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c3",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "bar",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c4",
+    "y": "c6",
+    "series": "c7"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "bar",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c5",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "bar",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c6"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "bar",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c7",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "bar",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "y": "c6",
+    "series": "c7"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "line",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c1",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "line",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c2",
+    "y": "c6",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "line",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c3",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "line",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c4",
+    "y": "c6"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "line",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "line",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c6",
+    "y": "c6",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "line",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c7",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "line",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c6",
+    "series": "c7"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "area",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "area",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c6"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "area",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "area",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "series": "c7"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "area",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c5",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "area",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c6",
+    "y": "c6",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "area",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c7",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "area",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "y": "c6"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "scatter",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c5",
+    "y": "c6",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "scatter",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3",
+    "color": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "scatter",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c5",
+    "y": "c6",
+    "size": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "scatter",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c6",
+    "y": "c5",
+    "series": "c7",
+    "color": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "scatter",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c5",
+    "y": "c6",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "scatter",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c6",
+    "y": "c5",
+    "color": "c2",
+    "size": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "scatter",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c7",
+    "y": "c6",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "scatter",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "y": "c5",
+    "series": "c7",
+    "x": "c6",
+    "color": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "pie",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c1",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "pie",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c2",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "pie",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c3",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "pie",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c4",
+    "y": "c6"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "pie",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c5",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "pie",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c6",
+    "y": "c6",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "pie",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c7",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "pie",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "y": "c6",
+    "series": "c7"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "heatmap",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c1",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "heatmap",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c2",
+    "y": "c6"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "heatmap",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c3",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "heatmap",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c4",
+    "y": "c6",
+    "series": "c7"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "heatmap",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c5",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "heatmap",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c6",
+    "y": "c6",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "heatmap",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c7",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "heatmap",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "map",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c1",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "map",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c2",
+    "y": "c6",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "map",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c3",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "map",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c4",
+    "y": "c6",
+    "series": "c7"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "map",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c5",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "map",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c6",
+    "y": "c6"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "map",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c7",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "map",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c6",
+    "series": "c7"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "table",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "table",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c6",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "table",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "table",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c6"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "table",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c5",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "table",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c6",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "table",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c7",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "table",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "y": "c6",
+    "series": "c7"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "stat",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c1",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "stat",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c2",
+    "y": "c6"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "stat",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c3",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "stat",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c4",
+    "y": "c6",
+    "series": "c7"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "stat",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c5"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "stat",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c6",
+    "y": "c6",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "stat",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c7",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "stat",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "y": "c6"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "bar",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "bar",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "bar",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "bar",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "bar",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c5",
+    "y": "c4",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "bar",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "line",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "line",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "line",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "line",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c4",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "line",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "line",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "area",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "area",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "area",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "area",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c4",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "area",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c5",
+    "y": "c4",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "area",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "scatter",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c1",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "scatter",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c5",
+    "y": "c4",
+    "series": "c3",
+    "color": "c1"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "scatter",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c4",
+    "y": "c5",
+    "size": "c4"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "scatter",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c5",
+    "y": "c4",
+    "series": "c2",
+    "color": "c1"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "scatter",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "scatter",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c4",
+    "x": "c5",
+    "color": "c1",
+    "size": "c4"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "pie",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c1",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "pie",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "pie",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "pie",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "pie",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c5",
+    "y": "c4",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "pie",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "heatmap",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "heatmap",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c2",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "heatmap",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "heatmap",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c4",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "heatmap",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c5",
+    "y": "c4",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "heatmap",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "map",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "map",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "map",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "map",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c4",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "map",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c5",
+    "y": "c4",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "map",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "table",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "table",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "table",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "table",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "table",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c5",
+    "y": "c4",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "table",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "y": "c5"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "stat",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c1",
+    "y": "c4",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "stat",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c2",
+    "y": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "stat",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c3",
+    "y": "c4"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "stat",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c4",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "stat",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c5",
+    "series": "c3"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "stat",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c5"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "bar",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "bar",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "bar",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c3"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "bar",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "bar",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c5",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "bar",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "line",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c1",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "line",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c2",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "line",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c3",
+    "y": "c3"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "line",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c4",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "line",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c5",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "line",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "y": "c5"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "area",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c1",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "area",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c2",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "area",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c3",
+    "y": "c3"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "area",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c4",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "area",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c5",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "area",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "y": "c5"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "scatter",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c3",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "scatter",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c2",
+    "series": "c4",
+    "y": "c3",
+    "color": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "scatter",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c3",
+    "y": "c5",
+    "size": "c3"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "scatter",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c5",
+    "y": "c3",
+    "series": "c4",
+    "color": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "scatter",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "scatter",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "y": "c3",
+    "x": "c5",
+    "color": "c2",
+    "size": "c3"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "pie",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c1",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "pie",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c2",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "pie",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c3"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "pie",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c4",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "pie",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c5",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "pie",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c5"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "heatmap",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "heatmap",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "heatmap",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c3",
+    "y": "c3"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "heatmap",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c4",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "heatmap",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c5",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "heatmap",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "y": "c5"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "map",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c1",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "map",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c2",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "map",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c3",
+    "y": "c3"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "map",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c4",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "map",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c5",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "map",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "y": "c5"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "table",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "x": "c1",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "table",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c2",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "table",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c3",
+    "y": "c3"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "table",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c4",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "table",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c5",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "table",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "stat",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c1",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "stat",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c2",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "stat",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c3",
+    "y": "c3"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "stat",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c4",
+    "y": "c5",
+    "series": "c4"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "stat",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c5",
+    "y": "c3",
+    "series": "c2"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "stat",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "y": "c5"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "bar",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "x": "c1",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "bar",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c2",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "bar",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "y": "c2"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "line",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c1",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "line",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c2",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "line",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "y": "c2"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "area",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c1",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "area",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "area",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "warm",
+    "y": "c2"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "scatter",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c2",
+    "y": "c2",
+    "series": "c1",
+    "color": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "scatter",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c2",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "scatter",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "y": "c2",
+    "x": "c2",
+    "color": "c1",
+    "size": "c2"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "pie",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "theme",
+    "x": "c1",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "pie",
+    "aggregate": "min",
+    "bin": "month",
+    "sort": "desc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c2",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "pie",
+    "aggregate": "max",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "earth"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "heatmap",
+    "aggregate": "sum",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c1",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "heatmap",
+    "aggregate": "avg",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": true,
+    "palette": "cool",
+    "x": "c2",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "heatmap",
+    "aggregate": "count",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "theme",
+    "y": "c2"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "map",
+    "aggregate": "min",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": false,
+    "palette": "warm",
+    "x": "c1",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "map",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "natural",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "earth",
+    "x": "c2",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "map",
+    "aggregate": "sum",
+    "bin": "day",
+    "sort": "desc",
+    "limit": 0,
+    "stack": true,
+    "horizontal": true,
+    "palette": "default",
+    "y": "c2"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "table",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "desc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "cool",
+    "x": "c1",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "table",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 10,
+    "stack": true,
+    "horizontal": false,
+    "palette": "theme",
+    "x": "c2",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "table",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "asc",
+    "limit": 20,
+    "stack": false,
+    "horizontal": false,
+    "palette": "warm",
+    "y": "c2"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "stat",
+    "aggregate": "max",
+    "bin": "week",
+    "sort": "asc",
+    "limit": 2.5,
+    "stack": true,
+    "horizontal": true,
+    "palette": "earth",
+    "x": "c1",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "stat",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "asc",
+    "limit": -1,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default",
+    "x": "c2",
+    "y": "c2",
+    "series": "c1"
+   }
+  ],
+  [
+   "x-blank",
+   {
+    "view": "stat",
+    "aggregate": "avg",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": true,
+    "horizontal": false,
+    "palette": "cool",
+    "y": "c2"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "bar",
+    "x": "c2",
+    "y": "c2",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 0,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default"
+   }
+  ],
+  [
+   "ds-runs",
+   {
+    "view": "table",
+    "x": "c5",
+    "y": "c6",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 0,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default"
+   }
+  ],
+  [
+   "ds-cities",
+   {
+    "view": "table",
+    "x": "c4",
+    "aggregate": "count",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 0,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "stat",
+    "x": "c1",
+    "y": "c3",
+    "aggregate": "avg",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 0,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "stat",
+    "x": "c1",
+    "y": "c3",
+    "aggregate": "min",
+    "bin": "day",
+    "sort": "natural",
+    "limit": 0,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default"
+   }
+  ],
+  [
+   "x-edge",
+   {
+    "view": "line",
+    "x": "c1",
+    "y": "c5",
+    "series": "c4",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "desc",
+    "limit": 3,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "stat",
+    "x": "c1",
+    "y": "c5",
+    "aggregate": "sum",
+    "bin": "month",
+    "sort": "natural",
+    "limit": 0,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default"
+   }
+  ],
+  [
+   "ds-arrivals",
+   {
+    "view": "stat",
+    "x": "c1",
+    "aggregate": "count",
+    "bin": "week",
+    "sort": "natural",
+    "limit": 0,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default"
+   }
+  ],
+  [
+   "ds-rainfall",
+   {
+    "view": "map",
+    "x": "c2",
+    "y": "c4",
+    "aggregate": "max",
+    "bin": "month",
+    "sort": "asc",
+    "limit": 5,
+    "stack": false,
+    "horizontal": false,
+    "palette": "default"
+   }
+  ]
+ ],
+ "filters": [
+  [
+   {
+    "field": "State",
+    "operator": "oneOf",
+    "values": [
+     "failed",
+     "cancelled"
+    ]
+   }
+  ],
+  [
+   {
+    "field": "day",
+    "operator": "between",
+    "values": [
+     "2025-10-05",
+     "2025-10-12"
+    ]
+   }
+  ],
+  [
+   {
+    "field": "Duration",
+    "operator": "atLeast",
+    "values": [
+     "500"
+    ]
+   },
+   {
+    "field": "Project",
+    "operator": "isNot",
+    "values": [
+     "harbor"
+    ]
+   }
+  ],
+  [
+   {
+    "field": "Region",
+    "operator": "noneOf",
+    "values": [
+     "Bomi",
+     "Lofa"
+    ]
+   },
+   {
+    "field": "Month",
+    "operator": "after",
+    "values": [
+     "2025-06-01"
+    ]
+   }
+  ],
+  [
+   {
+    "field": "Harbor",
+    "operator": "contains",
+    "values": [
+     "er"
+    ]
+   },
+   {
+    "field": "Date",
+    "operator": "before",
+    "values": [
+     "2025-02-01"
+    ]
+   }
+  ],
+  [
+   {
+    "field": "Rainfall",
+    "operator": "atMost",
+    "values": [
+     "100"
+    ]
+   }
+  ],
+  [
+   {
+    "field": "Nothing",
+    "operator": "is",
+    "values": [
+     "x"
+    ]
+   }
+  ],
+  [
+   {
+    "field": "State",
+    "operator": "oneOf",
+    "values": [
+     "nope"
+    ]
+   }
+  ],
+  [
+   {
+    "field": "Job",
+    "operator": "is",
+    "values": [
+     "SEND-DIGEST"
+    ]
+   },
+   {
+    "field": "Rows",
+    "operator": "between",
+    "values": [
+     "",
+     "5000"
+    ]
+   }
+  ]
+ ],
+ "extra": {
+  "x-edge": "Day,Name,Value,Region,Other\n2024-12-30,b,5,Bomi,1\n2025-01-03,a,\"1,200\",Lofa,\n2025-01-03,a,x,Atlantis,2.5\n,c,7,,3\n2025-02-30,10,-4,bomi,4\n2025-02-28,9,0,Bong,0\n2026-01-05,b,1e3,Nimba,-1\n2024-12-31,a,0.5,,\n",
+  "x-blank": "Name;Count\n"
+ },
+ "parse": [
+  "",
+  "   ",
+  "a,b\n1,2",
+  "a;b;c\n1;2;3\n4;5;6",
+  "a\tb\n1\t2\r\n3\t4\r\n",
+  "name,note\n\"x, y\",\"he said \"\"hi\"\"\"\n\"multi\nline\",2\n",
+  "a,b\n\n , \n1",
+  "only,header",
+  "a,b,c\n1\n1,2,3,4",
+  " x , ,x\n1,2,3",
+  "Month,Harbor,Arrivals\n2025-01,Bergen,412\n2025-01,Cork,198\n2025-02,Bergen,437\n2025-02,Cork,224",
+  "Region,Rain\nBomi,1\nbong,2\nLofa,3\nNowhere,4\nMaryland,5",
+  "d,n\n2025-02-30,1\n2025-13-01,2",
+  "n\n+5\n-1,234.5\n1,23\n1e400\n0x10\n.5\n007",
+  "[{\"a\":1,\"b\":\"x\"},{\"b\":null,\"c\":true,\"2\":[1,2]}]",
+  "[[\"x\",\"y\"],[1,2],[3]]",
+  "{\"rows\":[{\"k\":1.50}]}",
+  "{\"data\":[{\"k\":{\"z\":1,\"1\":2}}]}",
+  "{\"rows\":5}",
+  "[]",
+  "[1,2]",
+  "[{\"a\":1},5]",
+  "{",
+  "[1,",
+  "{\"a\":}",
+  "[1,2]x",
+  "{\"a\" 1}",
+  "{\"a\":1,}",
+  "[01]",
+  "['a']",
+  "[1e400]",
+  "[\"\\u12\"]",
+  "[.5]",
+  "[+1]",
+  "[-]",
+  "{\"a\":1,\"a\":2,\"rows\":[[\"h\"],[\"v\"]]}",
+  "[[1,2],[3,4]]",
+  "x\n\"open quote,1",
+  "a,b\r\n1,2\r",
+  "Date;Value\n2025-01-01T10:00;1\n2025-01-02;2"
+ ],
+ "numbers": [
+  "12",
+  "1,234",
+  "1,23",
+  "12,345.5",
+  "-0",
+  "+3.5e2",
+  "1e",
+  "",
+  ".5",
+  "5.",
+  "1,234,567",
+  "12,34,567",
+  " 42 ",
+  "1_0",
+  "0x1F",
+  "Infinity",
+  "1e999",
+  "007"
+ ],
+ "days": [
+  "2025-01-02",
+  "2025-01",
+  "2025-1-2",
+  "2025-02-30",
+  "2025-02-31T12:00:00",
+  "2025-13-01",
+  "2025-00-10",
+  "2025-01-32",
+  "0000-01-01",
+  " 2025-03-04 ",
+  "garbage",
+  ""
+ ],
+ "formats": [
+  0,
+  1,
+  -1,
+  0.5,
+  1.005,
+  2.5,
+  -0.001,
+  12.345,
+  999.95,
+  999999,
+  1234567.891,
+  -1234.5,
+  1000000000000000.0,
+  1500000000000000.0,
+  0.04,
+  1e+21,
+  123456789012
+ ],
+ "prefs": [
+  [
+   "grouped",
+   "auto"
+  ],
+  [
+   "grouped",
+   "0"
+  ],
+  [
+   "grouped",
+   "1"
+  ],
+  [
+   "grouped",
+   "2"
+  ],
+  [
+   "compact",
+   "auto"
+  ],
+  [
+   "compact",
+   "0"
+  ],
+  [
+   "compact",
+   "1"
+  ],
+  [
+   "compact",
+   "2"
+  ],
+  [
+   "plain",
+   "auto"
+  ],
+  [
+   "plain",
+   "0"
+  ],
+  [
+   "plain",
+   "1"
+  ],
+  [
+   "plain",
+   "2"
+  ]
+ ],
+ "breaks": [
+  [],
+  [
+   5
+  ],
+  [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ],
+  [
+   2474,
+   13,
+   980,
+   0,
+   -50,
+   77777
+  ],
+  [
+   0.0123,
+   0.5,
+   0.04,
+   1.9
+  ],
+  [
+   100,
+   100,
+   100
+  ]
+ ],
+ "names": [
+  [
+   "a",
+   "A",
+   "",
+   "b",
+   " ",
+   "a 2",
+   "a"
+  ],
+  [
+   "Column 2",
+   "",
+   ""
+  ],
+  [
+   "x",
+   "X",
+   "x 2",
+   "X 2"
+  ]
+ ],
+ "csv": [
+  [
+   [
+    "a",
+    "b,c"
+   ],
+   [
+    [
+     "x\"y",
+     1.5,
+     null
+    ],
+    [
+     3,
+     "line\nbreak",
+     0.1
+    ]
+   ]
+  ],
+  [
+   [
+    "h"
+   ],
+   []
+  ]
+ ],
+ "files": [
+  "Rainfall 2025!",
+  "  ",
+  "\u00c9T\u00c9 data",
+  "--a--b--",
+  "Chart"
+ ],
+ "collate": [
+  [
+   "a",
+   "B",
+   "_x",
+   "-y",
+   "1",
+   "10",
+   "2",
+   "\u00c4",
+   "b",
+   "a b",
+   "a-b",
+   "ab",
+   "Grand Bassa",
+   "Grand Cape Mount",
+   "River Gee",
+   "River Cess",
+   "x10",
+   "x9",
+   "X9",
+   "0.55",
+   "0.7",
+   "-5",
+   "5"
+  ]
+ ],
+ "shares": [
+  "",
+  "j",
+  "zzz",
+  "q!!",
+  "jeyJ2IjoxfQ",
+  "j!!",
+  "z AAAA",
+  "jW10",
+  "jeyJ2IjoxLCJuIjoiYSIsInMiOnt9fQ",
+  "zrVzNchs5Dn4VVZ_tLRL893n3spfdmt3bVA5tqWMrkVuuVsuJN5WqfY15vXmSIUH5LyIo0NZhMrHc_gyCH0HgAzo_uofuSl50Y3fV_bYfd4vrx8Vu7uehu-h23dWP7mE9fIvfu1-nT77Hvy11_Et_czMNN-mxq263v4ufXK8TxN12nG_Tj26nOX459vN-6jfxg836bh0_EfFbc7_82l197je74aK73U7r_8Ufig89fXTfb4YZkVfD536_mbufF90q2fLayC_b6wibfsk_HobpcTHtx8X28-K_69Xw0I_jn___Y5ee2S3W4-Jfy3l7PUwLEGCuFut5l5d4sbjdfltstuNN_Gwxb7df08O7YbkdV7tFP64W8-2wmLbfdun7d9uHYfW3-DuX3dXvP7r1KvlCxq_H_i4Z-_f-MRn0eI-WJ9f8vHh6DF4e-2e2Oz82D9_nV4-pl8f-PW2_DMuZfFS_PPqfw3aVHzSvLIx7Ma-348uz4_4u-uXV0_bl6d_iuitPujcGTPOwirvyqxWfLropeuv3Lnn-UopLgQ5b39zOm8fL4ft9okkkQT9db6dEm_1yOQyrYRX_7lQyXQkl08_slrfDar8Zuk8Xv6DtHsfl5Xp8GMZ5Oz1SaNKG9CdI5ZCN4373XijwIv7pPSSkftW_G0cnACmk9NUFTsP1fr1ZRcDV8D1-_WU_ru8HRPu6vr9HLHH4r-KmYVxdrtY3wy55fNNPX3f3-19NUmn_pVOJXTdTvyzgrO_Spl1up9Uw7d5a88ZHuDbwMnwUSjmEksamU3TXTzf9NMxv0YDPKpOWaAIYmlXAZ1VIR1Y7baumMfkA6VmptVDnQDMed0CF-kIr7Hq9UFAS_ebkCb9xaKYBl2tM-SgCmxsaNJ5tJUzVKhrtc7_evAoQ9BlSbIppIxDPm2KAUA2EwC20QvuqWUw0mXxlAE9kmV18MIlrtNLb8vFWbGYFi8QSVhNsUOzgpdAwvDYIkzg8kOrAg2aM18YYadAap3yJBJrNJoO_VIEGwtWazwCLHlIyBJJPDWgO2SmEFdQKufdgcpWx6HjaKm6gEmlxzhtLR1HNDlSYNFgtqpYxY5XFe0yBkOdA0wklnj9F76Vhk8y6jCYCQXzDjwwuGeQ13trNSM_H0Ar6FDYY4_HwOLwmCrHF8HklMCnywuIFSGDx4hRGBo3hilgdN8ZIPNVeFk8gH0ibtDZlhaOvUcsnE97rELkpqmjcLURqKmWg7PdWqOC8_ihSDllB4pVKr5BHLY_hRXvvittoa7x6Pi8gu1r2Yjt-up2eBcipbTl-NqDhyYuZHlK04HPX8TN3JIKzQDvd8XcQMEwF488BhjmVjHkovBftqJIrRAbHj1aAuacKCq-U8i46bsA63IKZieTiaEIs-3E5bDJPFebjlQUyeYVZkdQWU-MClGfzymMCGgFDMVPzDZTC6jkmbHQ12ICG5zBWg5isfcAsGTIVvC-fQM9nlfAY2a3FwqSyQg6r8HZQBsvT4vKYl2D2eoyeHwRSKMPEoywI9SNUKfUciRVm_MVQHhpjQPmwBT6HdFpKsJX6kQ8mMyHBauIiDnwiRYkJiVQrRkONSG9CiqYjSuBvP6aKYDSmZ7RJnBLSB4IBeAtyrzs8H9oEsixCNO7mpU0LkpBcWpCyriQsqlXHLm-AApRcrHa-ukImp7TIOqG01tQ9xopOmFoLTKKLu8hkVchG2UDeCU1oWdMLdJ4uJS9KxaqhFmRkg4ytsgYXbDgHWtbpNZQ93yD4Y7poNAQKh8krix2DGBecJy3iMwqspFCY9x3KB2BE8FV3c6NevtF9hVHAZBRSXFRhuA0WzPS1xSTvyFd1oNc3A0h_JpMOeqcJZXFRtijp6OrYgNB1l7NIhWl-lPptFYqbAOWj5wjppgFK41UZtS4gtS7JF9Rz5QGxMk3_L9xeDbo1hj0vDbFEdTZuNdiEZzDWapXVMbV0TKadVESKJvlaOraiZDE5l1wlHQmePFS-9_hiOmC6GJV5KHcTpWaGKKurFrVo1hb97Wh-18GebXJPuWJhu_j2ZF7HDQuK9hBNotfEjoq-OGESW-WE3AYhcBgcymq-oNfEFbUSn51HzbVgDV8pz1FbkSKibBCnTbLGBqJh1YAEElMUY8hqqhlM6lCJ3Q26OWA57KMorKtwvBwqbaNSoZgb8vXu51rPmqrDKmhHtXoZha-aO7x9jfaVtKBBoMYLLjaH4L1gPDGixSSsip_GXY52r66Xv_SFzNOlUkTg6Zmye5L9CgeYL24DXtzxkhTECW7QyTFnj53GQIQVvk7uAdupLncIj7zEV7Uldlx8sO6DOJi2OW2Jy7tBZ889OFWJTA0aucaESwWhVBWOl4hjRNG-DsUlA0Zgo4WhycCkKDZ0Y-PLEGrNCZ2c0ZaQDZo2SqtSGSwlyhGzRdhGhcxr4sg0IOXQpIWSNBQzBcfkyXhvbMVb_AQqBwYCh9uDA0RSHujVcaEwEXeCaCbI0PG7xMlBsYED9BXVoHRjN0HGn_RnQcutRnkeNAwKXkNRzWhQzXUuFMFbVTeLPy2liVFP2SCcqzzuJoWmOcGt83w-17p8eKBBPs9DRS6PDRR9BQ2id56cklkaOV5jAxRgShZcKLGhCSebZDzQvuK2Y1CDjmfIkz1_4CvnGJVlce4NGrRu7DMcTg1tEvcaRGfFzmU5BwH-WLp2OelT1tFQ3AQr0dwqbT6KBBiPo6qFB-fI6w1Ah4FaQUdlaNDOjckktQJL08LBYcvnSAeVZ--LC-S2UJDqzipbXSBXjM8qh6cHPwDY1MpzhtJDIMtSaFDR0TYNrpzTNCDlbq0HV74rWmxCnoZgirvYIKLnwW_ltPBVx_PqQZ3jsqx6nal8yzy2IWhJvgFNHUZKrCCCfMtUOlYo3ulAQ3GZlaOpw85Y2WMtaFhmOnpe9xTYUZFyxCy-hB7viLQorwWcWBx7ckpZusAEvgieuQA6EHlWC1QONPEqI-swaJhQR5R44zsixjOVcP_UP6QNanzXC95l0NsaM087eKdoKC6zdJ4grkyYAH8yHbvAKlRW2DKhAEYZV7WKGf5yMeAVPRkLDWI7Fr-x8W6JZXKHyV1HNTSgQa_PVWFUMInMrwUqWROCDzQSk1VZINAWpKl6vKHtF3RJ8YMGfR0TGCnzKw9lTjWgoVoUL8FAFF91kf3VYF51QAFa1PWT79adQHs2Kogz2XT6VUTgj6SH_NJR1MjLmh_wtXa8AbX11SVyh35RyAKwhiYCpzEdqsPy0KC140nRMasKVbSm2afYpT4LGub_UllP36kNIr47vDvmysofNAjvEquASIpKbc8W3rNMCqI8Bw58qTwnyNGqLPqT3ufNuYN7unMKRvGH0y2OQoHMExBlVzXo77nLpA3QS2yZUM9qvqblyBY0yG8ZOC-qaGxJCxugXtHD-MCW4vOUlaXVYGiR0HOnz0sio2yBwmTL5HfaC1An1HhGcwdaZG5cmMlthqPsoQ70ch-qamhumX3P7-RI-tVwaJlYz9q7s-aEcSyJNMdSa2ifc_UnRPJATKM0QGWhPF5BhMSt-Nq7x9s-lgBQYoJqkN1zThO7FNQZbgJLznCaKAobkLKkFutdSWo8qmVwHZOImGrRE72qqr6_TEtRsxGKL5WbPAUqvPkg0MFLMc6VtSvF19wt5ts6dtfJylk1yO65OhGaODQNUIcXbJwg5d8WMKxzjJX1RXJZlV_XEZD_QQPC_3ytQQoBVbu4k8G51RSEOwOawrQo9tLgZSc__fz5Fw",
+  "jeyJ2IjoxLCJuIjoiUnVucyBieSBzdGF0ZSIsInMiOnsidmlldyI6InBpZSIsIngiOiJjNCIsImFnZ3JlZ2F0ZSI6InN1bSIsImJpbiI6Im1vbnRoIiwic29ydCI6Im5hdHVyYWwiLCJsaW1pdCI6MCwic3RhY2siOmZhbHNlLCJob3Jpem9udGFsIjpmYWxzZSwicGFsZXR0ZSI6ImRlZmF1bHQifSwiZCI6eyJuIjoiUnVucyBieSBqb2IiLCJ0IjoiRXZlcnkgcnVuIG9mIFRpZGV2YW5u4oCZcyBqb2JzIGluIE9jdG9iZXIgMjAyNTogaXRzIHN0YXRlLCBob3cgbG9uZyBpdCB0b29rIGluIHNlY29uZHMgYW5kIHRoZSByb3dzIGl0IG1vdmVkLiIsImMiOlt7ImlkIjoiYzEiLCJuYW1lIjoiRGF5IiwidHlwZSI6ImRhdGUifSx7ImlkIjoiYzIiLCJuYW1lIjoiSm9iIiwidHlwZSI6InRleHQifSx7ImlkIjoiYzMiLCJuYW1lIjoiUHJvamVjdCIsInR5cGUiOiJ0ZXh0In0seyJpZCI6ImM0IiwibmFtZSI6IlN0YXRlIiwidHlwZSI6InRleHQifSx7ImlkIjoiYzUiLCJuYW1lIjoiRHVyYXRpb24iLCJ0eXBlIjoibnVtYmVyIn0seyJpZCI6ImM2IiwibmFtZSI6IlJvd3MiLCJ0eXBlIjoibnVtYmVyIn0seyJpZCI6ImM3IiwibmFtZSI6IlN0YXJ0ZWQgYnkiLCJ0eXBlIjoidGV4dCJ9XSwiciI6W1siMjAyNS0xMC0wMSIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiNzM1IiwiMzAzMTEiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0wMSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMTY5IiwiMTIxMzciLCJsaW51cyJdLFsiMjAyNS0xMC0wMSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjgwIiwiODgyNyIsImFkYSJdLFsiMjAyNS0xMC0wMSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjQ3IiwiMTAxMTgiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0wMSIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic2tpcHBlZCIsIjAiLCIwIiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMDEiLCJzZW5kLWRpZ2VzdCIsImxhcmtzcHVyIiwic3VjY2VlZGVkIiwiMzYiLCIxNzM0IiwiZ3JhY2UiXSxbIjIwMjUtMTAtMDEiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjI4NyIsIjEyODE5IiwiZ3JhY2UiXSxbIjIwMjUtMTAtMDEiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjM3NyIsIjExNTYyIiwibWFyZ2FyZXQiXSxbIjIwMjUtMTAtMDIiLCJuaWdodGx5LWV4cG9ydCIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjc1NiIsIjU5MjUxIiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMDIiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE5MyIsIjQ3NDYiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0wMiIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjIyIiwiMTQ0MDMiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0wMiIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjU4IiwiMTIzOTEiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0wMiIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMTIzMSIsIjU5NzExIiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMDIiLCJzZW5kLWRpZ2VzdCIsImxhcmtzcHVyIiwic3VjY2VlZGVkIiwiNDIiLCIyMjU1IiwibGludXMiXSxbIjIwMjUtMTAtMDIiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjQyNCIsIjE2MzA1Iiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMDIiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsImZhaWxlZCIsIjE2OSIsIjAiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0wMyIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiNDUwIiwiMTY4NTciLCJhZGEiXSxbIjIwMjUtMTAtMDMiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjIyOCIsIjE2MDQ4Iiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMDMiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjIxNCIsIjUyMTkiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0wMyIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMTUwIiwiNjE4NiIsImdyYWNlIl0sWyIyMDI1LTEwLTAzIiwicmVidWlsZC1pbmRleCIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCI5NjEiLCI1MDY0NSIsImxpbnVzIl0sWyIyMDI1LTEwLTAzIiwic2VuZC1kaWdlc3QiLCJsYXJrc3B1ciIsInN1Y2NlZWRlZCIsIjMzIiwiMTUzNSIsImdyYWNlIl0sWyIyMDI1LTEwLTAzIiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJmYWlsZWQiLCIxMTMiLCIwIiwiZ3JhY2UiXSxbIjIwMjUtMTAtMDMiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjUxNSIsIjE1NzM4IiwiYWRhIl0sWyIyMDI1LTEwLTA0IiwibmlnaHRseS1leHBvcnQiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCI1MDMiLCIzMjQyNiIsImdyYWNlIl0sWyIyMDI1LTEwLTA0Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyNjMiLCIxMzE5OSIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTA0Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyNzgiLCIxMDA2MCIsImFkYSJdLFsiMjAyNS0xMC0wNCIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjQ1IiwiNTYxMyIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTA0IiwicmVidWlsZC1pbmRleCIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIxMjA5IiwiNzg1NjMiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0wNCIsInNlbmQtZGlnZXN0IiwibGFya3NwdXIiLCJzdWNjZWVkZWQiLCI0OSIsIjE2NDAiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0wNCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiNDY3IiwiMTMyMDEiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0wNCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiNDQxIiwiMTg2MzkiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0wNSIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiNjcxIiwiMTgwOTAiLCJncmFjZSJdLFsiMjAyNS0xMC0wNSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMTc5IiwiODQ3NyIsImdyYWNlIl0sWyIyMDI1LTEwLTA1Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJmYWlsZWQiLCI2MCIsIjAiLCJncmFjZSJdLFsiMjAyNS0xMC0wNSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMTgzIiwiMzcyNCIsImxpbnVzIl0sWyIyMDI1LTEwLTA1IiwicmVidWlsZC1pbmRleCIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIxMDM0IiwiODA2MTEiLCJsaW51cyJdLFsiMjAyNS0xMC0wNSIsInNlbmQtZGlnZXN0IiwibGFya3NwdXIiLCJzdWNjZWVkZWQiLCIzNSIsIjE0MzMiLCJncmFjZSJdLFsiMjAyNS0xMC0wNSIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiNTExIiwiMjY4MTAiLCJhZGEiXSxbIjIwMjUtMTAtMDUiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjQ1NCIsIjM2MDc1Iiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMDYiLCJuaWdodGx5LWV4cG9ydCIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjY1NSIsIjIxODYwIiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMDYiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE4MSIsIjEzMzUyIiwibGludXMiXSxbIjIwMjUtMTAtMDYiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE4MSIsIjk3ODQiLCJsaW51cyJdLFsiMjAyNS0xMC0wNiIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjQ1IiwiOTExNCIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTA2IiwicmVidWlsZC1pbmRleCIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCI4NDAiLCI0ODg3MCIsImFkYSJdLFsiMjAyNS0xMC0wNiIsInNlbmQtZGlnZXN0IiwibGFya3NwdXIiLCJmYWlsZWQiLCIyMSIsIjAiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0wNiIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzc2IiwiMjIxOTMiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0wNiIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzI0IiwiMjU1MTAiLCJsaW51cyJdLFsiMjAyNS0xMC0wNyIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiNzUxIiwiMTc2MjQiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0wNyIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjI5IiwiODk1OCIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTA3Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyMTkiLCIxMTYzMiIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTA3Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJza2lwcGVkIiwiMCIsIjAiLCJncmFjZSJdLFsiMjAyNS0xMC0wNyIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMTI1NyIsIjM5MzA0IiwibWFyZ2FyZXQiXSxbIjIwMjUtMTAtMDciLCJzZW5kLWRpZ2VzdCIsImxhcmtzcHVyIiwic3VjY2VlZGVkIiwiNDkiLCIxNjA2Iiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMDciLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsImNhbmNlbGxlZCIsIjMwMiIsIjAiLCJncmFjZSJdLFsiMjAyNS0xMC0wNyIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzAzIiwiMTQ2NDgiLCJncmFjZSJdLFsiMjAyNS0xMC0wOCIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiODYxIiwiMzAzOTgiLCJhZGEiXSxbIjIwMjUtMTAtMDgiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjIyNiIsIjE1MDM2IiwibWFyZ2FyZXQiXSxbIjIwMjUtMTAtMDgiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjI3NiIsIjE0NDk5IiwiYWRhIl0sWyIyMDI1LTEwLTA4Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIxOTciLCIzOTg4IiwibGludXMiXSxbIjIwMjUtMTAtMDgiLCJyZWJ1aWxkLWluZGV4IiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjEwODUiLCIyNjYyOCIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTA4Iiwic2VuZC1kaWdlc3QiLCJsYXJrc3B1ciIsInN1Y2NlZWRlZCIsIjYwIiwiMzU5MSIsImFkYSJdLFsiMjAyNS0xMC0wOCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiNTI2IiwiMTg4NzEiLCJhZGEiXSxbIjIwMjUtMTAtMDgiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjMxOCIsIjIxOTA0IiwiZ3JhY2UiXSxbIjIwMjUtMTAtMDkiLCJuaWdodGx5LWV4cG9ydCIsImhhcmJvciIsImZhaWxlZCIsIjMzOCIsIjAiLCJhZGEiXSxbIjIwMjUtMTAtMDkiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInNraXBwZWQiLCIwIiwiMCIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTA5Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyNDQiLCI5NjQ4Iiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMDkiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE3NiIsIjEyNjQyIiwibGludXMiXSxbIjIwMjUtMTAtMDkiLCJyZWJ1aWxkLWluZGV4IiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjExNzMiLCIyNjIxOSIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTA5Iiwic2VuZC1kaWdlc3QiLCJsYXJrc3B1ciIsImNhbmNlbGxlZCIsIjM0IiwiMCIsImdyYWNlIl0sWyIyMDI1LTEwLTA5IiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIzODMiLCIyNTQzNSIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTA5IiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJmYWlsZWQiLCIxODkiLCIwIiwiYWRhIl0sWyIyMDI1LTEwLTEwIiwibmlnaHRseS1leHBvcnQiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCI3NTAiLCIzNDU5MyIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTEwIiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIxNzIiLCI5MTU1IiwibGludXMiXSxbIjIwMjUtMTAtMTAiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE1OCIsIjEwNjIyIiwiZ3JhY2UiXSxbIjIwMjUtMTAtMTAiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjI2OSIsIjY0NzgiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xMCIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMTQwNyIsIjExMTY2NSIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTEwIiwic2VuZC1kaWdlc3QiLCJsYXJrc3B1ciIsInN1Y2NlZWRlZCIsIjYxIiwiMjAwNSIsImFkYSJdLFsiMjAyNS0xMC0xMCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzk3IiwiMTE2OTYiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0xMCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzk4IiwiMTI5NzUiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xMSIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwiZmFpbGVkIiwiMjY4IiwiMCIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTExIiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyMzQiLCIxNjk2OSIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTExIiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyNjkiLCIxNDIwNSIsImFkYSJdLFsiMjAyNS0xMC0xMSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMTUxIiwiNTQyOSIsImFkYSJdLFsiMjAyNS0xMC0xMSIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMTYzNyIsIjU0Mzc4IiwiYWRhIl0sWyIyMDI1LTEwLTExIiwic2VuZC1kaWdlc3QiLCJsYXJrc3B1ciIsInN1Y2NlZWRlZCIsIjYxIiwiMjI2MSIsImFkYSJdLFsiMjAyNS0xMC0xMSIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiNTAxIiwiMjUwOTgiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xMSIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzg1IiwiMjY4NzUiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xMiIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwiZmFpbGVkIiwiMjk2IiwiMCIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTEyIiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyODEiLCIxNDYwMyIsImFkYSJdLFsiMjAyNS0xMC0xMiIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwiY2FuY2VsbGVkIiwiMjE4IiwiMCIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTEyIiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIxNTAiLCI2NTk1IiwiZ3JhY2UiXSxbIjIwMjUtMTAtMTIiLCJyZWJ1aWxkLWluZGV4IiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjEyNzUiLCI5MjU0NSIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTEyIiwic2VuZC1kaWdlc3QiLCJsYXJrc3B1ciIsInN1Y2NlZWRlZCIsIjU3IiwiMjU4NiIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTEyIiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIzMTkiLCIxNDc3NyIsImdyYWNlIl0sWyIyMDI1LTEwLTEyIiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCI0MDkiLCIxMzIyMSIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTEzIiwibmlnaHRseS1leHBvcnQiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCI2MDYiLCIyMzc2NiIsImxpbnVzIl0sWyIyMDI1LTEwLTEzIiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIxNjgiLCI4MTU3IiwiZ3JhY2UiXSxbIjIwMjUtMTAtMTMiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsImNhbmNlbGxlZCIsIjIxOCIsIjAiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xMyIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMTg1IiwiMzkzNiIsImxpbnVzIl0sWyIyMDI1LTEwLTEzIiwicmVidWlsZC1pbmRleCIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCI5OTEiLCI3MTM0MiIsImxpbnVzIl0sWyIyMDI1LTEwLTEzIiwic2VuZC1kaWdlc3QiLCJsYXJrc3B1ciIsInN1Y2NlZWRlZCIsIjMyIiwiMTE5MSIsImFkYSJdLFsiMjAyNS0xMC0xMyIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwiZmFpbGVkIiwiMTQ1IiwiMCIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTEzIiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIyNzMiLCIxMTMyOSIsImdyYWNlIl0sWyIyMDI1LTEwLTE0IiwibmlnaHRseS1leHBvcnQiLCJoYXJib3IiLCJmYWlsZWQiLCIyNjQiLCIwIiwibWFyZ2FyZXQiXSxbIjIwMjUtMTAtMTQiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjI0NiIsIjk5NzEiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xNCIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwiZmFpbGVkIiwiNzkiLCIwIiwibGludXMiXSxbIjIwMjUtMTAtMTQiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE2OCIsIjExOTkzIiwiZ3JhY2UiXSxbIjIwMjUtMTAtMTQiLCJyZWJ1aWxkLWluZGV4IiwianVuaXBlciIsImNhbmNlbGxlZCIsIjEwMDAiLCIwIiwibGludXMiXSxbIjIwMjUtMTAtMTQiLCJzZW5kLWRpZ2VzdCIsImxhcmtzcHVyIiwic3VjY2VlZGVkIiwiMzUiLCIyNTE1IiwibGludXMiXSxbIjIwMjUtMTAtMTQiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsImZhaWxlZCIsIjIwOSIsIjAiLCJncmFjZSJdLFsiMjAyNS0xMC0xNCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzcyIiwiNzgzMyIsImxpbnVzIl0sWyIyMDI1LTEwLTE1IiwibmlnaHRseS1leHBvcnQiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCI1NDUiLCIzOTc4NCIsImxpbnVzIl0sWyIyMDI1LTEwLTE1Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIxNTMiLCI2OTM1IiwiZ3JhY2UiXSxbIjIwMjUtMTAtMTUiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjIxNyIsIjU1NTkiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0xNSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjE3IiwiMTQ5MjEiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xNSIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMTIzOCIsIjg2NTU0Iiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMTUiLCJzZW5kLWRpZ2VzdCIsImxhcmtzcHVyIiwic3VjY2VlZGVkIiwiNjIiLCIzMzk1IiwiYWRhIl0sWyIyMDI1LTEwLTE1IiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIzODMiLCIyNTQ2NSIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTE1IiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJza2lwcGVkIiwiMCIsIjAiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0xNiIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiNzE5IiwiNTQ4NDUiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xNiIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjU3IiwiNjM5MiIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTE2Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJza2lwcGVkIiwiMCIsIjAiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xNiIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjg5IiwiMTAxMTgiLCJhZGEiXSxbIjIwMjUtMTAtMTYiLCJyZWJ1aWxkLWluZGV4IiwianVuaXBlciIsImZhaWxlZCIsIjY1NSIsIjAiLCJhZGEiXSxbIjIwMjUtMTAtMTYiLCJzZW5kLWRpZ2VzdCIsImxhcmtzcHVyIiwic3VjY2VlZGVkIiwiNDEiLCI4NjEiLCJsaW51cyJdLFsiMjAyNS0xMC0xNiIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMjg1IiwiMTkxMDUiLCJncmFjZSJdLFsiMjAyNS0xMC0xNiIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzExIiwiMTY0OTQiLCJsaW51cyJdLFsiMjAyNS0xMC0xNyIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiODI1IiwiNTc0NDEiLCJhZGEiXSxbIjIwMjUtMTAtMTciLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE1MiIsIjg5NjciLCJhZGEiXSxbIjIwMjUtMTAtMTciLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE2NiIsIjc0NjkiLCJncmFjZSJdLFsiMjAyNS0xMC0xNyIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjM0IiwiODMyMSIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTE3IiwicmVidWlsZC1pbmRleCIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIxNDM2IiwiMzkwMzMiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xNyIsInNlbmQtZGlnZXN0IiwibGFya3NwdXIiLCJzdWNjZWVkZWQiLCI1MyIsIjI0ODMiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xNyIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzE3IiwiMTU0MDUiLCJsaW51cyJdLFsiMjAyNS0xMC0xNyIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMjkwIiwiMTgxNTIiLCJncmFjZSJdLFsiMjAyNS0xMC0xOCIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic2tpcHBlZCIsIjAiLCIwIiwiZ3JhY2UiXSxbIjIwMjUtMTAtMTgiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjIwNCIsIjEzNTEyIiwibWFyZ2FyZXQiXSxbIjIwMjUtMTAtMTgiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE5MCIsIjM4NDQiLCJsaW51cyJdLFsiMjAyNS0xMC0xOCIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMTg5IiwiMTQwMzEiLCJsaW51cyJdLFsiMjAyNS0xMC0xOCIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiOTAwIiwiNTg4NTYiLCJncmFjZSJdLFsiMjAyNS0xMC0xOCIsInNlbmQtZGlnZXN0IiwibGFya3NwdXIiLCJzdWNjZWVkZWQiLCIzNSIsIjIzMTEiLCJncmFjZSJdLFsiMjAyNS0xMC0xOCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzIyIiwiMjMzODIiLCJsaW51cyJdLFsiMjAyNS0xMC0xOCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzIzIiwiMTcwODgiLCJsaW51cyJdLFsiMjAyNS0xMC0xOSIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiNjU2IiwiNDY0MjIiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xOSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjYwIiwiMTIwMjgiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xOSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjYxIiwiMTcxMjgiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0xOSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjgzIiwiODQyMyIsImFkYSJdLFsiMjAyNS0xMC0xOSIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMTQ4NSIsIjMyODYzIiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMTkiLCJzZW5kLWRpZ2VzdCIsImxhcmtzcHVyIiwic3VjY2VlZGVkIiwiMzMiLCIxNDM0IiwiZ3JhY2UiXSxbIjIwMjUtMTAtMTkiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjMzMCIsIjE2MTA0IiwibGludXMiXSxbIjIwMjUtMTAtMTkiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjI3OCIsIjE5MDQ2IiwiZ3JhY2UiXSxbIjIwMjUtMTAtMjAiLCJuaWdodGx5LWV4cG9ydCIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjc0NSIsIjU3MzUyIiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMjAiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE2MyIsIjExNzc3IiwibGludXMiXSxbIjIwMjUtMTAtMjAiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjI5MiIsIjk3OTMiLCJhZGEiXSxbIjIwMjUtMTAtMjAiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjI5MyIsIjExNTgyIiwiZ3JhY2UiXSxbIjIwMjUtMTAtMjAiLCJyZWJ1aWxkLWluZGV4IiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjExMTAiLCIyNjA4MyIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTIwIiwic2VuZC1kaWdlc3QiLCJsYXJrc3B1ciIsInN1Y2NlZWRlZCIsIjYwIiwiMzEzOCIsImFkYSJdLFsiMjAyNS0xMC0yMCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzU4IiwiODQyMyIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTIwIiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIyOTMiLCIxMjY2OSIsImdyYWNlIl0sWyIyMDI1LTEwLTIxIiwibmlnaHRseS1leHBvcnQiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCI0NzUiLCIxOTM2NyIsImdyYWNlIl0sWyIyMDI1LTEwLTIxIiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIxNTYiLCI2MzQ1IiwiZ3JhY2UiXSxbIjIwMjUtMTAtMjEiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjI4OCIsIjE1NzQ2IiwiYWRhIl0sWyIyMDI1LTEwLTIxIiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyMjQiLCIxNjAyMiIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTIxIiwicmVidWlsZC1pbmRleCIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIxNTUzIiwiMTE2MDU5IiwibGludXMiXSxbIjIwMjUtMTAtMjEiLCJzZW5kLWRpZ2VzdCIsImxhcmtzcHVyIiwic3VjY2VlZGVkIiwiNTgiLCIzMjgwIiwiYWRhIl0sWyIyMDI1LTEwLTIxIiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIzOTAiLCIyNzYzNiIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTIxIiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCI1MDUiLCIyNTgzMiIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTIyIiwibmlnaHRseS1leHBvcnQiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCI2NDAiLCIxODI5NSIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTIyIiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyMDUiLCI0MjcxIiwibGludXMiXSxbIjIwMjUtMTAtMjIiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE3MyIsIjgyNzQiLCJncmFjZSJdLFsiMjAyNS0xMC0yMiIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjg4IiwiOTk1MCIsImFkYSJdLFsiMjAyNS0xMC0yMiIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMTQyNCIsIjM3NDA4Iiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMjIiLCJzZW5kLWRpZ2VzdCIsImxhcmtzcHVyIiwic3VjY2VlZGVkIiwiNDQiLCIyOTIxIiwibWFyZ2FyZXQiXSxbIjIwMjUtMTAtMjIiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjQxNiIsIjE0MDg2Iiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMjIiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjMyNiIsIjE1NjAyIiwiZ3JhY2UiXSxbIjIwMjUtMTAtMjMiLCJuaWdodGx5LWV4cG9ydCIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjQ1MyIsIjI4NzQ5IiwiZ3JhY2UiXSxbIjIwMjUtMTAtMjMiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjIwMyIsIjEyNzM3IiwibWFyZ2FyZXQiXSxbIjIwMjUtMTAtMjMiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjIwMiIsIjg3NjMiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0yMyIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic2tpcHBlZCIsIjAiLCIwIiwiYWRhIl0sWyIyMDI1LTEwLTIzIiwicmVidWlsZC1pbmRleCIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIxMjY3IiwiODQwMjciLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0yMyIsInNlbmQtZGlnZXN0IiwibGFya3NwdXIiLCJzdWNjZWVkZWQiLCI0OSIsIjM2MzMiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0yMyIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzI2IiwiMjQ5MDQiLCJsaW51cyJdLFsiMjAyNS0xMC0yMyIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzQwIiwiMTQ3NTIiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0yNCIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiNTUyIiwiMzEzNzkiLCJsaW51cyJdLFsiMjAyNS0xMC0yNCIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwiZmFpbGVkIiwiODYiLCIwIiwibWFyZ2FyZXQiXSxbIjIwMjUtMTAtMjQiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE2OSIsIjEyMTI5IiwibGludXMiXSxbIjIwMjUtMTAtMjQiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE5OCIsIjEwODczIiwibGludXMiXSxbIjIwMjUtMTAtMjQiLCJyZWJ1aWxkLWluZGV4IiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjEyNDQiLCI4MDQzNSIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTI0Iiwic2VuZC1kaWdlc3QiLCJsYXJrc3B1ciIsInN1Y2NlZWRlZCIsIjQxIiwiMjM5OSIsImxpbnVzIl0sWyIyMDI1LTEwLTI0IiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIzOTciLCIyNTM1NyIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTI0IiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCI0MzAiLCIxODMxNCIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTI1IiwibmlnaHRseS1leHBvcnQiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCI1MTEiLCIzNzg2OSIsImxpbnVzIl0sWyIyMDI1LTEwLTI1Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJmYWlsZWQiLCI2NyIsIjAiLCJsaW51cyJdLFsiMjAyNS0xMC0yNSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMTYxIiwiMTEwMTciLCJncmFjZSJdLFsiMjAyNS0xMC0yNSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMTYwIiwiOTk4OSIsImdyYWNlIl0sWyIyMDI1LTEwLTI1IiwicmVidWlsZC1pbmRleCIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIxMzExIiwiNDYyMTUiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0yNSIsInNlbmQtZGlnZXN0IiwibGFya3NwdXIiLCJzdWNjZWVkZWQiLCIzMiIsIjE5NDciLCJhZGEiXSxbIjIwMjUtMTAtMjUiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjM5NSIsIjExNDY3IiwibWFyZ2FyZXQiXSxbIjIwMjUtMTAtMjUiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjMxMiIsIjE1Njk3IiwibGludXMiXSxbIjIwMjUtMTAtMjYiLCJuaWdodGx5LWV4cG9ydCIsImhhcmJvciIsImZhaWxlZCIsIjMzNiIsIjAiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0yNiIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjU4IiwiMTIzOTEiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0yNiIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwiZmFpbGVkIiwiOTAiLCIwIiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMjYiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE5MyIsIjQ3NDYiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0yNiIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiOTAzIiwiMzg2MTAiLCJncmFjZSJdLFsiMjAyNS0xMC0yNiIsInNlbmQtZGlnZXN0IiwibGFya3NwdXIiLCJzdWNjZWVkZWQiLCI0OSIsIjM0NjgiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0yNiIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzAyIiwiMjIyNjUiLCJsaW51cyJdLFsiMjAyNS0xMC0yNiIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwiZmFpbGVkIiwiMTkxIiwiMCIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTI3IiwibmlnaHRseS1leHBvcnQiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCI4NDciLCI0Mjg3OSIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTI3Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyNjkiLCIxMjY0OSIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTI3Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyMDUiLCIxMzY4MCIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTI3Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIxNzMiLCIxMzE3OCIsImxpbnVzIl0sWyIyMDI1LTEwLTI3IiwicmVidWlsZC1pbmRleCIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIxMTg4IiwiMzQ2MjMiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0yNyIsInNlbmQtZGlnZXN0IiwibGFya3NwdXIiLCJzdWNjZWVkZWQiLCIzNSIsIjIyMDgiLCJncmFjZSJdLFsiMjAyNS0xMC0yNyIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiNDUzIiwiMzQ2MTciLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0yNyIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwiY2FuY2VsbGVkIiwiMjc3IiwiMCIsImdyYWNlIl0sWyIyMDI1LTEwLTI4IiwibmlnaHRseS1leHBvcnQiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCI2ODEiLCIyMTI3MyIsIm1hcmdhcmV0Il0sWyIyMDI1LTEwLTI4Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyMTEiLCIxNDUyNyIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTI4Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyNzQiLCIxMzQ2MyIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTI4Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyMjkiLCIxNjc4MCIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTI4IiwicmVidWlsZC1pbmRleCIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCIxMTE3IiwiNjgzMzYiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0yOCIsInNlbmQtZGlnZXN0IiwibGFya3NwdXIiLCJzdWNjZWVkZWQiLCI1NyIsIjI2MjgiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0yOCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzIxIiwiMTY4MTMiLCJsaW51cyJdLFsiMjAyNS0xMC0yOCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzIwIiwiMTU3NTYiLCJsaW51cyJdLFsiMjAyNS0xMC0yOSIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic2tpcHBlZCIsIjAiLCIwIiwiZ3JhY2UiXSxbIjIwMjUtMTAtMjkiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjI4MSIsIjE1MzgyIiwiYWRhIl0sWyIyMDI1LTEwLTI5Iiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJmYWlsZWQiLCI5MyIsIjAiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0yOSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjQ5IiwiMTExMDUiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0yOSIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMTE4NSIsIjM3NjUwIiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMjkiLCJzZW5kLWRpZ2VzdCIsImxhcmtzcHVyIiwic3VjY2VlZGVkIiwiNjMiLCIxMzY1IiwiZ3JhY2UiXSxbIjIwMjUtMTAtMjkiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjUwMyIsIjE4Mjg0IiwibGludXMiXSxbIjIwMjUtMTAtMjkiLCJpbXBvcnQtb3JkZXJzIiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjM1MiIsIjI2OTc3IiwibGludXMiXSxbIjIwMjUtMTAtMzAiLCJuaWdodGx5LWV4cG9ydCIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjg2OCIsIjMxNDIyIiwiYWRhIl0sWyIyMDI1LTEwLTMwIiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIxOTMiLCI0MTQzIiwibWFyZ2FyZXQiXSxbIjIwMjUtMTAtMzAiLCJzeW5jLWludmVudG9yeSIsImhhcmJvciIsInN1Y2NlZWRlZCIsIjE5OSIsIjc0MjkiLCJsaW51cyJdLFsiMjAyNS0xMC0zMCIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjcxIiwiMTM3MTYiLCJzY2hlZHVsZSJdLFsiMjAyNS0xMC0zMCIsInJlYnVpbGQtaW5kZXgiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMTQ0NyIsIjYxMDk4Iiwic2NoZWR1bGUiXSxbIjIwMjUtMTAtMzAiLCJzZW5kLWRpZ2VzdCIsImxhcmtzcHVyIiwiZmFpbGVkIiwiMjUiLCIwIiwiYWRhIl0sWyIyMDI1LTEwLTMwIiwiaW1wb3J0LW9yZGVycyIsImp1bmlwZXIiLCJzdWNjZWVkZWQiLCI1MTkiLCIxMDg1MCIsImFkYSJdLFsiMjAyNS0xMC0zMCIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMjcxIiwiMTgxMzIiLCJncmFjZSJdLFsiMjAyNS0xMC0zMSIsIm5pZ2h0bHktZXhwb3J0IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiNjU4IiwiNDQ4MzUiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0zMSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMTk1IiwiMTA0ODQiLCJsaW51cyJdLFsiMjAyNS0xMC0zMSIsInN5bmMtaW52ZW50b3J5IiwiaGFyYm9yIiwic3VjY2VlZGVkIiwiMjQ0IiwiOTcwMiIsInNjaGVkdWxlIl0sWyIyMDI1LTEwLTMxIiwic3luYy1pbnZlbnRvcnkiLCJoYXJib3IiLCJzdWNjZWVkZWQiLCIyMTIiLCI1NjE1IiwibWFyZ2FyZXQiXSxbIjIwMjUtMTAtMzEiLCJyZWJ1aWxkLWluZGV4IiwianVuaXBlciIsInN1Y2NlZWRlZCIsIjE0NzYiLCIxMDIxMTMiLCJncmFjZSJdLFsiMjAyNS0xMC0zMSIsInNlbmQtZGlnZXN0IiwibGFya3NwdXIiLCJzdWNjZWVkZWQiLCI0MSIsIjEwMDIiLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0zMSIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiNDAwIiwiMjY5MDciLCJtYXJnYXJldCJdLFsiMjAyNS0xMC0zMSIsImltcG9ydC1vcmRlcnMiLCJqdW5pcGVyIiwic3VjY2VlZGVkIiwiMzczIiwiNzkzMiIsImxpbnVzIl1dfX0",
+  "zdZTLcho7EIZfRaU1lYK5YdhxfHwuFY7DiZMs4vKimRGDgkYiGgkHu1yV18jr5UnSLXlmIHFYSa2vW7-6_-GRH_h8MuKaz_nK7L0CJ41mUIPUrWNgBfARb_n8kR-kuEeqLcE5YTH6BXdljosjLTJclEYZS5sUN1DXVtTgBCX5BiNrSdc0RrstFTXW4VaD8xYUBpRsJEbGeOSg3PH5BlQrRnxrrHzAJIS60B6UcKFyJTbgleNPI16Ryp8esj6yUrojVqe7VsLslWBKHqSumdTM3RtWmQehiZKiHTHQFRNQbkPa96_f2tADYtvPHpdsJ5VpBHagfcXeGq8rUbGNrL2l7I2xrLJwT-UtuK2wzG0hVtf1K2oRn98-cllRlya419DQMy6fRR73tHPiC72o45ITDm909vdoeopqvFRo91s4G-ChZQOtfbPGQQ98PvCLaIyfyLsRx_Hf3vIl1KbF82tZCyuJXGysLGkxybMx_Wg5mU743eiWX4O0Zi0x9Fro4xme9XQxKwK8KEtLJ39jY8_QpOjQJMkD-ifsgJx6IzQ6UZ3CadrBeTYN8NK3iGPgIzTrc82RJTibXAT4H9CG9H6QwmFLCG5DzkWvN03zWWBfoxEa9JWnhoh91BHpSS85Hwf2vQLQawAXdP9ndG1U1PKcMO2VTMdZSFlttWnYSmj6qC5Ru6lOM5L-ocU06kHN6AzQAmNLCHPqqvfvTGdJFPSmVYZ0G3sPZLsrb82eMgchedSxlO062GeFH7aP7e7pPO9mPo5134rj7hMc5A5j_5ZCYX9O-UnWjXIaq78DpaSm8letMzrI7emsr54PT4zm8K2z53ByMsxnm_g11iYh9hchxWDWi-dnNlRuJSzN88Z4t2WLRnTuHs96ExbTJGTcALW7pjZebqUSL6QVfVaRxU8CR-_EQVaC0t5bX_vQ_l_u6-2WjGPiEtgKHjDwh6H_OXgh6WLwUFT4v5eO7rkqPVTGvpAyNC3tXuUPdPCX_ETfwZtSQBzKrNeTxYYt9lEENAbOyG7ERXTEtd95_MMFZTZ0-g69f86n_ST43d3T0w8",
+  "jeyJ2IjoxLCJuIjoiUG9wdWxhdGlvbiBhZ2FpbnN0IGFyZWEiLCJzIjp7InZpZXciOiJzY2F0dGVyIiwieCI6ImM1IiwieSI6ImM0IiwiY29sb3IiOiJjMyIsImFnZ3JlZ2F0ZSI6InN1bSIsImJpbiI6Im1vbnRoIiwic29ydCI6Im5hdHVyYWwiLCJsaW1pdCI6MCwic3RhY2siOmZhbHNlLCJob3Jpem9udGFsIjpmYWxzZSwicGFsZXR0ZSI6ImRlZmF1bHQifSwiZCI6eyJuIjoiUG9wdWxhdGlvbiBieSBjaXR5IiwidCI6IlBlb3BsZSBsaXZpbmcgaW4gdHdvIGRvemVuIGNpdGllcywgYW5kIGVhY2ggY2l0eeKAmXMgYXJlYSBpbiBzcXVhcmUga2lsb21ldGVycy4gUm91bmRlZCBmaWd1cmVzLCBmb3IgZHJhd2luZyByYXRoZXIgdGhhbiBjaXRpbmcuIiwiYyI6W3siaWQiOiJjMSIsIm5hbWUiOiJDaXR5IiwidHlwZSI6InRleHQifSx7ImlkIjoiYzIiLCJuYW1lIjoiQ291bnRyeSIsInR5cGUiOiJ0ZXh0In0seyJpZCI6ImMzIiwibmFtZSI6IkNvbnRpbmVudCIsInR5cGUiOiJ0ZXh0In0seyJpZCI6ImM0IiwibmFtZSI6IlBvcHVsYXRpb24iLCJ0eXBlIjoibnVtYmVyIn0seyJpZCI6ImM1IiwibmFtZSI6IkFyZWEiLCJ0eXBlIjoibnVtYmVyIn1dLCJyIjpbWyJMYWdvcyIsIk5pZ2VyaWEiLCJBZnJpY2EiLCIxNTQwMDAwMCIsIjExNzEiXSxbIk5haXJvYmkiLCJLZW55YSIsIkFmcmljYSIsIjQ0MDAwMDAiLCI2OTYiXSxbIkFjY3JhIiwiR2hhbmEiLCJBZnJpY2EiLCIyNjAwMDAwIiwiMjI1Il0sWyJEYWthciIsIlNlbmVnYWwiLCJBZnJpY2EiLCIzMzAwMDAwIiwiNTQ3Il0sWyJMdXNha2EiLCJaYW1iaWEiLCJBZnJpY2EiLCIzMDAwMDAwIiwiNDE4Il0sWyJIYW5vaSIsIlZpZXRuYW0iLCJBc2lhIiwiODQwMDAwMCIsIjMzNTkiXSxbIkthdGhtYW5kdSIsIk5lcGFsIiwiQXNpYSIsIjE2MDAwMDAiLCI1MCJdLFsiVWxhYW5iYWF0YXIiLCJNb25nb2xpYSIsIkFzaWEiLCIxNzAwMDAwIiwiNDcwNCJdLFsiUGhub20gUGVuaCIsIkNhbWJvZGlhIiwiQXNpYSIsIjIzMDAwMDAiLCI2NzkiXSxbIlZpZW50aWFuZSIsIkxhb3MiLCJBc2lhIiwiMTAwMDAwMCIsIjM5MjAiXSxbIk9zbG8iLCJOb3J3YXkiLCJFdXJvcGUiLCI3MDAwMDAiLCI0NTQiXSxbIkxpc2JvbiIsIlBvcnR1Z2FsIiwiRXVyb3BlIiwiNTUwMDAwIiwiMTAwIl0sWyJSZXlramF2aWsiLCJJY2VsYW5kIiwiRXVyb3BlIiwiMTQwMDAwIiwiMjc0Il0sWyJUYWxsaW5uIiwiRXN0b25pYSIsIkV1cm9wZSIsIjQ1MDAwMCIsIjE1OSJdLFsiVmllbm5hIiwiQXVzdHJpYSIsIkV1cm9wZSIsIjIwMDAwMDAiLCI0MTUiXSxbIkR1YmxpbiIsIklyZWxhbmQiLCJFdXJvcGUiLCI2MDAwMDAiLCIxMTgiXSxbIkxpbWEiLCJQZXJ1IiwiU291dGggQW1lcmljYSIsIjEwOTAwMDAwIiwiMjY3MiJdLFsiU2FudGlhZ28iLCJDaGlsZSIsIlNvdXRoIEFtZXJpY2EiLCI2OTAwMDAwIiwiNjQxIl0sWyJNb250ZXZpZGVvIiwiVXJ1Z3VheSIsIlNvdXRoIEFtZXJpY2EiLCIxNDAwMDAwIiwiMjAxIl0sWyJMYSBQYXoiLCJCb2xpdmlhIiwiU291dGggQW1lcmljYSIsIjgwMDAwMCIsIjQ3MiJdLFsiUXVpdG8iLCJFY3VhZG9yIiwiU291dGggQW1lcmljYSIsIjIwMDAwMDAiLCIzNzIiXSxbIlN1dmEiLCJGaWppIiwiT2NlYW5pYSIsIjkwMDAwIiwiMjA0OCJdLFsiQXBpYSIsIlNhbW9hIiwiT2NlYW5pYSIsIjQwMDAwIiwiNjAiXSxbIk51a3XigJlhbG9mYSIsIlRvbmdhIiwiT2NlYW5pYSIsIjMwMDAwIiwiMTEiXV19fQ"
+ ],
+ "binKeys": [
+  [
+   "2025-03-05",
+   "week"
+  ],
+  [
+   "2025-01-01",
+   "week"
+  ],
+  [
+   "2024-12-30",
+   "week"
+  ],
+  [
+   "2025-02-30",
+   "week"
+  ],
+  [
+   "0000-01-01",
+   "week"
+  ],
+  [
+   "2025-07-14",
+   "month"
+  ],
+  [
+   "2025-07-14",
+   "day"
+  ]
+ ],
+ "binLabels": [
+  [
+   "2025-03",
+   "month",
+   false
+  ],
+  [
+   "2025-03",
+   "month",
+   true
+  ],
+  [
+   "2025-03-03",
+   "week",
+   false
+  ],
+  [
+   "2025-03-03",
+   "day",
+   true
+  ],
+  [
+   "2025-13-01",
+   "day",
+   false
+  ],
+  [
+   "2025-08-09",
+   "week",
+   true
+  ]
+ ],
+ "counted": [
+  [
+   0,
+   "row",
+   null
+  ],
+  [
+   1,
+   "row",
+   null
+  ],
+  [
+   1234,
+   "row",
+   null
+  ],
+  [
+   2,
+   "category",
+   "categories"
+  ]
+ ],
+ "paletteOf": [
+  [
+   "default",
+   "theme"
+  ],
+  [
+   "default",
+   "cool"
+  ],
+  [
+   "warm",
+   "cool"
+  ],
+  [
+   "theme",
+   "earth"
+  ],
+  [
+   "nope",
+   "cool"
+  ],
+  [
+   "default",
+   "nope"
+  ]
+ ],
+ "boardOrders": [
+  null,
+  [],
+  [
+   "bd-runs"
+  ],
+  [
+   "bd-runs",
+   "bd-weather"
+  ],
+  [
+   "bd-weather",
+   "gone",
+   "bd-weather"
+  ]
+ ],
+ "steps": [
+  {
+   "op": "go",
+   "route": [
+    "datasets"
+   ],
+   "at": 1000
+  },
+  {
+   "op": "search",
+   "value": "harbor",
+   "at": 2000
+  },
+  {
+   "op": "search",
+   "value": "",
+   "at": 3000
+  },
+  {
+   "op": "go",
+   "route": [
+    "datasets",
+    "ds-runs"
+   ],
+   "at": 4000
+  },
+  {
+   "op": "cell",
+   "row": "ds-runs-r1",
+   "column": "c5",
+   "value": "1,234",
+   "at": 5000
+  },
+  {
+   "op": "cell",
+   "row": "ds-runs-r2",
+   "column": "c1",
+   "value": "2025-10-30",
+   "at": 6000
+  },
+  {
+   "op": "button",
+   "label": "Row",
+   "at": 7000
+  },
+  {
+   "op": "rowAction",
+   "row": "ds-runs-r2",
+   "id": "duplicate",
+   "at": 8000
+  },
+  {
+   "op": "bulk",
+   "ids": [
+    "ds-runs-r3",
+    "ds-runs-r4"
+   ],
+   "at": 9000
+  },
+  {
+   "op": "cell",
+   "table": 1,
+   "row": "c5",
+   "column": "type",
+   "value": "text",
+   "at": 10000
+  },
+  {
+   "op": "cell",
+   "table": 1,
+   "row": "c5",
+   "column": "type",
+   "value": "number",
+   "at": 11000
+  },
+  {
+   "op": "cell",
+   "table": 1,
+   "row": "c2",
+   "column": "name",
+   "value": "  Job name ",
+   "at": 12000
+  },
+  {
+   "op": "button",
+   "label": "Column",
+   "at": 13000
+  },
+  {
+   "op": "rowAction",
+   "table": 1,
+   "row": "c6",
+   "id": "drop",
+   "at": 14000
+  },
+  {
+   "op": "confirm",
+   "at": 15000
+  },
+  {
+   "op": "search",
+   "value": "FAILED",
+   "at": 16000
+  },
+  {
+   "op": "filters",
+   "filters": [
+    {
+     "field": "c5",
+     "operator": "atLeast",
+     "values": [
+      "300"
+     ]
+    }
+   ],
+   "at": 17000
+  },
+  {
+   "op": "filters",
+   "filters": [],
+   "at": 18000
+  },
+  {
+   "op": "search",
+   "value": "",
+   "at": 19000
+  },
+  {
+   "op": "inline",
+   "index": 0,
+   "value": "  Runs, edited ",
+   "at": 20000
+  },
+  {
+   "op": "inline",
+   "index": 1,
+   "value": " New words ",
+   "at": 21000
+  },
+  {
+   "op": "menu",
+   "label": "Download CSV",
+   "at": 22000
+  },
+  {
+   "op": "menu",
+   "label": "Duplicate",
+   "follow": true,
+   "at": 23000
+  },
+  {
+   "op": "go",
+   "route": [
+    "charts"
+   ],
+   "at": 24000
+  },
+  {
+   "op": "search",
+   "value": "RAIN",
+   "at": 25000
+  },
+  {
+   "op": "search",
+   "value": "",
+   "at": 26000
+  },
+  {
+   "op": "rowAction",
+   "row": "ch-runs-share",
+   "id": "duplicate",
+   "at": 27000
+  },
+  {
+   "op": "rowAction",
+   "row": "ch-rain-map",
+   "id": "delete",
+   "at": 28000
+  },
+  {
+   "op": "confirm",
+   "at": 29000
+  },
+  {
+   "op": "go",
+   "route": [
+    "build",
+    "ds-arrivals"
+   ],
+   "at": 30000
+  },
+  {
+   "op": "builder",
+   "do": "view",
+   "value": "pie",
+   "at": 31000
+  },
+  {
+   "op": "builder",
+   "do": "name",
+   "value": " Harbor share ",
+   "at": 32000
+  },
+  {
+   "op": "builder",
+   "do": "aggregate",
+   "value": "avg",
+   "at": 33000
+  },
+  {
+   "op": "builder",
+   "do": "view",
+   "value": "bar",
+   "at": 34000
+  },
+  {
+   "op": "builder",
+   "do": "slot",
+   "field": "series",
+   "value": "c3",
+   "at": 35000
+  },
+  {
+   "op": "builder",
+   "do": "slot",
+   "field": "x",
+   "value": "c1",
+   "at": 36000
+  },
+  {
+   "op": "builder",
+   "do": "bin",
+   "value": "week",
+   "at": 37000
+  },
+  {
+   "op": "builder",
+   "do": "sort",
+   "value": "asc",
+   "at": 38000
+  },
+  {
+   "op": "builder",
+   "do": "limit",
+   "value": "5",
+   "at": 39000
+  },
+  {
+   "op": "builder",
+   "do": "palette",
+   "value": "warm",
+   "at": 40000
+  },
+  {
+   "op": "builder",
+   "do": "stack",
+   "value": true,
+   "at": 41000
+  },
+  {
+   "op": "builder",
+   "do": "horizontal",
+   "value": true,
+   "at": 42000
+  },
+  {
+   "op": "builder",
+   "do": "suggestion",
+   "value": 1,
+   "at": 43000
+  },
+  {
+   "op": "builder",
+   "do": "view",
+   "value": "scatter",
+   "at": 44000
+  },
+  {
+   "op": "builder",
+   "do": "view",
+   "value": "stat",
+   "at": 45000
+  },
+  {
+   "op": "builder",
+   "do": "view",
+   "value": "map",
+   "at": 46000
+  },
+  {
+   "op": "builder",
+   "do": "dataset",
+   "value": "ds-rainfall",
+   "at": 47000
+  },
+  {
+   "op": "builder",
+   "do": "view",
+   "value": "heatmap",
+   "at": 48000
+  },
+  {
+   "op": "button",
+   "label": "Save",
+   "follow": true,
+   "at": 49000
+  },
+  {
+   "op": "builder",
+   "do": "name",
+   "value": "Rain grid, renamed",
+   "at": 50000
+  },
+  {
+   "op": "button",
+   "label": "Discard",
+   "at": 51000
+  },
+  {
+   "op": "go",
+   "route": [
+    "charts",
+    "ch-runs-state"
+   ],
+   "at": 52000
+  },
+  {
+   "op": "builder",
+   "do": "view",
+   "value": "table",
+   "at": 53000
+  },
+  {
+   "op": "builder",
+   "do": "aggregate",
+   "value": "count",
+   "at": 54000
+  },
+  {
+   "op": "button",
+   "label": "Save",
+   "at": 55000
+  },
+  {
+   "op": "button",
+   "label": "Save as new",
+   "follow": true,
+   "at": 56000
+  },
+  {
+   "op": "builder",
+   "do": "addTo",
+   "value": "bd-weather",
+   "at": 57000
+  },
+  {
+   "op": "menu",
+   "label": "Data as CSV",
+   "at": 58000
+  },
+  {
+   "op": "go",
+   "route": [
+    "build",
+    "ds-cities"
+   ],
+   "at": 59000
+  },
+  {
+   "op": "builder",
+   "do": "view",
+   "value": "scatter",
+   "at": 60000
+  },
+  {
+   "op": "builder",
+   "do": "slot",
+   "field": "size",
+   "value": "c5",
+   "at": 61000
+  },
+  {
+   "op": "go",
+   "route": [
+    "boards"
+   ],
+   "at": 62000
+  },
+  {
+   "op": "reorder",
+   "from": 1,
+   "to": 0,
+   "at": 63000
+  },
+  {
+   "op": "reorder",
+   "from": 0,
+   "to": 5,
+   "at": 64000
+  },
+  {
+   "op": "go",
+   "route": [
+    "boards",
+    "bd-runs"
+   ],
+   "at": 65000
+  },
+  {
+   "op": "filters",
+   "filters": [
+    {
+     "field": "State",
+     "operator": "oneOf",
+     "values": [
+      "failed",
+      "skipped"
+     ]
+    },
+    {
+     "field": "Duration",
+     "operator": "atLeast",
+     "values": [
+      "200"
+     ]
+    },
+    {
+     "field": "Region",
+     "operator": "oneOf",
+     "values": [
+      "Bomi"
+     ]
+    }
+   ],
+   "at": 66000
+  },
+  {
+   "op": "board",
+   "do": "csv",
+   "item": "it-8",
+   "at": 67000
+  },
+  {
+   "op": "board",
+   "do": "takeOff",
+   "item": "it-6",
+   "at": 68000
+  },
+  {
+   "op": "undo",
+   "index": 0,
+   "at": 69000
+  },
+  {
+   "op": "board",
+   "do": "edit",
+   "at": 70000
+  },
+  {
+   "op": "board",
+   "do": "add",
+   "chart": "ch-cities",
+   "span": "full",
+   "index": 1,
+   "at": 71000
+  },
+  {
+   "op": "board",
+   "do": "takeOff",
+   "item": "it-7",
+   "at": 72000
+  },
+  {
+   "op": "board",
+   "do": "done",
+   "at": 73000
+  },
+  {
+   "op": "addDialog",
+   "pick": null,
+   "span": "two-thirds",
+   "at": 74000
+  },
+  {
+   "op": "addDialog",
+   "pick": "ch-rain-total",
+   "add": true,
+   "at": 75000
+  },
+  {
+   "op": "inline",
+   "index": 0,
+   "value": "Runs, renamed",
+   "at": 76000
+  },
+  {
+   "op": "menu",
+   "label": "Duplicate",
+   "follow": true,
+   "at": 77000
+  },
+  {
+   "op": "menu",
+   "label": "Delete",
+   "at": 78000
+  },
+  {
+   "op": "confirm",
+   "follow": true,
+   "at": 79000
+  },
+  {
+   "op": "boardDialog",
+   "name": "  Harbor watch ",
+   "description": " Ships ",
+   "make": true,
+   "follow": true,
+   "at": 80000
+  },
+  {
+   "op": "board",
+   "do": "cancel",
+   "at": 81000
+  },
+  {
+   "op": "go",
+   "route": [
+    "boards",
+    "gone"
+   ],
+   "at": 82000
+  },
+  {
+   "op": "settings",
+   "id": "palette",
+   "value": "cool",
+   "at": 83000
+  },
+  {
+   "op": "settings",
+   "id": "style",
+   "value": "compact",
+   "at": 84000
+  },
+  {
+   "op": "settings",
+   "id": "decimals",
+   "value": "1",
+   "at": 85000
+  },
+  {
+   "op": "settings",
+   "id": "suggestions",
+   "value": false,
+   "at": 86000
+  },
+  {
+   "op": "settings",
+   "id": "aggregate",
+   "value": "max",
+   "at": 87000
+  },
+  {
+   "op": "go",
+   "route": [
+    "build",
+    "ds-runs"
+   ],
+   "at": 88000
+  },
+  {
+   "op": "settings",
+   "do": "reset",
+   "section": "numbers",
+   "at": 89000
+  },
+  {
+   "op": "settings",
+   "do": "reset",
+   "section": "charts",
+   "at": 90000
+  },
+  {
+   "op": "import",
+   "do": "source",
+   "value": "paste",
+   "at": 91000
+  },
+  {
+   "op": "import",
+   "do": "paste",
+   "value": "Month,Harbor,Arrivals\n2025-01,Bergen,\"1,412\"\n2025-01,Cork,198\n2025-02,Bergen,437\n",
+   "at": 92000
+  },
+  {
+   "op": "import",
+   "do": "name",
+   "value": "",
+   "at": 93000
+  },
+  {
+   "op": "import",
+   "do": "name",
+   "value": " Pasted harbors ",
+   "at": 94000
+  },
+  {
+   "op": "import",
+   "do": "column",
+   "index": 1,
+   "field": "name",
+   "value": "arrivals",
+   "at": 95000
+  },
+  {
+   "op": "import",
+   "do": "column",
+   "index": 1,
+   "field": "name",
+   "value": "Port",
+   "at": 96000
+  },
+  {
+   "op": "import",
+   "do": "column",
+   "index": 2,
+   "field": "type",
+   "value": "text",
+   "at": 97000
+  },
+  {
+   "op": "import",
+   "do": "source",
+   "value": "file",
+   "at": 98000
+  },
+  {
+   "op": "import",
+   "do": "save",
+   "follow": true,
+   "at": 99000
+  },
+  {
+   "op": "import",
+   "do": "reopen",
+   "at": 100000
+  },
+  {
+   "op": "import",
+   "do": "file",
+   "name": "rain_by-region.v2.csv",
+   "content": "Region;Rain\nBomi;12\nLofa;\nNowhere;x\n",
+   "at": 101000
+  },
+  {
+   "op": "import",
+   "do": "source",
+   "value": "paste",
+   "at": 102000
+  },
+  {
+   "op": "import",
+   "do": "paste",
+   "value": "[1,",
+   "at": 103000
+  },
+  {
+   "op": "import",
+   "do": "source",
+   "value": "file",
+   "at": 104000
+  },
+  {
+   "op": "import",
+   "do": "save",
+   "follow": true,
+   "at": 105000
+  },
+  {
+   "op": "share",
+   "chart": "ch-cities",
+   "at": 106000
+  },
+  {
+   "op": "share",
+   "chart": "ch-runs-duration",
+   "at": 107000
+  },
+  {
+   "op": "openShared",
+   "at": 108000
+  },
+  {
+   "op": "openShared",
+   "keep": true,
+   "follow": true,
+   "at": 109000
+  },
+  {
+   "op": "openShared",
+   "payload": "zAAAA",
+   "at": 110000
+  },
+  {
+   "op": "go",
+   "route": [
+    "datasets"
+   ],
+   "at": 111000
+  },
+  {
+   "op": "rowAction",
+   "row": "ds-cities",
+   "id": "delete",
+   "at": 112000
+  },
+  {
+   "op": "confirm",
+   "follow": true,
+   "at": 113000
+  },
+  {
+   "op": "rowAction",
+   "row": "ds-arrivals",
+   "id": "csv",
+   "at": 114000
+  },
+  {
+   "op": "settings",
+   "do": "resetAll",
+   "at": 115000
+  }
+ ]
+}

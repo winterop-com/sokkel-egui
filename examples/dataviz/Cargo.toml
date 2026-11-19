@@ -1,0 +1,17 @@
+[package]
+name = "dataviz"
+description = "Tidevann's visualizer: datasets imported from a file or pasted, charts drawn from their columns with views suggested for them, boards of charts filtered together, and charts shared as links that carry their data, as sokkel-ui's dataviz example keeps it."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-egui.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+miniz_oxide = "0.8"
+
+[dev-dependencies]
+# The web's numbers read back to the bit, as `tests/web.rs` compares them.
+serde_json = { workspace = true, features = ["float_roundtrip"] }
