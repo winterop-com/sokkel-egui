@@ -1,0 +1,1725 @@
+{
+ "now": 1793869200000,
+ "random": 20261105,
+ "origin": "http://localhost:5173",
+ "pathname": "/",
+ "hashed": [
+  "",
+  "a",
+  "ab",
+  "ba",
+  "NO",
+  "ou:NO",
+  "héllo",
+  "Laksevåg",
+  "a long text with spaces and words in it",
+  "☃"
+ ],
+ "uids": [
+  "",
+  "x",
+  "ou:NO",
+  "de:DE_VISITS",
+  "ind:IND_NEW_010:mhm6s6wg",
+  "prr:new:8:abc"
+ ],
+ "extraPeriods": [
+  "202510",
+  "202611",
+  "202412"
+ ],
+ "shifts": [
+  [
+   "202511",
+   0
+  ],
+  [
+   "202511",
+   -1
+  ],
+  [
+   "202511",
+   1
+  ],
+  [
+   "202601",
+   -1
+  ],
+  [
+   "202601",
+   -13
+  ],
+  [
+   "202510",
+   25
+  ],
+  [
+   "202603",
+   0.5
+  ],
+  [
+   "202603",
+   -0.5
+  ],
+  [
+   "202512",
+   12
+  ],
+  [
+   "2026",
+   1
+  ],
+  [
+   "abcdef",
+   1
+  ],
+  [
+   "000101",
+   -1
+  ],
+  [
+   "000101",
+   -2
+  ]
+ ],
+ "days": [
+  "202511",
+  "202602",
+  "202402",
+  "190002",
+  "200002",
+  "202604",
+  "2026",
+  "abcdef",
+  "002402",
+  "202613",
+  "202600"
+ ],
+ "places": [
+  [
+   "NO",
+   "202610"
+  ],
+  [
+   "NO",
+   "202511"
+  ],
+  [
+   "NO",
+   "202603"
+  ],
+  [
+   "NO",
+   "202510"
+  ],
+  [
+   "NO_VESTLAND",
+   "202606"
+  ],
+  [
+   "NO_VESTLAND_VOSS",
+   "202604"
+  ],
+  [
+   "NO_VESTLAND_VOSS_VOSSESTRAND",
+   "202604"
+  ],
+  [
+   "NO_VESTLAND_VOSS_VOSSESTRAND",
+   "202602"
+  ],
+  [
+   "NO_NORDLAND_BODO_BODO_CENTER",
+   "202608"
+  ],
+  [
+   "NO_INNLANDET_LILLEHAMMER_FABERG",
+   "202512"
+  ],
+  [
+   "nothing",
+   "202603"
+  ],
+  [
+   "NO",
+   "202611"
+  ]
+ ],
+ "expressions": [
+  "#{$vaccinated}",
+  "#{$due}",
+  "/* coverage in percent */\n#{$vaccinated} / #{$due} * 100",
+  "C{$target}",
+  "#{$visits.$under5}",
+  "#{$visits}",
+  "#{$referrals}",
+  "#{$visits.*}",
+  "[days]",
+  "#{$taken} - #{$failed}",
+  "greatest(#{$taken}, 1)",
+  "#{$onHand}\n  - #{$onHand}.periodOffset(-1)",
+  "1",
+  "R{$set.REPORTING_RATE}",
+  "removeZeros(#{$referrals})",
+  "#{$used}",
+  "#{$onHand}.periodOffset(-1)\n  + #{$received}",
+  "#{$visits} * 0.1",
+  "R{$set.ACTUAL_REPORTS}",
+  "R{$set.EXPECTED_REPORTS}",
+  "R{$set.WHATEVER}",
+  "R{$set}",
+  "R{nothing.REPORTING_RATE}",
+  "R{$set.REPORTING_RATE} / 100 * [days]",
+  "#{$visits.$over5}",
+  "#{$visits.$plain}",
+  "#{$referrals.$under5}",
+  "#{$visits.nothing}",
+  "#{nothing}",
+  "#{}",
+  "#{$visits.*.*}",
+  "#{$visits.$under5.attr}",
+  "#{ $due }",
+  "C{nothing}",
+  "C{$samples} * 2",
+  "N{nothing}",
+  "N{IND}",
+  "OUG{abc}",
+  "I{abc}",
+  "D{abc.def}",
+  "A{abc}",
+  "V{event_date}",
+  "#{water source}",
+  "1 + 2 * 3",
+  "(1 + 2) * 3",
+  "2 ^ 3 ^ 2",
+  "-2 ^ 2",
+  "10 % 4",
+  "10 % 0",
+  "1 / 0",
+  "0 / 0",
+  "7 / 2",
+  "1.5e3 + .5",
+  "1.e2",
+  "3.",
+  "1e",
+  "1e+",
+  "2E-3",
+  "0.1 + 0.2",
+  "1 - -1",
+  "+-+1",
+  "--3",
+  "1.1 ^ 3",
+  "1.1 ^ 7",
+  "3.3 ^ 5",
+  "0.1 ^ 3",
+  "2 ^ 0.5",
+  "(-8) ^ (1/3)",
+  "2 ^ -2",
+  "10 ^ 400",
+  "1e999 - 1e999",
+  "1e999",
+  "log(100)",
+  "log(8, 2)",
+  "log10(1000)",
+  "log(0)",
+  "log(-1)",
+  "log10(0) < 1",
+  "log(#{$visits})",
+  "1 < 2 && 2 < 3",
+  "1 and 0",
+  "0 or 2",
+  "not 1",
+  "!0",
+  "true == 1",
+  "false != 0",
+  "'a' == 'a'",
+  "'a' < 'b'",
+  "'10' < '9'",
+  "'10' < 9",
+  "'' == false",
+  "null",
+  "isNull(#{$visits})",
+  "isNotNull(#{$visits})",
+  "if(#{$visits} > 1000, 1, 0)",
+  "if(1, 2)",
+  "if(1, 2, 3, 4)",
+  "firstNonNull(#{$referrals}, 5)",
+  "firstNonNull()",
+  "greatest(1, 5, 3)",
+  "least(4, -2, 9)",
+  "greatest(#{$visits}, #{$due})",
+  "least()",
+  "least(0, -0)",
+  "removeZeros(0)",
+  "removeZeros(3)",
+  "#{$referrals} == #{$referrals}",
+  "#{$vaccinated} > #{$due}",
+  "#{$vaccinated} <= #{$due} || #{$due} == 0",
+  "'x' + 1",
+  "true + true",
+  "'3' * '4'",
+  "#{$visits}.periodOffset(-12)",
+  "#{$visits}.periodOffset(1)",
+  "#{$visits}.periodOffset(-1).periodOffset(-1)",
+  "(#{$visits} + #{$due}).periodOffset(-1)",
+  "#{$visits}.periodOffset()",
+  "#{$visits}.periodOffset(-1, 2)",
+  "5.periodOffset(-1)",
+  "[days].periodOffset(-1)",
+  "#{$visits}.periodOffset(0.5)",
+  "#{$visits}.yearToDate()",
+  "#{$visits}.stageOffset(1)",
+  "#{$visits}.periodOffset",
+  "#{$visits}.nothing(1)",
+  "#{$visits}.maxDate()",
+  "sum(#{$visits})",
+  "avg(1, 2)",
+  "orgUnit.ancestor(abc)",
+  "contains('a', 'b')",
+  "containsItems('a')",
+  "nothing(1)",
+  "d2:hasValue(#{$visits})",
+  "d2:zing(-3)",
+  "is(1)",
+  "subExpression(#{$visits})",
+  "",
+  "   ",
+  "/* only a comment */",
+  "// a line comment",
+  "/* not closed",
+  "#{abc",
+  "#{abc\n}",
+  "C{abc",
+  "OUG{abc",
+  "'not closed",
+  "\"also not",
+  "1 +",
+  "(1 + 2",
+  "1 + 2)",
+  "1 2",
+  "* 3",
+  ")",
+  "a = b",
+  "a & b",
+  "1 | 2",
+  "f(1,",
+  "f(1 2)",
+  "f(",
+  "#{$visits} #{$due}",
+  "@",
+  "1 + é",
+  "(",
+  "()",
+  "1 +\n\n  *",
+  "if(1, 2, ,)",
+  ".5.5",
+  "d2:",
+  "d2:9",
+  "x.y.z",
+  "abc",
+  "true false",
+  "not",
+  "-",
+  ".periodOffset(1)",
+  "#{$visits}.(1)",
+  "[days",
+  "[days]]",
+  "1 // trailing\n+ 2",
+  "/* a */ 1 /* b */ + /* c */ 2",
+  "1 /* a */ /* b",
+  "'it\\'s' == \"it's\"",
+  "'a\\\\b'",
+  "'tab\\tx'",
+  "\t1 + 2",
+  "1 + 2",
+  "!d2:hasValue(#{treated}) || #{treated}",
+  "if(#{water source} == 'river', 3, if(#{water source} == 'well', 2, 1))\n  + if(d2:hasValue(#{treated}) && !#{treated}, 2, 0)\n  + d2:zing(#{samples failed})",
+  "d2:hasValue(#{samples failed}) && #{samples failed} > #{samples taken}",
+  "#{water source} == 'river'\n  && d2:hasValue(#{treated}) && !#{treated}",
+  "#{risk score} < 4",
+  "d2:hasValue(#{follow-up date})\n  && d2:daysBetween(V{event_date}, #{follow-up date}) > 30",
+  "d2:concatenate(d2:daysBetween(V{event_date}, #{follow-up date}), ' days')",
+  "d2:hasValue(#{samples taken}) && #{samples taken} < C{$samples}",
+  "d2:hasValue('samples taken')",
+  "d2:hasValue('nothing')",
+  "d2:hasValue(A{treated})",
+  "d2:daysBetween('2026-01-01', '2026-03-01')",
+  "d2:daysBetween('2026-03-01', '2026-01-01')",
+  "d2:weeksBetween('2026-01-01', '2026-01-14')",
+  "d2:weeksBetween('2026-01-14', '2026-01-01')",
+  "d2:monthsBetween('2026-01-31', '2026-02-28')",
+  "d2:monthsBetween('2026-01-15', '2026-03-15')",
+  "d2:monthsBetween('2026-03-20', '2026-01-25')",
+  "d2:yearsBetween('2000-02-29', '2026-02-28')",
+  "d2:yearsBetween('2026-05-01', '2001-06-01')",
+  "d2:daysBetween('2026-02-30', '2026-03-01')",
+  "d2:daysBetween('0050-01-01', '2026-01-01')",
+  "d2:daysBetween('nope', '2026-01-01')",
+  "d2:daysBetween(V{event_date}, V{current_date})",
+  "d2:daysBetween('2026-01-01T10:00', '2026-01-02')",
+  "d2:addDays('2026-01-30', 3)",
+  "d2:addDays('2026-12-31', 1)",
+  "d2:addDays('2026-03-01', -1)",
+  "d2:addDays('2026-01-01', 1.5)",
+  "d2:addDays('2026-01-01', -0.5)",
+  "d2:addDays('9999-12-31', 1)",
+  "d2:addDays('bad', 1)",
+  "d2:addDays(V{event_date}, 30)",
+  "d2:ceil(1.2)",
+  "d2:ceil(-1.2)",
+  "d2:floor(-1.2)",
+  "d2:floor('7.9')",
+  "d2:round(2.5)",
+  "d2:round(-2.5)",
+  "d2:round(1.005, 2)",
+  "d2:round(1234.5678, -2)",
+  "d2:round(2.345, 0.5)",
+  "d2:round(1.45, 1)",
+  "d2:concatenate('a', 1, true, #{nothing})",
+  "d2:concatenate(1.5, ' ', 0.1 + 0.2)",
+  "d2:length('héllo')",
+  "d2:length(12345)",
+  "d2:left('abcdef', 3)",
+  "d2:left('abc', -1)",
+  "d2:left('abc', 1.9)",
+  "d2:right('abcdef', 2)",
+  "d2:right('abc', 0)",
+  "d2:right('abc', 10)",
+  "d2:substring('abcdef', 1, 3)",
+  "d2:substring('abcdef', 4, 2)",
+  "d2:substring('abcdef', -3, -1)",
+  "d2:modulus(10, 3)",
+  "d2:modulus(-10, 3)",
+  "d2:modulus(10, 0)",
+  "d2:modulus(5.5, 2)",
+  "d2:zing(-3)",
+  "d2:zing(3)",
+  "d2:oizp(-1)",
+  "d2:oizp(0)",
+  "d2:oizp('x')",
+  "d2:validatePattern('abc123', '[a-z]+\\\\d+')",
+  "d2:validatePattern(#{water source}, 'river|well')",
+  "d2:count(#{treated})",
+  "d2:minutesBetween('a', 'b')",
+  "d2:inUserGroup('x')",
+  "d2:countIfZeroPos(#{treated})",
+  "d2:hasValue()",
+  "d2:left('a')",
+  "d2:concatenate()",
+  "d2:round(1, 2, 3)",
+  "V{current_date}",
+  "V{org_unit_count}",
+  "V{analytics_period_end}",
+  "V{scheduled_event_count}",
+  "V{nothing}",
+  "V{enrollment_date}",
+  "#{nothing}",
+  "A{samples taken}",
+  "C{$target}",
+  "C{nothing}",
+  "[days]",
+  "R{$set.REPORTING_RATE}",
+  "OUG{x}",
+  "N{x}",
+  "I{x}",
+  "D{x}",
+  "#{samples taken}.periodOffset(-1)",
+  "greatest(#{samples taken}, #{samples failed})",
+  "sum(#{samples taken})",
+  "#{water source} == 'river' and not #{treated}",
+  "#{samples taken} * 2 > 5 or #{treated}",
+  "#{treated} == false",
+  "#{treated} == 0",
+  "#{treated} == ''",
+  "#{samples taken} == '3'",
+  "#{water source} > 'r'",
+  "#{risk score}",
+  "-#{samples taken}",
+  "+#{water source}",
+  "-#{nothing}",
+  "#{nothing} + #{nothing}",
+  "#{nothing} + 1",
+  "#{samples taken} / #{samples failed}",
+  "#{follow-up date} > '2026-12-01'"
+ ],
+ "forms": [
+  [
+   {
+    "water source": "river",
+    "treated": false,
+    "samples taken": 3,
+    "samples failed": 1
+   },
+   "2026-11-02"
+  ],
+  [
+   {},
+   "2026-11-02"
+  ],
+  [
+   {
+    "water source": "well",
+    "treated": true,
+    "samples taken": 5,
+    "samples failed": 7,
+    "follow-up date": "2026-12-20"
+   },
+   "2026-11-02"
+  ],
+  [
+   {
+    "water source": "tap",
+    "treated": null,
+    "reason not treated": "",
+    "samples taken": 0,
+    "samples failed": 0,
+    "follow-up date": "2026-11-20"
+   },
+   "2026-10-01"
+  ],
+  [
+   {
+    "water source": "rain tank",
+    "treated": false,
+    "reason not treated": "pump broken",
+    "samples taken": 2,
+    "samples failed": 2,
+    "follow-up date": "2027-02-01",
+    "risk score": 9
+   },
+   "2026-12-31"
+  ],
+  [
+   {
+    "water source": "river",
+    "treated": "false",
+    "samples taken": "4",
+    "samples failed": "x",
+    "follow-up date": "not a date"
+   },
+   ""
+  ]
+ ],
+ "patterns": [
+  [
+   "abc123",
+   "[a-z]+\\d+"
+  ],
+  [
+   "ABC",
+   "[a-z]+"
+  ],
+  [
+   "",
+   ""
+  ],
+  [
+   "",
+   "a*"
+  ],
+  [
+   "aaa",
+   "a{2,3}"
+  ],
+  [
+   "aaaa",
+   "a{2,3}"
+  ],
+  [
+   "a{2}",
+   "a{2"
+  ],
+  [
+   "x",
+   "("
+  ],
+  [
+   "x",
+   ")"
+  ],
+  [
+   "x",
+   "*x"
+  ],
+  [
+   "ab",
+   "a|b"
+  ],
+  [
+   "a",
+   "a|b"
+  ],
+  [
+   "12-34",
+   "\\d{2}-\\d{2}"
+  ],
+  [
+   "hello world",
+   "\\w+\\s\\w+"
+  ],
+  [
+   "a.b",
+   "a\\.b"
+  ],
+  [
+   "axb",
+   "a\\.b"
+  ],
+  [
+   "axb",
+   "a.b"
+  ],
+  [
+   "a\nb",
+   "a.b"
+  ],
+  [
+   "abab",
+   "(ab)+"
+  ],
+  [
+   "abab",
+   "(ab)\\1"
+  ],
+  [
+   "abcabc",
+   "(?:abc){2}"
+  ],
+  [
+   "NO123",
+   "[A-Z]{2}[0-9]{3}"
+  ],
+  [
+   "no123",
+   "[A-Z]{2}[0-9]{3}"
+  ],
+  [
+   "x",
+   "[z-a]"
+  ],
+  [
+   "]",
+   "]"
+  ],
+  [
+   "-",
+   "[a-]"
+  ],
+  [
+   "b",
+   "[^a]"
+  ],
+  [
+   "a",
+   "[^a]"
+  ],
+  [
+   "a1_",
+   "\\w*"
+  ],
+  [
+   "a b",
+   "\\S+"
+  ],
+  [
+   "aaa",
+   "a+?"
+  ],
+  [
+   "foo",
+   "(?=f)foo"
+  ],
+  [
+   "foo",
+   "(?!f)foo"
+  ],
+  [
+   "abc",
+   "^abc$"
+  ],
+  [
+   "word",
+   "\\bword\\b"
+  ],
+  [
+   "x",
+   "x{3,1}"
+  ],
+  [
+   "x",
+   "\\"
+  ],
+  [
+   "x",
+   "[x"
+  ],
+  [
+   "tab\t",
+   "tab\\t"
+  ],
+  [
+   "A",
+   "\\x41"
+  ],
+  [
+   "é",
+   "\\u00e9"
+  ],
+  [
+   "2026-11-05",
+   "\\d{4}-\\d{2}-\\d{2}"
+  ]
+ ],
+ "itemNames": [
+  [
+   "#",
+   "$visits"
+  ],
+  [
+   "#",
+   "$visits.$under5"
+  ],
+  [
+   "#",
+   "$visits.*"
+  ],
+  [
+   "#",
+   "$visits.nothing"
+  ],
+  [
+   "#",
+   "nothing"
+  ],
+  [
+   "#",
+   "$referrals.$plain.x"
+  ],
+  [
+   "C",
+   "$target"
+  ],
+  [
+   "C",
+   "nothing"
+  ],
+  [
+   "R",
+   "$set.REPORTING_RATE"
+  ],
+  [
+   "R",
+   "$set"
+  ],
+  [
+   "R",
+   "$set.ACTUAL_REPORTS"
+  ],
+  [
+   "R",
+   "nothing.X"
+  ],
+  [
+   "days",
+   ""
+  ],
+  [
+   "N",
+   "x"
+  ],
+  [
+   "V",
+   "event_date"
+  ]
+ ],
+ "variants": [
+  [
+   "VR_STOCK",
+   [
+    "NO",
+    "NO_VESTLAND_VOSS",
+    "NO_VESTLAND_VOSS_VOSSESTRAND"
+   ]
+  ],
+  [
+   "VR_REFERRALS",
+   [
+    "NO_NORDLAND",
+    "NO_INNLANDET_HAMAR_STANGE"
+   ]
+  ]
+ ],
+ "ruleEdits": [
+  [
+   0,
+   "#{treated} ==",
+   null
+  ],
+  [
+   1,
+   "true",
+   "#{nothing}"
+  ],
+  [
+   2,
+   "V{org_unit_count} > 1",
+   null
+  ],
+  [
+   5,
+   "true",
+   "d2:addDays(#{follow-up date}, 7)"
+  ],
+  [
+   4,
+   "#{risk score} >= 4",
+   null
+  ],
+  [
+   6,
+   "1",
+   "d2:round(#{samples taken} / 3, 2)"
+  ],
+  [
+   1,
+   "true",
+   "#{samples taken} / 3"
+  ]
+ ],
+ "figures": [
+  [
+   null,
+   null
+  ],
+  [
+   null,
+   "%"
+  ],
+  [
+   0,
+   null
+  ],
+  [
+   1,
+   "%"
+  ],
+  [
+   1234.56,
+   null
+  ],
+  [
+   -0.04,
+   "%"
+  ],
+  [
+   0.05,
+   null
+  ],
+  [
+   0.15,
+   null
+  ],
+  [
+   0.25,
+   null
+  ],
+  [
+   1e+21,
+   null
+  ],
+  [
+   123456789.987,
+   "‰"
+  ],
+  [
+   -1234.5,
+   ""
+  ],
+  [
+   2.45,
+   null
+  ],
+  [
+   99.95,
+   null
+  ]
+ ],
+ "counts": [
+  [
+   0,
+   "rule",
+   null
+  ],
+  [
+   1,
+   "rule",
+   null
+  ],
+  [
+   2,
+   "rule",
+   null
+  ],
+  [
+   1,
+   "finding",
+   null
+  ],
+  [
+   3,
+   "child",
+   "children"
+  ],
+  [
+   1234,
+   "site",
+   null
+  ],
+  [
+   1.5,
+   "month",
+   null
+  ]
+ ],
+ "completions": [
+  "",
+  "#{",
+  "#{$visits.",
+  "#{$visits.ab",
+  "#{nothing.",
+  "#{abc",
+  "C{",
+  "R{",
+  "R{$set.",
+  "V{",
+  "A{",
+  "OUG{",
+  "#{$visits} + ",
+  "#{$visits}.",
+  "#{$visits} .",
+  "(1 + 2).",
+  "greatest(1, 2) .",
+  "d2:",
+  "1 + d2:",
+  "#{a} #{",
+  "#{a}"
+ ],
+ "hover": [
+  "$visits",
+  "$referrals",
+  "$under5",
+  "$plain",
+  "$target",
+  "$samples",
+  "$set",
+  "nothing",
+  ""
+ ],
+ "searches": [
+  "vacc",
+  "",
+  "  STOCK ",
+  "no",
+  "zz",
+  "prr",
+  "bergen"
+ ],
+ "steps": [
+  {
+   "at": 2000,
+   "op": "search",
+   "value": "vacc"
+  },
+  {
+   "at": 3000,
+   "op": "filter",
+   "facet": "Type",
+   "values": [
+    "percent"
+   ]
+  },
+  {
+   "at": 4000,
+   "op": "filter",
+   "facet": "Check",
+   "values": [
+    "valid"
+   ]
+  },
+  {
+   "at": 5000,
+   "op": "search",
+   "value": ""
+  },
+  {
+   "at": 6000,
+   "op": "filter",
+   "facet": "Type",
+   "values": []
+  },
+  {
+   "at": 7000,
+   "op": "filter",
+   "facet": "Check",
+   "values": [
+    "warnings",
+    "invalid"
+   ]
+  },
+  {
+   "at": 8000,
+   "op": "filter",
+   "facet": "Check",
+   "values": []
+  },
+  {
+   "at": 9000,
+   "op": "version",
+   "value": "2.41"
+  },
+  {
+   "at": 10000,
+   "op": "version",
+   "value": "2.44"
+  },
+  {
+   "at": 11000,
+   "op": "button",
+   "label": "New"
+  },
+  {
+   "at": 12000,
+   "op": "edit",
+   "id": "indicator-numerator",
+   "value": "#{$vaccinated} + #{$due}.periodOffset(-1)"
+  },
+  {
+   "at": 13000,
+   "op": "edit",
+   "id": "indicator-type",
+   "value": "number"
+  },
+  {
+   "at": 14000,
+   "op": "unit",
+   "code": "NO_NORDLAND"
+  },
+  {
+   "at": 15000,
+   "op": "period",
+   "value": "202603"
+  },
+  {
+   "at": 16000,
+   "op": "open",
+   "code": "NO_NORDLAND_LOFOTEN"
+  },
+  {
+   "at": 17000,
+   "op": "open",
+   "code": "NO_NORDLAND_LOFOTEN_LEKNES"
+  },
+  {
+   "at": 18000,
+   "op": "edit",
+   "id": "indicator-denominator",
+   "value": "#{$due"
+  },
+  {
+   "at": 19000,
+   "op": "edit",
+   "id": "indicator-denominator",
+   "value": "removeZeros(#{$referrals})"
+  },
+  {
+   "at": 20000,
+   "op": "version",
+   "value": "2.41"
+  },
+  {
+   "at": 21000,
+   "op": "version",
+   "value": "2.44"
+  },
+  {
+   "at": 22000,
+   "op": "edit",
+   "id": "indicator-name",
+   "value": "Coverage plus last month"
+  },
+  {
+   "at": 23000,
+   "op": "save",
+   "wait": 100
+  },
+  {
+   "at": 24000,
+   "op": "wait"
+  },
+  {
+   "at": 25000,
+   "op": "edit",
+   "id": "indicator-description",
+   "value": "Not kept"
+  },
+  {
+   "at": 26000,
+   "op": "discard"
+  },
+  {
+   "at": 27000,
+   "op": "delete",
+   "confirm": false
+  },
+  {
+   "at": 28000,
+   "op": "delete"
+  },
+  {
+   "at": 29000,
+   "op": "go",
+   "route": [
+    "indicators",
+    "ind:IND_VACC_TARGET"
+   ]
+  },
+  {
+   "at": 30000,
+   "op": "edit",
+   "id": "indicator-numerator",
+   "value": "/* a note\n   over two lines */\n#{$vaccinated} / #{nothing} * 100 // per cent"
+  },
+  {
+   "at": 31000,
+   "op": "unit",
+   "code": "NO_VESTLAND_VOSS_VOSSESTRAND"
+  },
+  {
+   "at": 32000,
+   "op": "period",
+   "value": "202604"
+  },
+  {
+   "at": 33000,
+   "op": "unit",
+   "code": null
+  },
+  {
+   "at": 34000,
+   "op": "go",
+   "route": [
+    "indicators",
+    "ind:IND_STOCK_CHANGE"
+   ]
+  },
+  {
+   "at": 35000,
+   "op": "period",
+   "value": "202511"
+  },
+  {
+   "at": 36000,
+   "op": "go",
+   "route": [
+    "indicators",
+    "nothing"
+   ]
+  },
+  {
+   "at": 37000,
+   "op": "go",
+   "route": [
+    "validation-rules"
+   ]
+  },
+  {
+   "at": 38000,
+   "op": "search",
+   "value": "stock"
+  },
+  {
+   "at": 39000,
+   "op": "search",
+   "value": "  "
+  },
+  {
+   "at": 40000,
+   "op": "button",
+   "label": "New"
+  },
+  {
+   "at": 41000,
+   "op": "edit",
+   "id": "rule-operator",
+   "value": "greater_than"
+  },
+  {
+   "at": 42000,
+   "op": "edit",
+   "id": "rule-left-strategy",
+   "value": "NEVER_SKIP"
+  },
+  {
+   "at": 43000,
+   "op": "run"
+  },
+  {
+   "at": 44000,
+   "op": "unit",
+   "code": "NO_VESTLAND_VOSS"
+  },
+  {
+   "at": 45000,
+   "op": "edit",
+   "id": "rule-from",
+   "value": "202606"
+  },
+  {
+   "at": 46000,
+   "op": "edit",
+   "id": "rule-to",
+   "value": "202602"
+  },
+  {
+   "at": 47000,
+   "op": "run"
+  },
+  {
+   "at": 48000,
+   "op": "edit",
+   "id": "rule-right",
+   "value": "#{$visits} *"
+  },
+  {
+   "at": 49000,
+   "op": "run"
+  },
+  {
+   "at": 50000,
+   "op": "edit",
+   "id": "rule-right",
+   "value": "#{$visits} * 0.03"
+  },
+  {
+   "at": 51000,
+   "op": "edit",
+   "id": "rule-right-strategy",
+   "value": "SKIP_IF_ALL_VALUES_MISSING"
+  },
+  {
+   "at": 52000,
+   "op": "edit",
+   "id": "rule-importance",
+   "value": "high"
+  },
+  {
+   "at": 53000,
+   "op": "edit",
+   "id": "rule-name",
+   "value": "Referrals within three in a hundred"
+  },
+  {
+   "at": 54000,
+   "op": "save"
+  },
+  {
+   "at": 55000,
+   "op": "run"
+  },
+  {
+   "at": 56000,
+   "op": "go",
+   "route": [
+    "validation-rules"
+   ]
+  },
+  {
+   "at": 57000,
+   "op": "go",
+   "route": [
+    "validation-rules",
+    "vr:VR_STOCK"
+   ]
+  },
+  {
+   "at": 58000,
+   "op": "run"
+  },
+  {
+   "at": 59000,
+   "op": "edit",
+   "id": "rule-operator",
+   "value": "compulsory_pair"
+  },
+  {
+   "at": 60000,
+   "op": "run"
+  },
+  {
+   "at": 61000,
+   "op": "edit",
+   "id": "rule-operator",
+   "value": "exclusive_pair"
+  },
+  {
+   "at": 62000,
+   "op": "run"
+  },
+  {
+   "at": 63000,
+   "op": "edit",
+   "id": "rule-operator",
+   "value": "equal_to"
+  },
+  {
+   "at": 64000,
+   "op": "edit",
+   "id": "rule-left-strategy",
+   "value": "SKIP_IF_ALL_VALUES_MISSING"
+  },
+  {
+   "at": 65000,
+   "op": "run"
+  },
+  {
+   "at": 66000,
+   "op": "delete"
+  },
+  {
+   "at": 67000,
+   "op": "go",
+   "route": [
+    "program-rules"
+   ]
+  },
+  {
+   "at": 68000,
+   "op": "edit",
+   "form": true,
+   "id": "try-samples-failed",
+   "value": 5
+  },
+  {
+   "at": 69000,
+   "op": "edit",
+   "form": true,
+   "id": "try-treated",
+   "value": true
+  },
+  {
+   "at": 70000,
+   "op": "edit",
+   "form": true,
+   "id": "try-water-source",
+   "value": "well"
+  },
+  {
+   "at": 71000,
+   "op": "edit",
+   "form": true,
+   "id": "try-follow-up-date",
+   "value": "2026-12-20"
+  },
+  {
+   "at": 72000,
+   "op": "edit",
+   "form": true,
+   "id": "try-event-date",
+   "value": "2026-12-01"
+  },
+  {
+   "at": 73000,
+   "op": "edit",
+   "form": true,
+   "id": "try-event-date",
+   "value": null
+  },
+  {
+   "at": 74000,
+   "op": "edit",
+   "form": true,
+   "id": "try-water-source",
+   "value": ""
+  },
+  {
+   "at": 75000,
+   "op": "clear"
+  },
+  {
+   "at": 76000,
+   "op": "edit",
+   "form": true,
+   "id": "try-samples-taken",
+   "value": 2
+  },
+  {
+   "at": 77000,
+   "op": "edit",
+   "form": true,
+   "id": "try-treated",
+   "value": false
+  },
+  {
+   "at": 78000,
+   "op": "edit",
+   "form": true,
+   "id": "try-reason-not-treated",
+   "value": "No tablets"
+  },
+  {
+   "at": 79000,
+   "op": "select",
+   "ref": "prr:RISK"
+  },
+  {
+   "at": 80000,
+   "op": "edit",
+   "id": "program-rule-condition",
+   "value": "#{water source} =="
+  },
+  {
+   "at": 81000,
+   "op": "addAction"
+  },
+  {
+   "at": 82000,
+   "op": "action",
+   "index": 1,
+   "field": "type",
+   "value": "ASSIGN"
+  },
+  {
+   "at": 83000,
+   "op": "action",
+   "index": 1,
+   "field": "field",
+   "value": "follow-up date"
+  },
+  {
+   "at": 84000,
+   "op": "action",
+   "index": 1,
+   "field": "data",
+   "value": "d2:addDays(V{event_date}, 14)"
+  },
+  {
+   "at": 85000,
+   "op": "action",
+   "index": 0,
+   "field": "data",
+   "value": "#{nothing} + 1"
+  },
+  {
+   "at": 86000,
+   "op": "edit",
+   "id": "program-rule-condition",
+   "value": "true"
+  },
+  {
+   "at": 87000,
+   "op": "edit",
+   "id": "program-rule-priority",
+   "value": 8
+  },
+  {
+   "at": 88000,
+   "op": "moveAction",
+   "from": 1,
+   "to": 0
+  },
+  {
+   "at": 89000,
+   "op": "removeAction",
+   "index": 1
+  },
+  {
+   "at": 90000,
+   "op": "addAction"
+  },
+  {
+   "at": 91000,
+   "op": "action",
+   "index": 1,
+   "field": "type",
+   "value": "DISPLAYTEXT"
+  },
+  {
+   "at": 92000,
+   "op": "action",
+   "index": 1,
+   "field": "content",
+   "value": "Score: "
+  },
+  {
+   "at": 93000,
+   "op": "action",
+   "index": 1,
+   "field": "data",
+   "value": "#{risk score} * 10"
+  },
+  {
+   "at": 94000,
+   "op": "save",
+   "wait": 100
+  },
+  {
+   "at": 95000,
+   "op": "wait"
+  },
+  {
+   "at": 96000,
+   "op": "move",
+   "ref": "prr:REASON",
+   "index": 3
+  },
+  {
+   "at": 97000,
+   "op": "select",
+   "ref": "prr:REASON"
+  },
+  {
+   "at": 98000,
+   "op": "edit",
+   "id": "program-rule-name",
+   "value": "Reason, renamed"
+  },
+  {
+   "at": 99000,
+   "op": "move",
+   "ref": "prr:SAMPLES",
+   "index": 0
+  },
+  {
+   "at": 100000,
+   "op": "version",
+   "value": "2.42"
+  },
+  {
+   "at": 101000,
+   "op": "edit",
+   "id": "program-rule-condition",
+   "value": "V{org_unit_count} > 1 && d2:countIfZeroPos(#{treated}) > 0"
+  },
+  {
+   "at": 102000,
+   "op": "version",
+   "value": "2.43"
+  },
+  {
+   "at": 103000,
+   "op": "version",
+   "value": "2.44"
+  },
+  {
+   "at": 104000,
+   "op": "discard"
+  },
+  {
+   "at": 105000,
+   "op": "button",
+   "label": "New"
+  },
+  {
+   "at": 106000,
+   "op": "action",
+   "index": 0,
+   "field": "content",
+   "value": "Where is the water from?"
+  },
+  {
+   "at": 107000,
+   "op": "delete"
+  },
+  {
+   "at": 108000,
+   "op": "tree",
+   "ref": "prr:FAILED"
+  },
+  {
+   "at": 109000,
+   "op": "delete"
+  },
+  {
+   "at": 110000,
+   "op": "go",
+   "route": [
+    "data-elements"
+   ]
+  },
+  {
+   "at": 111000,
+   "op": "search",
+   "value": "stock"
+  },
+  {
+   "at": 112000,
+   "op": "search",
+   "value": ""
+  },
+  {
+   "at": 113000,
+   "op": "go",
+   "route": [
+    "data-elements",
+    "de:visits"
+   ]
+  },
+  {
+   "at": 114000,
+   "op": "go",
+   "route": [
+    "data-elements",
+    "de:stockReceived"
+   ]
+  },
+  {
+   "at": 115000,
+   "op": "go",
+   "route": [
+    "data-elements",
+    "nothing"
+   ]
+  },
+  {
+   "at": 116000,
+   "op": "go",
+   "route": [
+    "org-units"
+   ]
+  },
+  {
+   "at": 117000,
+   "op": "period",
+   "page": true,
+   "value": "202605"
+  },
+  {
+   "at": 118000,
+   "op": "go",
+   "route": [
+    "org-units",
+    "ou:NO_NORDLAND_BODO"
+   ]
+  },
+  {
+   "at": 119000,
+   "op": "go",
+   "route": [
+    "org-units",
+    "ou:NO_VESTLAND_VOSS_VOSSESTRAND"
+   ]
+  },
+  {
+   "at": 120000,
+   "op": "period",
+   "page": true,
+   "value": "202603"
+  },
+  {
+   "at": 121000,
+   "op": "go",
+   "route": [
+    "org-units",
+    "nothing"
+   ]
+  },
+  {
+   "at": 122000,
+   "op": "go",
+   "route": [
+    "functions"
+   ]
+  },
+  {
+   "at": 123000,
+   "op": "version",
+   "value": "2.41"
+  },
+  {
+   "at": 124000,
+   "op": "search",
+   "value": "d2:"
+  },
+  {
+   "at": 125000,
+   "op": "filter",
+   "facet": "Kind",
+   "values": [
+    "function"
+   ]
+  },
+  {
+   "at": 126000,
+   "op": "filter",
+   "facet": "On",
+   "values": [
+    "unknown"
+   ]
+  },
+  {
+   "at": 127000,
+   "op": "search",
+   "value": ""
+  },
+  {
+   "at": 128000,
+   "op": "filter",
+   "facet": "Kind",
+   "values": [
+    "variable"
+   ]
+  },
+  {
+   "at": 129000,
+   "op": "version",
+   "value": "2.43"
+  },
+  {
+   "at": 130000,
+   "op": "go",
+   "route": [
+    "nowhere"
+   ]
+  },
+  {
+   "at": 131000,
+   "op": "go",
+   "route": [
+    "indicators"
+   ]
+  },
+  {
+   "at": 132000,
+   "op": "go",
+   "route": [
+    "program-rules"
+   ]
+  },
+  {
+   "at": 133000,
+   "op": "delete",
+   "wait": 40
+  },
+  {
+   "at": 133050,
+   "op": "move",
+   "ref": "prr:FOLLOW_UP_SOON",
+   "index": 0,
+   "wait": 60
+  },
+  {
+   "at": 133200,
+   "op": "wait"
+  },
+  {
+   "at": 134200,
+   "op": "edit",
+   "id": "program-rule-name",
+   "value": "Saved after a refusal"
+  },
+  {
+   "at": 135200,
+   "op": "save"
+  }
+ ]
+}

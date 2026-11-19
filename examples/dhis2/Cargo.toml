@@ -1,0 +1,16 @@
+[package]
+name = "dhis2"
+description = "Tidevann's metadata workbench: data elements, indicators and validation rules written in the expression language and checked against the server version, org units, program rules, and the functions each version knows, as sokkel-ui's dhis2 example keeps it."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-egui.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+# The web's numbers read back to the bit, as `tests/web.rs` compares them.
+serde_json = { workspace = true, features = ["float_roundtrip"] }
