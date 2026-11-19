@@ -1,0 +1,1946 @@
+{
+ "now": 1795084200000,
+ "base": "https://tidevann.example.org/video/",
+ "width": 1440,
+ "random": 20261119,
+ "seeds": [
+  "",
+  "a",
+  "first-light",
+  "harbor-banner",
+  "\u00e9t\u00e9",
+  "\ud83c\udf0a",
+  "salt-flats72619"
+ ],
+ "renditionOf": [
+  "720",
+  "480",
+  "360",
+  "240",
+  "1080",
+  ""
+ ],
+ "hrefs": [
+  [
+   "first-light",
+   null
+  ],
+  [
+   "night-train",
+   "later"
+  ],
+  [
+   "glacier",
+   "coast-mornings"
+  ]
+ ],
+ "links": [
+  [
+   "first-light",
+   null
+  ],
+  [
+   "first-light",
+   0.99
+  ],
+  [
+   "first-light",
+   1
+  ],
+  [
+   "night-train",
+   65.7
+  ],
+  [
+   "glacier",
+   3599.4
+  ]
+ ],
+ "short": [
+  0,
+  1,
+  2,
+  12.34,
+  999,
+  999.94,
+  999.95,
+  1000,
+  1049,
+  1050,
+  1250,
+  9600,
+  48200,
+  52450,
+  127000,
+  999949,
+  999950,
+  1000000,
+  1200000,
+  1234567890,
+  999999999999999,
+  2500000000000000,
+  0.05,
+  0.04,
+  -1500
+ ],
+ "plural": [
+  [
+   0,
+   "video",
+   null
+  ],
+  [
+   1,
+   "video",
+   null
+  ],
+  [
+   2,
+   "video",
+   null
+  ],
+  [
+   1234567,
+   "result",
+   null
+  ],
+  [
+   1,
+   "person",
+   "people"
+  ],
+  [
+   3,
+   "person",
+   "people"
+  ],
+  [
+   1234.5675,
+   "view",
+   null
+  ]
+ ],
+ "daysAgo": [
+  0,
+  0.5,
+  1,
+  1.99,
+  2,
+  13.9,
+  14,
+  59,
+  60,
+  364,
+  365,
+  729,
+  730,
+  2210,
+  10000.0
+ ],
+ "bytes": [
+  0,
+  1,
+  1023,
+  1024,
+  1536,
+  1048575,
+  1048576,
+  5242880,
+  8800000,
+  10400000,
+  123456789
+ ],
+ "bitrates": [
+  0,
+  499,
+  500,
+  999999,
+  1000000,
+  1600000,
+  850000,
+  1250000
+ ],
+ "clocks": [
+  0,
+  0.9,
+  5,
+  59.99,
+  60,
+  65.7,
+  600,
+  3599.4,
+  3600,
+  -5
+ ],
+ "sound": [
+  "first-light",
+  "western-cape",
+  "night-train",
+  "snow-pass",
+  "aurora-fjord",
+  "city-rain",
+  "tide-table",
+  "island-ferry",
+  "wind-plain",
+  "glacier"
+ ],
+ "bandwidth": [
+  [
+   "first-light",
+   "720",
+   0
+  ],
+  [
+   "first-light",
+   "480",
+   12.5
+  ],
+  [
+   "night-train",
+   "360",
+   100
+  ],
+  [
+   "glacier",
+   "240",
+   1234.5
+  ]
+ ],
+ "steps": [
+  {
+   "at": 1000,
+   "op": "view",
+   "page": "site",
+   "route": [],
+   "wait": 300
+  },
+  {
+   "at": 1400,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "watch",
+    "first-light"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 1800,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "channel",
+    "night"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 2200,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "playlist",
+    "coast-mornings"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 2600,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "playlist",
+    "gone"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 3000,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "search",
+    "tide"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 3400,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "later"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 3800,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "nowhere"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 4200,
+   "op": "view",
+   "page": "home",
+   "chip": "all",
+   "wait": 300
+  },
+  {
+   "at": 4600,
+   "op": "view",
+   "page": "home",
+   "chip": "following",
+   "wait": 300
+  },
+  {
+   "at": 5000,
+   "op": "view",
+   "page": "home",
+   "chip": "continue",
+   "wait": 300
+  },
+  {
+   "at": 5400,
+   "op": "view",
+   "page": "home",
+   "chip": "recent",
+   "wait": 300
+  },
+  {
+   "at": 5800,
+   "op": "view",
+   "page": "home",
+   "chip": "rail",
+   "wait": 300
+  },
+  {
+   "at": 6200,
+   "op": "view",
+   "page": "home",
+   "chip": "night",
+   "wait": 300
+  },
+  {
+   "at": 6600,
+   "op": "view",
+   "page": "home",
+   "chip": "weather",
+   "wait": 300
+  },
+  {
+   "at": 7000,
+   "op": "view",
+   "page": "search",
+   "query": "harbor",
+   "kind": "all",
+   "sort": "relevance",
+   "wait": 300
+  },
+  {
+   "at": 7400,
+   "op": "view",
+   "page": "search",
+   "query": "aurora night",
+   "kind": "all",
+   "sort": "views",
+   "wait": 300
+  },
+  {
+   "at": 7800,
+   "op": "view",
+   "page": "search",
+   "query": "tide",
+   "kind": "videos",
+   "sort": "date",
+   "wait": 300
+  },
+  {
+   "at": 8200,
+   "op": "view",
+   "page": "search",
+   "query": "zzz",
+   "kind": "all",
+   "sort": "relevance",
+   "wait": 300
+  },
+  {
+   "at": 8600,
+   "op": "view",
+   "page": "search",
+   "query": "",
+   "kind": "all",
+   "sort": "relevance",
+   "wait": 300
+  },
+  {
+   "at": 9000,
+   "op": "view",
+   "page": "search",
+   "query": "Harbor",
+   "kind": "channels",
+   "sort": "relevance",
+   "wait": 300
+  },
+  {
+   "at": 9400,
+   "op": "view",
+   "page": "search",
+   "query": "the sea",
+   "kind": "channels",
+   "sort": "relevance",
+   "wait": 300
+  },
+  {
+   "at": 9800,
+   "op": "view",
+   "page": "search",
+   "query": "north",
+   "kind": "all",
+   "sort": "views",
+   "wait": 300
+  },
+  {
+   "at": 10200,
+   "op": "view",
+   "page": "subscriptions",
+   "chosen": "all",
+   "wait": 300
+  },
+  {
+   "at": 10600,
+   "op": "view",
+   "page": "subscriptions",
+   "chosen": "tides",
+   "wait": 300
+  },
+  {
+   "at": 11000,
+   "op": "view",
+   "page": "subscriptions",
+   "chosen": "juniper",
+   "wait": 300
+  },
+  {
+   "at": 11400,
+   "op": "view",
+   "page": "history",
+   "search": "",
+   "wait": 300
+  },
+  {
+   "at": 11800,
+   "op": "view",
+   "page": "history",
+   "search": " TIDE ",
+   "wait": 300
+  },
+  {
+   "at": 12200,
+   "op": "view",
+   "page": "history",
+   "search": "nothing here",
+   "wait": 300
+  },
+  {
+   "at": 12600,
+   "op": "view",
+   "page": "playlist",
+   "id": "later",
+   "wait": 300
+  },
+  {
+   "at": 13000,
+   "op": "view",
+   "page": "playlist",
+   "id": "coast-mornings",
+   "wait": 300
+  },
+  {
+   "at": 13400,
+   "op": "view",
+   "page": "playlist",
+   "id": "gone",
+   "wait": 300
+  },
+  {
+   "at": 13800,
+   "op": "view",
+   "page": "playlists",
+   "wait": 300
+  },
+  {
+   "at": 14200,
+   "op": "view",
+   "page": "library",
+   "wait": 300
+  },
+  {
+   "at": 14600,
+   "op": "view",
+   "page": "liked",
+   "wait": 300
+  },
+  {
+   "at": 15000,
+   "op": "view",
+   "page": "downloads",
+   "wait": 300
+  },
+  {
+   "at": 15400,
+   "op": "view",
+   "page": "channel",
+   "id": "harbor",
+   "sort": "latest",
+   "wait": 300
+  },
+  {
+   "at": 15800,
+   "op": "view",
+   "page": "channel",
+   "id": "larkspur",
+   "sort": "popular",
+   "wait": 300
+  },
+  {
+   "at": 16200,
+   "op": "view",
+   "page": "channel",
+   "id": "atlas",
+   "sort": "oldest",
+   "wait": 300
+  },
+  {
+   "at": 16600,
+   "op": "view",
+   "page": "channel",
+   "id": "juniper",
+   "sort": "latest",
+   "wait": 300
+  },
+  {
+   "at": 17000,
+   "op": "view",
+   "page": "comments",
+   "video": "first-light",
+   "order": "top",
+   "wait": 300
+  },
+  {
+   "at": 17400,
+   "op": "view",
+   "page": "comments",
+   "video": "first-light",
+   "order": "new",
+   "wait": 300
+  },
+  {
+   "at": 17800,
+   "op": "view",
+   "page": "comments",
+   "video": "tide-table",
+   "order": "top",
+   "wait": 300
+  },
+  {
+   "at": 18200,
+   "op": "view",
+   "page": "comments",
+   "video": "archipelago",
+   "order": "top",
+   "wait": 300
+  },
+  {
+   "at": 18600,
+   "op": "view",
+   "page": "comments",
+   "video": "western-cape",
+   "order": "new",
+   "wait": 300
+  },
+  {
+   "at": 19000,
+   "op": "view",
+   "page": "aside",
+   "video": "first-light",
+   "filter": "all",
+   "wait": 300
+  },
+  {
+   "at": 19400,
+   "op": "view",
+   "page": "aside",
+   "video": "first-light",
+   "filter": "channel",
+   "wait": 300
+  },
+  {
+   "at": 19800,
+   "op": "view",
+   "page": "aside",
+   "video": "first-light",
+   "filter": "topic",
+   "wait": 300
+  },
+  {
+   "at": 20200,
+   "op": "view",
+   "page": "aside",
+   "video": "first-light",
+   "filter": "unwatched",
+   "wait": 300
+  },
+  {
+   "at": 20600,
+   "op": "view",
+   "page": "aside",
+   "video": "salt-flats",
+   "list": "window-seat",
+   "filter": "all",
+   "wait": 300
+  },
+  {
+   "at": 21000,
+   "op": "view",
+   "page": "aside",
+   "video": "aurora-night",
+   "list": "later",
+   "filter": "all",
+   "wait": 300
+  },
+  {
+   "at": 21400,
+   "op": "view",
+   "page": "card",
+   "id": "first-light",
+   "layout": "stack",
+   "wait": 300
+  },
+  {
+   "at": 21800,
+   "op": "view",
+   "page": "card",
+   "id": "first-light",
+   "layout": "row",
+   "wait": 300
+  },
+  {
+   "at": 22200,
+   "op": "view",
+   "page": "card",
+   "id": "snow-pass",
+   "layout": "row",
+   "bare": true,
+   "wait": 300
+  },
+  {
+   "at": 22600,
+   "op": "view",
+   "page": "card",
+   "id": "valley-line",
+   "layout": "row",
+   "list": "window-seat",
+   "playing": true,
+   "wait": 300
+  },
+  {
+   "at": 23000,
+   "op": "view",
+   "page": "card",
+   "id": "tide-table",
+   "layout": "stack",
+   "bare": true,
+   "wait": 300
+  },
+  {
+   "at": 23400,
+   "op": "view",
+   "page": "card",
+   "id": "glacier",
+   "layout": "stack",
+   "wait": 300
+  },
+  {
+   "at": 23800,
+   "op": "view",
+   "page": "menu",
+   "id": "first-light",
+   "wait": 300
+  },
+  {
+   "at": 24200,
+   "op": "view",
+   "page": "menu",
+   "id": "night-train",
+   "wait": 300
+  },
+  {
+   "at": 24600,
+   "op": "view",
+   "page": "save",
+   "id": "first-light",
+   "wait": 300
+  },
+  {
+   "at": 25000,
+   "op": "view",
+   "page": "share",
+   "id": "first-light",
+   "fromHere": true,
+   "wait": 300,
+   "second": 65.7
+  },
+  {
+   "at": 25400,
+   "op": "view",
+   "page": "share",
+   "id": "first-light",
+   "wait": 300,
+   "second": 0.5
+  },
+  {
+   "at": 25800,
+   "op": "view",
+   "page": "share",
+   "id": "aurora-night",
+   "wait": 300
+  },
+  {
+   "at": 26200,
+   "op": "follow",
+   "channel": "juniper",
+   "on": true,
+   "wait": 300
+  },
+  {
+   "at": 26600,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "subscriptions"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 27000,
+   "op": "view",
+   "page": "subscriptions",
+   "chosen": "juniper",
+   "wait": 300
+  },
+  {
+   "at": 27400,
+   "op": "setFollowing",
+   "channel": "atlas",
+   "on": true,
+   "wait": 50
+  },
+  {
+   "at": 27450,
+   "op": "setFollowing",
+   "channel": "atlas",
+   "on": false,
+   "wait": 50
+  },
+  {
+   "at": 27500,
+   "op": "setFollowing",
+   "channel": "atlas",
+   "on": false,
+   "wait": 120
+  },
+  {
+   "at": 27720,
+   "op": "setFollowing",
+   "channel": "atlas",
+   "on": true
+  },
+  {
+   "at": 28720,
+   "op": "follow",
+   "channel": "harbor",
+   "on": false,
+   "wait": 300
+  },
+  {
+   "at": 29120,
+   "op": "follow",
+   "channel": "harbor",
+   "on": false,
+   "wait": 300
+  },
+  {
+   "at": 29520,
+   "op": "view",
+   "page": "subscriptions",
+   "chosen": "harbor",
+   "wait": 300
+  },
+  {
+   "at": 29920,
+   "op": "view",
+   "page": "channel",
+   "id": "harbor",
+   "sort": "latest",
+   "wait": 300
+  },
+  {
+   "at": 30320,
+   "op": "prefs",
+   "patch": {
+    "autoplay": false
+   },
+   "wait": 300
+  },
+  {
+   "at": 30720,
+   "op": "prefs",
+   "patch": {
+    "theater": true
+   },
+   "wait": 50
+  },
+  {
+   "at": 30770,
+   "op": "prefs",
+   "patch": {
+    "stats": true
+   },
+   "wait": 50
+  },
+  {
+   "at": 30820,
+   "op": "prefs",
+   "patch": {
+    "rate": 1.25,
+    "quality": "720"
+   }
+  },
+  {
+   "at": 31820,
+   "op": "prefs",
+   "patch": {
+    "captions": {
+     "track": null,
+     "size": 1.5,
+     "color": "yellow"
+    }
+   },
+   "wait": 300
+  },
+  {
+   "at": 32220,
+   "op": "keepWatched",
+   "id": "glacier",
+   "patch": {
+    "position": 5,
+    "at": 1795084220000
+   },
+   "wait": 50
+  },
+  {
+   "at": 32270,
+   "op": "keepWatched",
+   "id": "glacier",
+   "patch": {
+    "position": 9
+   },
+   "wait": 40
+  },
+  {
+   "at": 32310,
+   "op": "keepWatched",
+   "id": "glacier",
+   "patch": {
+    "finished": true,
+    "times": 3
+   }
+  },
+  {
+   "at": 33310,
+   "op": "view",
+   "page": "history",
+   "search": "",
+   "wait": 300
+  },
+  {
+   "at": 33710,
+   "op": "view",
+   "page": "home",
+   "chip": "continue",
+   "wait": 300
+  },
+  {
+   "at": 34110,
+   "op": "menuLater",
+   "id": "first-light",
+   "wait": 300
+  },
+  {
+   "at": 34510,
+   "op": "menuLater",
+   "id": "spring-tide",
+   "wait": 300
+  },
+  {
+   "at": 34910,
+   "op": "menuChannel",
+   "id": "glacier",
+   "wait": 300
+  },
+  {
+   "at": 35310,
+   "op": "view",
+   "page": "menu",
+   "id": "first-light",
+   "wait": 300
+  },
+  {
+   "at": 35710,
+   "op": "saveToggle",
+   "video": "night-train",
+   "list": "coast-mornings",
+   "on": true,
+   "wait": 300
+  },
+  {
+   "at": 36110,
+   "op": "saveToggle",
+   "video": "night-train",
+   "list": "window-seat",
+   "on": false,
+   "wait": 300
+  },
+  {
+   "at": 36510,
+   "op": "saveNew",
+   "video": "city-rain",
+   "name": "  Evening rain ",
+   "wait": 300
+  },
+  {
+   "at": 36910,
+   "op": "saveNew",
+   "video": "city-rain",
+   "name": "Window seat",
+   "wait": 300
+  },
+  {
+   "at": 37310,
+   "op": "saveNew",
+   "video": "city-rain",
+   "name": "   ",
+   "wait": 300
+  },
+  {
+   "at": 37710,
+   "op": "view",
+   "page": "save",
+   "id": "city-rain",
+   "wait": 300
+  },
+  {
+   "at": 38110,
+   "op": "playlistsNew",
+   "name": "Mountain days",
+   "wait": 300
+  },
+  {
+   "at": 38510,
+   "op": "playlistsNew",
+   "name": "",
+   "wait": 300
+  },
+  {
+   "at": 38910,
+   "op": "view",
+   "page": "playlists",
+   "wait": 300
+  },
+  {
+   "at": 39310,
+   "op": "playlist",
+   "id": "coast-mornings",
+   "do": "rename",
+   "name": "  Coast mornings, slow ",
+   "wait": 300
+  },
+  {
+   "at": 39710,
+   "op": "playlist",
+   "id": "coast-mornings",
+   "do": "rename",
+   "name": "  ",
+   "wait": 300
+  },
+  {
+   "at": 40110,
+   "op": "playlist",
+   "id": "coast-mornings",
+   "do": "describe",
+   "text": "  Early starts. ",
+   "wait": 300
+  },
+  {
+   "at": 40510,
+   "op": "playlist",
+   "id": "coast-mornings",
+   "do": "up",
+   "index": 2,
+   "wait": 300
+  },
+  {
+   "at": 40910,
+   "op": "playlist",
+   "id": "coast-mornings",
+   "do": "down",
+   "index": 0,
+   "wait": 300
+  },
+  {
+   "at": 41310,
+   "op": "playlist",
+   "id": "coast-mornings",
+   "do": "drag",
+   "from": 0,
+   "to": 3,
+   "wait": 300
+  },
+  {
+   "at": 41710,
+   "op": "playlist",
+   "id": "coast-mornings",
+   "do": "remove",
+   "index": 1,
+   "wait": 300
+  },
+  {
+   "at": 42110,
+   "op": "view",
+   "page": "playlist",
+   "id": "coast-mornings",
+   "wait": 300
+  },
+  {
+   "at": 42510,
+   "op": "playlist",
+   "id": "coast-mornings",
+   "do": "shuffle",
+   "wait": 300
+  },
+  {
+   "at": 42910,
+   "op": "playlist",
+   "id": "coast-mornings",
+   "do": "play",
+   "wait": 300
+  },
+  {
+   "at": 43310,
+   "op": "playlist",
+   "id": "window-seat",
+   "do": "delete",
+   "wait": 300
+  },
+  {
+   "at": 43710,
+   "op": "playlistsDelete",
+   "name": "Mountain days",
+   "wait": 300
+  },
+  {
+   "at": 44110,
+   "op": "view",
+   "page": "playlists",
+   "wait": 300
+  },
+  {
+   "at": 44510,
+   "op": "view",
+   "page": "library",
+   "wait": 300
+  },
+  {
+   "at": 44910,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "playlists"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 45310,
+   "op": "likedRemove",
+   "id": "island-ferry",
+   "wait": 300
+  },
+  {
+   "at": 45710,
+   "op": "likedPlay",
+   "wait": 300
+  },
+  {
+   "at": 46110,
+   "op": "view",
+   "page": "liked",
+   "wait": 300
+  },
+  {
+   "at": 46510,
+   "op": "historyRemove",
+   "id": "tide-table",
+   "wait": 300
+  },
+  {
+   "at": 46910,
+   "op": "historyKeep",
+   "on": false,
+   "wait": 300
+  },
+  {
+   "at": 47310,
+   "op": "view",
+   "page": "history",
+   "search": "",
+   "wait": 300
+  },
+  {
+   "at": 47710,
+   "op": "historyKeep",
+   "on": true,
+   "wait": 300
+  },
+  {
+   "at": 48110,
+   "op": "comment",
+   "video": "first-light",
+   "do": "add",
+   "text": "  What a morning.  ",
+   "wait": 300
+  },
+  {
+   "at": 48510,
+   "op": "comment",
+   "video": "first-light",
+   "do": "reply",
+   "id": "first-light-c0",
+   "text": "Same here, every word.",
+   "wait": 300
+  },
+  {
+   "at": 48910,
+   "op": "comment",
+   "video": "first-light",
+   "do": "like",
+   "id": "first-light-owner",
+   "wait": 300
+  },
+  {
+   "at": 49310,
+   "op": "comment",
+   "video": "first-light",
+   "do": "like",
+   "id": "first-light-owner",
+   "wait": 300
+  },
+  {
+   "at": 49710,
+   "op": "comment",
+   "video": "first-light",
+   "do": "dislike",
+   "id": "first-light-c1",
+   "wait": 300
+  },
+  {
+   "at": 50110,
+   "op": "comment",
+   "video": "first-light",
+   "do": "like",
+   "id": "first-light-c1",
+   "wait": 300
+  },
+  {
+   "at": 50510,
+   "op": "comment",
+   "video": "first-light",
+   "do": "react",
+   "id": "first-light-owner",
+   "emoji": "\u2764\ufe0f",
+   "name": "red heart",
+   "wait": 300
+  },
+  {
+   "at": 50910,
+   "op": "comment",
+   "video": "first-light",
+   "do": "react",
+   "id": "first-light-c1",
+   "emoji": "\ud83d\udc4d",
+   "name": "thumbs up",
+   "wait": 300
+  },
+  {
+   "at": 51310,
+   "op": "comment",
+   "video": "first-light",
+   "do": "react",
+   "id": "first-light-c1",
+   "emoji": "\ud83d\udc4d",
+   "name": "thumbs up",
+   "wait": 300
+  },
+  {
+   "at": 51710,
+   "op": "comment",
+   "video": "first-light",
+   "do": "menu",
+   "id": "first-light-c1",
+   "wait": 300
+  },
+  {
+   "at": 52110,
+   "op": "view",
+   "page": "comments",
+   "video": "first-light",
+   "order": "top",
+   "wait": 300
+  },
+  {
+   "at": 52510,
+   "op": "comment",
+   "video": "first-light",
+   "do": "undo",
+   "wait": 300
+  },
+  {
+   "at": 52910,
+   "op": "comment",
+   "video": "first-light",
+   "do": "reply",
+   "body": "What a morning.",
+   "text": "And the light.",
+   "wait": 300
+  },
+  {
+   "at": 53310,
+   "op": "view",
+   "page": "comments",
+   "video": "first-light",
+   "order": "new",
+   "wait": 300
+  },
+  {
+   "at": 53710,
+   "op": "comment",
+   "video": "first-light",
+   "do": "menu",
+   "body": "What a morning.",
+   "wait": 300
+  },
+  {
+   "at": 54110,
+   "op": "view",
+   "page": "comments",
+   "video": "first-light",
+   "order": "top",
+   "wait": 300
+  },
+  {
+   "at": 54510,
+   "op": "palette",
+   "id": "autoplay",
+   "wait": 300
+  },
+  {
+   "at": 54910,
+   "op": "palette",
+   "id": "theater",
+   "wait": 300
+  },
+  {
+   "at": 55310,
+   "op": "palette",
+   "id": "stats",
+   "wait": 300
+  },
+  {
+   "at": 55710,
+   "op": "palette",
+   "id": "clear-history",
+   "wait": 300
+  },
+  {
+   "at": 56110,
+   "op": "palette",
+   "id": "playlist-coast-mornings",
+   "wait": 300
+  },
+  {
+   "at": 56510,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "home"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 56910,
+   "op": "paletteSearch",
+   "text": "ha",
+   "wait": 300
+  },
+  {
+   "at": 57310,
+   "op": "paletteSearch",
+   "text": "aurora",
+   "open": [
+    "videos",
+    "aurora-night"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 57710,
+   "op": "paletteSearch",
+   "text": "harbor work",
+   "open": [
+    "channels",
+    "harbor"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 58110,
+   "op": "paletteSearch",
+   "text": "the",
+   "wait": 300
+  },
+  {
+   "at": 58510,
+   "op": "submit",
+   "text": "  spring tide ",
+   "wait": 300
+  },
+  {
+   "at": 58910,
+   "op": "submit",
+   "text": "   ",
+   "wait": 300
+  },
+  {
+   "at": 59310,
+   "op": "prefs",
+   "patch": {
+    "quality": "auto",
+    "stats": false,
+    "theater": false,
+    "autoplay": true
+   },
+   "wait": 300
+  },
+  {
+   "at": 59710,
+   "op": "open",
+   "id": "first-light",
+   "wait": 300
+  },
+  {
+   "at": 60110,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 60510,
+   "op": "watch",
+   "do": "play",
+   "time": 17,
+   "wait": 300
+  },
+  {
+   "at": 60910,
+   "op": "watch",
+   "do": "time",
+   "time": 18,
+   "wait": 300
+  },
+  {
+   "at": 61310,
+   "op": "watch",
+   "do": "time",
+   "time": 20,
+   "wait": 300
+  },
+  {
+   "at": 61710,
+   "op": "watch",
+   "do": "time",
+   "time": 22.5,
+   "wait": 300
+  },
+  {
+   "at": 62110,
+   "op": "watch",
+   "do": "pause",
+   "time": 23.25,
+   "wait": 300
+  },
+  {
+   "at": 62510,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 62910,
+   "op": "view",
+   "page": "history",
+   "search": "",
+   "wait": 300
+  },
+  {
+   "at": 63310,
+   "op": "watch",
+   "do": "play",
+   "wait": 300
+  },
+  {
+   "at": 63710,
+   "op": "watch",
+   "do": "ended",
+   "wait": 300
+  },
+  {
+   "at": 64110,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 64510,
+   "op": "watch",
+   "do": "stay",
+   "wait": 300
+  },
+  {
+   "at": 64910,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 65310,
+   "op": "watch",
+   "do": "quality",
+   "quality": "720",
+   "wait": 300
+  },
+  {
+   "at": 65710,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 66110,
+   "op": "watch",
+   "do": "rating",
+   "rating": "dislike",
+   "wait": 300
+  },
+  {
+   "at": 66510,
+   "op": "watch",
+   "do": "rating",
+   "rating": null,
+   "wait": 300
+  },
+  {
+   "at": 66910,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 67310,
+   "op": "watch",
+   "do": "rating",
+   "rating": "like",
+   "wait": 300
+  },
+  {
+   "at": 67710,
+   "op": "watch",
+   "do": "follow",
+   "on": true,
+   "wait": 300
+  },
+  {
+   "at": 68110,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 68510,
+   "op": "watch",
+   "do": "download",
+   "wait": 1000
+  },
+  {
+   "at": 69610,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 70010,
+   "op": "watch",
+   "do": "download",
+   "wait": 1200
+  },
+  {
+   "at": 71310,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 71710,
+   "op": "view",
+   "page": "downloads",
+   "wait": 300
+  },
+  {
+   "at": 72110,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "downloads"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 72510,
+   "op": "view",
+   "page": "library",
+   "wait": 300
+  },
+  {
+   "at": 72910,
+   "op": "watch",
+   "do": "downloadEntry",
+   "wait": 300
+  },
+  {
+   "at": 73310,
+   "op": "watch",
+   "do": "remove",
+   "wait": 300
+  },
+  {
+   "at": 73710,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 74110,
+   "op": "watch",
+   "do": "download",
+   "wait": 500
+  },
+  {
+   "at": 74710,
+   "op": "watch",
+   "do": "cancel",
+   "wait": 300
+  },
+  {
+   "at": 75110,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 75510,
+   "op": "watch",
+   "do": "downloadEntry",
+   "wait": 300
+  },
+  {
+   "at": 75910,
+   "op": "watch",
+   "do": "theater",
+   "wait": 2500
+  },
+  {
+   "at": 78510,
+   "op": "watch",
+   "do": "stats",
+   "wait": 300
+  },
+  {
+   "at": 78910,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 79310,
+   "op": "view",
+   "page": "downloads",
+   "wait": 300
+  },
+  {
+   "at": 79710,
+   "op": "watch",
+   "do": "ended",
+   "wait": 300
+  },
+  {
+   "at": 80110,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 80510,
+   "op": "watch",
+   "do": "playNext",
+   "wait": 300
+  },
+  {
+   "at": 80910,
+   "op": "open",
+   "id": "night-train",
+   "list": "later",
+   "wait": 300
+  },
+  {
+   "at": 81310,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 81710,
+   "op": "view",
+   "page": "aside",
+   "video": "night-train",
+   "list": "later",
+   "filter": "all",
+   "wait": 300
+  },
+  {
+   "at": 82110,
+   "op": "watch",
+   "do": "play",
+   "time": 0,
+   "wait": 300
+  },
+  {
+   "at": 82510,
+   "op": "watch",
+   "do": "ended",
+   "wait": 300
+  },
+  {
+   "at": 82910,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 83310,
+   "op": "watch",
+   "do": "playNext",
+   "wait": 300
+  },
+  {
+   "at": 83710,
+   "op": "prefs",
+   "patch": {
+    "history": false
+   },
+   "wait": 300
+  },
+  {
+   "at": 84110,
+   "op": "open",
+   "id": "archipelago",
+   "wait": 300,
+   "start": 12
+  },
+  {
+   "at": 84510,
+   "op": "view",
+   "page": "watch",
+   "wait": 300
+  },
+  {
+   "at": 84910,
+   "op": "watch",
+   "do": "play",
+   "time": 12,
+   "wait": 300
+  },
+  {
+   "at": 85310,
+   "op": "watch",
+   "do": "pause",
+   "time": 20,
+   "wait": 300
+  },
+  {
+   "at": 85710,
+   "op": "prefs",
+   "patch": {
+    "history": true
+   },
+   "wait": 300
+  },
+  {
+   "at": 86110,
+   "op": "open",
+   "id": "green-hills",
+   "wait": 300
+  },
+  {
+   "at": 86510,
+   "op": "watch",
+   "do": "play",
+   "time": 0,
+   "wait": 300
+  },
+  {
+   "at": 86910,
+   "op": "watch",
+   "do": "time",
+   "time": 4,
+   "wait": 40
+  },
+  {
+   "at": 86950,
+   "op": "watch",
+   "do": "time",
+   "time": 8.5,
+   "wait": 40
+  },
+  {
+   "at": 86990,
+   "op": "watch",
+   "do": "pause",
+   "time": 9,
+   "wait": 300
+  },
+  {
+   "at": 87390,
+   "op": "view",
+   "page": "history",
+   "search": "",
+   "wait": 300
+  },
+  {
+   "op": "view",
+   "page": "settings",
+   "wait": 300,
+   "at": 87790
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "toggle",
+   "id": "autoplay",
+   "on": false,
+   "at": 88190
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "select",
+   "id": "speed",
+   "value": "1.5",
+   "at": 88590
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "segment",
+   "id": "quality",
+   "value": "360",
+   "at": 88990
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "toggle",
+   "id": "captions-on",
+   "on": false,
+   "at": 89390
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "segment",
+   "id": "caption-size",
+   "value": "0.75",
+   "at": 89790
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "select",
+   "id": "caption-color",
+   "value": "cyan",
+   "at": 90190
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "segment",
+   "id": "caption-background",
+   "value": "solid",
+   "at": 90590
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "segment",
+   "id": "caption-edge",
+   "value": "shadow",
+   "at": 90990
+  },
+  {
+   "op": "view",
+   "page": "settings",
+   "wait": 300,
+   "at": 91390
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "toggle",
+   "id": "captions-on",
+   "on": true,
+   "at": 91790
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "reset",
+   "section": "captions",
+   "at": 92190
+  },
+  {
+   "op": "view",
+   "page": "settings",
+   "wait": 300,
+   "at": 92590
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "reset",
+   "section": "playback",
+   "at": 92990
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "reset",
+   "section": "appearance",
+   "at": 93390
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "toggle",
+   "id": "keep-history",
+   "on": false,
+   "at": 93790
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "reset",
+   "section": "history",
+   "at": 94190
+  },
+  {
+   "op": "settings",
+   "wait": 300,
+   "do": "clear",
+   "at": 94590
+  },
+  {
+   "op": "view",
+   "page": "settings",
+   "wait": 300,
+   "at": 94990
+  },
+  {
+   "at": 95390,
+   "op": "historyClear",
+   "clearing": true,
+   "wait": 60
+  },
+  {
+   "at": 95450,
+   "op": "keepWatched",
+   "id": "first-light",
+   "patch": {
+    "position": 30
+   }
+  },
+  {
+   "at": 96450,
+   "op": "keepWatched",
+   "id": "first-light",
+   "patch": {
+    "position": 31
+   },
+   "wait": 300
+  },
+  {
+   "at": 96850,
+   "op": "view",
+   "page": "history",
+   "search": "",
+   "wait": 300
+  },
+  {
+   "at": 97250,
+   "op": "view",
+   "page": "site",
+   "route": [
+    "history"
+   ],
+   "wait": 300
+  },
+  {
+   "at": 97650,
+   "op": "downloadsRemove",
+   "id": "first-light",
+   "wait": 300
+  },
+  {
+   "at": 98050,
+   "op": "view",
+   "page": "downloads",
+   "wait": 300
+  },
+  {
+   "at": 98450,
+   "op": "view",
+   "page": "library",
+   "wait": 300
+  }
+ ]
+}
