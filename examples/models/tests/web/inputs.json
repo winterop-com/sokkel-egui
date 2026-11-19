@@ -1,0 +1,3072 @@
+{
+ "now": 1793869200000,
+ "random": 20261119,
+ "modelIds": [
+  [
+   "tide-7b-instruct",
+   "Q4_K_M"
+  ],
+  [
+   "x",
+   "4bit"
+  ],
+  [
+   "y",
+   "BF16"
+  ],
+  [
+   "Z",
+   "q8_0"
+  ]
+ ],
+ "entryIds": [
+  "ada/tide-7b-instruct",
+  "nope",
+  "desktop/pebble-2b"
+ ],
+ "searches": [
+  {
+   "text": "",
+   "source": "all",
+   "format": "all"
+  },
+  {
+   "text": "tide",
+   "source": "all",
+   "format": "all"
+  },
+  {
+   "text": "  Code  small ",
+   "source": "all",
+   "format": "all"
+  },
+  {
+   "text": "",
+   "source": "runner",
+   "format": "all"
+  },
+  {
+   "text": "",
+   "source": "all",
+   "format": "sharded"
+  },
+  {
+   "text": "vision",
+   "source": "desktop",
+   "format": "packed"
+  },
+  {
+   "text": "reasoning math",
+   "source": "hub",
+   "format": "unified"
+  },
+  {
+   "text": "nothing at all here",
+   "source": "all",
+   "format": "all"
+  },
+  {
+   "text": "KELP",
+   "source": "all",
+   "format": "unified"
+  }
+ ],
+ "numbers": [
+  0,
+  1,
+  999,
+  1000,
+  1499,
+  1500,
+  999999,
+  1000000,
+  1049999,
+  99949999,
+  99950000,
+  100000000,
+  999999999,
+  1000000000.0,
+  4375000000.0,
+  9995000000.0,
+  10000000000.0,
+  99950000000.0,
+  100000000000.0,
+  999900000000.0,
+  1000000000000.0,
+  1005000000000.0,
+  25000000000000.0,
+  512,
+  1024,
+  1536,
+  8192,
+  131072,
+  32768,
+  4096,
+  2047,
+  0.5
+ ],
+ "params": [
+  0.3,
+  0.5,
+  1.2,
+  1.25,
+  1.249,
+  3,
+  7.2,
+  9.96,
+  10,
+  14.1,
+  22.5,
+  70.6,
+  9.95
+ ],
+ "counts": [
+  0,
+  1,
+  2,
+  1000,
+  12345,
+  1.5
+ ],
+ "seconds": [
+  0,
+  0.4,
+  0.5,
+  12.7,
+  59.5,
+  60,
+  61,
+  3599.4,
+  3600,
+  3725,
+  86400,
+  -5,
+  null
+ ],
+ "times": [
+  1793869200000,
+  1793869199999,
+  1793919912000,
+  1759309200000,
+  1700000000000,
+  0
+ ],
+ "durations": [
+  0,
+  59999,
+  60000,
+  3599999,
+  3600000,
+  18720000,
+  86399999,
+  86400000,
+  183600000,
+  34560000000
+ ],
+ "roots": [
+  "/Volumes/models",
+  "/Volumes/models/",
+  "/Volumes/Scratch Disk/models",
+  "/Volumes/",
+  "/Volumes",
+  "~/models",
+  "/",
+  "models",
+  "//models",
+  "/a//b",
+  "  /trimmed  ",
+  "~",
+  "/data\u0000x"
+ ],
+ "downloads": [
+  {
+   "id": "d1",
+   "entry": "grace/kelp-3b",
+   "quant": "8bit",
+   "name": "kelp-3b",
+   "publisher": "grace",
+   "source": "hub",
+   "format": "unified",
+   "size": 3300000000.0,
+   "done": 1200000000.0,
+   "speed": 50000000.0,
+   "state": "running",
+   "started": 1793869190000,
+   "ended": null,
+   "error": null
+  },
+  {
+   "id": "d2",
+   "entry": "grace/kelp-3b",
+   "quant": "8bit",
+   "name": "kelp-3b",
+   "publisher": "grace",
+   "source": "hub",
+   "format": "unified",
+   "size": 3300000000.0,
+   "done": 0,
+   "speed": 0,
+   "state": "failed",
+   "started": 1793869180000,
+   "ended": 1793869185000,
+   "error": "Not enough room"
+  },
+  {
+   "id": "d3",
+   "entry": "grace/kelp-1b",
+   "quant": "F16",
+   "name": "kelp-1b",
+   "publisher": "grace",
+   "source": "hub",
+   "format": "packed",
+   "size": 2400000000.0,
+   "done": 2400000000.0,
+   "speed": 0,
+   "state": "done",
+   "started": 1793869110000,
+   "ended": 1793869140000,
+   "error": null
+  },
+  {
+   "id": "d4",
+   "entry": "grace/kelp-1b",
+   "quant": "F16",
+   "name": "kelp-1b",
+   "publisher": "grace",
+   "source": "hub",
+   "format": "packed",
+   "size": 2400000000.0,
+   "done": 700000000.0,
+   "speed": 0,
+   "state": "paused",
+   "started": 1793869191000,
+   "ended": null,
+   "error": null
+  },
+  {
+   "id": "d5",
+   "entry": "ada/eddy-22b",
+   "quant": "Q4_K_M",
+   "name": "eddy-22b",
+   "publisher": "ada",
+   "source": "hub",
+   "format": "packed",
+   "size": 13000000000.0,
+   "done": 4000000000.0,
+   "speed": 0,
+   "state": "cancelled",
+   "started": 1793869191000,
+   "ended": 1793869200000,
+   "error": null
+  }
+ ],
+ "pullOf": [
+  [
+   "grace/kelp-3b",
+   "8bit"
+  ],
+  [
+   "grace/kelp-1b",
+   "F16"
+  ],
+  [
+   "ada/eddy-22b",
+   "Q4_K_M"
+  ],
+  [
+   "nope",
+   "Q4_K_M"
+  ]
+ ],
+ "texts": [
+  "Hello there",
+  "hi",
+  "Hiking routes?",
+  "good morning team",
+  "What cron schedule runs send-digest every weekday at 06:30?",
+  "Translate the release notes in Norwegian",
+  "Give me a TL;DR of the week",
+  "tldr",
+  "Write a jq filter for failed runs",
+  "filter the JSON please",
+  "A TypeScript retry with backoff",
+  "ts helper",
+  "Write a Python function to parse amounts",
+  "fix this bug",
+  "Suggest names for the jobs",
+  "name it",
+  "Some ideas for alerts",
+  "Explain why a bigger model writes slower than a small one.",
+  "quantize it",
+  "What about quantiz?",
+  "Why did nightly-export fail?",
+  "It broke again",
+  "What is the weather like at the harbor?",
+  "",
+  "   \n  ",
+  "Line one\nline two `code` and *bold*",
+  "Explain why nightly-export failed last night, in under a hundred words.",
+  "Look at these files",
+  "What's in the attachment?",
+  "Please read this csv",
+  "Summarize this log",
+  "every night at two",
+  "Tell me about sync-inventory: a very long first line that goes on and on past eighty characters and then some more words to make it longer than one hundred and sixty characters in all for the cut.",
+  "one two  three\tfour\n",
+  "  leading spaces",
+  "trailing   ",
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "øøøøøøøøø beløp",
+  "emoji 👍 here",
+  "`#> *_ title` here",
+  "Seven words in this title, exactly here.",
+  "Eight words in this title, exactly here, yes!",
+  "What is it?",
+  "Done.",
+  "A, b, c, d, e, f, g, h"
+ ],
+ "plans": [
+  {
+   "prompt": "Hello there",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [],
+   "history": 0,
+   "attempt": 0
+  },
+  {
+   "prompt": "Hello there",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 0,
+   "attempt": 2
+  },
+  {
+   "prompt": "Hello there",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 0,
+   "attempt": 1
+  },
+  {
+   "prompt": "hi",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 37,
+   "attempt": 1
+  },
+  {
+   "prompt": "hi",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 37,
+   "attempt": 2
+  },
+  {
+   "prompt": "hi",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 37,
+   "attempt": 1
+  },
+  {
+   "prompt": "hi",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 37,
+   "attempt": 0
+  },
+  {
+   "prompt": "Hiking routes?",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 74,
+   "attempt": 2
+  },
+  {
+   "prompt": "Hiking routes?",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 74,
+   "attempt": 1
+  },
+  {
+   "prompt": "Hiking routes?",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 74,
+   "attempt": 0
+  },
+  {
+   "prompt": "good morning team",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 111,
+   "attempt": 0
+  },
+  {
+   "prompt": "good morning team",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 111,
+   "attempt": 1
+  },
+  {
+   "prompt": "good morning team",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 111,
+   "attempt": 0
+  },
+  {
+   "prompt": "good morning team",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 111,
+   "attempt": 2
+  },
+  {
+   "prompt": "What cron schedule runs send-digest every weekday at 06:30?",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 148,
+   "attempt": 1
+  },
+  {
+   "prompt": "What cron schedule runs send-digest every weekday at 06:30?",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 148,
+   "attempt": 0
+  },
+  {
+   "prompt": "What cron schedule runs send-digest every weekday at 06:30?",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 148,
+   "attempt": 2
+  },
+  {
+   "prompt": "Translate the release notes in Norwegian",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 185,
+   "attempt": 2
+  },
+  {
+   "prompt": "Translate the release notes in Norwegian",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 185,
+   "attempt": 0
+  },
+  {
+   "prompt": "Translate the release notes in Norwegian",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 185,
+   "attempt": 2
+  },
+  {
+   "prompt": "Translate the release notes in Norwegian",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 185,
+   "attempt": 1
+  },
+  {
+   "prompt": "Give me a TL;DR of the week",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 222,
+   "attempt": 0
+  },
+  {
+   "prompt": "Give me a TL;DR of the week",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 222,
+   "attempt": 2
+  },
+  {
+   "prompt": "Give me a TL;DR of the week",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 222,
+   "attempt": 1
+  },
+  {
+   "prompt": "tldr",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [],
+   "history": 259,
+   "attempt": 1
+  },
+  {
+   "prompt": "tldr",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 259,
+   "attempt": 2
+  },
+  {
+   "prompt": "tldr",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 259,
+   "attempt": 1
+  },
+  {
+   "prompt": "tldr",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 259,
+   "attempt": 0
+  },
+  {
+   "prompt": "Write a jq filter for failed runs",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 296,
+   "attempt": 2
+  },
+  {
+   "prompt": "Write a jq filter for failed runs",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 296,
+   "attempt": 1
+  },
+  {
+   "prompt": "Write a jq filter for failed runs",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 296,
+   "attempt": 0
+  },
+  {
+   "prompt": "filter the JSON please",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 333,
+   "attempt": 0
+  },
+  {
+   "prompt": "filter the JSON please",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 333,
+   "attempt": 1
+  },
+  {
+   "prompt": "filter the JSON please",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 333,
+   "attempt": 0
+  },
+  {
+   "prompt": "filter the JSON please",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [],
+   "history": 333,
+   "attempt": 2
+  },
+  {
+   "prompt": "A TypeScript retry with backoff",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 370,
+   "attempt": 1
+  },
+  {
+   "prompt": "A TypeScript retry with backoff",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 370,
+   "attempt": 0
+  },
+  {
+   "prompt": "A TypeScript retry with backoff",
+   "model": "kelp-1b-q8_0",
+   "settings": {},
+   "attachments": [],
+   "history": 370,
+   "attempt": 2
+  },
+  {
+   "prompt": "ts helper",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 407,
+   "attempt": 2
+  },
+  {
+   "prompt": "ts helper",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 407,
+   "attempt": 0
+  },
+  {
+   "prompt": "ts helper",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {},
+   "attachments": [],
+   "history": 407,
+   "attempt": 2
+  },
+  {
+   "prompt": "ts helper",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 407,
+   "attempt": 1
+  },
+  {
+   "prompt": "Write a Python function to parse amounts",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 444,
+   "attempt": 0
+  },
+  {
+   "prompt": "Write a Python function to parse amounts",
+   "model": "brine-coder-14b-4bit",
+   "settings": {},
+   "attachments": [],
+   "history": 444,
+   "attempt": 2
+  },
+  {
+   "prompt": "Write a Python function to parse amounts",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 444,
+   "attempt": 1
+  },
+  {
+   "prompt": "fix this bug",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 481,
+   "attempt": 1
+  },
+  {
+   "prompt": "fix this bug",
+   "model": "reef-8b-q4_k_m",
+   "settings": {},
+   "attachments": [],
+   "history": 481,
+   "attempt": 2
+  },
+  {
+   "prompt": "fix this bug",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 481,
+   "attempt": 1
+  },
+  {
+   "prompt": "fix this bug",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 481,
+   "attempt": 0
+  },
+  {
+   "prompt": "Suggest names for the jobs",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [],
+   "history": 18,
+   "attempt": 2
+  },
+  {
+   "prompt": "Suggest names for the jobs",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 18,
+   "attempt": 1
+  },
+  {
+   "prompt": "Suggest names for the jobs",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 18,
+   "attempt": 0
+  },
+  {
+   "prompt": "name it",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 55,
+   "attempt": 0
+  },
+  {
+   "prompt": "name it",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 55,
+   "attempt": 1
+  },
+  {
+   "prompt": "name it",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 55,
+   "attempt": 0
+  },
+  {
+   "prompt": "name it",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 55,
+   "attempt": 2
+  },
+  {
+   "prompt": "Some ideas for alerts",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 92,
+   "attempt": 1
+  },
+  {
+   "prompt": "Some ideas for alerts",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 92,
+   "attempt": 0
+  },
+  {
+   "prompt": "Some ideas for alerts",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 92,
+   "attempt": 2
+  },
+  {
+   "prompt": "Explain why a bigger model writes slower than a small one.",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 129,
+   "attempt": 2
+  },
+  {
+   "prompt": "Explain why a bigger model writes slower than a small one.",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 129,
+   "attempt": 0
+  },
+  {
+   "prompt": "Explain why a bigger model writes slower than a small one.",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 129,
+   "attempt": 2
+  },
+  {
+   "prompt": "Explain why a bigger model writes slower than a small one.",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 129,
+   "attempt": 1
+  },
+  {
+   "prompt": "quantize it",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 166,
+   "attempt": 0
+  },
+  {
+   "prompt": "quantize it",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 166,
+   "attempt": 2
+  },
+  {
+   "prompt": "quantize it",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 166,
+   "attempt": 1
+  },
+  {
+   "prompt": "What about quantiz?",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 203,
+   "attempt": 1
+  },
+  {
+   "prompt": "What about quantiz?",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 203,
+   "attempt": 2
+  },
+  {
+   "prompt": "What about quantiz?",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 203,
+   "attempt": 1
+  },
+  {
+   "prompt": "What about quantiz?",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 203,
+   "attempt": 0
+  },
+  {
+   "prompt": "Why did nightly-export fail?",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 240,
+   "attempt": 2
+  },
+  {
+   "prompt": "Why did nightly-export fail?",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 240,
+   "attempt": 1
+  },
+  {
+   "prompt": "Why did nightly-export fail?",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 240,
+   "attempt": 0
+  },
+  {
+   "prompt": "It broke again",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [],
+   "history": 277,
+   "attempt": 0
+  },
+  {
+   "prompt": "It broke again",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 277,
+   "attempt": 1
+  },
+  {
+   "prompt": "It broke again",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 277,
+   "attempt": 0
+  },
+  {
+   "prompt": "It broke again",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 277,
+   "attempt": 2
+  },
+  {
+   "prompt": "What is the weather like at the harbor?",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 314,
+   "attempt": 1
+  },
+  {
+   "prompt": "What is the weather like at the harbor?",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 314,
+   "attempt": 0
+  },
+  {
+   "prompt": "What is the weather like at the harbor?",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 314,
+   "attempt": 2
+  },
+  {
+   "prompt": "",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 351,
+   "attempt": 2
+  },
+  {
+   "prompt": "",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 351,
+   "attempt": 0
+  },
+  {
+   "prompt": "",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 351,
+   "attempt": 2
+  },
+  {
+   "prompt": "",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [],
+   "history": 351,
+   "attempt": 1
+  },
+  {
+   "prompt": "   \n  ",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 388,
+   "attempt": 0
+  },
+  {
+   "prompt": "   \n  ",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 388,
+   "attempt": 2
+  },
+  {
+   "prompt": "   \n  ",
+   "model": "kelp-1b-q8_0",
+   "settings": {},
+   "attachments": [],
+   "history": 388,
+   "attempt": 1
+  },
+  {
+   "prompt": "Line one\nline two `code` and *bold*",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 425,
+   "attempt": 1
+  },
+  {
+   "prompt": "Line one\nline two `code` and *bold*",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 425,
+   "attempt": 2
+  },
+  {
+   "prompt": "Line one\nline two `code` and *bold*",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {},
+   "attachments": [],
+   "history": 425,
+   "attempt": 1
+  },
+  {
+   "prompt": "Line one\nline two `code` and *bold*",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 425,
+   "attempt": 0
+  },
+  {
+   "prompt": "Explain why nightly-export failed last night, in under a hundred words.",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 20
+   },
+   "attachments": [],
+   "history": 462,
+   "attempt": 2
+  },
+  {
+   "prompt": "Explain why nightly-export failed last night, in under a hundred words.",
+   "model": "brine-coder-14b-4bit",
+   "settings": {},
+   "attachments": [],
+   "history": 462,
+   "attempt": 1
+  },
+  {
+   "prompt": "Explain why nightly-export failed last night, in under a hundred words.",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 462,
+   "attempt": 0
+  },
+  {
+   "prompt": "Look at these files",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 499,
+   "attempt": 0
+  },
+  {
+   "prompt": "Look at these files",
+   "model": "reef-8b-q4_k_m",
+   "settings": {},
+   "attachments": [],
+   "history": 499,
+   "attempt": 1
+  },
+  {
+   "prompt": "Look at these files",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 499,
+   "attempt": 0
+  },
+  {
+   "prompt": "Look at these files",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 499,
+   "attempt": 2
+  },
+  {
+   "prompt": "What's in the attachment?",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [],
+   "history": 36,
+   "attempt": 1
+  },
+  {
+   "prompt": "What's in the attachment?",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 36,
+   "attempt": 0
+  },
+  {
+   "prompt": "What's in the attachment?",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 36,
+   "attempt": 2
+  },
+  {
+   "prompt": "Please read this csv",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 73,
+   "attempt": 2
+  },
+  {
+   "prompt": "Please read this csv",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 73,
+   "attempt": 0
+  },
+  {
+   "prompt": "Please read this csv",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 73,
+   "attempt": 2
+  },
+  {
+   "prompt": "Please read this csv",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 73,
+   "attempt": 1
+  },
+  {
+   "prompt": "Summarize this log",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "topP": 0.4
+   },
+   "attachments": [],
+   "history": 110,
+   "attempt": 0
+  },
+  {
+   "prompt": "Summarize this log",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 110,
+   "attempt": 2
+  },
+  {
+   "prompt": "Summarize this log",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 110,
+   "attempt": 1
+  },
+  {
+   "prompt": "every night at two",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 1.3,
+    "topP": 1
+   },
+   "attachments": [],
+   "history": 147,
+   "attempt": 1
+  },
+  {
+   "prompt": "every night at two",
+   "model": "reef-8b-q4_k_m",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 147,
+   "attempt": 2
+  },
+  {
+   "prompt": "every night at two",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 147,
+   "attempt": 1
+  },
+  {
+   "prompt": "every night at two",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 147,
+   "attempt": 0
+  },
+  {
+   "prompt": "Tell me about sync-inventory: a very long first line that goes on and on past eighty characters and then some more words to make it longer than one hundred and sixty characters in all for the cut.",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {
+    "system": "Be brief."
+   },
+   "attachments": [],
+   "history": 184,
+   "attempt": 2
+  },
+  {
+   "prompt": "Tell me about sync-inventory: a very long first line that goes on and on past eighty characters and then some more words to make it longer than one hundred and sixty characters in all for the cut.",
+   "model": "brine-coder-14b-4bit",
+   "settings": {
+    "maxTokens": 3,
+    "system": "You are terse and SHORT"
+   },
+   "attachments": [],
+   "history": 184,
+   "attempt": 1
+  },
+  {
+   "prompt": "Tell me about sync-inventory: a very long first line that goes on and on past eighty characters and then some more words to make it longer than one hundred and sixty characters in all for the cut.",
+   "model": "kelp-1b-q8_0",
+   "settings": {
+    "temperature": 0
+   },
+   "attachments": [],
+   "history": 184,
+   "attempt": 0
+  },
+  {
+   "prompt": "Look at these files",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-1",
+     "name": "runs.csv",
+     "kind": "file",
+     "size": 180,
+     "detail": "CSV, 5 lines",
+     "text": "date,job,amount,state\n2026-11-01,nightly-export,12,50,failed\n2026-11-02,nightly-export,\"12,50\",ok\n2026-11-03,sync-inventory,n/a,ok\n2026-11-04,rebuild-index,-,ok\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 0
+  },
+  {
+   "prompt": "Answer about deploys",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-1",
+     "name": "runs.csv",
+     "kind": "file",
+     "size": 180,
+     "detail": "CSV, 5 lines",
+     "text": "date,job,amount,state\n2026-11-01,nightly-export,12,50,failed\n2026-11-02,nightly-export,\"12,50\",ok\n2026-11-03,sync-inventory,n/a,ok\n2026-11-04,rebuild-index,-,ok\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 0
+  },
+  {
+   "prompt": "",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-1",
+     "name": "runs.csv",
+     "kind": "file",
+     "size": 180,
+     "detail": "CSV, 5 lines",
+     "text": "date,job,amount,state\n2026-11-01,nightly-export,12,50,failed\n2026-11-02,nightly-export,\"12,50\",ok\n2026-11-03,sync-inventory,n/a,ok\n2026-11-04,rebuild-index,-,ok\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 0
+  },
+  {
+   "prompt": "What is in it?",
+   "model": "tide-7b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-1",
+     "name": "runs.csv",
+     "kind": "file",
+     "size": 180,
+     "detail": "CSV, 5 lines",
+     "text": "date,job,amount,state\n2026-11-01,nightly-export,12,50,failed\n2026-11-02,nightly-export,\"12,50\",ok\n2026-11-03,sync-inventory,n/a,ok\n2026-11-04,rebuild-index,-,ok\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 0
+  },
+  {
+   "prompt": "Look at these files",
+   "model": "reef-8b-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-2",
+     "name": "answer.json",
+     "kind": "file",
+     "size": 90,
+     "detail": "JSON, 3 lines",
+     "text": "{\"runs\": [], \"2\": 1, \"next\": null,\n \"1\": true}\n"
+    },
+    {
+     "id": "a-3",
+     "name": "Broken.JSON",
+     "kind": "file",
+     "size": 12,
+     "detail": "JSON, 1 lines",
+     "text": "{\"runs\": [\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 1
+  },
+  {
+   "prompt": "Answer about deploys",
+   "model": "reef-8b-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-2",
+     "name": "answer.json",
+     "kind": "file",
+     "size": 90,
+     "detail": "JSON, 3 lines",
+     "text": "{\"runs\": [], \"2\": 1, \"next\": null,\n \"1\": true}\n"
+    },
+    {
+     "id": "a-3",
+     "name": "Broken.JSON",
+     "kind": "file",
+     "size": 12,
+     "detail": "JSON, 1 lines",
+     "text": "{\"runs\": [\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 1
+  },
+  {
+   "prompt": "",
+   "model": "reef-8b-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-2",
+     "name": "answer.json",
+     "kind": "file",
+     "size": 90,
+     "detail": "JSON, 3 lines",
+     "text": "{\"runs\": [], \"2\": 1, \"next\": null,\n \"1\": true}\n"
+    },
+    {
+     "id": "a-3",
+     "name": "Broken.JSON",
+     "kind": "file",
+     "size": 12,
+     "detail": "JSON, 1 lines",
+     "text": "{\"runs\": [\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 1
+  },
+  {
+   "prompt": "What is in it?",
+   "model": "reef-8b-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-2",
+     "name": "answer.json",
+     "kind": "file",
+     "size": 90,
+     "detail": "JSON, 3 lines",
+     "text": "{\"runs\": [], \"2\": 1, \"next\": null,\n \"1\": true}\n"
+    },
+    {
+     "id": "a-3",
+     "name": "Broken.JSON",
+     "kind": "file",
+     "size": 12,
+     "detail": "JSON, 1 lines",
+     "text": "{\"runs\": [\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 1
+  },
+  {
+   "prompt": "Look at these files",
+   "model": "brine-coder-14b-4bit",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-4",
+     "name": "chart.png",
+     "kind": "image",
+     "size": 52000,
+     "detail": "PNG, 52 KB"
+    },
+    {
+     "id": "a-5",
+     "name": "model.bin",
+     "kind": "file",
+     "size": 4000000,
+     "detail": "BIN, 4.0 MB"
+    }
+   ],
+   "history": 0,
+   "attempt": 2
+  },
+  {
+   "prompt": "Answer about deploys",
+   "model": "brine-coder-14b-4bit",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-4",
+     "name": "chart.png",
+     "kind": "image",
+     "size": 52000,
+     "detail": "PNG, 52 KB"
+    },
+    {
+     "id": "a-5",
+     "name": "model.bin",
+     "kind": "file",
+     "size": 4000000,
+     "detail": "BIN, 4.0 MB"
+    }
+   ],
+   "history": 0,
+   "attempt": 2
+  },
+  {
+   "prompt": "",
+   "model": "brine-coder-14b-4bit",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-4",
+     "name": "chart.png",
+     "kind": "image",
+     "size": 52000,
+     "detail": "PNG, 52 KB"
+    },
+    {
+     "id": "a-5",
+     "name": "model.bin",
+     "kind": "file",
+     "size": 4000000,
+     "detail": "BIN, 4.0 MB"
+    }
+   ],
+   "history": 0,
+   "attempt": 2
+  },
+  {
+   "prompt": "What is in it?",
+   "model": "brine-coder-14b-4bit",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-4",
+     "name": "chart.png",
+     "kind": "image",
+     "size": 52000,
+     "detail": "PNG, 52 KB"
+    },
+    {
+     "id": "a-5",
+     "name": "model.bin",
+     "kind": "file",
+     "size": 4000000,
+     "detail": "BIN, 4.0 MB"
+    }
+   ],
+   "history": 0,
+   "attempt": 2
+  },
+  {
+   "prompt": "Look at these files",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-6",
+     "name": "worker.log",
+     "kind": "file",
+     "size": 300,
+     "detail": "LOG, 3 lines",
+     "text": "\n  2026-11-05 02:00 start `fetch`\nvalidate refused 37 rows\n\ndone with   errors  \n"
+    }
+   ],
+   "history": 0,
+   "attempt": 3
+  },
+  {
+   "prompt": "Answer about deploys",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-6",
+     "name": "worker.log",
+     "kind": "file",
+     "size": 300,
+     "detail": "LOG, 3 lines",
+     "text": "\n  2026-11-05 02:00 start `fetch`\nvalidate refused 37 rows\n\ndone with   errors  \n"
+    }
+   ],
+   "history": 0,
+   "attempt": 3
+  },
+  {
+   "prompt": "",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-6",
+     "name": "worker.log",
+     "kind": "file",
+     "size": 300,
+     "detail": "LOG, 3 lines",
+     "text": "\n  2026-11-05 02:00 start `fetch`\nvalidate refused 37 rows\n\ndone with   errors  \n"
+    }
+   ],
+   "history": 0,
+   "attempt": 3
+  },
+  {
+   "prompt": "What is in it?",
+   "model": "shoal-0.5b-q8_0",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-6",
+     "name": "worker.log",
+     "kind": "file",
+     "size": 300,
+     "detail": "LOG, 3 lines",
+     "text": "\n  2026-11-05 02:00 start `fetch`\nvalidate refused 37 rows\n\ndone with   errors  \n"
+    }
+   ],
+   "history": 0,
+   "attempt": 3
+  },
+  {
+   "prompt": "Look at these files",
+   "model": "kelp-1b-q8_0",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-1",
+     "name": "runs.csv",
+     "kind": "file",
+     "size": 180,
+     "detail": "CSV, 5 lines",
+     "text": "date,job,amount,state\n2026-11-01,nightly-export,12,50,failed\n2026-11-02,nightly-export,\"12,50\",ok\n2026-11-03,sync-inventory,n/a,ok\n2026-11-04,rebuild-index,-,ok\n"
+    },
+    {
+     "id": "a-4",
+     "name": "chart.png",
+     "kind": "image",
+     "size": 52000,
+     "detail": "PNG, 52 KB"
+    },
+    {
+     "id": "a-2",
+     "name": "answer.json",
+     "kind": "file",
+     "size": 90,
+     "detail": "JSON, 3 lines",
+     "text": "{\"runs\": [], \"2\": 1, \"next\": null,\n \"1\": true}\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 4
+  },
+  {
+   "prompt": "Answer about deploys",
+   "model": "kelp-1b-q8_0",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-1",
+     "name": "runs.csv",
+     "kind": "file",
+     "size": 180,
+     "detail": "CSV, 5 lines",
+     "text": "date,job,amount,state\n2026-11-01,nightly-export,12,50,failed\n2026-11-02,nightly-export,\"12,50\",ok\n2026-11-03,sync-inventory,n/a,ok\n2026-11-04,rebuild-index,-,ok\n"
+    },
+    {
+     "id": "a-4",
+     "name": "chart.png",
+     "kind": "image",
+     "size": 52000,
+     "detail": "PNG, 52 KB"
+    },
+    {
+     "id": "a-2",
+     "name": "answer.json",
+     "kind": "file",
+     "size": 90,
+     "detail": "JSON, 3 lines",
+     "text": "{\"runs\": [], \"2\": 1, \"next\": null,\n \"1\": true}\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 4
+  },
+  {
+   "prompt": "",
+   "model": "kelp-1b-q8_0",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-1",
+     "name": "runs.csv",
+     "kind": "file",
+     "size": 180,
+     "detail": "CSV, 5 lines",
+     "text": "date,job,amount,state\n2026-11-01,nightly-export,12,50,failed\n2026-11-02,nightly-export,\"12,50\",ok\n2026-11-03,sync-inventory,n/a,ok\n2026-11-04,rebuild-index,-,ok\n"
+    },
+    {
+     "id": "a-4",
+     "name": "chart.png",
+     "kind": "image",
+     "size": 52000,
+     "detail": "PNG, 52 KB"
+    },
+    {
+     "id": "a-2",
+     "name": "answer.json",
+     "kind": "file",
+     "size": 90,
+     "detail": "JSON, 3 lines",
+     "text": "{\"runs\": [], \"2\": 1, \"next\": null,\n \"1\": true}\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 4
+  },
+  {
+   "prompt": "What is in it?",
+   "model": "kelp-1b-q8_0",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-1",
+     "name": "runs.csv",
+     "kind": "file",
+     "size": 180,
+     "detail": "CSV, 5 lines",
+     "text": "date,job,amount,state\n2026-11-01,nightly-export,12,50,failed\n2026-11-02,nightly-export,\"12,50\",ok\n2026-11-03,sync-inventory,n/a,ok\n2026-11-04,rebuild-index,-,ok\n"
+    },
+    {
+     "id": "a-4",
+     "name": "chart.png",
+     "kind": "image",
+     "size": 52000,
+     "detail": "PNG, 52 KB"
+    },
+    {
+     "id": "a-2",
+     "name": "answer.json",
+     "kind": "file",
+     "size": 90,
+     "detail": "JSON, 3 lines",
+     "text": "{\"runs\": [], \"2\": 1, \"next\": null,\n \"1\": true}\n"
+    }
+   ],
+   "history": 0,
+   "attempt": 4
+  },
+  {
+   "prompt": "Look at these files",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-5",
+     "name": "model.bin",
+     "kind": "file",
+     "size": 4000000,
+     "detail": "BIN, 4.0 MB"
+    }
+   ],
+   "history": 0,
+   "attempt": 5
+  },
+  {
+   "prompt": "Answer about deploys",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-5",
+     "name": "model.bin",
+     "kind": "file",
+     "size": 4000000,
+     "detail": "BIN, 4.0 MB"
+    }
+   ],
+   "history": 0,
+   "attempt": 5
+  },
+  {
+   "prompt": "",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-5",
+     "name": "model.bin",
+     "kind": "file",
+     "size": 4000000,
+     "detail": "BIN, 4.0 MB"
+    }
+   ],
+   "history": 0,
+   "attempt": 5
+  },
+  {
+   "prompt": "What is in it?",
+   "model": "tide-14b-instruct-q4_k_m",
+   "settings": {},
+   "attachments": [
+    {
+     "id": "a-5",
+     "name": "model.bin",
+     "kind": "file",
+     "size": 4000000,
+     "detail": "BIN, 4.0 MB"
+    }
+   ],
+   "history": 0,
+   "attempt": 5
+  }
+ ],
+ "historyTimes": [
+  1793869200000,
+  1793833200000,
+  1793829600000,
+  1793782800000,
+  1776589200000,
+  1759309200000,
+  1793872800000
+ ],
+ "steps": [
+  {
+   "at": 500,
+   "op": "pages"
+  },
+  {
+   "conversation": "c-cron",
+   "text": "Hello there",
+   "at": 1000,
+   "op": "send"
+  },
+  {
+   "at": 1300,
+   "op": "look"
+  },
+  {
+   "at": 2500,
+   "op": "pages"
+  },
+  {
+   "at": 6000,
+   "op": "look"
+  },
+  {
+   "conversation": "c-cron",
+   "message": 3,
+   "at": 8000,
+   "op": "regenerate"
+  },
+  {
+   "at": 8400,
+   "op": "look"
+  },
+  {
+   "conversation": "c-cron",
+   "at": 9000,
+   "op": "stop"
+  },
+  {
+   "at": 9500,
+   "op": "look"
+  },
+  {
+   "conversation": "c-cron",
+   "message": 3,
+   "version": 0,
+   "at": 10000,
+   "op": "showVersion"
+  },
+  {
+   "conversation": "c-cron",
+   "message": 3,
+   "feedback": "good",
+   "at": 10300,
+   "op": "feedback"
+  },
+  {
+   "conversation": "c-cron",
+   "message": 2,
+   "emoji": "👍",
+   "name": "thumbs up",
+   "at": 10500,
+   "op": "react"
+  },
+  {
+   "conversation": "c-cron",
+   "message": 2,
+   "emoji": "🎉",
+   "name": "party",
+   "at": 10600,
+   "op": "react"
+  },
+  {
+   "conversation": "c-cron",
+   "message": 2,
+   "emoji": "👍",
+   "name": "thumbs up",
+   "at": 10700,
+   "op": "react"
+  },
+  {
+   "conversation": "c-cron",
+   "message": 3,
+   "feedback": null,
+   "at": 10800,
+   "op": "feedback"
+  },
+  {
+   "conversation": "c-cron",
+   "patch": {
+    "system": "Answer briefly, in one short paragraph.",
+    "temperature": 0
+   },
+   "at": 11000,
+   "op": "settings"
+  },
+  {
+   "conversation": "c-cron",
+   "text": "Explain why a bigger model writes slower than a small one.",
+   "wait": 3000,
+   "at": 11500,
+   "op": "send"
+  },
+  {
+   "at": 16000,
+   "op": "look"
+  },
+  {
+   "model": "kelp-1b-q8_0",
+   "at": 20000,
+   "op": "chatWith"
+  },
+  {
+   "conversation": 0,
+   "text": "Write a Python function to parse amounts that may use a decimal comma, like 12,50.",
+   "attachments": [
+    {
+     "id": "a-1",
+     "name": "runs.csv",
+     "kind": "file",
+     "size": 180,
+     "detail": "CSV, 5 lines",
+     "text": "date,job,amount,state\n2026-11-01,nightly-export,12,50,failed\n2026-11-02,nightly-export,\"12,50\",ok\n2026-11-03,sync-inventory,n/a,ok\n2026-11-04,rebuild-index,-,ok\n"
+    },
+    {
+     "id": "a-4",
+     "name": "chart.png",
+     "kind": "image",
+     "size": 52000,
+     "detail": "PNG, 52 KB"
+    }
+   ],
+   "at": 20500,
+   "op": "send"
+  },
+  {
+   "at": 20700,
+   "op": "look"
+  },
+  {
+   "at": 21500,
+   "op": "look"
+  },
+  {
+   "at": 23000,
+   "op": "look"
+  },
+  {
+   "at": 28000,
+   "op": "look"
+  },
+  {
+   "conversation": 0,
+   "text": "Look at these files",
+   "attachments": [
+    {
+     "id": "a-1",
+     "name": "runs.csv",
+     "kind": "file",
+     "size": 180,
+     "detail": "CSV, 5 lines",
+     "text": "date,job,amount,state\n2026-11-01,nightly-export,12,50,failed\n2026-11-02,nightly-export,\"12,50\",ok\n2026-11-03,sync-inventory,n/a,ok\n2026-11-04,rebuild-index,-,ok\n"
+    },
+    {
+     "id": "a-2",
+     "name": "answer.json",
+     "kind": "file",
+     "size": 90,
+     "detail": "JSON, 3 lines",
+     "text": "{\"runs\": [], \"2\": 1, \"next\": null,\n \"1\": true}\n"
+    },
+    {
+     "id": "a-3",
+     "name": "Broken.JSON",
+     "kind": "file",
+     "size": 12,
+     "detail": "JSON, 1 lines",
+     "text": "{\"runs\": [\n"
+    },
+    {
+     "id": "a-6",
+     "name": "worker.log",
+     "kind": "file",
+     "size": 300,
+     "detail": "LOG, 3 lines",
+     "text": "\n  2026-11-05 02:00 start `fetch`\nvalidate refused 37 rows\n\ndone with   errors  \n"
+    },
+    {
+     "id": "a-5",
+     "name": "model.bin",
+     "kind": "file",
+     "size": 4000000,
+     "detail": "BIN, 4.0 MB"
+    }
+   ],
+   "at": 29000,
+   "op": "send"
+  },
+  {
+   "at": 36000,
+   "op": "look"
+  },
+  {
+   "conversation": "c-week",
+   "text": "Summarize this week for the harbor project.",
+   "at": 40000,
+   "op": "send"
+  },
+  {
+   "at": 41000,
+   "op": "look"
+  },
+  {
+   "at": 44000,
+   "op": "look"
+  },
+  {
+   "at": 50000,
+   "op": "look"
+  },
+  {
+   "at": 60000,
+   "op": "look"
+  },
+  {
+   "prompt": "Explain why nightly-export failed last night, in under a hundred words.",
+   "models": [
+    "kelp-3b-q4_k_m",
+    "tide-7b-instruct-q4_k_m",
+    "reef-8b-q4_k_m"
+   ],
+   "temperature": 0.7,
+   "maxTokens": 512,
+   "at": 70000,
+   "op": "compare"
+  },
+  {
+   "at": 70500,
+   "op": "look"
+  },
+  {
+   "at": 72000,
+   "op": "pages"
+  },
+  {
+   "comparison": 0,
+   "index": 2,
+   "at": 73000,
+   "op": "stopColumn"
+  },
+  {
+   "at": 74000,
+   "op": "look"
+  },
+  {
+   "at": 80000,
+   "op": "look"
+  },
+  {
+   "at": 90000,
+   "op": "look"
+  },
+  {
+   "comparison": 0,
+   "index": 2,
+   "at": 91000,
+   "op": "rerun"
+  },
+  {
+   "at": 92000,
+   "op": "look"
+  },
+  {
+   "at": 100000,
+   "op": "look"
+  },
+  {
+   "comparison": 0,
+   "index": 0,
+   "at": 101000,
+   "op": "removeColumn"
+  },
+  {
+   "prompt": "hi",
+   "models": [
+    "shoal-0.5b-q8_0",
+    "cove-embed-0.3b-f16",
+    "gone-model"
+   ],
+   "temperature": 0,
+   "maxTokens": 64,
+   "at": 102000,
+   "op": "compare"
+  },
+  {
+   "comparison": 0,
+   "at": 103000,
+   "op": "stopComparison"
+  },
+  {
+   "at": 106000,
+   "op": "look"
+  },
+  {
+   "comparison": 1,
+   "at": 107000,
+   "op": "deleteComparison"
+  },
+  {
+   "model": "cove-embed-0.3b-f16",
+   "at": 110000,
+   "op": "chatWith"
+  },
+  {
+   "conversation": 0,
+   "text": "hello",
+   "wait": 500,
+   "at": 110500,
+   "op": "send"
+  },
+  {
+   "patch": {
+    "memory": 8
+   },
+   "at": 112000,
+   "op": "prefs"
+  },
+  {
+   "model": "brine-coder-14b-bf16",
+   "wait": 500,
+   "at": 112500,
+   "op": "load"
+  },
+  {
+   "patch": {
+    "memory": 24,
+    "autoLoad": false
+   },
+   "at": 113000,
+   "op": "prefs"
+  },
+  {
+   "conversation": "c-rate",
+   "text": "Why did it fail?",
+   "wait": 500,
+   "at": 113500,
+   "op": "send"
+  },
+  {
+   "patch": {
+    "autoLoad": true
+   },
+   "at": 114000,
+   "op": "prefs"
+  },
+  {
+   "conversation": "c-parse",
+   "text": "Now a regex for amounts",
+   "at": 115000,
+   "op": "send"
+  },
+  {
+   "conversation": "c-rate",
+   "text": "Explain rounding",
+   "at": 115100,
+   "op": "send"
+  },
+  {
+   "wait": 200,
+   "at": 115300,
+   "op": "stopRunner"
+  },
+  {
+   "at": 116000,
+   "op": "pages"
+  },
+  {
+   "at": 118000,
+   "op": "look"
+  },
+  {
+   "conversation": "c-parse",
+   "text": "Still there?",
+   "wait": 500,
+   "at": 118500,
+   "op": "send"
+  },
+  {
+   "wait": 300,
+   "at": 119000,
+   "op": "startRunner"
+  },
+  {
+   "at": 121000,
+   "op": "look"
+  },
+  {
+   "model": "reef-8b-q4_k_m",
+   "wait": 200,
+   "at": 121500,
+   "op": "load"
+  },
+  {
+   "model": "reef-8b-q4_k_m",
+   "why": "by hand",
+   "wait": 200,
+   "at": 121600,
+   "op": "unload"
+  },
+  {
+   "at": 124000,
+   "op": "look"
+  },
+  {
+   "entry": "runner/tide-7b-instruct",
+   "quant": "Q4_K_M",
+   "wait": 200,
+   "at": 130000,
+   "op": "pull"
+  },
+  {
+   "entry": "desktop/pebble-2b",
+   "quant": "8bit",
+   "at": 130100,
+   "op": "pull"
+  },
+  {
+   "entry": "desktop/pebble-2b",
+   "quant": "8bit",
+   "at": 130150,
+   "op": "pull"
+  },
+  {
+   "entry": "grace/kelp-1b",
+   "quant": "Q4_K_M",
+   "at": 130200,
+   "op": "pull"
+  },
+  {
+   "entry": "linus/shoal-0.5b",
+   "quant": "F16",
+   "at": 130300,
+   "op": "pull"
+  },
+  {
+   "at": 130600,
+   "op": "look"
+  },
+  {
+   "at": 131000,
+   "op": "look"
+  },
+  {
+   "at": 132500,
+   "op": "pages"
+  },
+  {
+   "entry": "grace/kelp-1b",
+   "quant": "Q4_K_M",
+   "at": 133000,
+   "op": "pause"
+  },
+  {
+   "at": 134000,
+   "op": "look"
+  },
+  {
+   "entry": "grace/kelp-1b",
+   "quant": "Q4_K_M",
+   "at": 135000,
+   "op": "resume"
+  },
+  {
+   "at": 136000,
+   "op": "look"
+  },
+  {
+   "at": 138000,
+   "op": "look"
+  },
+  {
+   "patch": {
+    "bandwidth": 25,
+    "parallel": 1
+   },
+   "at": 140000,
+   "op": "prefs"
+  },
+  {
+   "entry": "grace/kelp-3b",
+   "quant": "8bit",
+   "at": 140100,
+   "op": "pull"
+  },
+  {
+   "at": 142000,
+   "op": "pages"
+  },
+  {
+   "entry": "linus/shoal-0.5b",
+   "quant": "F16",
+   "at": 145000,
+   "op": "cancel"
+  },
+  {
+   "at": 147000,
+   "op": "look"
+  },
+  {
+   "at": 155000,
+   "op": "look"
+  },
+  {
+   "entry": "linus/shoal-0.5b",
+   "quant": "F16",
+   "at": 160000,
+   "op": "retry"
+  },
+  {
+   "patch": {
+    "bandwidth": 0,
+    "parallel": 3
+   },
+   "at": 161000,
+   "op": "prefs"
+  },
+  {
+   "at": 165000,
+   "op": "look"
+  },
+  {
+   "at": 175000,
+   "op": "look"
+  },
+  {
+   "at": 200000,
+   "op": "look"
+  },
+  {
+   "wait": 1000,
+   "at": 201000,
+   "op": "clearEnded"
+  },
+  {
+   "entry": "grace/kelp-3b",
+   "quant": "8bit",
+   "at": 203000,
+   "op": "removePull"
+  },
+  {
+   "at": 204000,
+   "op": "pages"
+  },
+  {
+   "models": [
+    "kelp-1b-q8_0",
+    "tide-7b-instruct-q4_k_m"
+   ],
+   "wait": 1500,
+   "at": 210000,
+   "op": "deleteModels"
+  },
+  {
+   "conversation": "c-week",
+   "patch": {
+    "title": "Harbor, this week",
+    "pinned": true
+   },
+   "at": 213000,
+   "op": "conversation"
+  },
+  {
+   "conversation": "c-rate",
+   "at": 214000,
+   "op": "deleteConversation"
+  },
+  {
+   "conversation": "c-cron",
+   "text": "Are you still there?",
+   "wait": 1000,
+   "at": 215000,
+   "op": "send"
+  },
+  {
+   "name": "Small and fast",
+   "state": {
+    "filters": [
+     {
+      "field": "tags",
+      "operator": "oneOf",
+      "values": [
+       "fast"
+      ]
+     }
+    ],
+    "sort": null,
+    "hidden": [],
+    "order": [],
+    "widths": {}
+   },
+   "at": 217000,
+   "op": "createView"
+  },
+  {
+   "view": "small",
+   "name": "Laptop size",
+   "at": 218000,
+   "op": "renameView"
+  },
+  {
+   "view": "code",
+   "at": 219000,
+   "op": "removeView"
+  },
+  {
+   "conversation": "c-cron",
+   "message": 3,
+   "wait": 500,
+   "at": 216500,
+   "op": "regenerate"
+  },
+  {
+   "at": 220000,
+   "op": "look"
+  },
+  {
+   "model": "kelp-3b-q4_k_m",
+   "wait": 3000,
+   "at": 225000,
+   "op": "load"
+  },
+  {
+   "conversation": "c-parse",
+   "text": "One more: a regex for the dates",
+   "at": 226000,
+   "op": "send"
+  },
+  {
+   "conversation": "c-parse",
+   "text": "And a test for it",
+   "at": 226100,
+   "op": "send"
+  },
+  {
+   "conversation": "c-parse",
+   "patch": {
+    "maxTokens": 40,
+    "topP": 0.2
+   },
+   "at": 226200,
+   "op": "settings"
+  },
+  {
+   "at": 232000,
+   "op": "pages"
+  },
+  {
+   "patch": {
+    "keepAlive": 5
+   },
+   "at": 240000,
+   "op": "prefs"
+  },
+  {
+   "at": 600000,
+   "op": "look"
+  },
+  {
+   "at": 1000000,
+   "op": "look"
+  },
+  {
+   "at": 1500000,
+   "op": "look"
+  },
+  {
+   "patch": {
+    "root": "/",
+    "parallel": 4
+   },
+   "at": 1600000,
+   "op": "prefs"
+  },
+  {
+   "entry": "grace/swell-70b",
+   "quant": "Q4_K_M",
+   "at": 1600100,
+   "op": "pull"
+  },
+  {
+   "entry": "grace/swell-70b",
+   "quant": "Q3_K_S",
+   "at": 1600110,
+   "op": "pull"
+  },
+  {
+   "entry": "ada/tide-32b-instruct",
+   "quant": "Q4_K_M",
+   "at": 1600120,
+   "op": "pull"
+  },
+  {
+   "entry": "ada/tide-32b-instruct",
+   "quant": "Q3_K_S",
+   "at": 1600130,
+   "op": "pull"
+  },
+  {
+   "entry": "ada/tide-32b-instruct",
+   "quant": "4bit",
+   "at": 1600140,
+   "op": "pull"
+  },
+  {
+   "entry": "margaret/reef-32b",
+   "quant": "Q4_K_M",
+   "at": 1600150,
+   "op": "pull"
+  },
+  {
+   "entry": "margaret/reef-32b",
+   "quant": "4bit",
+   "at": 1600160,
+   "op": "pull"
+  },
+  {
+   "entry": "ada/eddy-22b",
+   "quant": "Q4_K_M",
+   "at": 1600170,
+   "op": "pull"
+  },
+  {
+   "entry": "ada/eddy-22b",
+   "quant": "Q5_K_M",
+   "at": 1600180,
+   "op": "pull"
+  },
+  {
+   "entry": "ada/tide-14b-instruct",
+   "quant": "Q8_0",
+   "at": 1600190,
+   "op": "pull"
+  },
+  {
+   "entry": "linus/brine-coder-14b",
+   "quant": "Q8_0",
+   "at": 1600200,
+   "op": "pull"
+  },
+  {
+   "entry": "ada/tide-14b-instruct",
+   "quant": "8bit",
+   "at": 1600210,
+   "op": "pull"
+  },
+  {
+   "entry": "linus/brine-coder-14b",
+   "quant": "8bit",
+   "at": 1600220,
+   "op": "pull"
+  },
+  {
+   "entry": "grace/drift-vision-11b",
+   "quant": "Q8_0",
+   "at": 1600230,
+   "op": "pull"
+  },
+  {
+   "entry": "margaret/skerry-9b",
+   "quant": "Q8_0",
+   "at": 1600240,
+   "op": "pull"
+  },
+  {
+   "entry": "margaret/reef-8b",
+   "quant": "Q8_0",
+   "at": 1600250,
+   "op": "pull"
+  },
+  {
+   "entry": "ada/tide-7b-instruct",
+   "quant": "Q8_0",
+   "at": 1600260,
+   "op": "pull"
+  },
+  {
+   "entry": "ada/tide-14b-instruct",
+   "quant": "Q5_K_M",
+   "at": 1600270,
+   "op": "pull"
+  },
+  {
+   "at": 1700000,
+   "op": "look"
+  },
+  {
+   "at": 1950000,
+   "op": "look"
+  },
+  {
+   "at": 2200000,
+   "op": "look"
+  },
+  {
+   "at": 2450000,
+   "op": "look"
+  },
+  {
+   "at": 2700000,
+   "op": "look"
+  },
+  {
+   "at": 2950000,
+   "op": "look"
+  },
+  {
+   "at": 3200000,
+   "op": "look"
+  },
+  {
+   "at": 3450000,
+   "op": "look"
+  },
+  {
+   "at": 3700000,
+   "op": "look"
+  },
+  {
+   "at": 3950000,
+   "op": "look"
+  },
+  {
+   "at": 4200000,
+   "op": "pages"
+  }
+ ],
+ "library": [
+  {
+   "filters": [],
+   "query": ""
+  },
+  {
+   "filters": [],
+   "query": "  tide  "
+  },
+  {
+   "filters": [],
+   "query": "kelp q4"
+  },
+  {
+   "filters": [
+    {
+     "field": "size",
+     "operator": "atMost",
+     "values": [
+      "6"
+     ]
+    }
+   ],
+   "query": ""
+  },
+  {
+   "filters": [
+    {
+     "field": "capabilities",
+     "operator": "oneOf",
+     "values": [
+      "code"
+     ]
+    }
+   ],
+   "query": ""
+  },
+  {
+   "filters": [
+    {
+     "field": "format",
+     "operator": "noneOf",
+     "values": [
+      "packed"
+     ]
+    },
+    {
+     "field": "params",
+     "operator": "between",
+     "values": [
+      "3",
+      "15"
+     ]
+    }
+   ],
+   "query": ""
+  },
+  {
+   "filters": [
+    {
+     "field": "added",
+     "operator": "after",
+     "values": [
+      "2026-10-01"
+     ]
+    }
+   ],
+   "query": ""
+  },
+  {
+   "filters": [
+    {
+     "field": "added",
+     "operator": "between",
+     "values": [
+      "2026-09-01",
+      "2026-10-20"
+     ]
+    }
+   ],
+   "query": "b"
+  },
+  {
+   "filters": [
+    {
+     "field": "name",
+     "operator": "contains",
+     "values": [
+      "REEF"
+     ]
+    }
+   ],
+   "query": ""
+  },
+  {
+   "filters": [
+    {
+     "field": "context",
+     "operator": "atLeast",
+     "values": [
+      "64"
+     ]
+    },
+    {
+     "field": "tags",
+     "operator": "oneOf",
+     "values": [
+      "chat",
+      "code"
+     ]
+    }
+   ],
+   "query": ""
+  },
+  {
+   "filters": [
+    {
+     "field": "source",
+     "operator": "oneOf",
+     "values": [
+      "desktop",
+      "runner"
+     ]
+    },
+    {
+     "field": "quant",
+     "operator": "oneOf",
+     "values": [
+      "4bit"
+     ]
+    }
+   ],
+   "query": ""
+  },
+  {
+   "filters": [
+    {
+     "field": "size",
+     "operator": "between",
+     "values": [
+      "",
+      "2.5"
+     ]
+    }
+   ],
+   "query": ""
+  }
+ ],
+ "modelPages": [
+  "tide-7b-instruct-q4_k_m",
+  "drift-vision-11b-q4_k_m",
+  "brine-coder-14b-bf16",
+  "pebble-2b-8bit",
+  "nothing-here"
+ ],
+ "sheets": [
+  "ada/tide-7b-instruct",
+  "grace/swell-70b",
+  "runner/cove-embed-0.3b",
+  "desktop/pebble-2b"
+ ],
+ "logViews": [
+  [
+   "all",
+   ""
+  ],
+  [
+   "loader",
+   ""
+  ],
+  [
+   "all",
+   "LOADED"
+  ],
+  [
+   "pull",
+   "kelp"
+  ]
+ ],
+ "deletes": [
+  [
+   "kelp-3b-q4_k_m"
+  ],
+  [
+   "brine-coder-14b-4bit",
+   "brine-coder-14b-bf16"
+  ],
+  [
+   "pebble-2b-4bit"
+  ],
+  []
+ ],
+ "routes": [
+  [
+   "library"
+  ],
+  [
+   "library",
+   "reef-8b-q4_k_m"
+  ],
+  [
+   "chat",
+   "c-cron"
+  ],
+  [
+   "compare",
+   "new"
+  ],
+  [
+   "compare",
+   "cmp-seed"
+  ],
+  [
+   "runner"
+  ],
+  [
+   "nowhere"
+  ],
+  [
+   "downloads",
+   "x",
+   "y"
+  ]
+ ]
+}

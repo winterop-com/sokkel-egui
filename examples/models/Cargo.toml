@@ -1,0 +1,16 @@
+[package]
+name = "models"
+description = "Tidevann's models: a local model runner's library, downloads, chat and compare on a simulated backend, as sokkel-ui's models example keeps it."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-egui.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+# The web's numbers read back to the bit, as `tests/web.rs` compares them.
+serde_json = { workspace = true, features = ["float_roundtrip"] }
