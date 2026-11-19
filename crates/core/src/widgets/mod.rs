@@ -17,6 +17,7 @@ mod consequences;
 mod contents;
 mod dashboard;
 mod datetime;
+mod diff_view;
 mod display;
 mod document_tabs;
 mod dot;
@@ -109,6 +110,7 @@ pub use clip_timeline::{
     ClipDrop, ClipTimeline, ClipTimelineResponse, ClipTimelineWords, ClipTrackKind, DragData, KindColor, TimelineClip,
     TimelineTrack, TrackChange, clip_fit_zoom, clip_tick_step, format_timecode, place_clip, snap_time, zoom_step,
 };
+pub use code_editor::regex;
 pub use code_editor::{
     ActiveLine, CodeCompletion, CodeEditor, CodeEditorResponse, CodeEditorWords, CodeLanguage, CodeMark, CodeProblem,
     CodeSize, CodeTag, CodeToken, CodeVariant, LARGE_DOCUMENT, MarkTone,
@@ -124,6 +126,7 @@ pub use dashboard::{
     DashboardGrid, DashboardPanel, GridCells, PanelSpan, body_room, cell_height, report_natural_height, took_room,
 };
 pub use datetime::{DateField, DateFieldWords, DateTimeField, DateTimeFieldResponse, DateTimeFieldWords, Moment};
+pub use diff_view::{DiffKind, DiffLine, DiffRow, DiffView, DiffViewWords, diff_counts, diff_lines, fold_diff};
 pub use display::{Alert, Badge, BadgeVariant, Banner, BannerTone, Card, Separator, Skeleton, TextLink, Unfoldable};
 pub use document_tabs::{DocumentTab, DocumentTabs, DocumentTabsResponse, DocumentTabsWords};
 pub use dot::Dot;

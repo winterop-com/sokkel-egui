@@ -9,7 +9,6 @@ use serde::Serialize;
 use serde_json::{Value, json};
 
 use crate::app::{App, Page, Toast, Waiting};
-use crate::diff::{DiffRow, diff_counts, diff_lines, fold_diff};
 use crate::evaluate::{Completion, Evaluation, element_names, evaluate, functions, variables_offered};
 use crate::js::{locale_compare, month_short, pretty};
 use crate::model::{
@@ -25,6 +24,7 @@ use crate::server::{
 use crate::types::{TYPE_NAMES, type_def};
 use crate::ui::{count, number, on_day, state_of, title_of, when};
 use crate::validate::cql_header;
+use sokkel_egui::{DiffRow, diff_counts, diff_lines, fold_diff};
 
 // --- What the pages draw ---------------------------------------------------------------------------
 

@@ -15,8 +15,8 @@ use std::collections::BTreeMap;
 use serde_json::Value;
 
 use crate::js::{civil_from_days, days_from_civil, days_in_month, iso_day, number, number_to_string, round, stringify};
-use crate::regex::Regex;
 use crate::types::{datatype, type_def};
+use sokkel_egui::regex::Regex;
 
 // --- Tokens -----------------------------------------------------------------------------------------
 

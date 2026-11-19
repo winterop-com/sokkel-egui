@@ -4,15 +4,23 @@
 use crate::{Appearance, CommandGroup, Icon, MenuItem, RailGroup, Scheme, ThemeInfo};
 
 /// The places in `groups` as one palette group titled `title` ("Go to" in sokkel-ui), each command
-/// `place-{id}` with the entry's label and icon; `None` when the groups hold no entries.
+/// `place-{id}` with the entry's label and icon, a parent's own entries after it hinted with its
+/// label; `None` when the groups hold no entries.
 pub fn place_commands(groups: &[RailGroup], title: impl Into<String>) -> Option<CommandGroup> {
     let items: Vec<MenuItem> = groups
         .iter()
         .flat_map(|group| &group.entries)
-        .map(|entry| {
-            MenuItem::action(&entry.label)
+        .flat_map(|entry| {
+            // a parent's own entries after it, each hinted with the parent's label
+            let own = MenuItem::action(&entry.label)
                 .icon(entry.icon)
-                .id(format!("place-{}", entry.id))
+                .id(format!("place-{}", entry.id));
+            std::iter::once(own).chain(entry.entries.iter().map(|child| {
+                MenuItem::action(&child.label)
+                    .icon(entry.icon)
+                    .hint(&entry.label)
+                    .id(format!("place-{}", child.id))
+            }))
         })
         .collect();
     (!items.is_empty()).then(|| CommandGroup::new(title, items))

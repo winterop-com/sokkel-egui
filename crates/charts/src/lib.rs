@@ -249,6 +249,8 @@ fn label(value: f64) -> String {
 /// it, and the rect left for the marks.
 struct Frame {
     plot: Rect,
+    /// The scale's start: 0, or a round value under the lowest when fitted.
+    low: f64,
     top: f64,
     /// Points on the axis' ends, as a line's are, rather than in the middle of each category's band.
     edge: bool,
@@ -262,6 +264,8 @@ struct Axes {
     /// Every nth category labeled; as many as fit when `None`.
     every: Option<usize>,
     edge: bool,
+    /// The lowest value, when the scale fits the values rather than starting at zero.
+    fit: Option<f64>,
 }
 
 impl Frame {
@@ -270,14 +274,19 @@ impl Frame {
         let font = axis_font(t);
         let ink = t.color("muted-foreground");
         let rule = t.color("border");
-        let max = if max > 0.0 { max } else { 1.0 };
-        let step = nice_step(max, steps_for(rect.height()));
-        let top = (max / step - 1e-9).ceil().max(1.0) * step;
-        let ticks = (top / step).round() as usize;
+        let (low, top, step) = match axes.fit {
+            Some(min) => crate::kinds::value_ticks_in(min, max, true, steps_for(rect.height())),
+            None => {
+                let max = if max > 0.0 { max } else { 1.0 };
+                let step = nice_step(max, steps_for(rect.height()));
+                (0.0, (max / step - 1e-9).ceil().max(1.0) * step, step)
+            }
+        };
+        let ticks = ((top - low) / step).round() as usize;
         let widest = (0..=ticks)
             .map(|i| {
                 painter
-                    .layout_no_wrap(axes.writing.tick(i as f64 * step), font.clone(), ink)
+                    .layout_no_wrap(axes.writing.tick(low + i as f64 * step), font.clone(), ink)
                     .size()
                     .x
             })
@@ -289,8 +298,8 @@ impl Frame {
             pos2(rect.right() - 10.0, rect.bottom() - 12.0 - line),
         );
         for i in 0..=ticks {
-            let value = i as f64 * step;
-            let y = plot.bottom() - (value / top) as f32 * plot.height();
+            let value = low + i as f64 * step;
+            let y = plot.bottom() - ((value - low) / (top - low)) as f32 * plot.height();
             // the baseline is a rule; the lines above it are quieter
             let stroke = if i == 0 {
                 Stroke::new(1.0, rule)
@@ -308,6 +317,7 @@ impl Frame {
         }
         let frame = Self {
             plot,
+            low,
             top,
             edge: axes.edge,
             count: categories.len(),
@@ -402,7 +412,7 @@ impl Frame {
     }
 
     fn y(&self, value: f64) -> f32 {
-        self.plot.bottom() - (value / self.top) as f32 * self.plot.height()
+        self.plot.bottom() - ((value - self.low) / (self.top - self.low)) as f32 * self.plot.height()
     }
 
     fn band(&self, count: usize) -> f32 {
@@ -535,6 +545,7 @@ pub struct LineChart {
     marks: Vec<(f64, Color32)>,
     height: f32,
     stacked: bool,
+    fit: bool,
 }
 
 /// How the areas under a line chart's series are filled: not at all, fading from each line toward
@@ -561,11 +572,19 @@ impl LineChart {
             marks: Vec::new(),
             height: 240.0,
             stacked: false,
+            fit: false,
         }
     }
 
     pub fn series(mut self, series: Series) -> Self {
         self.series.push(series);
+        self
+    }
+
+    /// The value axis fitted to the values, from a round value under the lowest, rather than
+    /// starting at zero, as the web's `fit` (ECharts' `scale`).
+    pub fn fit(mut self, fit: bool) -> Self {
+        self.fit = fit;
         self
     }
 
@@ -675,10 +694,16 @@ impl Widget for LineChart {
             .map_or(0.0, |(_, high)| high.iter().copied().fold(0.0, f64::max));
         let max = tops.iter().map(|v| max_of(v.iter())).fold(band_top, f64::max);
         let max = self.marks.iter().map(|m| m.0).fold(max, f64::max);
+        let fit = self.fit.then(|| {
+            tops.iter()
+                .flat_map(|v| v.iter().flatten().copied())
+                .fold(f64::INFINITY, f64::min)
+        });
         let axes = Axes {
             writing: self.writing.clone(),
             every: self.every,
             edge: true,
+            fit: fit.filter(|min| min.is_finite()),
         };
         let frame = Frame::draw(ui, rect, &t, &self.categories, max, &axes);
         let x = |i: usize| frame.x(i);

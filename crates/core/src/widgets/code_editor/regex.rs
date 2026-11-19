@@ -2,6 +2,9 @@
 //! the find bar's regexp: literals, `.`, classes, `\d \w \s \b` and their negations, anchors,
 //! groups, alternation and the greedy and lazy quantifiers. Each test is given a step budget, as
 //! sokkel-ui's guarded patterns are, so a pattern that would take long answers "unknown".
+//!
+//! Public as `sokkel_egui::regex`, for an app that tests a value the way the web tests it with a
+//! `RegExp`, such as FHIRPath's `matches`.
 
 use std::cell::Cell;
 
@@ -33,7 +36,7 @@ enum ClassItem {
 
 /// A compiled pattern.
 #[derive(Debug, Clone)]
-pub(crate) struct Regex {
+pub struct Regex {
     alternatives: Vec<Vec<Node>>,
     ignore_case: bool,
 }
@@ -43,7 +46,7 @@ const BUDGET: u32 = 200_000;
 
 impl Regex {
     /// The pattern compiled, or `None` for one this engine does not read.
-    pub(crate) fn new(pattern: &str, ignore_case: bool) -> Option<Self> {
+    pub fn new(pattern: &str, ignore_case: bool) -> Option<Self> {
         let chars: Vec<char> = pattern.chars().collect();
         let mut at = 0;
         let alternatives = parse_alternatives(&chars, &mut at)?;
@@ -57,7 +60,7 @@ impl Regex {
     }
 
     /// Whether the pattern matches anywhere in `text`; `None` when the test ran out of steps.
-    pub(crate) fn is_match(&self, text: &str) -> Option<bool> {
+    pub fn is_match(&self, text: &str) -> Option<bool> {
         let chars: Vec<char> = text.chars().collect();
         let matcher = Matcher {
             text: &chars,
@@ -76,7 +79,7 @@ impl Regex {
     }
 
     /// Every match in `text` that takes at least one character, as byte ranges, leftmost first.
-    pub(crate) fn find_all(&self, text: &str) -> Vec<(usize, usize)> {
+    pub fn find_all(&self, text: &str) -> Vec<(usize, usize)> {
         let chars: Vec<char> = text.chars().collect();
         let mut bytes = Vec::with_capacity(chars.len() + 1);
         let mut offset = 0;

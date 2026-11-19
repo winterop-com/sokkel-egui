@@ -15,7 +15,6 @@ use std::process::Command;
 use std::sync::OnceLock;
 
 use fhir::app::{self, App, Page, SEARCH_MIN_QUERY};
-use fhir::diff::{diff_lines, fold_diff};
 use fhir::evaluate::{describe_word, element_names, evaluate, functions, variables_offered};
 use fhir::js::{parse_instant, pretty};
 use fhir::model::{
@@ -34,6 +33,7 @@ use fhir::types::{DATATYPE_NAMES, ElementDef, TYPE_NAMES, datatype, matches_patt
 use fhir::ui::{self, Prefs, count, on_day, state_of, statuses, title_of, when};
 use fhir::validate::{cql_header, validate};
 use serde_json::{Map, Value as Json, json};
+use sokkel_egui::{diff_lines, fold_diff};
 
 fn root_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")

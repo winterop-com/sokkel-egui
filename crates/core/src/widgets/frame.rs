@@ -23,6 +23,10 @@ pub struct RailEntry {
     /// A color drawn as a dot in the icon's place, for a label, a tag or a channel: a color token's
     /// name, such as `kind-teal`.
     pub dot: Option<String>,
+    /// The entries under this one, one level deep, as the web's entry `entries`: expanded, the
+    /// row folds them under it behind a chevron at its end, open at first while one of them is the
+    /// place shown; collapsed, the entry stands for them, marked while one of them is shown.
+    pub entries: Vec<RailEntry>,
 }
 
 impl RailEntry {
@@ -35,7 +39,14 @@ impl RailEntry {
             description: None,
             takes: Vec::new(),
             dot: None,
+            entries: Vec::new(),
         }
+    }
+
+    /// The entries under this one, as the web's `entries`; each is chosen by its own id.
+    pub fn entries(mut self, entries: impl IntoIterator<Item = RailEntry>) -> Self {
+        self.entries = entries.into_iter().collect();
+        self
     }
 
     /// A dot in the token's color in place of the icon, as the web's entry `dot`.
@@ -415,7 +426,22 @@ impl Widget for Rail<'_> {
                     y += 30.0;
                 }
             }
+            // a parent's entries follow it while it is open; collapsed, the parent stands for them
+            let mut drawn: Vec<(&RailEntry, Nested)> = Vec::new();
             for entry in &group.entries {
+                if entry.entries.is_empty() {
+                    drawn.push((entry, Nested::Plain));
+                    continue;
+                }
+                let holds = entry.entries.iter().any(|child| child.id == *self.active);
+                let open_id = response.id.with(("open", &entry.id));
+                let open = ui.data(|d| d.get_temp::<bool>(open_id)).unwrap_or(holds);
+                drawn.push((entry, Nested::Parent { open, holds }));
+                if open && !narrow {
+                    drawn.extend(entry.entries.iter().map(|child| (child, Nested::Child)));
+                }
+            }
+            for (entry, nested) in drawn {
                 // a described entry: 6 over and under its 22 label line and its description's 20
                 // tall lines, wrapped beside the count as the web's `text-pretty` wraps them
                 let described = !narrow && entry.description.is_some();
@@ -449,7 +475,26 @@ impl Widget for Rail<'_> {
                     bounds.center().y
                 };
                 let hit = ui.interact(bounds, response.id.with(&entry.id), Sense::click());
-                let active = *self.active == entry.id;
+                // a parent is marked while one of its entries is shown and it is folded (or the
+                // rail collapsed), and set apart, unwashed, while it is open over it
+                let (holding, folded_over) = match nested {
+                    Nested::Parent { open, holds } => (holds && open && !narrow, holds && (!open || narrow)),
+                    _ => (false, false),
+                };
+                let active = *self.active == entry.id || folded_over;
+                // the chevron at a parent's end folds and unfolds its entries, drawn over the row
+                let mut chevron_drawn = None;
+                if let Nested::Parent { open, .. } = nested
+                    && !narrow
+                {
+                    let chevron = Rect::from_center_size(pos2(bounds.right() - 4.0 - 14.0, line), vec2(28.0, 28.0));
+                    let fold = ui.interact(chevron, response.id.with(("fold", &entry.id)), Sense::click());
+                    fold.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, open, &entry.label));
+                    chevron_drawn = Some((chevron, open, fold.hovered()));
+                    if fold.clicked() {
+                        ui.data_mut(|d| d.insert_temp(response.id.with(("open", &entry.id)), !open));
+                    }
+                }
                 hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, active, &entry.label));
                 if hit.clicked() {
                     *self.active = entry.id.clone();
@@ -529,7 +574,7 @@ impl Widget for Rail<'_> {
                 super::focus_ring(&painter, &t, bounds, t.radius("md"), &hit);
                 let ink = if active {
                     t.color("sidebar-accent-foreground")
-                } else if hit.hovered() {
+                } else if hit.hovered() || holding {
                     t.color("foreground")
                 } else {
                     t.color("muted-foreground")
@@ -576,8 +621,15 @@ impl Widget for Rail<'_> {
                         );
                     }
                 } else {
-                    mark(pos2(bounds.left() + 12.0 + 8.0, line));
-                    let role = if active { TextRole::Action } else { TextRole::Body };
+                    // an entry under a parent has no mark: its label lines up under the parent's
+                    if nested != Nested::Child {
+                        mark(pos2(bounds.left() + 12.0 + 8.0, line));
+                    }
+                    let role = if active || holding {
+                        TextRole::Action
+                    } else {
+                        TextRole::Body
+                    };
                     let label = galley(ui, role, &entry.label, bounds.width() - 80.0);
                     painter.galley(pos2(bounds.left() + 40.0, line - label.size().y / 2.0), label, ink);
                     if let Some(lines) = &words {
@@ -592,7 +644,10 @@ impl Widget for Rail<'_> {
                             painter.galley(pos2(bounds.left() + 40.0, middle - words.size().y / 2.0), words, quiet);
                         }
                     }
-                    if let Some(count) = entry.count.filter(|count| *count > 0) {
+                    if let Some(count) = entry
+                        .count
+                        .filter(|count| *count > 0 && !matches!(nested, Nested::Parent { .. }))
+                    {
                         // the count at 600
                         let rich = TextRole::Badge.rich(&t, count.to_string()).variation("wght", 600.0);
                         let figure = WidgetText::from(rich).into_galley(
@@ -604,6 +659,18 @@ impl Widget for Rail<'_> {
                         let at = pos2(bounds.right() - 12.0 - figure.size().x, line - figure.size().y / 2.0);
                         painter.galley(at, figure, t.color("foreground"));
                     }
+                }
+                if let Some((chevron, open, hovered)) = chevron_drawn {
+                    if hovered {
+                        painter.rect_filled(chevron, t.radius("md"), t.color("hover"));
+                    }
+                    icons::paint(
+                        &painter,
+                        chevron.center(),
+                        if open { Icon::ChevronDown } else { Icon::ChevronRight },
+                        16.0,
+                        t.color("muted-foreground"),
+                    );
                 }
                 y += if narrow { row } else { height } + 4.0;
             }
@@ -617,6 +684,15 @@ impl Widget for Rail<'_> {
         }
         response
     }
+}
+
+/// Where an entry stands among a parent's: on its own, a parent (open or folded, holding the place
+/// shown or not), or one of an open parent's entries.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Nested {
+    Plain,
+    Parent { open: bool, holds: bool },
+    Child,
 }
 
 /// A rail body's heading, its search and its content, scrolling, from `y` down the rail.
@@ -1380,6 +1456,7 @@ pub struct Shell<'a> {
     words: ShellWords,
     banner: Option<ShellBanner<'a>>,
     panel: Option<(&'a mut bool, ShellBanner<'a>)>,
+    panel_width: f32,
     bottom: Option<ShellBanner<'a>>,
 }
 
@@ -1401,6 +1478,7 @@ impl<'a> Shell<'a> {
             words: ShellWords::default(),
             banner: None,
             panel: None,
+            panel_width: 352.0,
             bottom: None,
         }
     }
@@ -1446,10 +1524,17 @@ impl<'a> Shell<'a> {
 
     /// A side panel as the frame's right column while `open`, after the web's `Shell` `panel`: the
     /// window's height down to the status line, its head level with the top bar (a `SidePanel`
-    /// fills it), 352 wide at first and dragged wider or narrower by its start edge, with the
+    /// fills it), `panel_width` wide at first (352) and dragged wider or narrower by its start edge, with the
     /// toggle that hides it in its head's corner, which sets `open` false.
     pub fn panel(mut self, open: &'a mut bool, panel: impl FnOnce(&mut Ui) + 'a) -> Self {
         self.panel = Some((open, Box::new(panel)));
+        self
+    }
+
+    /// The width the side panel opens at and a double press on its edge puts back, as the web's
+    /// `SidePanel` `defaultSize`; 352 when not given.
+    pub fn panel_width(mut self, width: f32) -> Self {
+        self.panel_width = width;
         self
     }
 
@@ -1466,7 +1551,7 @@ impl<'a> Shell<'a> {
         let width: f32 = ui
             .ctx()
             .data(|d| d.get_temp(size_id))
-            .unwrap_or(352.0_f32)
+            .unwrap_or(self.panel_width)
             .clamp(280.0, (column.width() - 320.0).max(280.0));
         let area = Rect::from_min_max(pos2(column.right() - width, column.top()), column.max);
         ui.painter().rect_filled(area, CornerRadius::ZERO, t.color("sidebar"));

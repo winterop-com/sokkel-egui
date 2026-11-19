@@ -12,6 +12,7 @@ sokkel-egui-charts.workspace = true
 sokkel-egui-maps.workspace = true
 sokkel-egui-media.workspace = true
 sokkel-egui-dhis2.workspace = true
+sokkel-egui-fhir.workspace = true
 eframe.workspace = true
 serde.workspace = true
 

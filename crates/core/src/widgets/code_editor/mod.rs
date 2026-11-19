@@ -12,7 +12,7 @@ mod document;
 mod edit;
 mod highlight;
 mod popup;
-mod regex;
+pub mod regex;
 pub(super) mod schema;
 
 use std::collections::hash_map::DefaultHasher;

@@ -1,0 +1,13 @@
+[package]
+name = "sokkel-egui-fhir"
+description = "The health-data standards' languages, FHIRPath and CQL, for sokkel-egui's code editor."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sokkel-egui.workspace = true
+
+[dev-dependencies]
+egui.workspace = true

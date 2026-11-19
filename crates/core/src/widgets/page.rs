@@ -196,6 +196,16 @@ impl PageHeader {
         // the words keep clear of the actions, 16 before them (`gap-x-4`): their width as last drawn
         let actions_id = ui.scope_id().with("page-header-actions");
         let actions_width: f32 = ui.data(|d| d.get_temp(actions_id)).unwrap_or(0.0);
+        // the actions wrap under the words once the words would have less than their basis beside
+        // them, as the web's `flex-wrap` row: 16rem for words with more under the title, 8rem else
+        let more = self.description.is_some()
+            || self.edit_description.is_some()
+            || !self.chips.is_empty()
+            || !self.meta.is_empty()
+            || self.meta_line.is_some();
+        let basis = if more { 256.0 } else { 128.0 };
+        let wrapped = actions_width > 0.0 && basis + 16.0 + actions_width > ui.available_width();
+        let mut actions = Some(actions);
         ui.horizontal_top(|ui| {
             // the back button on the title's line, the title 8 after it
             if let Some(label) = &self.back {
@@ -221,8 +231,8 @@ impl PageHeader {
             }
             let room = ui.available_width();
             let block = ui.vertical(|ui| {
-                if actions_width > 0.0 {
-                    ui.set_max_width((room - actions_width - 16.0).max(room / 2.0));
+                if actions_width > 0.0 && !wrapped {
+                    ui.set_max_width((room - actions_width - 16.0).max(basis));
                 }
                 // the code right under the title, the description 4 under what is over it
                 ui.spacing_mut().item_spacing.y = 0.0;
@@ -318,25 +328,43 @@ impl PageHeader {
                     answer.meta_link = line.show_links(ui).pressed;
                 }
             });
+            if wrapped {
+                return;
+            }
             // the actions at the row's end, 8 apart, level with the title block's foot
             let height = block.response.rect.height();
-            ui.allocate_ui_with_layout(
-                egui::vec2(ui.available_width(), height),
-                Layout::right_to_left(Align::Max),
-                |ui| {
-                    ui.spacing_mut().item_spacing.x = 8.0;
-                    let end = ui.cursor().right();
-                    actions(ui);
-                    let drawn = (end - ui.min_rect().left()).max(0.0);
-                    let drawn = if ui.min_rect().width() > 0.0 { drawn } else { 0.0 };
-                    if (drawn - actions_width).abs() > 0.5 {
-                        ui.data_mut(|d| d.insert_temp(actions_id, drawn));
-                        ui.ctx().request_repaint();
-                    }
-                },
-            );
+            if let Some(actions) = actions.take() {
+                ui.allocate_ui_with_layout(
+                    egui::vec2(ui.available_width(), height),
+                    Layout::right_to_left(Align::Max),
+                    |ui| measured_actions(ui, actions_id, actions_width, actions),
+                );
+            }
         });
+        // wrapped, the actions stand on a row of their own under the words, 12 down, from the start
+        if let Some(actions) = actions.take() {
+            ui.add_space(12.0 - ui.spacing().item_spacing.y);
+            let width = actions_width.min(ui.available_width());
+            ui.allocate_ui_with_layout(
+                egui::vec2(width, t.density("control-sm")),
+                Layout::right_to_left(Align::Center),
+                |ui| measured_actions(ui, actions_id, actions_width, actions),
+            );
+        }
         answer
+    }
+}
+
+/// A header's actions laid out from the end, 8 apart, their width kept for the next frame.
+fn measured_actions(ui: &mut Ui, id: egui::Id, was: f32, actions: impl FnOnce(&mut Ui)) {
+    ui.spacing_mut().item_spacing.x = 8.0;
+    let end = ui.cursor().right();
+    actions(ui);
+    let drawn = (end - ui.min_rect().left()).max(0.0);
+    let drawn = if ui.min_rect().width() > 0.0 { drawn } else { 0.0 };
+    if (drawn - was).abs() > 0.5 {
+        ui.data_mut(|d| d.insert_temp(id, drawn));
+        ui.ctx().request_repaint();
     }
 }
 

@@ -969,11 +969,12 @@ impl<'a> DataTable<'a> {
         let row = &rows[index];
         for (c, column) in self.columns.iter().enumerate() {
             if column.stack == StackPlace::Lead {
-                let place = Rect::from_min_size(pos2(x, line.top()), vec2(16.0, line.height()));
+                let width = lead_width(ui, t, &row[c], column.width);
+                let place = Rect::from_min_size(pos2(x, line.top()), vec2(width, line.height()));
                 if paint_cell(ui, t, &row[c], place, false, self.id.with(("cell", index, c)), false).is_some() {
                     toggled = true;
                 }
-                x += 16.0 + 8.0;
+                x += width + 8.0;
             }
         }
         // the title runs to 8 before the menu's 24 box at the row's end
@@ -3313,6 +3314,22 @@ fn code_rich(t: &crate::Tokens, text: &str, role: TextRole) -> egui::RichText {
     egui::RichText::new(text)
         .font(egui::FontId::monospace(role.font(t).size))
         .line_height(Some(TextRole::Body.line_height(t)))
+}
+
+/// How wide a lead stands before a stacked row's title: a mark (a dot, a check, an icon) 16, and
+/// words, such as a version's `v3`, as wide as they are, at most their column's width.
+fn lead_width(ui: &Ui, t: &crate::Tokens, cell: &Cell, most: f32) -> f32 {
+    let rich = match cell {
+        Cell::Text(label) | Cell::Strong(label) | Cell::Muted(label) => TextRole::Body.rich(t, label),
+        Cell::Mono(label) | Cell::MutedCode(label) => code_rich(t, label, TextRole::Help),
+        Cell::Code(label) => code_rich(t, label, TextRole::Body),
+        _ => return 16.0,
+    };
+    let width = WidgetText::from(rich)
+        .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Body.font(t))
+        .size()
+        .x;
+    width.ceil().min(most.max(16.0))
 }
 
 /// How tall `cell` stands with its words wrapped onto lines `room` wide, for a row that grows to

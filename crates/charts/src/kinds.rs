@@ -132,7 +132,7 @@ pub struct ChartSpec {
     pub field_names: Vec<(String, String)>,
     /// A heatmap's color scale shown beside the grid.
     pub show_scale: bool,
-    /// A scatter's axes fitted to the points rather than starting at zero.
+    /// A scatter's axes, or a line's value axis, fitted to the values rather than starting at zero.
     pub fit: bool,
     /// A ring's total written in its middle, with this word under it.
     pub total: Option<String>,
@@ -510,6 +510,7 @@ impl Widget for Chart<'_> {
                 } else {
                     let mut chart = LineChart::new(data.categories)
                         .stacked(spec.stack.is_some())
+                        .fit(spec.fit && spec.stack.is_none())
                         .fill(if kind == ChartKind::Area {
                             Fill::Solid
                         } else {

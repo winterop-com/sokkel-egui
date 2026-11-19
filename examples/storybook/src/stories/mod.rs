@@ -8,6 +8,7 @@ mod chart_kinds;
 mod charts;
 mod dhis2;
 mod display;
+mod fhir;
 mod foundations;
 mod frame;
 mod icon_list;
@@ -616,6 +617,21 @@ pub const STORIES: &[Story] = &[
         path: "Dhis2/Expression editor",
         doc: "DHIS2's expression languages in the code editor: an indicator's numerator with a finding underlined and listed on the field's issue mark, and a program rule's condition with its program functions and variables.",
         show: dhis2::expression_editor,
+    },
+    Story {
+        path: "Fhir/FHIRPath and CQL",
+        doc: "The health-data standards' languages in the code editor: a FHIRPath expression over the whole server with its bound names and a date, and a CQL library in a pane with its declarations, a retrieve and a block comment.",
+        show: fhir::languages,
+    },
+    Story {
+        path: "Patterns/Diff view",
+        doc: "Two versions of a text as one list of lines, after sokkel-ui's DiffView: a library's earlier version against the editor with the far unchanged lines folded and the counts at its top end, the same with a title and every line, and two texts the same.",
+        show: fhir::diff_view,
+    },
+    Story {
+        path: "Patterns/Rail nested places",
+        doc: "A rail place holding places of its own, as a workbench's resource types under Resources: open under its chevron while one of them is shown, each with its count, the parent set apart; collapsed, the parent marked.",
+        show: fhir::rail_nested,
     },
     Story {
         path: "Patterns/Show more",

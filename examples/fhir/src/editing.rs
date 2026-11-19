@@ -2,12 +2,12 @@
 //! version it was read at (kept in the browser, so an edit survives a reload), and the server's
 //! last word on each. The resource's page and its side panel read the same.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::model::{Issue, Part};
 
 /// An unsaved edit and the version it started from, sent as If-Match.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Draft {
     pub text: String,
     #[serde(rename = "readAt")]

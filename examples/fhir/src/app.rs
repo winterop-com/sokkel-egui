@@ -5,7 +5,7 @@
 //! notes shown and the routes gone to) and the open page's own state; each page's words and
 //! actions are in `pages`.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::editing::Editing;
@@ -446,7 +446,7 @@ impl Toast {
 }
 
 /// The values the app keeps in the browser, each under its key once it is set.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Kept {
     pub values: Vec<(String, Value)>,
 }

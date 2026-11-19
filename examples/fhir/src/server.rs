@@ -12,7 +12,7 @@
 //! told or listed (`Collection::seen`). The clock and the collections are carried from the dhis2
 //! example's backend (`examples/dhis2/src/backend.rs`).
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
 
 use crate::js::{iso_instant, stringify};
@@ -32,7 +32,7 @@ pub const ME: &str = "ada";
 pub const LATENCY: i64 = 150;
 
 /// A resource as the server holds it, under its key `Type/id`.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Stored {
     pub id: String,
     #[serde(rename = "type")]
@@ -41,7 +41,7 @@ pub struct Stored {
 }
 
 /// What a version did.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Change {
     Create,
@@ -60,7 +60,7 @@ impl Change {
 }
 
 /// One version of a resource, under `Type/id/_history/n`.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Version {
     pub id: String,
     pub key: String,
@@ -76,7 +76,7 @@ pub struct Version {
 }
 
 /// A search the person kept, run again from Saved.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SavedSearch {
     pub id: String,
     pub label: String,
@@ -84,7 +84,7 @@ pub struct SavedSearch {
 }
 
 /// The searches a person kept, in the order they put them.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SavedSearches {
     pub id: String,
     pub searches: Vec<SavedSearch>,
@@ -482,6 +482,21 @@ impl Backend {
             tickets: 0,
             settled: Vec::new(),
         }
+    }
+
+    /// The rows a visit before kept, in place of the seed, as the browser keeps a collection once a
+    /// change is kept; every collection listed again.
+    pub fn restore(&mut self, resources: Vec<Stored>, history: Vec<Version>, saved: Vec<SavedSearches>) {
+        self.resources.rows = resources;
+        self.resources.written = true;
+        self.history.rows = history;
+        self.history.written = true;
+        self.saved.rows = saved;
+        self.saved.written = true;
+        self.resources.pending.clear();
+        self.history.pending.clear();
+        self.saved.pending.clear();
+        self.list_all();
     }
 
     /// Every collection listed, as the pages that read them do when they are drawn.
