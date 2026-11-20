@@ -801,6 +801,7 @@ pub struct DataTable<'a> {
     auto: bool,
     detail: Option<RowDetail<'a>>,
     groups: Option<Vec<String>>,
+    group_order: Vec<String>,
     fits: bool,
     cards: Option<Cards<'a>>,
     actions_hover: bool,
@@ -971,6 +972,7 @@ impl<'a> DataTable<'a> {
             auto: false,
             detail: None,
             groups: None,
+            group_order: Vec::new(),
             fits: false,
             cards: None,
             actions_hover: false,
@@ -1141,11 +1143,19 @@ impl<'a> DataTable<'a> {
     }
 
     /// The rows under a head for each group, by each row's key (one for each row, in the rows'
-    /// order), the groups in the order their keys first come, as the web's `groupBy`: the head
-    /// says the key and how many rows it holds, and a press on it folds the group shut or opens
-    /// it. The folded groups are the state's `folded`.
+    /// order), the groups in the order their keys first come among the rows as given, as the web's
+    /// `groupBy`: the head says the key and how many rows it holds, and a press on it folds the
+    /// group shut or opens it. The folded groups are the state's `folded`. A paged table draws no
+    /// groups, as the web's.
     pub fn groups<S: Into<String>>(mut self, keys: impl IntoIterator<Item = S>) -> Self {
         self.groups = Some(keys.into_iter().map(Into::into).collect());
+        self
+    }
+
+    /// The group keys to put first, in this order, as the web's `groupOrder`; the other groups
+    /// follow in the order their keys first come.
+    pub fn group_order<S: Into<String>>(mut self, keys: impl IntoIterator<Item = S>) -> Self {
+        self.group_order = keys.into_iter().map(Into::into).collect();
         self
     }
 
@@ -1809,8 +1819,56 @@ impl<'a> DataTable<'a> {
                         );
                         let pressed = (cards.card)(&mut child, index, width);
                         tallest = tallest.max(pressed.rect.height());
+                        let card = Rect::from_min_size(place.min, vec2(width, pressed.rect.height().max(cards.height)));
+                        let selected = self.state.selected.contains(&index);
+                        // a chosen card ringed in its paint, an opened one in its own, outside its
+                        // edge, as the web's `ring-2 ring-primary` and `ring-2 ring-ring/60`
+                        let ring = if selected {
+                            t.paint("table.base.selected.card")
+                        } else if self.state.opened == Some(index) {
+                            t.paint("table.base.opened.card")
+                        } else {
+                            None
+                        };
+                        if let Some((color, width)) = ring.and_then(|p| p.ring) {
+                            ui.painter().rect_stroke(
+                                card,
+                                t.radius("surface"),
+                                Stroke::new(width, color),
+                                egui::StrokeKind::Outside,
+                            );
+                        }
+                        // the selection box at the card's top corner, 8 in, on the page's ground at
+                        // 85% padded 4: shown while the card is pointed at, chosen, or any row is,
+                        // as the web's grid box; a press on it selects the row alone
+                        if self.selectable
+                            && (selected || !self.state.selected.is_empty() || ui.rect_contains_pointer(card))
+                        {
+                            let pad = Rect::from_min_size(card.min + vec2(8.0, 8.0), vec2(24.0, 24.0));
+                            ui.painter()
+                                .rect_filled(pad, t.radius("md"), t.color_at("background", 0.85));
+                            let mut checked = selected;
+                            if put_at(
+                                ui,
+                                pad.shrink(4.0),
+                                Checkbox::new(&mut checked, self.words.select_row.clone()).hide_label(),
+                            )
+                            .clicked()
+                            {
+                                let groups = self.groups.as_deref().filter(|g| g.len() == self.rows.len());
+                                toggle_selection(self.state, shape.as_ref(), groups, order, index, false);
+                            }
+                        }
                         if pressed.clicked()
-                            && !(self.selectable && select_press(ui, self.state, shape.as_ref(), order, index))
+                            && !(self.selectable
+                                && select_press(
+                                    ui,
+                                    self.state,
+                                    shape.as_ref(),
+                                    self.groups.as_deref().filter(|g| g.len() == self.rows.len()),
+                                    order,
+                                    index,
+                                ))
                         {
                             self.state.opened = Some(index);
                         }
@@ -2103,11 +2161,34 @@ impl<'a> DataTable<'a> {
                 let card = Rect::from_min_size(pos2(outer.left() + inset, outer.top()), vec2(width, height));
                 card_rects.push(card);
                 let hit = ui.interact(card, self.id.with(("card", index)), Sense::click());
-                if hit.clicked() && !(self.selectable && select_press(ui, self.state, shape.as_ref(), order, index)) {
+                if hit.clicked()
+                    && !(self.selectable
+                        && select_press(
+                            ui,
+                            self.state,
+                            shape.as_ref(),
+                            self.groups.as_deref().filter(|g| g.len() == self.rows.len()),
+                            order,
+                            index,
+                        ))
+                {
                     self.state.opened = Some(index);
                 }
+                let selected = self.state.selected.contains(&index);
+                let opened = self.state.opened == Some(index);
                 if listed {
-                    if hit.hovered() {
+                    // a chosen or opened listed row on its paint's ground, hovered or not, as the
+                    // web's `bg-secondary hover:bg-secondary`
+                    let chosen = if selected {
+                        t.paint("table.base.selected.row")
+                    } else if opened {
+                        t.paint("table.base.opened.row")
+                    } else {
+                        None
+                    };
+                    if let Some(ground) = chosen.and_then(|p| p.ground) {
+                        ui.painter().rect_filled(card, 0.0, ground);
+                    } else if hit.hovered() {
                         ui.painter().rect_filled(card, 0.0, t.color("hover"));
                     }
                     ui.painter()
@@ -2126,6 +2207,19 @@ impl<'a> DataTable<'a> {
                         Stroke::new(1.0, t.color("border")),
                         egui::StrokeKind::Inside,
                     );
+                    // a chosen card ringed in its paint, an opened one in its own, outside its
+                    // edge, as the web's `ring-2 ring-primary` and `ring-2 ring-ring/60`
+                    let ring = if selected {
+                        t.paint("table.base.selected.card")
+                    } else if opened {
+                        t.paint("table.base.opened.card")
+                    } else {
+                        None
+                    };
+                    if let Some((color, width)) = ring.and_then(|p| p.ring) {
+                        ui.painter()
+                            .rect_stroke(card, radius, Stroke::new(width, color), egui::StrokeKind::Outside);
+                    }
                 }
                 let left = card.left() + 1.0 + 12.0;
                 let right = card.right() - 1.0 - 12.0;
@@ -2156,6 +2250,23 @@ impl<'a> DataTable<'a> {
                         t.color("muted-foreground"),
                     );
                     title_left += GRIP + 8.0;
+                }
+                // the selection box before the tree's control and the title, 8 before them; a
+                // press on it selects the row alone, as the web's stacked `boxFor`
+                if self.selectable {
+                    let mut checked = selected;
+                    let place = Rect::from_min_size(pos2(title_left, y + 12.0 - 8.0), vec2(16.0, 16.0));
+                    if put_at(
+                        ui,
+                        place,
+                        Checkbox::new(&mut checked, self.words.select_row.clone()).hide_label(),
+                    )
+                    .clicked()
+                    {
+                        let groups = self.groups.as_deref().filter(|g| g.len() == self.rows.len());
+                        toggle_selection(self.state, shape.as_ref(), groups, order, index, false);
+                    }
+                    title_left += 16.0 + 8.0;
                 }
                 if let Some(tree) = tree {
                     let control =
@@ -2446,15 +2557,24 @@ impl<'a> DataTable<'a> {
         }
         let tree = self.tree_shape();
         if let Some(groups) = self.groups.as_ref().filter(|g| g.len() == self.rows.len()) {
-            // the groups in the order their keys first come, each keeping its rows' order; in a
-            // tree a row stands in its top-level row's group
+            // the groups in the order their keys first come among the rows as given (not as
+            // sorted), as the web's `groupRows`, each keeping its rows' order; in a tree a row
+            // stands in its top-level row's group
             let key = |i: usize| &groups[tree.as_ref().map_or(i, |t| t.root(i))];
             let mut first: Vec<&String> = Vec::new();
-            for i in 0..self.rows.len() {
+            for i in (0..self.rows.len()).filter(|i| tree.as_ref().is_none_or(|t| t.parent[*i].is_none())) {
                 if !first.contains(&key(i)) {
                     first.push(key(i));
                 }
             }
+            // the keys `group_order` names first, in its order, then the rest as they came
+            let rank = |k: &String| {
+                self.group_order
+                    .iter()
+                    .position(|o| o == k)
+                    .unwrap_or(self.group_order.len())
+            };
+            first.sort_by_key(|k| rank(k));
             order.sort_by_key(|i| first.iter().position(|k| *k == key(*i)).unwrap_or(0));
         }
         match tree {
@@ -2675,6 +2795,11 @@ impl<'a> DataTable<'a> {
 
     fn show_stacked(mut self, ui: &mut Ui) -> TableOutput {
         let t = tokens(ui.ctx());
+        // a paged table is never grouped, as the web's `grouped` (groupBy without paging): its
+        // rows are drawn, paged and ranged as one list
+        if self.paging.is_some() {
+            self.groups = None;
+        }
         if self.state.widths.len() != self.columns.len() {
             self.state.widths = self.columns.iter().map(|c| c.width).collect();
         }
@@ -3307,7 +3432,15 @@ impl<'a> DataTable<'a> {
                         });
                         // a press with Shift, Cmd or Ctrl selects, and opens nothing
                         let picked = row.clicked()
-                            && !(self.selectable && select_press(ui, self.state, shape.as_ref(), &order, index));
+                            && !(self.selectable
+                                && select_press(
+                                    ui,
+                                    self.state,
+                                    shape.as_ref(),
+                                    self.groups.as_deref().filter(|g| g.len() == self.rows.len()),
+                                    &order,
+                                    index,
+                                ));
                         if picked && self.detail.is_some() {
                             // a press opens the row's detail or closes it
                             if !self.state.expanded.remove(&index) {
@@ -3398,7 +3531,14 @@ impl<'a> DataTable<'a> {
                             {
                                 // Shift on the box selects the range from the row pressed last
                                 let range = ui.input(|i| i.modifiers.shift);
-                                toggle_selection(self.state, shape.as_ref(), &order, index, range);
+                                toggle_selection(
+                                    self.state,
+                                    shape.as_ref(),
+                                    self.groups.as_deref().filter(|g| g.len() == self.rows.len()),
+                                    &order,
+                                    index,
+                                    range,
+                                );
                             }
                         }
                         if stacked {
@@ -3971,7 +4111,14 @@ impl<'a> DataTable<'a> {
                 if space && self.selectable {
                     // a branch takes every row under it, as its box does; Shift takes the range
                     // from the row pressed last
-                    toggle_selection(self.state, shape.as_ref(), &order, row, space_shift);
+                    toggle_selection(
+                        self.state,
+                        shape.as_ref(),
+                        self.groups.as_deref().filter(|g| g.len() == self.rows.len()),
+                        &order,
+                        row,
+                        space_shift,
+                    );
                 } else if has_detail {
                     if !self.state.expanded.remove(&row) {
                         self.state.expanded.insert(row);
@@ -4696,14 +4843,29 @@ fn put_at(ui: &mut Ui, rect: Rect, widget: impl egui::Widget) -> Response {
 /// Select or clear `row`, as the web's `toggle`: with `range` and a row pressed before, every row
 /// shown from that one to this, all on unless this one is on and that one is not; else the row
 /// alone, a branch with every row under it. The row becomes the next range's start.
-fn toggle_selection(state: &mut TableState, shape: Option<&TreeShape>, order: &[usize], row: usize, range: bool) {
+///
+/// The range runs over the web's `flat`: the rows in `order` (with `groups`, each group's rows
+/// after the one before), less those of a folded group, which are not drawn.
+fn toggle_selection(
+    state: &mut TableState,
+    shape: Option<&TreeShape>,
+    groups: Option<&[String]>,
+    order: &[usize],
+    row: usize,
+    range: bool,
+) {
     if range && let Some(anchor) = state.anchor {
         let on = !state.selected.contains(&row) || state.selected.contains(&anchor);
+        let flat: Vec<usize> = order
+            .iter()
+            .copied()
+            .filter(|r| groups.is_none_or(|g| !state.folded.contains(&g[*r])))
+            .collect();
         let rows = match (
-            order.iter().position(|r| *r == anchor),
-            order.iter().position(|r| *r == row),
+            flat.iter().position(|r| *r == anchor),
+            flat.iter().position(|r| *r == row),
         ) {
-            (Some(a), Some(b)) => order[a.min(b)..=a.max(b)].to_vec(),
+            (Some(a), Some(b)) => flat[a.min(b)..=a.max(b)].to_vec(),
             _ => vec![row],
         };
         for r in rows {
@@ -4729,13 +4891,20 @@ fn toggle_selection(state: &mut TableState, shape: Option<&TreeShape>, order: &[
 /// A press on a row of a table that selects: with Shift it selects the range from the row
 /// pressed last, with Cmd or Ctrl it selects or clears the row, as the web's `press`. True when it
 /// did, so the press opens nothing.
-fn select_press(ui: &Ui, state: &mut TableState, shape: Option<&TreeShape>, order: &[usize], row: usize) -> bool {
+fn select_press(
+    ui: &Ui,
+    state: &mut TableState,
+    shape: Option<&TreeShape>,
+    groups: Option<&[String]>,
+    order: &[usize],
+    row: usize,
+) -> bool {
     let modifiers = ui.input(|i| i.modifiers);
     if modifiers.shift {
-        toggle_selection(state, shape, order, row, true);
+        toggle_selection(state, shape, groups, order, row, true);
         true
     } else if modifiers.command || modifiers.ctrl || modifiers.mac_cmd {
-        toggle_selection(state, shape, order, row, false);
+        toggle_selection(state, shape, groups, order, row, false);
         true
     } else {
         false

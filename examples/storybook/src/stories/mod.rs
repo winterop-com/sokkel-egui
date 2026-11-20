@@ -126,6 +126,7 @@ impl Default for State {
             cards: {
                 let mut cards = sokkel_egui::TableState::sorted(0, true);
                 cards.grid = true;
+                cards.selected.insert(1);
                 cards
             },
             hovered: sokkel_egui::TableState::default(),
@@ -358,7 +359,7 @@ pub const STORIES: &[Story] = &[
     },
     Story {
         path: "Patterns/Data table cards",
-        doc: "The rows as cards in a grid, each at least 240 wide: the bar's toggle between the table and the grid, the sort as a menu, and a row's actions at its card's corner; then a table whose row actions show only on the row pointed at.",
+        doc: "The rows as cards in a grid, each at least 240 wide: the bar's toggle between the table and the grid, the sort as a menu, a row's actions at its card's corner, and a chosen card ringed with every card's selection box at its other corner while any row is chosen; then a table whose row actions show only on the row pointed at.",
         show: table::data_table_cards,
     },
     Story {
@@ -368,7 +369,7 @@ pub const STORIES: &[Story] = &[
     },
     Story {
         path: "Patterns/Data table tree stacked",
-        doc: "A tree stacked as cards, as a listed list and as a compact list: each row's control after its indent, 20 a level; listed, every line starts where its title does; sync-inventory's runs refused, said under it with Try again in the two lists (the web's cards leave the line out).",
+        doc: "A tree stacked as cards, as a listed list and as a compact list: each row's control after its indent, 20 a level; listed, every line starts where its title does; sync-inventory's runs refused, said under it with Try again in the two lists (the web's cards leave the line out); run_4119 chosen, its box ticked before its title, its card ringed in the chosen paint and its listed rows on the chosen ground.",
         show: table::data_table_tree_stacked,
     },
     Story {

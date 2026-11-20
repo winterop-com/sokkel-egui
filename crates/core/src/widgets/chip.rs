@@ -587,12 +587,10 @@ fn look(t: &Tokens, tone: ChipTone, hue: Option<ChipHue>, selected: bool) -> Loo
         edge: paint.edge.unwrap_or(none),
         dashed: tone == ChipTone::Absent && hue.is_none(),
     };
-    // a toggle with no chosen paint of its own: edged in its ink, a hue over its ink at 20%
+    // absent has no chosen paint of its own: a toggle on is edged in its ink, as the web's
+    // `border-current`
     if selected && chosen.is_none() {
         look.edge = ink;
-        if hue.is_some() {
-            look.fill = ink.gamma_multiply(0.2);
-        }
     }
     look
 }
@@ -675,5 +673,61 @@ impl egui::Widget for TagChips<'_> {
             }
         })
         .response
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Appearance, Scheme};
+
+    /// The rects a chosen hue chip draws on a frame of `ctx`: their fills and edges.
+    fn drawn(ctx: &egui::Context, hue: ChipHue) -> Vec<(Color32, Stroke)> {
+        let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+            Chip::new("harbor").hue(hue).button().selected(true).ui(ui);
+        });
+        output.textures_delta.clear();
+        output
+            .shapes
+            .iter()
+            .filter_map(|clipped| match &clipped.shape {
+                egui::Shape::Rect(rect) => Some((rect.fill, rect.stroke)),
+                _ => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_chosen_hue_chip_draws_its_resolved_paint() {
+        for scheme in [Scheme::Light, Scheme::Dark] {
+            let appearance = Appearance {
+                scheme,
+                ..Default::default()
+            };
+            let ctx = egui::Context::default();
+            crate::install(&ctx, &appearance);
+            let t = tokens(&ctx);
+            for hue in ChipHue::ALL {
+                let paint = t
+                    .paint(&format!("chip.hue-{}.selected.container", hue.key()))
+                    .expect("a chosen hue chip's paint");
+                let ground = paint.ground.expect("its ground");
+                let edge = paint.edge.expect("its edge");
+                assert_eq!(paint.ink, Some(edge), "{scheme:?} {hue:?}: its ink is its edge");
+                let rects = drawn(&ctx, hue);
+                assert!(
+                    rects.iter().any(|(fill, _)| *fill == ground),
+                    "{scheme:?} {hue:?}: no rect filled with {ground:?} in {rects:?}"
+                );
+                assert!(
+                    rects
+                        .iter()
+                        .any(|(_, stroke)| stroke.color == edge && stroke.width == 1.0),
+                    "{scheme:?} {hue:?}: no rect edged with {edge:?} in {rects:?}"
+                );
+                let look = look(&t, ChipTone::Neutral, Some(hue), true);
+                assert_eq!((look.fill, look.edge, look.ink), (ground, edge, edge));
+            }
+        }
     }
 }

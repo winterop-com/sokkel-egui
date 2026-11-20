@@ -147,6 +147,7 @@ pub fn data_table_cards(state: &mut State, ui: &mut Ui) {
     };
     DataTable::new("chart-cards", &heads, &rows, &mut state.cards)
         .search(&mut state.empty)
+        .selectable(true)
         .words(words)
         .footer(false)
         .height(330.0)
