@@ -347,6 +347,16 @@ pub const STORIES: &[Story] = &[
         show: table::data_table_cards,
     },
     Story {
+        path: "Patterns/Data table tree",
+        doc: "Rows with children: runs under their jobs under their projects, each level indented 20 with the chevron that opens it, harbor open; a branch's box takes every row under it and is mixed while some are chosen. The arrows move along the rows and Home, End, PageUp and PageDown reach along them; Right opens a branch, Left closes it or moves to its parent. Then each person's tokens, loaded as their row first opens, the control a spinner while they come and named for its person (Show the tokens of ada); a load that failed says so under its branch with Try again.",
+        show: table::data_table_tree,
+    },
+    Story {
+        path: "Patterns/Data table loading and failed",
+        doc: "The table's own loading and failed looks: placeholder rows under the heads while the first rows come, the bar keeping its search and counting nothing; three after the last row while more come; and a failed read in place of the rows, headed by what the server answered, its diagnostic and problem under it, Try again showing the placeholder rows while it reads.",
+        show: table::data_table_loading,
+    },
+    Story {
         path: "Patterns/Item card",
         doc: "The card for one thing: a picture over its words, an icon before its title, a title cut short; a code, a status that wraps, three lines of description and facts in columns; a chosen card with its menu; and a card whose code is its title.",
         show: table::item_card,

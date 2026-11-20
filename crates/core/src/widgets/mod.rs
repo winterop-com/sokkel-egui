@@ -237,8 +237,8 @@ pub use stat::{KpiRow, Stat, StatTiles, sparkline};
 pub use stat_panel::{StatColorMode, StatPanel, StatWords, Threshold, format_compact, format_value, threshold_color};
 pub use switch::Switch;
 pub use table::{
-    Aggregate, Cell, CellEdit, CellFocus, CellRun, Column, DataTable, RowActions, RowCard, StackLayout, StackPlace,
-    TableOutput, TableState, TableVariant, TableWords, Validate, sum_aggregate,
+    Aggregate, Cell, CellEdit, CellFocus, CellRun, Column, DataTable, ReadOutcome, RowActions, RowCard, StackLayout,
+    StackPlace, TableOutput, TableState, TableVariant, TableWords, Validate, sum_aggregate,
 };
 pub use table_edit::{EditWords, Editor};
 pub use text_field::{Input, TextField};

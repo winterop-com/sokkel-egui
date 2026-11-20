@@ -1,6 +1,7 @@
 use eframe::egui::Ui;
 use sokkel_egui::{
-    Cell, ChipTone, Column, DataTable, Icon, ItemCard, MenuItem, TableState, TableVariant, TextRole, tokens,
+    Cell, ChipTone, Column, DataTable, Icon, ItemCard, MenuItem, ReadOutcome, TableState, TableVariant, TextRole,
+    tokens,
 };
 
 use super::{State, section};
@@ -278,4 +279,227 @@ pub fn data_table_runs(_: &mut State, ui: &mut Ui) {
         .height(240.0)
         .show(ui);
     ui.data_mut(|d| d.insert_temp(id, state));
+}
+
+/// Runs under their jobs under their projects, as the web's `makeRunTree`: each row with its
+/// parent's index, the projects and their jobs counting the runs under them.
+fn run_tree() -> (Vec<Vec<Cell>>, Vec<Option<usize>>) {
+    let mut rows = Vec::new();
+    let mut parents = Vec::new();
+    let mut run = 4120;
+    for (p, project) in ["harbor", "juniper", "larkspur"].into_iter().enumerate() {
+        let project_at = rows.len();
+        rows.push(Vec::new());
+        parents.push(None);
+        let (mut runs_in, mut failed_in) = (0, 0);
+        for (j, job) in JOBS[..3].iter().enumerate() {
+            let job_at = rows.len();
+            rows.push(Vec::new());
+            parents.push(Some(project_at));
+            let count = 2 + (p + j) % 3;
+            let mut failed = 0;
+            for r in 0..count {
+                let (state, tone) = STATES[(p * 5 + j * 3 + r * 2) % 4];
+                failed += usize::from(state == "failed");
+                let ago = (p * 7 + j * 3 + r) * 37 + 4;
+                rows.push(vec![
+                    Cell::MutedCode(format!("run_{run:04}")),
+                    Cell::Empty,
+                    Cell::Empty,
+                    Cell::Chip(state.into(), tone),
+                    Cell::Text(format!("Nov 5, {:02}:{:02}", 13 - ago / 60 % 12, 59 - ago % 60)),
+                    Cell::Text(format!("{}m {:02}s", (run * 13) % 9 + 1, (run * 37) % 60)),
+                ]);
+                parents.push(Some(job_at));
+                run -= 1;
+            }
+            rows[job_at] = vec![
+                Cell::Mono((*job).into()),
+                Cell::Text(count.to_string()),
+                Cell::Text(failed.to_string()),
+                Cell::Empty,
+                Cell::Empty,
+                Cell::Empty,
+            ];
+            runs_in += count;
+            failed_in += failed;
+        }
+        rows[project_at] = vec![
+            Cell::Strong(project.into()),
+            Cell::Text(runs_in.to_string()),
+            Cell::Text(failed_in.to_string()),
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+        ];
+    }
+    (rows, parents)
+}
+
+/// Each person's tokens, loaded as their row first opens: the people, and the tokens brought so far.
+#[derive(Clone)]
+struct Tokens {
+    rows: Vec<Vec<Cell>>,
+    parents: Vec<Option<usize>>,
+    /// When each person's tokens were asked for, by their row, until they come.
+    asked: Vec<(usize, f64)>,
+    state: TableState,
+}
+
+impl Tokens {
+    fn new() -> Self {
+        let rows = PEOPLE
+            .iter()
+            .map(|person| vec![Cell::Person((*person).into()), Cell::Empty, Cell::Empty])
+            .collect();
+        let mut state = TableState::default();
+        // linus's tokens refused, and margaret's on their way
+        state.expanded.extend([2, 3]);
+        state.refuse_children(2);
+        Self {
+            rows,
+            parents: vec![None; PEOPLE.len()],
+            asked: Vec::new(),
+            state,
+        }
+    }
+
+    /// The token of the person at `row`, under their row.
+    fn bring(&mut self, row: usize) {
+        let person = PEOPLE[row];
+        let used = ["2 hours ago", "yesterday", "3 days ago", "last week"][row % 4];
+        self.rows.push(vec![
+            Cell::Mono(format!("{person}-deploy")),
+            Cell::Muted(format!("tvn_{}…", &format!("{:x}", (row + 7) * 48_271)[..4])),
+            Cell::Text(used.into()),
+        ]);
+        self.parents.push(Some(row));
+    }
+}
+
+fn tree_columns() -> Vec<Column> {
+    vec![
+        Column::new("Name", 260.0).fill().sortable(true),
+        Column::new("Runs", 88.0).numeric().sortable(true),
+        Column::new("Failed", 88.0).numeric().sortable(true),
+        Column::new("State", 120.0),
+        Column::new("Started", 120.0),
+        Column::new("Took", 88.0).numeric(),
+    ]
+}
+
+pub fn data_table_tree(_: &mut State, ui: &mut Ui) {
+    let (rows, parents) = run_tree();
+    section(ui, "Runs under their jobs and projects");
+    let id = eframe::egui::Id::unique(("story-table-tree", "state"));
+    let mut state = ui.data_mut(|d| d.get_temp::<TableState>(id)).unwrap_or_else(|| {
+        let mut state = TableState::default();
+        // harbor open, the keys on its nightly-export, one of whose runs is chosen
+        state.expanded.insert(0);
+        state.focus_row(1);
+        state.selected.insert(2);
+        state
+    });
+    DataTable::new("story-table-tree", &tree_columns(), &rows, &mut state)
+        .tree(parents)
+        .selectable(true)
+        .footer(false)
+        .show(ui);
+    ui.data_mut(|d| d.insert_temp(id, state));
+
+    section(ui, "Tokens loaded as each person opens");
+    let id = eframe::egui::Id::unique(("story-table-tokens", "state"));
+    let mut tokens = ui.data_mut(|d| d.get_temp::<Tokens>(id)).unwrap_or_else(Tokens::new);
+    let now = ui.input(|i| i.time);
+    // a person's tokens come two seconds after they were asked for
+    let came: Vec<usize> = tokens
+        .asked
+        .iter()
+        .filter(|(_, at)| now - at > 2.0)
+        .map(|(row, _)| *row)
+        .collect();
+    tokens.asked.retain(|(row, _)| !came.contains(row));
+    for row in came {
+        tokens.bring(row);
+    }
+    if !tokens.asked.is_empty() {
+        ui.ctx().request_repaint();
+    }
+    let given: Vec<usize> = tokens.parents.iter().flatten().copied().collect();
+    let Tokens {
+        rows, parents, state, ..
+    } = &mut tokens;
+    let out = DataTable::new(
+        "story-table-tokens",
+        &[
+            Column::new("Name", 220.0).fill(),
+            Column::new("Token", 240.0),
+            Column::new("Last used", 140.0),
+        ],
+        rows,
+        state,
+    )
+    .tree(parents.clone())
+    .lazy(|row| row < PEOPLE.len() && !given.contains(&row))
+    .expand_label(|row, open| {
+        let name = PEOPLE.get(row).copied().unwrap_or_default();
+        format!("{} the tokens of {name}", if open { "Hide" } else { "Show" })
+    })
+    .footer(false)
+    .show(ui);
+    if let Some(row) = out.load_children {
+        tokens.asked.push((row, now));
+    }
+    ui.data_mut(|d| d.insert_temp(id, tokens));
+}
+
+pub fn data_table_loading(_: &mut State, ui: &mut Ui) {
+    let columns = columns();
+    let narrow = &columns[..3];
+    ui.columns(2, |halves| {
+        section(&mut halves[0], "The first rows on their way");
+        let mut search = String::new();
+        let mut loading = TableState::default();
+        DataTable::new("story-table-loading", narrow, &[], &mut loading)
+            .search(&mut search)
+            .selectable(true)
+            .loading(true)
+            .height(160.0)
+            .show(&mut halves[0]);
+
+        section(&mut halves[1], "More rows on their way after the last");
+        let runs: Vec<Vec<Cell>> = runs().into_iter().take(2).map(|run| run[..3].to_vec()).collect();
+        let mut more = TableState::default();
+        DataTable::new("story-table-more", narrow, &runs, &mut more)
+            .loading(true)
+            .footer(false)
+            .show(&mut halves[1]);
+    });
+
+    section(ui, "A failed read, read again by Try again");
+    let id = eframe::egui::Id::unique(("story-table-failed", "since"));
+    // Try again reads for 1.2 seconds, placeholder rows over the failure, then fails the same way
+    let since: Option<f64> = ui.data(|d| d.get_temp(id));
+    let now = ui.input(|i| i.time);
+    let reading = since.is_some_and(|at| now - at < 1.2);
+    if reading {
+        ui.ctx().request_repaint();
+    }
+    let mut search = String::new();
+    let mut failed = TableState::default();
+    let out = DataTable::new("story-table-failed", &columns, &[], &mut failed)
+        .search(&mut search)
+        .selectable(true)
+        .loading(reading)
+        .failed(
+            "The scheduler for harbor is restarting, so its runs cannot be listed.",
+            ReadOutcome::Status(503),
+        )
+        .problems(["harbor: the scheduler answered 503 Service Unavailable"])
+        .retry(true)
+        .height(200.0)
+        .show(ui);
+    if out.retry {
+        ui.data_mut(|d| d.insert_temp(id, now));
+    }
 }

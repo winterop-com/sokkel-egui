@@ -453,6 +453,17 @@ pub struct TableState {
     /// The rows shown as cards in a grid, in a table that draws them (`DataTable::cards`), as the
     /// web's `view="grid"`.
     pub grid: bool,
+    /// The branches whose children the table asked the app for (`TableOutput::load_children`),
+    /// so each is asked once while it stays open and waits.
+    asked: BTreeSet<usize>,
+    /// The branches whose children did not load, said under each with Try again until it is
+    /// pressed or the branch closes.
+    refusals: BTreeSet<usize>,
+    /// The active row was moved by a key this frame: the rows scroll to keep it in view.
+    reveal: bool,
+    /// The active row was moved by a key last, not by a press: it is marked, as the web marks it
+    /// only under keyboard focus.
+    keyed: bool,
 }
 
 impl TableState {
@@ -474,8 +485,24 @@ impl TableState {
     /// on it would: it is marked as the table's `cell_focus` draws it.
     pub fn focus_cell(&mut self, row: usize, column: usize) {
         self.active = Some((row, column));
+        // the row is named by its index until the table next draws and keys it
+        self.active_key = None;
         self.focused = true;
         self.head = None;
+    }
+
+    /// Make `row` the active row of a tree, the table holding the focus, as the keys would move
+    /// it there: marked with its bar at its start, the keys going on from it.
+    pub fn focus_row(&mut self, row: usize) {
+        self.focus_cell(row, 0);
+        self.keyed = true;
+    }
+
+    /// Say the children of the branch at `row` did not load (the app's answer to
+    /// `TableOutput::load_children`), as the web's failed `loadChildren`: a line under the branch
+    /// says so with Try again, which asks for them again. Closing the branch forgets it.
+    pub fn refuse_children(&mut self, row: usize) {
+        self.refusals.insert(row);
     }
 }
 
@@ -501,9 +528,19 @@ pub struct TableWords {
     pub sort: String,
     /// The bar's menu of the columns to show, and its button's label.
     pub columns: String,
-    /// A row's control that opens its detail, and closes it.
+    /// A row's control that opens its branch or its detail (`dataTable.expand`), and closes it
+    /// (`dataTable.collapse`); a table's `expand_label` names it for its row instead.
     pub expand: String,
     pub collapse: String,
+    /// What an open branch's control says while its children load (`dataTable.loadingChildren`).
+    pub loading_children: String,
+    /// A failed read's heading by what the server answered: refused (`pageState.refused`), a 404
+    /// (`pageState.missing`) or no answer (`pageState.unreachable`); and its Try again
+    /// (`pageState.retry`).
+    pub refused: String,
+    pub missing: String,
+    pub unreachable: String,
+    pub retry: String,
     /// A group head's control while the group is folded, and while it is open.
     pub show_group: String,
     pub hide_group: String,
@@ -529,6 +566,11 @@ impl Default for TableWords {
             columns: "Columns".into(),
             expand: "Expand".into(),
             collapse: "Collapse".into(),
+            loading_children: "Loading".into(),
+            refused: "The server refused this read".into(),
+            missing: "Nothing is there".into(),
+            unreachable: "The server is not answering".into(),
+            retry: "Try again".into(),
             show_group: "Show group".into(),
             hide_group: "Hide group".into(),
             edit: EditWords::default(),
@@ -554,6 +596,143 @@ pub struct TableOutput {
     pub reordered: Option<(usize, usize)>,
     /// A cell's edit was saved: the app stores it.
     pub edited: Option<CellEdit>,
+    /// A branch opened whose children are not given yet (a row `lazy` says has some): the app
+    /// brings them, as rows whose parent is this one. Asked once while the branch stays open.
+    pub load_children: Option<usize>,
+    /// Try again was pressed under a failed read: the app reads the rows again.
+    pub retry: bool,
+}
+
+/// What the server answered a read that failed, as the web's `ReadOutcome`: an HTTP status (404
+/// says nothing is there, any other that it refused), or no answer at all.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ReadOutcome {
+    Status(u16),
+    Unreachable,
+}
+
+/// A read of the rows that failed: the server's diagnostic and what it answered.
+struct Failure {
+    error: String,
+    status: ReadOutcome,
+}
+
+/// Where each row stands in a tree, by its index in the rows given: its parent, how deep it is,
+/// whether rows are given under it, and whether it says it has children not given yet.
+struct TreeShape {
+    parent: Vec<Option<usize>>,
+    depth: Vec<usize>,
+    has_kids: Vec<bool>,
+    lazy: Vec<bool>,
+}
+
+impl TreeShape {
+    /// The shape `parents` give `count` rows: a parent out of range, the row itself or one that
+    /// would close a loop makes a row top level.
+    fn of(parents: &[Option<usize>], count: usize, lazy: impl Fn(usize) -> bool) -> Self {
+        let mut parent: Vec<Option<usize>> = (0..count)
+            .map(|i| parents.get(i).copied().flatten().filter(|p| *p < count && *p != i))
+            .collect();
+        // a row whose line of parents comes back to it is top level
+        for i in 0..count {
+            let mut at = parent[i];
+            let mut steps = 0;
+            while let Some(p) = at {
+                if p == i || steps > count {
+                    parent[i] = None;
+                    break;
+                }
+                at = parent[p];
+                steps += 1;
+            }
+        }
+        let depth = (0..count)
+            .map(|i| {
+                let (mut depth, mut at) = (0, parent[i]);
+                while let Some(p) = at {
+                    depth += 1;
+                    at = parent[p];
+                }
+                depth
+            })
+            .collect();
+        let mut has_kids = vec![false; count];
+        for p in parent.iter().flatten() {
+            has_kids[*p] = true;
+        }
+        let lazy = (0..count).map(|i| !has_kids[i] && lazy(i)).collect();
+        Self {
+            parent,
+            depth,
+            has_kids,
+            lazy,
+        }
+    }
+
+    /// The top-level row `row` stands under, or itself.
+    fn root(&self, row: usize) -> usize {
+        let mut at = row;
+        while let Some(p) = self.parent[at] {
+            at = p;
+        }
+        at
+    }
+
+    /// `row` and every row under it, at any depth, open or not: what selecting a branch selects.
+    fn branch_rows(&self, row: usize) -> Vec<usize> {
+        let mut kids: Vec<Vec<usize>> = vec![Vec::new(); self.parent.len()];
+        for (child, parent) in self.parent.iter().enumerate() {
+            if let Some(parent) = parent {
+                kids[*parent].push(child);
+            }
+        }
+        let mut rows = vec![row];
+        let mut at = 0;
+        while at < rows.len() {
+            let parent = rows[at];
+            rows.extend(&kids[parent]);
+            at += 1;
+        }
+        rows
+    }
+
+    /// Whether `row` opens: it has children given or still to come.
+    fn branch(&self, row: usize) -> bool {
+        self.has_kids[row] || self.lazy[row]
+    }
+
+    /// The rows as drawn, from `sorted` (every row in the order its level sorts in): each top-level
+    /// row in that order, an open row's children right under it in that order too.
+    fn flatten(&self, sorted: &[usize], expanded: &BTreeSet<usize>) -> Vec<usize> {
+        let mut kids: Vec<Vec<usize>> = vec![Vec::new(); self.parent.len()];
+        let mut roots = Vec::new();
+        for &i in sorted {
+            match self.parent[i] {
+                Some(p) => kids[p].push(i),
+                None => roots.push(i),
+            }
+        }
+        let mut flat = Vec::with_capacity(sorted.len());
+        let mut stack: Vec<usize> = roots.into_iter().rev().collect();
+        while let Some(row) = stack.pop() {
+            flat.push(row);
+            if expanded.contains(&row) {
+                stack.extend(kids[row].iter().rev());
+            }
+        }
+        flat
+    }
+}
+
+/// A placeholder bar's pulse: opacity 1 to 0.5 and back over two seconds, as `animate-pulse`;
+/// held at 1 while motion is off.
+fn pulse(ui: &Ui) -> f32 {
+    if super::sign_in_art::still(ui) {
+        return 1.0;
+    }
+    ui.ctx().request_repaint();
+    let phase = (ui.input(|i| i.time) as f32 * std::f32::consts::PI).cos() * 0.5 + 0.5;
+    0.5 + 0.5 * phase
 }
 
 /// A saved edit: the row's index in the rows given, the column's, and the value as text (a day as
@@ -617,7 +796,20 @@ pub struct DataTable<'a> {
     bulk: Option<Bulk<'a>>,
     slot: Option<Slot<'a>>,
     cell_focus: CellFocus,
+    parents: Option<Vec<Option<usize>>>,
+    lazy: Option<LazyRows<'a>>,
+    expand_label: Option<ExpandLabel<'a>>,
+    loading: bool,
+    failure: Option<Failure>,
+    problems: Vec<String>,
+    retry: bool,
 }
+
+/// Whether a row has children the app has not given yet, by its index in the rows given.
+type LazyRows<'a> = Box<dyn Fn(usize) -> bool + 'a>;
+
+/// A row's disclosure name for its index in the rows given and whether it is open.
+type ExpandLabel<'a> = Box<dyn Fn(usize, bool) -> String + 'a>;
 
 /// How an editable table marks its active cell while it has the focus, as sokkel-ui's
 /// `cellFocus`.
@@ -773,7 +965,86 @@ impl<'a> DataTable<'a> {
             actions_hover: false,
             bulk: None,
             slot: None,
+            parents: None,
+            lazy: None,
+            expand_label: None,
+            loading: false,
+            failure: None,
+            problems: Vec::new(),
+            retry: false,
         }
+    }
+
+    /// The rows as a tree, as the web's `childRows`: each row's parent by its index in the rows
+    /// given (in the rows' order), `None` for a top-level row. A row with children draws a chevron
+    /// before its first cell, indented 20 a level, that opens and closes it; its children sort
+    /// among themselves under it. The open rows are the state's `expanded`. With `groups`, a
+    /// child stands in its top-level row's group. Right opens the active branch, or moves to its
+    /// first child once open; Left closes it, or moves to its parent.
+    pub fn tree(mut self, parents: impl IntoIterator<Item = Option<usize>>) -> Self {
+        self.parents = Some(parents.into_iter().collect());
+        self
+    }
+
+    /// Which rows have children not given yet, as the web's `hasChildren` with `loadChildren`: such
+    /// a row opens, and while it is open with none given its control turns to a spinner said as
+    /// `words.loading_children` and the table asks for them once (`TableOutput::load_children`).
+    pub fn lazy(mut self, lazy: impl Fn(usize) -> bool + 'a) -> Self {
+        self.lazy = Some(Box::new(lazy));
+        self
+    }
+
+    /// The name of a row's control that opens or closes it, its accessible name and its tooltip,
+    /// given its index in the rows given and whether it is open, as the web's `expandLabel`: "Show
+    /// the tokens of ada". `words.expand` and `words.collapse` by default.
+    pub fn expand_label(mut self, label: impl Fn(usize, bool) -> String + 'a) -> Self {
+        self.expand_label = Some(Box::new(label));
+        self
+    }
+
+    /// Rows on their way, as the web's `loading`: placeholder rows under the heads, filling the
+    /// view while there are no rows yet, or three after the last row while more come. The bar, its
+    /// search, the heads and the frame keep their places, and nothing is counted until rows come.
+    /// It is drawn over a failure too, while the rows are read again.
+    pub fn loading(mut self, loading: bool) -> Self {
+        self.loading = loading;
+        self
+    }
+
+    /// The rows could not be read, as the web's `error` and `status`: while not `loading`, the
+    /// failure stands in place of the rows under the heads, unframed, headed by what the server
+    /// answered with `error` (its diagnostic) under it. The bar and the frame stay, counting
+    /// nothing.
+    pub fn failed(mut self, error: impl Into<String>, status: ReadOutcome) -> Self {
+        self.failure = Some(Failure {
+            error: error.into(),
+            status,
+        });
+        self
+    }
+
+    /// Each problem a failed read's refusal named, a line each under its diagnostic.
+    pub fn problems(mut self, problems: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        self.problems = problems.into_iter().map(Into::into).collect();
+        self
+    }
+
+    /// Try again under a failed read, as the web's `onRetry`: pressed, `TableOutput::retry`.
+    pub fn retry(mut self, retry: bool) -> Self {
+        self.retry = retry;
+        self
+    }
+
+    /// The failure drawn now: given, and not loading again.
+    fn failing(&self) -> bool {
+        self.failure.is_some() && !self.loading
+    }
+
+    /// The tree's shape, when the rows are a tree.
+    fn tree_shape(&self) -> Option<TreeShape> {
+        let parents = self.parents.as_ref()?;
+        let lazy = |i: usize| self.lazy.as_ref().is_some_and(|lazy| lazy(i));
+        Some(TreeShape::of(parents, self.rows.len(), lazy))
     }
 
     /// Draws each `Cell::Slot` with `slot`, in a child of the cell's room laid from its start and
@@ -1424,6 +1695,10 @@ impl<'a> DataTable<'a> {
                 });
             }
         }
+        // a failed read, or the first rows on their way, have nothing to count
+        if self.failing() || (self.loading && self.rows.is_empty()) {
+            return;
+        }
         let count = self.rows.len();
         let words = if count == 1 { &self.words.row } else { &self.words.rows };
         let mono = crate::mono_font(ui.ctx(), crate::mono_small_size(t, TextRole::Help.font(t).size), 400.0);
@@ -2010,17 +2285,23 @@ impl<'a> DataTable<'a> {
                 if ascending { ordering } else { ordering.reverse() }
             });
         }
+        let tree = self.tree_shape();
         if let Some(groups) = self.groups.as_ref().filter(|g| g.len() == self.rows.len()) {
-            // the groups in the order their keys first come, each keeping its rows' order
+            // the groups in the order their keys first come, each keeping its rows' order; in a
+            // tree a row stands in its top-level row's group
+            let key = |i: usize| &groups[tree.as_ref().map_or(i, |t| t.root(i))];
             let mut first: Vec<&String> = Vec::new();
-            for key in groups {
-                if !first.contains(&key) {
-                    first.push(key);
+            for i in 0..self.rows.len() {
+                if !first.contains(&key(i)) {
+                    first.push(key(i));
                 }
             }
-            order.sort_by_key(|i| first.iter().position(|k| *k == &groups[*i]).unwrap_or(0));
+            order.sort_by_key(|i| first.iter().position(|k| *k == key(*i)).unwrap_or(0));
         }
-        order
+        match tree {
+            Some(tree) => tree.flatten(&order, &self.state.expanded),
+            None => order,
+        }
     }
 
     /// The room after a row's last column: none where the actions' column stands at the row's very
@@ -2155,6 +2436,78 @@ impl<'a> DataTable<'a> {
             .collect()
     }
 
+    /// A placeholder row in `rect` while rows load, the `line`th: a `muted` bar 12 tall at 60
+    /// percent of each shown cell (a stacked row's title and facts lines), pulsing unless motion
+    /// is off, and the row's rule.
+    fn placeholder_row(
+        &self,
+        ui: &Ui,
+        t: &crate::Tokens,
+        rect: Rect,
+        (pad, select_width): (f32, f32),
+        stacked: bool,
+        line: usize,
+    ) {
+        let painter = ui.painter();
+        let ground = t.color_at("muted", pulse(ui));
+        let radius = t.radius("md");
+        let bar = |left: f32, width: f32, middle: f32| {
+            let place = Rect::from_min_size(pos2(left, middle - 6.0), vec2(width.max(0.0), 12.0));
+            painter.rect_filled(place, radius, ground);
+        };
+        if stacked {
+            // the title's line and the facts' line, as a stacked row stands
+            let left = rect.left() + pad + select_width;
+            let room = rect.right() - pad - left;
+            // the web's placeholder widths, two fifths to three fifths, turning with the line
+            let share = [0.4, 0.5, 1.0 / 3.0, 0.6][line % 4];
+            bar(left, room * 0.6, rect.top() + 8.0 + 12.0);
+            bar(left, room * share, rect.top() + 8.0 + 24.0 + 10.0);
+        } else {
+            let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
+            let places = self.layout(rect.left() + pad + select_width, rect.right() - self.end_pad(pad) - end);
+            for (c, column) in self.columns.iter().enumerate() {
+                if self.state.hidden.contains(&c) {
+                    continue;
+                }
+                let (x, w) = places[c];
+                let width = w * 0.6;
+                let left = if column.numeric { x + w - width } else { x };
+                bar(left, width, rect.center().y);
+            }
+        }
+        painter.hline(rect.x_range(), rect.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
+    }
+
+    /// The failed read in place of the rows, as the web's unframed `PageState`: the `destructive`
+    /// mark, the heading by what the server answered at 500, the diagnostic and each problem in
+    /// `text.help`, and Try again as an outline small button, padded `density.panel-pad` across
+    /// and 12 down. True when Try again was pressed.
+    fn failure_line(&self, ui: &mut Ui) -> bool {
+        let Some(failure) = &self.failure else {
+            return false;
+        };
+        let words = super::PageStateWords {
+            refused: self.words.refused.clone(),
+            missing: self.words.missing.clone(),
+            unreachable: self.words.unreachable.clone(),
+            retry: self.words.retry.clone(),
+            ..Default::default()
+        };
+        let error = failure.error.clone();
+        let state = match failure.status {
+            ReadOutcome::Status(404) => super::PageState::missing(error),
+            ReadOutcome::Unreachable => super::PageState::unreachable(error),
+            ReadOutcome::Status(_) => super::PageState::refused(error),
+        };
+        state
+            .problems(self.problems.iter().cloned())
+            .framed(false)
+            .retry(self.retry)
+            .words(words)
+            .show(ui)
+    }
+
     /// Draw the table, stacked top to bottom whatever layout the row around it has.
     pub fn show(self, ui: &mut Ui) -> TableOutput {
         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| self.show_stacked(ui))
@@ -2199,8 +2552,51 @@ impl<'a> DataTable<'a> {
             open_cell(self.state, self.rows, &keys, at);
         }
         let order = self.order();
-        // a paged table draws its page of the rows in their order
-        let total = order.len();
+        // a tree's open branches whose children are not given yet ask for them, each once while it
+        // waits; one closed, or whose children came, is forgotten
+        let shape = self.tree_shape();
+        let mut load_children = None;
+        if let Some(shape) = &shape {
+            let expanded = self.state.expanded.clone();
+            let waiting = |i: usize| shape.lazy.get(i).copied().unwrap_or(false) && expanded.contains(&i);
+            self.state.asked.retain(|i| waiting(*i));
+            // a refusal is kept while its branch stays open and waits
+            self.state.refusals.retain(|i| waiting(*i));
+            let mut asking = order
+                .iter()
+                .copied()
+                .filter(|i| waiting(*i) && !self.state.asked.contains(i) && !self.state.refusals.contains(i));
+            load_children = asking.next();
+            if asking.next().is_some() {
+                // the next branch is asked on the next frame
+                ui.ctx().request_repaint();
+            }
+            if let Some(row) = load_children {
+                self.state.asked.insert(row);
+            }
+        }
+        let failing = self.failing();
+        // the first rows on their way, or a failed read: nothing to count yet
+        let uncounted = failing || (self.loading && self.rows.is_empty());
+        let has_detail = self.detail.is_some();
+        // the room before a row's first cell: its tree indent, 20 a level, and the 20 control
+        // that opens it with 4 after it
+        let lead_of = |index: usize| -> f32 {
+            match &shape {
+                Some(shape) => shape.depth.get(index).copied().unwrap_or(0) as f32 * 20.0 + 24.0,
+                None if has_detail => 24.0,
+                None => 0.0,
+            }
+        };
+        let tree_keys = shape.is_some() && !self.columns.iter().any(|c| c.edit.is_some());
+        // a paged table draws its page of the rows in their order; a tree's pages count its
+        // top-level rows, each with the open rows under it, so a page never parts a row from its
+        // children
+        let starts: Vec<usize> = match &shape {
+            Some(shape) => (0..order.len()).filter(|p| shape.parent[order[*p]].is_none()).collect(),
+            None => (0..order.len()).collect(),
+        };
+        let total = starts.len();
         let order = match &self.paging {
             Some(sizes) => {
                 if self.state.page_size == 0 {
@@ -2209,7 +2605,8 @@ impl<'a> DataTable<'a> {
                 let size = self.state.page_size;
                 let pages = total.div_ceil(size).max(1);
                 self.state.page = self.state.page.min(pages - 1);
-                order.into_iter().skip(self.state.page * size).take(size).collect()
+                let start_of = |unit: usize| starts.get(unit).copied().unwrap_or(order.len());
+                order[start_of(self.state.page * size)..start_of((self.state.page + 1) * size)].to_vec()
             }
             None => order,
         };
@@ -2227,6 +2624,8 @@ impl<'a> DataTable<'a> {
             action: None,
             reordered: None,
             edited: None,
+            load_children,
+            retry: false,
         };
 
         // the selection bar, over the table while any row is chosen
@@ -2281,18 +2680,20 @@ impl<'a> DataTable<'a> {
                 }
                 // a table with no rows given its own words says them alone, without its heads
                 if self.rows.is_empty()
+                    && !self.loading
+                    && !failing
                     && let Some(empty) = self.empty.take()
                 {
                     empty(ui);
                     return;
                 }
                 // the cards' grid in place of the rows, while it is chosen
-                if self.gridded() && !self.rows.is_empty() {
+                if self.gridded() && !self.rows.is_empty() && !failing {
                     self.card_grid(ui, &t, &order, &mut out);
                     return;
                 }
                 // labeled cards in place of the rows
-                if stacked && self.stack_layout == StackLayout::Labeled && !self.rows.is_empty() {
+                if stacked && self.stack_layout == StackLayout::Labeled && !self.rows.is_empty() && !failing {
                     self.labeled_cards(ui, &t, &order, (&keys, pad + select_width), &mut out);
                     return;
                 }
@@ -2494,6 +2895,27 @@ impl<'a> DataTable<'a> {
                     }
                 }
 
+                // a failed read in place of the rows under the heads, unframed inside the frame
+                if failing {
+                    if self.failure_line(ui) {
+                        out.retry = true;
+                    }
+                    return;
+                }
+                // the first rows on their way: placeholder rows filling the view
+                if self.rows.is_empty() && self.loading {
+                    let view = if self.stretch {
+                        limit - ui.cursor().top() - foot_room - 1.0
+                    } else {
+                        self.height
+                    };
+                    let rows = ((view / row_height).floor() as usize).max(3);
+                    for line in 0..rows {
+                        let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), row_height), Sense::hover());
+                        self.placeholder_row(ui, &t, rect, (pad, select_width), stacked, line);
+                    }
+                    return;
+                }
                 // with no rows, what the table says in their place
                 if self.rows.is_empty() {
                     match self.empty.take() {
@@ -2537,8 +2959,11 @@ impl<'a> DataTable<'a> {
                 let rows_count = self.rows.len();
                 let groups: Option<Vec<String>> = self.groups.clone().filter(|g| g.len() == rows_count);
                 let groups = groups.as_ref();
-                let free = !stacked && (self.auto || self.detail.is_some() || groups.is_some());
-                let lead = if self.detail.is_some() { 24.0 } else { 0.0 };
+                // an open branch whose children did not load: a line under it says so
+                let refusals = self.state.refusals.clone();
+                let refused_under = |index: usize| refusals.contains(&index);
+                let refused_lines = order.iter().filter(|i| refused_under(**i)).count();
+                let free = !stacked && (self.auto || self.detail.is_some() || groups.is_some() || refused_lines > 0);
                 let heights: Vec<f32> = if free && self.auto {
                     let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
                     let left = ui.cursor().left();
@@ -2554,7 +2979,7 @@ impl<'a> DataTable<'a> {
                                 .enumerate()
                                 .filter(|(c, _)| !self.state.hidden.contains(c))
                                 .map(|(c, _)| {
-                                    let room = places[c].1 - if c == 0 { lead } else { 0.0 };
+                                    let room = places[c].1 - if c == 0 { lead_of(index) } else { 0.0 };
                                     cell_height(ui, &t, &self.rows[index][c], room.max(1.0))
                                 })
                                 .fold(0.0, f32::max);
@@ -2580,12 +3005,14 @@ impl<'a> DataTable<'a> {
                     keys.dedup();
                     keys.len()
                 });
+                // more rows on their way: three placeholder rows after the last
+                let more = if self.loading { 3 } else { 0 };
                 let whole: f32 = order
                     .iter()
                     .filter(|i| !folded(**i))
                     .map(|i| heights[*i] + detail_height(ui, *i))
                     .sum::<f32>()
-                    + heads as f32 * row_height;
+                    + (heads + more + refused_lines) as f32 * row_height;
                 let tall = if self.stretch {
                     // what is left under the bar and the head, less the foot and the frame's edge
                     (limit - ui.cursor().top() - foot_room - 1.0).max(row_height)
@@ -2593,7 +3020,7 @@ impl<'a> DataTable<'a> {
                     self.height.min(whole + 1.0)
                 } else {
                     // never taller than its rows: a height without bound shows them all
-                    self.height.min(order.len() as f32 * row_height + 1.0)
+                    self.height.min((order.len() + more) as f32 * row_height + 1.0)
                 };
                 let mut area = egui::ScrollArea::vertical()
                     .id_salt(self.id.with("rows"))
@@ -2603,10 +3030,37 @@ impl<'a> DataTable<'a> {
                     // as tall as asked, even inside a page that scrolls itself
                     area = area.min_scrolled_height(tall);
                 }
+                // a row the keys moved to scrolls into view, the least way, as the web's `moveTo`
+                if std::mem::take(&mut self.state.reveal)
+                    && !free
+                    && taller.is_none()
+                    && let Some(at) = self
+                        .state
+                        .active
+                        .and_then(|(row, _)| order.iter().position(|r| *r == row))
+                {
+                    let scrolled =
+                        egui::scroll_area::State::load(ui.ctx(), ui.make_persistent_id(self.id.with("rows")))
+                            .map_or(0.0, |state| state.clamped_offset().y);
+                    let top = at as f32 * row_height;
+                    let bottom = top + row_height;
+                    let view = tall - 1.0;
+                    if top < scrolled {
+                        area = area.vertical_scroll_offset(top);
+                    } else if bottom > scrolled + view {
+                        area = area.vertical_scroll_offset(bottom - view);
+                    }
+                }
                 let count = order.len();
                 let mut last_group: Option<String> = None;
                 let mut body = |ui: &mut Ui, range: std::ops::Range<usize>| {
                     for position in range {
+                        if position >= count {
+                            let (rect, _) =
+                                ui.allocate_exact_size(vec2(ui.available_width(), row_height), Sense::hover());
+                            self.placeholder_row(ui, &t, rect, (pad, select_width), stacked, position);
+                            continue;
+                        }
                         let index = order[position];
                         if let Some(groups) = groups {
                             let key = &groups[index];
@@ -2700,6 +3154,13 @@ impl<'a> DataTable<'a> {
                                 Some(index)
                             };
                         }
+                        if row.clicked() && tree_keys {
+                            // a press makes the row the active one, the table taking the keys
+                            self.state.active = Some((index, 0));
+                            self.state.focused = true;
+                            self.state.keyed = false;
+                            self.state.head = None;
+                        }
                         let selected = self.state.selected.contains(&index);
                         let opened = self.state.opened == Some(index);
                         let ground = if selected || opened {
@@ -2713,6 +3174,18 @@ impl<'a> DataTable<'a> {
                             t.color("card")
                         };
                         ui.painter().rect_filled(rect, CornerRadius::ZERO, ground);
+                        // the active row moved by keys: a 2 bar in `ring` inside its start edge
+                        if tree_keys
+                            && self.state.focused
+                            && self.state.keyed
+                            && self.state.active.map(|a| a.0) == Some(index)
+                        {
+                            ui.painter().rect_filled(
+                                Rect::from_min_size(rect.min, vec2(2.0, rect.height() - 1.0)),
+                                CornerRadius::ZERO,
+                                t.color("ring"),
+                            );
+                        }
                         // the active cell's row, while the table has the focus or a typed editor is open
                         let typed_open = self.state.open.as_ref().is_some_and(|o| {
                             o.row == index
@@ -2739,20 +3212,30 @@ impl<'a> DataTable<'a> {
                             );
                         }
                         if self.selectable {
+                            // a branch's box takes every row under it, and is mixed while some are chosen
+                            let branch = shape.as_ref().map(|s| s.branch_rows(index));
+                            let some = !selected
+                                && branch
+                                    .as_ref()
+                                    .is_some_and(|rows| rows.iter().any(|r| self.state.selected.contains(r)));
                             let mut checked = selected;
                             let place =
                                 Rect::from_min_size(pos2(rect.left() + pad, rect.center().y - 8.0), vec2(16.0, 16.0));
                             if put_at(
                                 ui,
                                 place,
-                                Checkbox::new(&mut checked, self.words.select_row.clone()).hide_label(),
+                                Checkbox::new(&mut checked, self.words.select_row.clone())
+                                    .hide_label()
+                                    .indeterminate(some),
                             )
                             .clicked()
                             {
-                                if checked {
-                                    self.state.selected.insert(index);
-                                } else {
-                                    self.state.selected.remove(&index);
+                                for row in branch.unwrap_or_else(|| vec![index]) {
+                                    if checked {
+                                        self.state.selected.insert(row);
+                                    } else {
+                                        self.state.selected.remove(&row);
+                                    }
                                 }
                             }
                         }
@@ -2822,36 +3305,68 @@ impl<'a> DataTable<'a> {
                                     rect.bottom() - 1.0,
                                 ),
                             );
-                            if c == 0 && self.detail.is_some() {
-                                // the control that opens the row's detail, 20 square and 4 before the cell
-                                let control = Rect::from_min_size(pos2(x, rect.center().y - 10.0), vec2(20.0, 20.0));
-                                let hit = ui.interact(control, self.id.with(("expand", index)), Sense::click());
-                                let words = if expanded {
-                                    &self.words.collapse
-                                } else {
-                                    &self.words.expand
-                                };
-                                hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, words));
-                                if hit.hovered() {
-                                    ui.painter().rect_filled(control, t.radius("sm"), t.color("accent"));
-                                }
-                                icons::paint(
-                                    ui.painter(),
-                                    control.center(),
-                                    if expanded {
-                                        Icon::ChevronDown
-                                    } else {
-                                        Icon::ChevronRight
-                                    },
-                                    14.0,
-                                    t.color(if hit.hovered() {
-                                        "foreground"
-                                    } else {
-                                        "muted-foreground"
-                                    }),
+                            if c == 0 && (has_detail || shape.is_some()) {
+                                // the control that opens the row's branch or detail, 20 square and
+                                // 4 before the cell, after its tree indent; a spinner while its
+                                // children load, and room alone on a row with nothing to open
+                                let lead = lead_of(index);
+                                let control = Rect::from_min_size(
+                                    pos2(x + lead - 24.0, rect.center().y - 10.0),
+                                    vec2(20.0, 20.0),
                                 );
-                                if hit.clicked() && !self.state.expanded.remove(&index) {
-                                    self.state.expanded.insert(index);
+                                let branch = has_detail || shape.as_ref().is_some_and(|s| s.branch(index));
+                                let open = self.state.expanded.contains(&index);
+                                // a branch whose children did not load shows its chevron again
+                                let waiting =
+                                    open && shape.as_ref().is_some_and(|s| s.lazy[index]) && !refused_under(index);
+                                if waiting {
+                                    let hit = ui.interact(control, self.id.with(("expand", index)), Sense::hover());
+                                    let words = &self.words.loading_children;
+                                    hit.widget_info(|| {
+                                        egui::WidgetInfo::labeled(egui::Role::ProgressIndicator, true, words)
+                                    });
+                                    super::spinner(
+                                        ui,
+                                        ui.painter(),
+                                        control.center(),
+                                        5.5,
+                                        t.color("muted-foreground"),
+                                    );
+                                } else if branch {
+                                    let hit = ui.interact(control, self.id.with(("expand", index)), Sense::click());
+                                    let words = match &self.expand_label {
+                                        Some(label) => label(index, open),
+                                        None if open => self.words.collapse.clone(),
+                                        None => self.words.expand.clone(),
+                                    };
+                                    hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &words));
+                                    if hit.hovered() {
+                                        ui.painter().rect_filled(control, t.radius("sm"), t.color("accent"));
+                                    }
+                                    icons::paint(
+                                        ui.painter(),
+                                        control.center(),
+                                        if open { Icon::ChevronDown } else { Icon::ChevronRight },
+                                        14.0,
+                                        t.color(if hit.hovered() {
+                                            "foreground"
+                                        } else {
+                                            "muted-foreground"
+                                        }),
+                                    );
+                                    let clicked = hit.clicked();
+                                    hit.on_hover_text(words);
+                                    if clicked {
+                                        if !self.state.expanded.remove(&index) {
+                                            self.state.expanded.insert(index);
+                                        }
+                                        if tree_keys {
+                                            self.state.active = Some((index, 0));
+                                            self.state.focused = true;
+                                            self.state.keyed = false;
+                                            self.state.head = None;
+                                        }
+                                    }
                                 }
                                 cell.min.x += lead;
                             }
@@ -3007,7 +3522,7 @@ impl<'a> DataTable<'a> {
                             let ground = if position % 2 == 1 { zebra } else { t.color("card") };
                             let behind = ui.painter().add(egui::Shape::Noop);
                             let margin = egui::Margin {
-                                left: (select_width + lead + pad) as i8,
+                                left: (select_width + lead_of(index) + pad) as i8,
                                 right: 12,
                                 top: 12,
                                 bottom: 12,
@@ -3030,6 +3545,81 @@ impl<'a> DataTable<'a> {
                                 );
                             }
                             ui.ctx().data_mut(|d| d.insert_temp(detail_id(index), drawn.height()));
+                        }
+                        if refused_under(index) {
+                            // the line under a branch whose children did not load: the refusal in
+                            // `critical`, then Try again, from where its children would start
+                            let (line, _) =
+                                ui.allocate_exact_size(vec2(ui.available_width(), row_height), Sense::hover());
+                            ui.painter().rect_filled(line, CornerRadius::ZERO, t.color("card"));
+                            ui.painter().hline(
+                                line.x_range(),
+                                line.bottom() - 0.5,
+                                Stroke::new(1.0, t.color("border")),
+                            );
+                            let left = line.left() + pad + select_width + lead_of(index) + 20.0;
+                            let said = WidgetText::from(
+                                TextRole::Body.rich(&t, &self.words.refused).color(t.color("critical")),
+                            )
+                            .into_galley(
+                                ui,
+                                Some(TextWrapMode::Truncate),
+                                (line.right() - pad - left - 120.0).max(1.0),
+                                TextRole::Body.font(&t),
+                            );
+                            let said_w = said.size().x;
+                            // read as the words it says
+                            let said_at =
+                                Rect::from_min_size(pos2(left, line.center().y - said.size().y / 2.0), said.size());
+                            let refusal = &self.words.refused;
+                            ui.interact(said_at, self.id.with(("refused-children", index)), Sense::hover())
+                                .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, refusal));
+                            ui.painter().galley(
+                                pos2(left, line.center().y - said.size().y / 2.0),
+                                said,
+                                t.color("critical"),
+                            );
+                            let retry = WidgetText::from(
+                                TextRole::Help.rich(&t, &self.words.retry).color(t.color("foreground")),
+                            )
+                            .into_galley(
+                                ui,
+                                Some(TextWrapMode::Extend),
+                                f32::INFINITY,
+                                TextRole::Help.font(&t),
+                            );
+                            // the icon 14, 4 before the words, 8 after the refusal
+                            let button = Rect::from_min_size(
+                                pos2(left + said_w + 8.0, line.center().y - 10.0),
+                                vec2(14.0 + 4.0 + retry.size().x, 20.0),
+                            );
+                            let hit = ui.interact(button, self.id.with(("retry-children", index)), Sense::click());
+                            let words = &self.words.retry;
+                            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, words));
+                            if hit.hovered() {
+                                ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
+                            }
+                            icons::paint(
+                                ui.painter(),
+                                pos2(button.left() + 7.0, button.center().y),
+                                Icon::RotateCw,
+                                14.0,
+                                t.color("foreground"),
+                            );
+                            let at = pos2(button.left() + 18.0, button.center().y - retry.size().y / 2.0);
+                            let words_rect = Rect::from_min_size(at, retry.size());
+                            ui.painter().galley(at, retry, t.color("foreground"));
+                            if hit.hovered() {
+                                ui.painter().hline(
+                                    words_rect.x_range(),
+                                    words_rect.bottom() - 1.0,
+                                    Stroke::new(1.0, t.color("foreground")),
+                                );
+                            }
+                            if hit.clicked() {
+                                self.state.refusals.remove(&index);
+                                self.state.asked.remove(&index);
+                            }
                         }
                     }
                 };
@@ -3063,10 +3653,10 @@ impl<'a> DataTable<'a> {
                         });
                     }
                     None if free => {
-                        area.show(ui, |ui| body(ui, 0..count));
+                        area.show(ui, |ui| body(ui, 0..count + more));
                     }
                     None => {
-                        area.show_rows(ui, row_height, count, body);
+                        area.show_rows(ui, row_height, count + more, body);
                     }
                 }
                 // a dragged row: the line where it lands, and its move on release
@@ -3226,6 +3816,29 @@ impl<'a> DataTable<'a> {
                     i.consume_key(none, egui::Key::ArrowDown),
                 )
             });
+            let space = tree_keys && ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Space));
+            let (home, end, page_up, page_down) = ui.input_mut(|i| {
+                let none = egui::Modifiers::NONE;
+                (
+                    i.consume_key(none, egui::Key::Home),
+                    i.consume_key(none, egui::Key::End),
+                    i.consume_key(none, egui::Key::PageUp),
+                    i.consume_key(none, egui::Key::PageDown),
+                )
+            });
+            if tree_keys && (enter || left || right || up || down || space || home || end || page_up || page_down) {
+                self.state.keyed = true;
+            }
+            // a view's worth of rows, less one, as the web's PageUp and PageDown
+            let view = (((self.height / row_height).floor() as usize).saturating_sub(1)).max(1);
+            let at = |p: usize| order.get(p.min(order.len().saturating_sub(1))).copied();
+            // in a tree the arrows open and close the branches: everywhere in a table that does not
+            // edit, and in the first column of one that does, as the web's editing gives a
+            // branch's arrows back there
+            let first_shown = (0..self.columns.len()).find(|c| !self.state.hidden.contains(c));
+            let tree_here = shape.is_some() && (tree_keys || Some(column) == first_shown);
+            let branch_here = has_detail || shape.as_ref().is_some_and(|s| s.branch(row));
+            let open_here = self.state.expanded.contains(&row);
             let last = self.columns.len().saturating_sub(1);
             // a character typed opens a text cell on it; Backspace or Delete opens a text or a date
             // cell empty
@@ -3251,6 +3864,59 @@ impl<'a> DataTable<'a> {
                 }
             } else if enter && editor.is_some() {
                 open_cell(self.state, self.rows, &keys, (row, column));
+            } else if right && tree_here && branch_here && !open_here {
+                // Right opens the active branch, as the web's tree
+                self.state.expanded.insert(row);
+            } else if right && tree_keys {
+                // an open branch or a leaf: Right does nothing more
+            } else if let (true, true, Some(shape)) = (left, tree_here, &shape) {
+                // Left closes the active branch, or moves to its parent
+                if branch_here && open_here {
+                    self.state.expanded.remove(&row);
+                } else if let Some(parent) = shape.parent[row] {
+                    self.state.active = Some((parent, column));
+                    self.state.reveal = true;
+                }
+            } else if home || end || page_up || page_down {
+                // Home and End to the first and the last row, PageUp and PageDown a view's worth
+                let to = if home {
+                    at(0)
+                } else if end {
+                    at(usize::MAX)
+                } else if page_up {
+                    at(position.saturating_sub(view))
+                } else {
+                    at(position + view)
+                };
+                if let Some(to) = to {
+                    self.state.active = Some((to, column));
+                    self.state.reveal = true;
+                }
+            } else if tree_keys && (enter || space) {
+                // Space selects the active row, or picks it in a table that does not select; Enter
+                // picks it: its detail opens or closes, or it is opened beside the list
+                if space && self.selectable {
+                    // a branch takes every row under it, as its box does
+                    let on = !self.state.selected.contains(&row);
+                    let rows = shape.as_ref().map_or_else(|| vec![row], |s| s.branch_rows(row));
+                    for r in rows {
+                        if on {
+                            self.state.selected.insert(r);
+                        } else {
+                            self.state.selected.remove(&r);
+                        }
+                    }
+                } else if has_detail {
+                    if !self.state.expanded.remove(&row) {
+                        self.state.expanded.insert(row);
+                    }
+                } else {
+                    self.state.opened = if self.state.opened == Some(row) {
+                        None
+                    } else {
+                        Some(row)
+                    };
+                }
             } else if left {
                 self.state.active = Some((row, column.saturating_sub(1)));
             } else if right {
@@ -3260,8 +3926,10 @@ impl<'a> DataTable<'a> {
                 self.state.head = Some(column);
             } else if up {
                 self.state.active = Some((order[position.saturating_sub(1)], column));
+                self.state.reveal = true;
             } else if down {
                 self.state.active = Some((order[(position + 1).min(order.len().saturating_sub(1))], column));
+                self.state.reveal = true;
             }
         }
         // a press outside the table takes its focus away
@@ -3270,7 +3938,7 @@ impl<'a> DataTable<'a> {
         {
             self.state.focused = false;
         }
-        if self.footer {
+        if self.footer && !uncounted {
             let count = self.rows.len();
             let words = if count == 1 { &self.words.row } else { &self.words.rows };
             ui.add_space(6.0);
