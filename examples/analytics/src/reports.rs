@@ -136,8 +136,8 @@ impl AnalyticsApp {
         let saved = self.reports.saved.clone();
         let mut draft = self.reports.draft.take().expect("a draft was just made");
         let list_state = self.tables.entry("reports-saved".into()).or_default();
-        list_state.opened = chosen.as_ref().and_then(|c| saved.iter().position(|r| r.id == c.id));
-        let was_opened = list_state.opened;
+        list_state.opened = None;
+        let was_opened = chosen.as_ref().and_then(|c| saved.iter().position(|r| r.id == c.id));
         let mut panels_state = std::mem::take(self.tables.entry("report-panels".into()).or_default());
         let list_state = self.tables.get_mut("reports-saved").expect("made above");
         Split::new(AsideWidth::Sm).start(true).show(
@@ -278,6 +278,7 @@ impl AnalyticsApp {
                             })
                             .collect();
                         DataTable::new("reports-saved", &columns, &rows, list_state)
+                            .opened(was_opened)
                             .variant(TableVariant::List)
                             .framed(false)
                             .bar(false)
@@ -306,10 +307,8 @@ impl AnalyticsApp {
                     .show(ui, |ui, placed| self.widget(ui, placed.id));
             }
         }
-        let opened = self.tables.get("reports-saved").and_then(|s| s.opened);
-        if opened != was_opened
-            && let Some(r) = opened.or(was_opened).and_then(|i| saved.get(i))
-        {
+        let opened = self.tables.get_mut("reports-saved").and_then(|s| s.opened.take());
+        if let Some(r) = opened.filter(|i| Some(*i) != was_opened).and_then(|i| saved.get(i)) {
             asked = Some(Asked::Open(r.id.clone()));
         }
         match asked {

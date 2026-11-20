@@ -2132,7 +2132,7 @@ impl<'a> ConversationHistory<'a> {
         }
         let columns = [title, Column::new("", time_width.max(24.0)).sortable(false)];
         let current = rows.iter().position(|one| Some(one.id.as_str()) == self.current);
-        held.table.opened = current;
+        held.table.opened = None;
         let menu = |index: usize| -> Vec<MenuItem> {
             let one = rows[index];
             let mut list = Vec::new();
@@ -2163,6 +2163,7 @@ impl<'a> ConversationHistory<'a> {
             .fits(true)
             .groups(keys)
             .keys(rows.iter().map(|one| one.id.clone()))
+            .opened(current)
             .height(f32::INFINITY)
             .words(TableWords {
                 empty: w.empty.clone(),
@@ -2202,13 +2203,11 @@ impl<'a> ConversationHistory<'a> {
                 }
             }
         }
-        if held.table.opened != current
-            && let Some(index) = held.table.opened
+        if let Some(index) = held.table.opened.take().filter(|index| Some(*index) != current)
             && let Some(one) = rows.get(index)
         {
             out.selected = Some(one.id.clone());
         }
-        held.table.opened = current;
         if let Some(doomed) = held.deleting.clone() {
             let title = self
                 .conversations

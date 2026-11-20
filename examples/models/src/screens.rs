@@ -1032,8 +1032,14 @@ fn discover_page(ui: &mut Ui, app: &ModelsApp, views: &mut Views, acts: &mut Vec
         let mut source_words = vec!["All".to_owned()];
         source_words.extend(SOURCE_IDS.iter().map(|one| one.label().to_owned()));
         let loading = views.results.is_none();
+        // the entry shown in the sheet, drawn as opened, as the web's `opened`
+        let open_row = views
+            .open
+            .as_deref()
+            .and_then(|id| results.iter().position(|one| one.id == id));
         DataTable::new("discover", &columns, &rows, &mut views.table)
             .keys(results.iter().map(|one| one.id.as_str()))
+            .opened(open_row)
             .search(&mut query)
             .search_placeholder("Search")
             .toolbar(|ui| {

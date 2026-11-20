@@ -188,7 +188,13 @@ impl RecordsApp {
             .or_insert_with(|| TableState::sorted(1, false));
         let shown_ids: Vec<String> = shown.iter().map(|r| r.receipt.clone()).collect();
         let states: Vec<ReceiptState> = shown.iter().map(|r| r.state).collect();
+        // the receipt shown in the sheet, drawn as opened, as the web's `opened`
+        let open_row = view
+            .opened
+            .as_ref()
+            .and_then(|code| shown_ids.iter().position(|id| id == code));
         let out = DataTable::new("responses", &columns, &rows, table)
+            .opened(open_row)
             .search(&mut view.query)
             .toolbar(|ui| {
                 FilterChip::new("responses-form", "Form", &options, &mut forms_chosen).show(ui);

@@ -375,9 +375,10 @@ fn elements_page(ui: &mut Ui, app: &WorkbenchApp, selected: Option<&str>, views:
             })
             .collect();
         let opened = selected.and_then(|id| shown.iter().position(|one| one.id == id));
-        view.table.opened = opened;
+        view.table.opened = None;
         DataTable::new("data-elements", &columns, &cells, &mut view.table)
             .keys(shown.iter().map(|one| one.id.clone()))
+            .opened(opened)
             .search(&mut view.query)
             .search_placeholder("Search")
             .chevron(true)
@@ -386,8 +387,12 @@ fn elements_page(ui: &mut Ui, app: &WorkbenchApp, selected: Option<&str>, views:
             .footer(false)
             .words(words_empty(Some(data_elements::EMPTY)))
             .show(ui);
-        if view.table.opened != opened
-            && let Some(one) = view.table.opened.and_then(|index| shown.get(index))
+        if let Some(one) = view
+            .table
+            .opened
+            .take()
+            .filter(|index| Some(*index) != opened)
+            .and_then(|index| shown.get(index))
         {
             acts.push(Act::go(format!("data-elements/{}", one.id)));
         }

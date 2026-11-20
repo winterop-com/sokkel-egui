@@ -1948,6 +1948,10 @@ impl StatusApp {
             .collect();
         let keys: Vec<&str> = listed.iter().map(|i| data::SITES[*i].id).collect();
         let cards = self.site_cards(&t);
+        // the site chosen, drawn as opened, as the web's `opened`
+        let open_row = self
+            .selected_site
+            .and_then(|site| listed.iter().position(|i| *i == site));
         let mut to_incident = None;
         let opened = &mut to_incident;
         let map = &mut self.sites_map;
@@ -1972,6 +1976,7 @@ impl StatusApp {
                     let output = DataTable::new("sites", &columns, &rows, table)
                         .fits(true)
                         .keys(keys)
+                        .opened(open_row)
                         .bar(true)
                         .stack_layout(StackLayout::Labeled)
                         .actions(|_| {
@@ -1986,6 +1991,10 @@ impl StatusApp {
                     if let Some((row, which)) = output.action {
                         chosen = Some(listed[row]);
                         troubled = which == 1;
+                    }
+                    // a press on a site chooses it, as the web's `onOpen`
+                    if let Some(row) = table.opened.take() {
+                        chosen = Some(listed[row]);
                     }
                 },
             );

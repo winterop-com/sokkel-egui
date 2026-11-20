@@ -428,7 +428,9 @@ pub struct TableState {
     pub selected: BTreeSet<usize>,
     /// The row a selection was last turned on or off at, where a Shift press's range starts.
     anchor: Option<usize>,
-    /// The row opened for its detail, by its index in the rows given.
+    /// The row a press or Enter picked last, by its index in the rows given, as the web's
+    /// `onOpen`: a report for the app, which takes it. The row drawn as opened is the app's,
+    /// given by [`DataTable::opened`].
     pub opened: Option<usize>,
     /// The rows opened into their own detail under them (a table with `detail`), by their index.
     pub expanded: BTreeSet<usize>,
@@ -802,6 +804,7 @@ pub struct DataTable<'a> {
     detail: Option<RowDetail<'a>>,
     groups: Option<Vec<String>>,
     group_order: Vec<String>,
+    opened: Option<usize>,
     fits: bool,
     cards: Option<Cards<'a>>,
     actions_hover: bool,
@@ -973,6 +976,7 @@ impl<'a> DataTable<'a> {
             detail: None,
             groups: None,
             group_order: Vec::new(),
+            opened: None,
             fits: false,
             cards: None,
             actions_hover: false,
@@ -1149,6 +1153,14 @@ impl<'a> DataTable<'a> {
     /// groups, as the web's.
     pub fn groups<S: Into<String>>(mut self, keys: impl IntoIterator<Item = S>) -> Self {
         self.groups = Some(keys.into_iter().map(Into::into).collect());
+        self
+    }
+
+    /// The row shown in a detail beside the list, by its index in the rows given, as the web's
+    /// `opened`: drawn as opened (a row or a listed row on its opened ground, a card ringed). A
+    /// press picks a row into `TableState::opened`, the app's to take; only this draws it.
+    pub fn opened(mut self, row: Option<usize>) -> Self {
+        self.opened = row;
         self
     }
 
@@ -1825,7 +1837,7 @@ impl<'a> DataTable<'a> {
                         // edge, as the web's `ring-2 ring-primary` and `ring-2 ring-ring/60`
                         let ring = if selected {
                             t.paint("table.base.selected.card")
-                        } else if self.state.opened == Some(index) {
+                        } else if self.opened == Some(index) {
                             t.paint("table.base.opened.card")
                         } else {
                             None
@@ -2175,7 +2187,7 @@ impl<'a> DataTable<'a> {
                     self.state.opened = Some(index);
                 }
                 let selected = self.state.selected.contains(&index);
-                let opened = self.state.opened == Some(index);
+                let opened = self.opened == Some(index);
                 if listed {
                     // a chosen or opened listed row on its paint's ground, hovered or not, as the
                     // web's `bg-secondary hover:bg-secondary`
@@ -3447,11 +3459,8 @@ impl<'a> DataTable<'a> {
                                 self.state.expanded.insert(index);
                             }
                         } else if picked {
-                            self.state.opened = if self.state.opened == Some(index) {
-                                None
-                            } else {
-                                Some(index)
-                            };
+                            // the press reported, as the web's `onOpen`
+                            self.state.opened = Some(index);
                         }
                         if row.clicked() && tree_keys {
                             // a press makes the row the active one, the table taking the keys
@@ -3461,7 +3470,7 @@ impl<'a> DataTable<'a> {
                             self.state.head = None;
                         }
                         let selected = self.state.selected.contains(&index);
-                        let opened = self.state.opened == Some(index);
+                        let opened = self.opened == Some(index);
                         let ground = if selected || opened {
                             t.color("secondary")
                         } else if row.hovered() || ui.rect_contains_pointer(rect) || dragging == Some(position) {
@@ -4124,11 +4133,7 @@ impl<'a> DataTable<'a> {
                         self.state.expanded.insert(row);
                     }
                 } else {
-                    self.state.opened = if self.state.opened == Some(row) {
-                        None
-                    } else {
-                        Some(row)
-                    };
+                    self.state.opened = Some(row);
                 }
             } else if left {
                 self.state.active = Some((row, column.saturating_sub(1)));

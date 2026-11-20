@@ -145,8 +145,8 @@ impl AnalyticsApp {
         let stages = figures.funnel(segment, span.from, span.to, &draft.steps, draft.window);
         let before = compare.then(|| figures.funnel(segment, previous.from, previous.to, &draft.steps, draft.window));
         let list_state = self.tables.entry("funnels-saved".into()).or_default();
-        list_state.opened = chosen.as_ref().and_then(|c| saved.iter().position(|f| f.id == c.id));
-        let was_opened = list_state.opened;
+        list_state.opened = None;
+        let was_opened = chosen.as_ref().and_then(|c| saved.iter().position(|f| f.id == c.id));
         let mut steps_state = std::mem::take(self.tables.entry("funnel-steps".into()).or_default());
         let mut stage_state = std::mem::take(self.tables.entry("funnel-stages".into()).or_default());
         let list_state = self.tables.get_mut("funnels-saved").expect("made above");
@@ -351,6 +351,7 @@ impl AnalyticsApp {
                             .map(|f| vec![Cell::Text(f.name.clone()), Cell::Muted(counted(f.steps.len(), "step"))])
                             .collect();
                         DataTable::new("funnels-saved", &columns, &rows, list_state)
+                            .opened(was_opened)
                             .variant(TableVariant::List)
                             .framed(false)
                             .bar(false)
@@ -364,10 +365,8 @@ impl AnalyticsApp {
                     });
             },
         );
-        let opened = self.tables.get("funnels-saved").and_then(|s| s.opened);
-        if opened != was_opened
-            && let Some(f) = opened.or(was_opened).and_then(|i| saved.get(i))
-        {
+        let opened = self.tables.get_mut("funnels-saved").and_then(|s| s.opened.take());
+        if let Some(f) = opened.filter(|i| Some(*i) != was_opened).and_then(|i| saved.get(i)) {
             asked = Some(Asked::Open(f.id.clone()));
         }
         *self.tables.entry("funnel-steps".into()).or_default() = steps_state;

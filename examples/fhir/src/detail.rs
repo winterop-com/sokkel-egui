@@ -771,9 +771,10 @@ fn versions_list(ui: &mut Ui, view: &pages::CqlView, views: &mut Views, acts: &L
             .as_ref()
             .is_some_and(|against| against.version_id == one.version_id)
     });
-    views.versions.opened = marked;
+    views.versions.opened = None;
     DataTable::new("cql-version-list", &columns, &cells, &mut views.versions)
         .keys(view.own.iter().map(|one| one.id.clone()))
+        .opened(marked)
         .variant(TableVariant::List)
         .framed(false)
         .heads(false)
@@ -781,8 +782,12 @@ fn versions_list(ui: &mut Ui, view: &pages::CqlView, views: &mut Views, acts: &L
         .stretch(true)
         .footer(false)
         .show(ui);
-    if views.versions.opened != marked
-        && let Some(one) = views.versions.opened.and_then(|at| view.own.get(at))
+    if let Some(one) = views
+        .versions
+        .opened
+        .take()
+        .filter(|at| Some(*at) != marked)
+        .and_then(|at| view.own.get(at))
     {
         let version = one.version_id;
         acts.push(Act::new(move |app| {

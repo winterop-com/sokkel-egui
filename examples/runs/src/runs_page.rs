@@ -183,8 +183,11 @@ impl RunsApp {
         let lives: Vec<bool> = shown.iter().map(|r| is_live(r.at.state)).collect();
         let mut filters = std::mem::take(&mut self.runs_view.filters);
         let mut query = std::mem::take(&mut self.runs_view.query);
+        // the run shown in the panel, drawn as opened, as the web's `opened`
+        let open_row = self.opened.as_ref().and_then(|id| keys.iter().position(|k| k == id));
         let state = self.tables.entry("runs".into()).or_default();
         let out = DataTable::new("runs", &columns, &rows, state)
+            .opened(open_row)
             .search(&mut query)
             .search_placeholder("Search")
             .toolbar(|ui| {

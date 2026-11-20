@@ -3,7 +3,8 @@
 //! stands on its paint's ground; the grid's cards are ringed the same, their box at the top corner
 //! while pointed at or while any row is chosen. A Shift range in a grouped table runs over the
 //! web's `flat`, the groups in the order their rows were given (those `group_order` names first),
-//! each group's rows as sorted, a folded group's left out; a paged table is not grouped.
+//! each group's rows as sorted, a folded group's left out; a paged table is not grouped. A row
+//! is drawn as opened only when the app says so (the web's `opened`), never for being pressed.
 
 use egui_kittest::{Harness, kittest::Queryable};
 use sokkel_egui::{
@@ -22,6 +23,8 @@ struct Jobs {
     group_order: Vec<String>,
     /// Offer the grid's cards.
     cards: bool,
+    /// The row the app shows beside the list.
+    opened: Option<usize>,
 }
 
 fn jobs(rows: &[(&str, &str)], groups: Option<&[&str]>, stacked: Option<TableVariant>) -> Harness<'static, Jobs> {
@@ -40,12 +43,14 @@ fn jobs(rows: &[(&str, &str)], groups: Option<&[&str]>, stacked: Option<TableVar
         paging: None,
         group_order: Vec::new(),
         cards: false,
+        opened: None,
     };
     let mut harness = Harness::builder().with_size([480.0, 480.0]).build_ui_state(
         |ui, jobs: &mut Jobs| {
             install(ui.ctx(), &Appearance::default());
             let mut table = DataTable::new("jobs", &jobs.columns, &jobs.rows, &mut jobs.state)
                 .selectable(true)
+                .opened(jobs.opened)
                 .footer(false);
             if let Some(groups) = &jobs.groups {
                 table = table.groups(groups.clone()).group_order(jobs.group_order.clone());
@@ -172,7 +177,7 @@ fn a_labeled_card_has_a_selection_box_and_a_chosen_card_is_ringed() {
     // sorted by name: archive-logs, then nightly-export
     assert_eq!(chosen(&harness), [0]);
     assert!(strokes(&harness).contains(&ring), "no ring {ring:?} drawn");
-    // a press on a card opens it, ringed in the opened paint
+    // a press reported is not an opened card; the app's opened row is ringed in its paint
     harness.state_mut().state.selected.clear();
     harness.state_mut().state.opened = Some(0);
     harness.run_steps(2);
@@ -180,6 +185,9 @@ fn a_labeled_card_has_a_selection_box_and_a_chosen_card_is_ringed() {
         .paint("table.base.opened.card")
         .and_then(|p| p.ring)
         .expect("an opened card's ring");
+    assert!(!strokes(&harness).contains(&opened));
+    harness.state_mut().opened = Some(0);
+    harness.run_steps(2);
     assert!(strokes(&harness).contains(&opened));
     assert!(!strokes(&harness).contains(&ring));
 }
@@ -253,4 +261,44 @@ fn a_grid_card_has_its_box_while_pointed_at_or_any_row_is_chosen_and_a_chosen_ca
     harness.hover_at(egui::pos2(479.0, 479.0));
     harness.run_steps(2);
     assert_eq!(harness.query_all_by_label("Select row").count(), 2);
+}
+
+#[test]
+fn a_pressed_grid_card_is_reported_but_ringed_only_when_the_app_opens_it() {
+    let mut harness = jobs(&JOBS[..2], None, None);
+    harness.state_mut().cards = true;
+    harness.state_mut().state.grid = true;
+    harness.run_steps(3);
+    let opened = tokens()
+        .paint("table.base.opened.card")
+        .and_then(|p| p.ring)
+        .expect("an opened card's ring");
+    harness.get_by_label("card 0").click();
+    harness.run_steps(2);
+    assert_eq!(harness.state().state.opened, Some(0));
+    assert!(!strokes(&harness).contains(&opened));
+    // a second press reports it again, as the web's `onOpen`
+    harness.state_mut().state.opened = None;
+    harness.get_by_label("card 0").click();
+    harness.run_steps(2);
+    assert_eq!(harness.state().state.opened, Some(0));
+    harness.state_mut().opened = Some(0);
+    harness.run_steps(2);
+    assert!(strokes(&harness).contains(&opened));
+}
+
+#[test]
+fn a_pressed_row_takes_the_opened_ground_only_when_the_app_opens_it() {
+    let mut harness = jobs(&JOBS[..2], None, None);
+    let ground = tokens()
+        .paint("table.base.opened.row")
+        .and_then(|p| p.ground)
+        .expect("an opened row's ground");
+    harness.get_by_label_contains("nightly-export").click();
+    harness.run_steps(2);
+    assert_eq!(harness.state().state.opened, Some(0));
+    assert!(!grounds(&harness, 300.0).contains(&ground));
+    harness.state_mut().opened = Some(0);
+    harness.run_steps(2);
+    assert!(grounds(&harness, 300.0).contains(&ground));
 }

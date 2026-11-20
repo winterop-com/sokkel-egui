@@ -219,8 +219,11 @@ impl RunsApp {
                     recent.iter().map(|r| run_cells(r, now, prefs.times, false)).collect();
                 let lives: Vec<bool> = recent.iter().map(|r| is_live(r.at.state)).collect();
                 let keys: Vec<String> = recent.iter().map(|r| r.run.id.clone()).collect();
+                // the run shown in the panel, drawn as opened, as the web's `opened`
+                let open_row = self.opened.as_ref().and_then(|id| keys.iter().position(|k| k == id));
                 let state = self.tables.entry(format!("job-runs-{}", job.id)).or_default();
                 let out = DataTable::new(("job-runs", &job.id), &columns, &rows, state)
+                    .opened(open_row)
                     .variant(TableVariant::List)
                     .framed(false)
                     .fits(true)
