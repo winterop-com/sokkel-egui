@@ -64,7 +64,7 @@ pub fn on_day(text: Option<&str>) -> String {
     let Some(text) = text.filter(|one| !one.is_empty()) else {
         return String::new();
     };
-    let head = crate::js::slice_units(text, 10);
+    let head = crate::js::slice16(text, 10);
     let parts: Vec<f64> = head.split('-').map(number_of_text).collect();
     let year = parts.first().copied().unwrap_or(0.0);
     let month = parts.get(1).copied().unwrap_or(1.0);

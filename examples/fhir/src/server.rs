@@ -9,8 +9,8 @@
 //! they were when it was made. The server's calls await several of those in turn, so each runs here
 //! as stages on the clock, each stage what the web does between two awaits; its answer is handed to
 //! the page that asked (`Backend::take_settled`). A page reads a collection's rows as they were last
-//! told or listed (`Collection::seen`). The clock and the collections are carried from the dhis2
-//! example's backend (`examples/dhis2/src/backend.rs`).
+//! told or listed (`Collection::seen`). The clock and the collections are the shared backend's
+//! (`tidevann_shared::backend`).
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
@@ -19,6 +19,8 @@ use crate::js::{iso_instant, stringify};
 use crate::model::{Issue, Refused, Resource, Severity, key_of, type_of, version_of};
 use crate::seed::seed;
 use crate::validate::validate;
+use tidevann_shared::backend;
+pub use tidevann_shared::backend::{Clock, LATENCY, Row};
 
 pub const SERVER_NAME: &str = "harbor";
 pub const SERVER_BASE: &str = "https://fhir.example.org/r4";
@@ -27,9 +29,6 @@ pub const SERVER_VERSION: &str = "FHIR 4.0.1";
 
 /// The person using the workbench, who every change is saved as.
 pub const ME: &str = "ada";
-
-/// How long each call to the backend takes, in milliseconds.
-pub const LATENCY: i64 = 150;
 
 /// A resource as the server holds it, under its key `Type/id`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -88,11 +87,6 @@ pub struct SavedSearch {
 pub struct SavedSearches {
     pub id: String,
     pub searches: Vec<SavedSearch>,
-}
-
-/// A row of a collection, kept under its id.
-pub trait Row: Clone {
-    fn id(&self) -> &str;
 }
 
 impl Row for Stored {
@@ -237,15 +231,25 @@ pub struct Settled {
 
 /// Which collection a timer tells.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Name {
+pub enum Name {
     Resources,
     History,
     Saved,
 }
 
+impl backend::Name for Name {
+    fn key(self) -> &'static str {
+        match self {
+            Name::Resources => "resources",
+            Name::History => "history",
+            Name::Saved => "saved-searches",
+        }
+    }
+}
+
 /// A call to the server on its way, at the stage it waits to run next.
 #[derive(Clone, Debug)]
-enum Call {
+pub enum Call {
     Update {
         kind: String,
         id: String,
@@ -281,130 +285,20 @@ enum Call {
 }
 
 #[derive(Clone, Debug)]
-enum Job {
+pub enum Job {
     /// A collection's change told, or its list answered, with the rows kept under the timer's seq.
     Heard(Name),
     /// A call's next stage.
     Stage(u64, Box<Call>),
 }
 
-#[derive(Clone, Debug)]
-struct Timer {
-    at: i64,
-    seq: u64,
-    job: Job,
-}
-
-/// The web's clock and its timers.
-#[derive(Clone, Debug, Default)]
-pub struct Clock {
-    pub now: i64,
-    seq: u64,
-    timers: Vec<Timer>,
-}
-
-impl Clock {
-    fn after(&mut self, ms: i64, job: Job) -> u64 {
-        self.seq += 1;
-        self.timers.push(Timer {
-            at: self.now + ms,
-            seq: self.seq,
-            job,
-        });
-        self.seq
-    }
-}
-
-/// One collection: its rows as the backend keeps them, and as the pages last heard them.
-#[derive(Clone, Debug)]
-pub struct Collection<T: Row> {
-    name: Name,
-    /// The rows as kept, every change made at once.
-    pub rows: Vec<T>,
-    /// The rows as last told or listed, none until the first answer.
-    pub seen: Option<Vec<T>>,
-    /// Whether a change was kept since the seed, as the browser keeps the rows once one is.
-    pub written: bool,
-    pending: Vec<(u64, Vec<T>)>,
-}
-
-impl<T: Row> Collection<T> {
-    fn new(name: Name, rows: Vec<T>) -> Self {
-        Collection {
-            name,
-            rows,
-            seen: None,
-            written: false,
-            pending: Vec::new(),
-        }
-    }
-
-    /// The rows a page shows: none until the first answer.
-    pub fn seen(&self) -> &[T] {
-        self.seen.as_deref().unwrap_or_default()
-    }
-
-    /// Whether a page has heard the rows yet.
-    pub fn loaded(&self) -> bool {
-        self.seen.is_some()
-    }
-
-    fn heard(&mut self, seq: u64) {
-        if let Some(at) = self.pending.iter().position(|(one, _)| *one == seq) {
-            self.seen = Some(self.pending.remove(at).1);
-        }
-    }
-
-    fn list(&mut self, clock: &mut Clock) {
-        let seq = clock.after(LATENCY, Job::Heard(self.name));
-        self.pending.push((seq, self.rows.clone()));
-    }
-
-    fn save(&mut self, clock: &mut Clock, next: Vec<T>) {
-        self.rows = next;
-        self.written = true;
-        let seq = clock.after(LATENCY, Job::Heard(self.name));
-        self.pending.push((seq, self.rows.clone()));
-    }
-
-    fn prepend(&mut self, clock: &mut Clock, row: T) {
-        let mut next = vec![row];
-        next.extend(self.rows.iter().cloned());
-        self.save(clock, next);
-    }
-
-    fn replace(&mut self, clock: &mut Clock, id: &str, change: impl FnOnce(&mut T)) -> Result<(), String> {
-        let Some(mut row) = self.rows.iter().find(|one| one.id() == id).cloned() else {
-            return Err(format!("No {} with the id {id}.", self.label()));
-        };
-        change(&mut row);
-        let next = self
-            .rows
-            .iter()
-            .map(|one| if one.id() == id { row.clone() } else { one.clone() })
-            .collect();
-        self.save(clock, next);
-        Ok(())
-    }
-
-    fn remove(&mut self, clock: &mut Clock, id: &str) {
-        let next = self.rows.iter().filter(|one| one.id() != id).cloned().collect();
-        self.save(clock, next);
-    }
-
-    fn label(&self) -> &'static str {
-        match self.name {
-            Name::Resources => "resources",
-            Name::History => "history",
-            Name::Saved => "saved-searches",
-        }
-    }
-}
+/// A collection of the server, under its name.
+pub type Collection<T> = backend::Collection<T, Name>;
 
 /// The server on the web's clock.
 #[derive(Clone, Debug)]
 pub struct Backend {
-    pub clock: Clock,
+    pub clock: Clock<Job>,
     pub resources: Collection<Stored>,
     pub history: Collection<Version>,
     pub saved: Collection<SavedSearches>,
@@ -472,10 +366,7 @@ impl Backend {
     /// The server as the app opens at `now`: every collection from its seed.
     pub fn new(now: i64) -> Self {
         Backend {
-            clock: Clock {
-                now,
-                ..Clock::default()
-            },
+            clock: Clock::new(now),
             resources: Collection::new(Name::Resources, resources_seed()),
             history: Collection::new(Name::History, history_seed()),
             saved: Collection::new(Name::Saved, saved_seed()),
@@ -501,9 +392,9 @@ impl Backend {
 
     /// Every collection listed, as the pages that read them do when they are drawn.
     pub fn list_all(&mut self) {
-        self.resources.list(&mut self.clock);
-        self.history.list(&mut self.clock);
-        self.saved.list(&mut self.clock);
+        self.resources.tell(&mut self.clock, Job::Heard);
+        self.history.tell(&mut self.clock, Job::Heard);
+        self.saved.tell(&mut self.clock, Job::Heard);
     }
 
     pub fn now(&self) -> i64 {
@@ -512,26 +403,18 @@ impl Backend {
 
     /// The time of the next timer due, if any.
     pub fn next_due(&self) -> Option<i64> {
-        self.clock.timers.iter().map(|timer| timer.at).min()
+        self.clock.next_due()
     }
 
     /// Fires the next timer due by `to`, at its time; false when none is.
     pub fn fire_next(&mut self, to: i64) -> bool {
-        let next = self
-            .clock
-            .timers
-            .iter()
-            .enumerate()
-            .filter(|(_, timer)| timer.at <= to)
-            .min_by_key(|(_, timer)| (timer.at, timer.seq))
-            .map(|(index, _)| index);
-        let Some(index) = next else { return false };
-        let timer = self.clock.timers.remove(index);
-        self.clock.now = timer.at;
-        match timer.job {
-            Job::Heard(Name::Resources) => self.resources.heard(timer.seq),
-            Job::Heard(Name::History) => self.history.heard(timer.seq),
-            Job::Heard(Name::Saved) => self.saved.heard(timer.seq),
+        let Some((seq, job)) = self.clock.take_due(to) else {
+            return false;
+        };
+        match job {
+            Job::Heard(Name::Resources) => self.resources.heard(seq),
+            Job::Heard(Name::History) => self.history.heard(seq),
+            Job::Heard(Name::Saved) => self.saved.heard(seq),
             Job::Stage(ticket, call) => self.stage(ticket, *call),
         }
         true
@@ -645,7 +528,7 @@ impl Backend {
         if all.iter().any(|row| row.id == key) {
             let fresh = kept.clone();
             self.resources
-                .replace(&mut self.clock, &key, |row| row.resource = fresh)
+                .update(&mut self.clock, &key, |row| row.resource = fresh, Job::Heard)
                 .map_err(Failure::Error)?;
         } else {
             self.resources.prepend(
@@ -655,6 +538,7 @@ impl Backend {
                     kind: kind.to_owned(),
                     resource: kept.clone(),
                 },
+                Job::Heard,
             );
         }
         Ok(kept)
@@ -675,6 +559,7 @@ impl Backend {
                 change,
                 resource: Some(resource.clone()),
             },
+            Job::Heard,
         );
     }
 
@@ -916,7 +801,7 @@ impl Backend {
                         return self.settle(ticket, Outcome::Failed(Failure::Refused(refused)));
                     }
                     let version_id = version_of(&current.resource) as i64 + 1;
-                    self.resources.remove(&mut self.clock, &key);
+                    self.resources.remove(&mut self.clock, &key, Job::Heard);
                     self.next(
                         ticket,
                         Call::Remove {
@@ -942,6 +827,7 @@ impl Backend {
                             change: Change::Delete,
                             resource: None,
                         },
+                        Job::Heard,
                     );
                     self.next(
                         ticket,
@@ -960,7 +846,10 @@ impl Backend {
                 1 => {
                     if rows.iter().any(|row| row.id == ME) {
                         let next = searches.clone();
-                        if let Err(why) = self.saved.replace(&mut self.clock, ME, |row| row.searches = next) {
+                        if let Err(why) = self
+                            .saved
+                            .update(&mut self.clock, ME, |row| row.searches = next, Job::Heard)
+                        {
                             return self.settle(ticket, Outcome::Failed(Failure::Error(why)));
                         }
                     } else {
@@ -970,6 +859,7 @@ impl Backend {
                                 id: ME.to_owned(),
                                 searches: searches.clone(),
                             },
+                            Job::Heard,
                         );
                     }
                     self.next(

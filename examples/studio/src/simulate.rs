@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use serde_json::{Map, Value};
 use url::Url;
 
-use crate::js::{iso, length, locale_number, number_to_string, round, slice, trim};
+use crate::js::{iso_instant as iso, len16 as length, locale_number, number_to_string, round, slice, trim};
 use crate::model::{Failure, Level, LogLine, ME, PROJECTS, Project, Run, RunState, RunStepRecord, StepState, WorkFile};
 use crate::pipeline::{Pipeline, StepInfo, js_string, prototype_text, read_pipeline, references, step_order};
 

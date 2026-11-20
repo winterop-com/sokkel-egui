@@ -21,7 +21,7 @@ pub mod export;
 pub mod export_dialog;
 pub mod history;
 pub mod inspector;
-pub mod js;
+pub use tidevann_shared::js;
 pub mod media;
 pub mod model;
 pub mod palette;

@@ -9,7 +9,7 @@ use crate::data::disk::model_path;
 use crate::data::format::{bytes, context, counted, day, params};
 use crate::data::model::{Conversation, FileRole, Loaded, Model, ModelFile, SamplingPatch, default_sampling};
 use crate::data::seed::model_memory;
-use crate::js::{locale, round};
+use crate::js::{locale_number as locale, round};
 
 /// What a file's role says in the files' list.
 pub fn role_said(role: FileRole) -> &'static str {

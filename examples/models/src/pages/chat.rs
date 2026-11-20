@@ -7,7 +7,7 @@ use serde::Serialize;
 use crate::data::model::{AssistantMessage, Conversation, Model, ReplyState, Usage, Version};
 use crate::engine::chat::chat_key;
 use crate::engine::stream::{Live, Phase, usage_of};
-use crate::js::{MONTHS, date_medium, start_of_day, utc_parts};
+use crate::js::{MONTHS, intl_date as date_medium, start_of_day, utc_parts};
 
 /// What a new conversation offers to ask: a title and its prompt.
 pub const SUGGESTIONS: [(&str, &str); 4] = [

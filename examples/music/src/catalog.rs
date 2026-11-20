@@ -719,7 +719,7 @@ pub fn song_of(id: &str, made: &[MadeStation]) -> Option<Song> {
         return None;
     }
     let station = station_of(station, made)?;
-    Some(radio_song(&station, js::number(count) as u64))
+    Some(radio_song(&station, js::number_of_text(count) as u64))
 }
 
 /// The album a song is on, or for a radio song its station dressed as one.

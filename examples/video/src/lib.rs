@@ -25,7 +25,7 @@ pub mod clips;
 pub mod data;
 pub mod dialogs;
 pub mod format;
-pub mod js;
+pub use tidevann_shared::js;
 pub mod overlays;
 pub mod pages;
 pub mod palette;

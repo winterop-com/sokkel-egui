@@ -19,7 +19,7 @@ pub mod actions;
 pub mod app;
 pub mod data;
 pub mod engine;
-pub mod js;
+pub use tidevann_shared::js;
 pub mod pages;
 pub mod runtime;
 pub mod screens;

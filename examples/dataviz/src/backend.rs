@@ -9,7 +9,8 @@
 //! or listed (`Collection::seen`), none until the first answer, so what a page shows lags a change
 //! by the same moment the web's does. The web's timers are kept as the web sets them, and
 //! `Backend::advance` moves the clock. Where the changes stand (`saving`) follows the web's
-//! `savingNow`.
+//! `savingNow`. The collections, the clock and `Saving` are the shared backend's
+//! (`tidevann_shared::backend`).
 
 use sokkel_egui::Filter;
 
@@ -21,6 +22,8 @@ use crate::parse::{ParsedTable, normalize, rows_of, to_csv};
 use crate::seed::{seed_boards, seed_charts, seed_datasets};
 use crate::share::{SharedChart, shared_dataset};
 use sokkel_egui_charts::data::Cell;
+use tidevann_shared::backend;
+pub use tidevann_shared::backend::{Clock, LATENCY, Row, Saving, saving_note};
 
 /// Changes a row by a change, which takes its type from the row's.
 fn apply<T, F: FnOnce(&mut T)>(row: &mut T, change: F) {
@@ -78,23 +81,11 @@ macro_rules! remove {
     }};
 }
 
-/// How long each call to the backend takes, in milliseconds.
-pub const LATENCY: i64 = 150;
-
-/// A row of a collection, kept under its id.
-pub trait Row: Clone {
-    fn id(&self) -> &str;
-    fn set_id(&mut self, id: &str);
-}
-
 macro_rules! row {
     ($($kind:ty),*) => {
         $(impl Row for $kind {
             fn id(&self) -> &str {
                 &self.id
-            }
-            fn set_id(&mut self, id: &str) {
-                self.id = id.to_owned();
             }
         })*
     };
@@ -119,6 +110,12 @@ impl Name {
             Name::Boards => "boards",
             Name::Preferences => "preferences",
         }
+    }
+}
+
+impl backend::Name for Name {
+    fn key(self) -> &'static str {
+        Name::key(self)
     }
 }
 
@@ -162,23 +159,6 @@ pub enum ToastAction {
     Open(String),
 }
 
-/// Where the example's changes stand: some still on their way, the last one refused, or all kept.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Saving {
-    Saving,
-    Failed(String),
-    Saved,
-}
-
-/// The words a status line says for where the changes stand, its tone and whether it pulses.
-pub fn saving_note(saving: &Saving) -> (String, &'static str, bool) {
-    match saving {
-        Saving::Saving => ("Saving".to_owned(), "quiet", true),
-        Saving::Failed(reason) => (format!("Not saved: {reason}"), "error", false),
-        Saving::Saved => ("All changes saved".to_owned(), "quiet", false),
-    }
-}
-
 /// What follows a change once it is answered.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Then {
@@ -198,7 +178,7 @@ pub enum Then {
 }
 
 #[derive(Clone, Debug)]
-enum Job {
+pub enum Job {
     /// A collection's change told to those listening, with the rows kept under the timer's seq.
     Tell(Name),
     /// A collection's list answered, with the rows kept under the timer's seq.
@@ -207,77 +187,8 @@ enum Job {
     Answer { failure: Option<String>, then: Vec<Then> },
 }
 
-#[derive(Clone, Debug)]
-struct Timer {
-    at: i64,
-    seq: u64,
-    job: Job,
-}
-
-/// The web's clock and its timers.
-#[derive(Clone, Debug, Default)]
-pub struct Clock {
-    pub now: i64,
-    seq: u64,
-    timers: Vec<Timer>,
-}
-
-impl Clock {
-    fn after(&mut self, ms: i64, job: Job) -> u64 {
-        self.seq += 1;
-        self.timers.push(Timer {
-            at: self.now + ms,
-            seq: self.seq,
-            job,
-        });
-        self.seq
-    }
-}
-
-/// One collection: its rows as the backend keeps them, and as the pages last heard them.
-#[derive(Clone, Debug)]
-pub struct Collection<T: Row> {
-    pub name: Name,
-    /// The rows as kept, every change made at once.
-    pub rows: Vec<T>,
-    /// The rows as last told or listed, none until the first answer.
-    pub seen: Option<Vec<T>>,
-    /// The rows each change or list will tell, under its timer's seq.
-    pending: Vec<(u64, Vec<T>)>,
-    seed: fn() -> Vec<T>,
-}
-
-impl<T: Row> Collection<T> {
-    fn new(name: Name, seed: fn() -> Vec<T>) -> Self {
-        Collection {
-            name,
-            rows: seed(),
-            seen: None,
-            pending: Vec::new(),
-            seed,
-        }
-    }
-
-    /// The rows a page shows: none until the first answer.
-    pub fn seen(&self) -> &[T] {
-        self.seen.as_deref().unwrap_or_default()
-    }
-
-    /// The row under `id` a page shows.
-    pub fn seen_get(&self, id: &str) -> Option<&T> {
-        self.seen().iter().find(|row| row.id() == id)
-    }
-
-    /// The row under `id` as kept.
-    pub fn get(&self, id: &str) -> Option<&T> {
-        self.rows.iter().find(|row| row.id() == id)
-    }
-
-    fn take(&mut self, seq: u64) -> Option<Vec<T>> {
-        let at = self.pending.iter().position(|(one, _)| *one == seq)?;
-        Some(self.pending.remove(at).1)
-    }
-}
+/// A collection of the backend, under its name.
+pub type Collection<T> = backend::Collection<T, Name>;
 
 /// A change to the preferences: the fields given, the rest kept.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -330,7 +241,7 @@ pub enum ImportSource {
 /// The visualizer's backend on the web's clock, and what the app said and where it went.
 #[derive(Clone, Debug)]
 pub struct Backend {
-    pub clock: Clock,
+    pub clock: Clock<Job>,
     /// How many ids `fresh_id` made, whose count ends each.
     pub made: u64,
     pub datasets: Collection<Dataset>,
@@ -356,15 +267,12 @@ impl Backend {
     /// visualizer's frame lists them.
     pub fn new(now: i64) -> Self {
         let mut backend = Backend {
-            clock: Clock {
-                now,
-                ..Clock::default()
-            },
+            clock: Clock::new(now),
             made: 0,
-            datasets: Collection::new(Name::Datasets, seed_datasets),
-            charts: Collection::new(Name::Charts, seed_charts),
-            boards: Collection::new(Name::Boards, seed_boards),
-            preferences: Collection::new(Name::Preferences, || vec![Preferences::default()]),
+            datasets: Collection::new(Name::Datasets, seed_datasets()),
+            charts: Collection::new(Name::Charts, seed_charts()),
+            boards: Collection::new(Name::Boards, seed_boards()),
+            preferences: Collection::new(Name::Preferences, vec![Preferences::default()]),
             saving: Saving::Saved,
             pending: 0,
             sealed: false,
@@ -404,56 +312,33 @@ impl Backend {
 
     /// Fires every timer due by `to`, each at its time, in the order they were set.
     pub fn advance(&mut self, to: i64) {
-        loop {
-            let next = self
-                .clock
-                .timers
-                .iter()
-                .enumerate()
-                .filter(|(_, timer)| timer.at <= to)
-                .min_by_key(|(_, timer)| (timer.at, timer.seq))
-                .map(|(index, _)| index);
-            let Some(index) = next else { break };
-            let timer = self.clock.timers.remove(index);
-            self.clock.now = timer.at;
-            self.fire(timer.seq, timer.job);
+        while let Some((seq, job)) = self.clock.take_due(to) {
+            self.fire(seq, job);
         }
-        self.clock.now = self.clock.now.max(to);
+        self.clock.reach(to);
     }
 
     /// The time of the next timer due, if any.
     pub fn next_due(&self) -> Option<i64> {
-        self.clock.timers.iter().map(|timer| timer.at).min()
+        self.clock.next_due()
     }
 
     fn fire(&mut self, seq: u64, job: Job) {
         match job {
             Job::Tell(name) | Job::Listed(name) => match name {
-                Name::Datasets => Self::heard(&mut self.datasets, seq),
-                Name::Charts => Self::heard(&mut self.charts, seq),
-                Name::Boards => Self::heard(&mut self.boards, seq),
-                Name::Preferences => Self::heard(&mut self.preferences, seq),
+                Name::Datasets => self.datasets.heard(seq),
+                Name::Charts => self.charts.heard(seq),
+                Name::Boards => self.boards.heard(seq),
+                Name::Preferences => self.preferences.heard(seq),
             },
             Job::Answer { failure, then } => {
-                self.pending -= 1;
-                match failure {
-                    Some(reason) => self.saving = Saving::Failed(reason),
-                    None => {
-                        if self.pending == 0 && self.saving == Saving::Saving {
-                            self.saving = Saving::Saved;
-                        }
-                        for one in then {
-                            self.follow(one);
-                        }
+                self.saving.settle(&mut self.pending, failure.as_deref());
+                if failure.is_none() {
+                    for one in then {
+                        self.follow(one);
                     }
                 }
             }
-        }
-    }
-
-    fn heard<T: Row>(collection: &mut Collection<T>, seq: u64) {
-        if let Some(rows) = collection.take(seq) {
-            collection.seen = Some(rows);
         }
     }
 
@@ -499,31 +384,25 @@ impl Backend {
     // --- The collections' calls ------------------------------------------------------------------
 
     fn list(&mut self, name: Name) {
-        let seq = self.clock.after(LATENCY, Job::Listed(name));
+        let clock = &mut self.clock;
         match name {
-            Name::Datasets => self.datasets.pending.push((seq, self.datasets.rows.clone())),
-            Name::Charts => self.charts.pending.push((seq, self.charts.rows.clone())),
-            Name::Boards => self.boards.pending.push((seq, self.boards.rows.clone())),
-            Name::Preferences => self.preferences.pending.push((seq, self.preferences.rows.clone())),
+            Name::Datasets => self.datasets.tell(clock, Job::Listed),
+            Name::Charts => self.charts.tell(clock, Job::Listed),
+            Name::Boards => self.boards.tell(clock, Job::Listed),
+            Name::Preferences => self.preferences.tell(clock, Job::Listed),
         }
     }
 
     /// Keeps a collection's rows and tells those listening, unless the data was reset.
-    fn save<T: Row>(clock: &mut Clock, sealed: bool, collection: &mut Collection<T>, next: Vec<T>) {
-        if sealed {
-            return;
+    fn save<T: Row>(clock: &mut Clock<Job>, sealed: bool, collection: &mut Collection<T>, next: Vec<T>) {
+        if !sealed {
+            collection.save(clock, next, Job::Tell);
         }
-        collection.rows = next;
-        let seq = clock.after(LATENCY, Job::Tell(collection.name));
-        collection.pending.push((seq, collection.rows.clone()));
     }
 
     /// A change made: followed by `saving` until it is answered, with what follows it.
     fn answered(&mut self, failure: Option<String>, then: Vec<Then>) {
-        self.pending += 1;
-        if self.saving != Saving::Saving {
-            self.saving = Saving::Saving;
-        }
+        self.saving.follow(&mut self.pending);
         self.clock.after(LATENCY, Job::Answer { failure, then });
     }
 
@@ -1160,10 +1039,10 @@ impl Backend {
     /// Puts the demo data back as it started, keeps nothing written after, and loads the page
     /// again.
     pub fn reset_all(&mut self) {
-        self.datasets.rows = (self.datasets.seed)();
-        self.charts.rows = (self.charts.seed)();
-        self.boards.rows = (self.boards.seed)();
-        self.preferences.rows = (self.preferences.seed)();
+        self.datasets.rows = seed_datasets();
+        self.charts.rows = seed_charts();
+        self.boards.rows = seed_boards();
+        self.preferences.rows = vec![Preferences::default()];
         self.sealed = true;
         self.clock.after(
             LATENCY,

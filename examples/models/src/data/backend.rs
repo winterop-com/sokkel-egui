@@ -7,7 +7,8 @@
 //! `Backend` is the whole page: the collections, the clock and the microtasks they run on
 //! (`runtime`), and the engines' own state, which `engine::*` drive. Carried in shape from the
 //! dhis2 example's backend (`examples/dhis2/src/backend.rs`), its timers here a `Runtime` of
-//! promises, since the engines chain answers as the web's `async` functions do.
+//! promises, since the engines chain answers as the web's `async` functions do: so its collections
+//! are its own, and only `LATENCY` and `Row` are the shared backend's (`tidevann_shared::backend`).
 
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
@@ -23,13 +24,7 @@ use crate::engine::stream::{AnswerRun, Live, Writer};
 use crate::js::base36;
 use crate::runtime::{Host, Promise, Runtime, Value};
 
-/// How long each call to the backend takes, in milliseconds.
-pub const LATENCY: i64 = 150;
-
-/// A row of a collection, kept under its id.
-pub trait Row: Clone + 'static {
-    fn id(&self) -> &str;
-}
+pub use tidevann_shared::backend::{LATENCY, Row};
 
 macro_rules! row {
     ($($kind:ty),*) => {
@@ -235,7 +230,7 @@ impl Backend {
     }
 
     /// A collection's rows answered after the delay, which its mirror then reads.
-    pub fn list<T: Row>(&mut self, pick: Pick<T>) -> Promise {
+    pub fn list<T: Row + 'static>(&mut self, pick: Pick<T>) -> Promise {
         let rows = pick(self).rows.clone();
         let answer = self.later(Ok(Rc::new(rows.clone())));
         self.on(answer, move |backend, _| pick(backend).seen = rows);
@@ -250,13 +245,18 @@ impl Backend {
     }
 
     /// Keeps a collection's rows and tells them to those listening after the delay.
-    fn save<T: Row>(&mut self, pick: Pick<T>, rows: Vec<T>) {
+    fn save<T: Row + 'static>(&mut self, pick: Pick<T>, rows: Vec<T>) {
         pick(self).rows = rows.clone();
         self.set_timeout(LATENCY, move |backend| pick(backend).seen = rows);
     }
 
     /// Adds a row under `id`, or under an id the backend makes from the collection's name.
-    pub fn create<T: Row>(&mut self, pick: Pick<T>, make: impl FnOnce(String) -> T, id: Option<String>) -> Promise {
+    pub fn create<T: Row + 'static>(
+        &mut self,
+        pick: Pick<T>,
+        make: impl FnOnce(String) -> T,
+        id: Option<String>,
+    ) -> Promise {
         self.made += 1;
         let name = pick(self).name;
         let now = self.now();
@@ -269,7 +269,7 @@ impl Backend {
     }
 
     /// Adds several rows at once, each under its own id, as one change.
-    pub fn insert<T: Row>(&mut self, pick: Pick<T>, added: Vec<T>) -> Promise {
+    pub fn insert<T: Row + 'static>(&mut self, pick: Pick<T>, added: Vec<T>) -> Promise {
         let mut rows = added.clone();
         rows.extend(pick(self).rows.iter().cloned());
         self.save(pick, rows);
@@ -277,7 +277,7 @@ impl Backend {
     }
 
     /// Changes the row under `id`; there being none is refused.
-    pub fn update<T: Row>(&mut self, pick: Pick<T>, id: &str, change: impl FnOnce(&mut T)) -> Promise {
+    pub fn update<T: Row + 'static>(&mut self, pick: Pick<T>, id: &str, change: impl FnOnce(&mut T)) -> Promise {
         let name = pick(self).name;
         let Some(mut row) = pick(self).get(id).cloned() else {
             return self.later(Err(format!("No {name} with the id {id}.")));
@@ -292,7 +292,7 @@ impl Backend {
         self.later(Ok(Rc::new(row)))
     }
 
-    pub fn remove<T: Row>(&mut self, pick: Pick<T>, id: &str) -> Promise {
+    pub fn remove<T: Row + 'static>(&mut self, pick: Pick<T>, id: &str) -> Promise {
         let rows = pick(self).rows.iter().filter(|one| one.id() != id).cloned().collect();
         self.save(pick, rows);
         self.later(Ok(crate::runtime::unit()))

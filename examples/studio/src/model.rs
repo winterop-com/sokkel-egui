@@ -130,7 +130,7 @@ pub fn file_order(a: &WorkFile, b: &WorkFile) -> Ordering {
         (Some(x), Some(y)) if x != y => x.cmp(&y),
         (Some(_), None) => Ordering::Less,
         (None, Some(_)) => Ordering::Greater,
-        _ => locale_compare(&a.name, &b.name),
+        _ => locale_compare(&a.name, &b.name, false),
     }
 }
 

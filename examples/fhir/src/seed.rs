@@ -5,7 +5,7 @@
 
 use serde_json::{Value, json};
 
-use crate::js::{days_from_civil, iso_day, number, round};
+use crate::js::{days_from_civil, iso_day, json_number as number, round};
 use crate::model::{Resource, to_base64};
 
 pub const LOINC: &str = "http://loinc.org";

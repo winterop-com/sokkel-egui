@@ -23,7 +23,7 @@ pub mod backend;
 pub mod catalog;
 pub mod discover;
 pub mod episodes;
-pub mod js;
+pub use tidevann_shared::js;
 pub mod pages;
 pub mod palette;
 pub mod parts;

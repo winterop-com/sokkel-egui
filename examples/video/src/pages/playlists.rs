@@ -58,7 +58,7 @@ pub fn view(data: &Data) -> PlaylistsView {
             .then(right.updated.cmp(&left.updated))
     });
     PlaylistsView {
-        loading: !data.playlists.ready(),
+        loading: !data.playlists.loaded(),
         count: plural(
             rows.iter().filter(|one| one.id != WATCH_LATER).count() as f64,
             "playlist",

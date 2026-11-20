@@ -4,7 +4,7 @@
 
 use std::sync::OnceLock;
 
-use crate::js::{iso, round, utc};
+use crate::js::{iso_instant as iso, round, utc};
 use crate::model::Run;
 use crate::sql::{Column, ColumnType, Table, Value};
 

@@ -5,7 +5,7 @@
 pub mod app;
 pub mod backend;
 pub mod dialogs;
-pub mod js;
+pub use tidevann_shared::js;
 pub mod model;
 pub mod palette;
 pub mod pipeline;

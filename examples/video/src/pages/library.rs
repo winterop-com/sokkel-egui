@@ -66,7 +66,7 @@ pub fn view(data: &Data) -> LibraryView {
         lists: Vec::new(),
     };
     LibraryView {
-        loading: !data.history.ready() || !data.playlists.ready(),
+        loading: !data.history.loaded() || !data.playlists.loaded(),
         parts: vec![
             part("History", "/history", recent, "Videos you watch land here."),
             part("Watch later", "/later", later, "Save a video for later from its menu."),

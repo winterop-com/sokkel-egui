@@ -8,7 +8,9 @@
 use serde::Serialize;
 
 use crate::data::model::{Attachment, AttachmentKind, Capability, Model, Sampling};
-use crate::js::{has_word, is_space, len16, locale, number_to_string, round, slice16, split_spaces, trim, words};
+use crate::js::{
+    has_word, is_space, len16, locale_number as locale, number_to_string, round, slice16, split_spaces, trim, words,
+};
 
 /// What a model is asked.
 #[derive(Clone, Debug, PartialEq)]

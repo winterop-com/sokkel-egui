@@ -1,26 +1,8 @@
-//! What the web's modules lean on the browser for, so the workbench gives the same answers: how a
-//! number is rounded (`Math.round`), read (`Number`) and written (`String`, `Intl.NumberFormat`
-//! with its decimals and grouping, base 36), what `\s` and `trim` take as space, how `en-US`
-//! collates text (`localeCompare`), and the calendar's days in UTC as `Date` counts them.
-//!
-//! Carried from the dataviz example (`examples/dataviz/src/js.rs`), as far as the workbench leans
-//! on it.
+//! How the web reads, rounds and writes a number: `Math.round`, `Number(text)`, `String(number)`,
+//! `toFixed`, `toString(36)`, `>>> 0`, `toLocaleString('en-US')` and `Intl.NumberFormat('en-US')`
+//! with its decimals, grouping and compact notation.
 
-use std::cmp::Ordering;
-
-/// Whether a character is one the web's `\s` matches.
-pub fn is_space(c: char) -> bool {
-    matches!(
-        c,
-        '\t' | '\n' | '\u{b}' | '\u{c}' | '\r' | ' ' | '\u{a0}' | '\u{1680}' | '\u{2000}'
-            ..='\u{200a}' | '\u{2028}' | '\u{2029}' | '\u{202f}' | '\u{205f}' | '\u{3000}' | '\u{feff}'
-    )
-}
-
-/// A text without the spaces at its ends, as `String.prototype.trim` cuts them.
-pub fn trim(text: &str) -> &str {
-    text.trim_matches(is_space)
-}
+use super::text::trim;
 
 /// A number rounded as `Math.round` rounds it: to the nearest whole number, a half up.
 pub fn round(value: f64) -> f64 {
@@ -95,6 +77,24 @@ fn round_decimal(whole: &str, fraction: &str, digits: usize) -> (String, String)
     let text = String::from_utf8(kept).unwrap_or_default();
     (text[..split].to_owned(), text[split..].to_owned())
 }
+
+/// A number with `digits` places after the point, as `toFixed` writes it: rounded from its exact
+/// value, a half going up (the core's), and as `String` writes it from 1e21 on.
+pub fn to_fixed(value: f64, digits: usize) -> String {
+    if !value.is_finite() || value.abs() >= 1e21 {
+        return number_to_string(value);
+    }
+    sokkel_egui::numbers::to_fixed(value, digits)
+}
+
+/// A number rounded to `digits` places and read back, as `Number(value.toFixed(digits))`.
+pub fn fixed(value: f64, digits: usize) -> f64 {
+    number_of_text(&to_fixed(value, digits))
+}
+
+/// A number as `toLocaleString('en-US')` writes it, and as `Intl.NumberFormat('en-US', { notation:
+/// 'compact', maximumFractionDigits: 1 })` writes it: the core's.
+pub use sokkel_egui::numbers::{compact_number, locale_number};
 
 /// A number's shortest decimal, the one that reads back as it (as ICU starts from), with its point
 /// moved `shift` places to the left, rounded at `digits` places after the point with a half going
@@ -225,6 +225,11 @@ pub fn intl_number(value: f64, min_fraction: usize, max_fraction: usize, groupin
     }
 }
 
+/// A count as `toLocaleString('en-US')` writes a whole number: `1,080`.
+pub fn locale_count(count: usize) -> String {
+    grouped(&count.to_string())
+}
+
 /// A text read as `Number(text)` reads it: spaces at its ends left out, nothing as 0, a decimal
 /// literal, `Infinity`, or a whole number in hexadecimal, octal or binary after `0x`, `0o` or
 /// `0b`; anything else is NaN.
@@ -316,190 +321,11 @@ pub fn base36(value: i64) -> String {
     if value < 0 { format!("-{text}") } else { text }
 }
 
-// --- The calendar ---------------------------------------------------------------------------------
-
-/// Days since 1970-01-01 of a day of the proleptic Gregorian calendar, its month from 1.
-pub fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
-    let year = if month <= 2 { year - 1 } else { year };
-    let era = year.div_euclid(400);
-    let yoe = year - era * 400;
-    let mp = (month + 9) % 12;
-    let doy = (153 * mp + 2) / 5 + day - 1;
-    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
-    era * 146_097 + doe - 719_468
-}
-
-/// The year, month from 1 and day of a count of days since 1970-01-01.
-pub fn civil_from_days(days: i64) -> (i64, i64, i64) {
-    let z = days + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = z - era * 146_097;
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let day = doy - (153 * mp + 2) / 5 + 1;
-    let month = if mp < 10 { mp + 3 } else { mp - 9 };
-    (yoe + era * 400 + i64::from(month <= 2), month, day)
-}
-
-/// The days since 1970 of `Date.UTC(year, month, day)`, its month from 0 and either part running
-/// over into the next.
-pub fn date_utc(year: i64, month: i64, day: i64) -> i64 {
-    days_from_civil(year + month.div_euclid(12), month.rem_euclid(12) + 1, 1) + day - 1
-}
-
-/// A day as `toISOString().slice(0, 10)` writes it: `YYYY-MM-DD`, or a sign and six digits for a
-/// year past four.
-pub fn iso_day(days: i64) -> String {
-    let (year, month, day) = civil_from_days(days);
-    let full = if (0..=9999).contains(&year) {
-        format!("{year:04}-{month:02}-{day:02}")
-    } else {
-        let sign = if year < 0 { '-' } else { '+' };
-        format!("{sign}{:06}-{month:02}-{day:02}", year.abs())
-    };
-    full.chars().take(10).collect()
-}
-
-// --- Collation ------------------------------------------------------------------------------------
-
-/// Spaces, punctuation and symbols in the order `en-US` collates them, before digits and letters.
-const MARKS: &str = "\t\u{b}\u{c}\r\n \u{a0}_-–—,;:!?.…·'‘’\"“”()[]{}@*/\\&#%`^+<=>|~$";
-
-/// A letter's base letters, its accent's weight and whether it is an expansion, for the accented
-/// Latin letters a text in English meets; none for a letter of its own.
-fn latin(c: char) -> Option<(&'static str, u32, bool)> {
-    let lower = c.to_lowercase().next().unwrap_or(c);
-    let (base, accent) = match lower {
-        'á' => ("a", 1),
-        'à' => ("a", 2),
-        'â' => ("a", 3),
-        'ä' => ("a", 4),
-        'ã' => ("a", 5),
-        'å' => ("a", 6),
-        'ç' => ("c", 1),
-        'é' => ("e", 1),
-        'è' => ("e", 2),
-        'ê' => ("e", 3),
-        'ë' => ("e", 4),
-        'í' => ("i", 1),
-        'ì' => ("i", 2),
-        'î' => ("i", 3),
-        'ï' => ("i", 4),
-        'ñ' => ("n", 5),
-        'ó' => ("o", 1),
-        'ò' => ("o", 2),
-        'ô' => ("o", 3),
-        'ö' => ("o", 4),
-        'õ' => ("o", 5),
-        'ø' => ("o", 7),
-        'ú' => ("u", 1),
-        'ù' => ("u", 2),
-        'û' => ("u", 3),
-        'ü' => ("u", 4),
-        'ý' => ("y", 1),
-        'ÿ' => ("y", 4),
-        'æ' => return Some(("ae", 0, true)),
-        'œ' => return Some(("oe", 0, true)),
-        'ß' => return Some(("ss", 0, true)),
-        _ => return None,
-    };
-    Some((base, accent, false))
-}
-
-/// One collation element: its primary weights, its accent and its case.
-#[derive(Clone, Debug, PartialEq, Eq)]
-struct Element {
-    primary: Vec<u32>,
-    secondary: u32,
-    tertiary: u32,
-}
-
-const CLASS_MARK: u32 = 1;
-const CLASS_DIGIT: u32 = 2;
-const CLASS_LETTER: u32 = 3;
-const CLASS_OTHER: u32 = 4;
-
-/// A text's collation elements: marks by their place in `MARKS`, digits by their value or, with
-/// `numeric`, each run of them by the number it writes, letters by their base letter with the
-/// accent and the case after; control characters are left out.
-fn elements(text: &str, numeric: bool) -> Vec<Element> {
-    let chars: Vec<char> = text.chars().collect();
-    let mut out = Vec::new();
-    let mut at = 0;
-    while at < chars.len() {
-        let c = chars[at];
-        if c.is_ascii_digit() {
-            if numeric {
-                let start = at;
-                while at < chars.len() && chars[at].is_ascii_digit() {
-                    at += 1;
-                }
-                let run: String = chars[start..at].iter().collect();
-                let run = run.trim_start_matches('0');
-                let mut primary = vec![CLASS_DIGIT, run.len() as u32];
-                primary.extend(run.bytes().map(u32::from));
-                out.push(Element {
-                    primary,
-                    secondary: 0,
-                    tertiary: 0,
-                });
-                continue;
-            }
-            out.push(Element {
-                primary: vec![CLASS_DIGIT, 1, u32::from(c)],
-                secondary: 0,
-                tertiary: 0,
-            });
-        } else if let Some(place) = MARKS.chars().position(|mark| mark == c) {
-            out.push(Element {
-                primary: vec![CLASS_MARK, place as u32],
-                secondary: 0,
-                tertiary: 0,
-            });
-        } else if c.is_control() {
-        } else if let Some((base, accent, expansion)) = latin(c) {
-            let upper = u32::from(c.is_uppercase());
-            for letter in base.chars() {
-                out.push(Element {
-                    primary: vec![CLASS_LETTER, u32::from(letter)],
-                    secondary: accent,
-                    tertiary: upper + if expansion { 2 } else { 0 },
-                });
-            }
-        } else if c.is_ascii_alphabetic() {
-            out.push(Element {
-                primary: vec![CLASS_LETTER, u32::from(c.to_ascii_lowercase())],
-                secondary: 0,
-                tertiary: u32::from(c.is_ascii_uppercase()),
-            });
-        } else {
-            let lower = c.to_lowercase().next().unwrap_or(c);
-            out.push(Element {
-                primary: vec![CLASS_OTHER, u32::from(lower)],
-                secondary: 0,
-                tertiary: u32::from(lower != c),
-            });
-        }
-        at += 1;
+/// A number as `ToUint32` makes it (`value >>> 0`): whole, then wrapped into 32 bits.
+pub fn to_uint32(value: f64) -> u32 {
+    if !value.is_finite() {
+        return 0;
     }
-    out
-}
-
-/// Two texts compared as `a.localeCompare(b, 'en-US', { numeric })` compares them: by their
-/// letters, digits and marks first, then their accents, then their case, lowercase first; texts
-/// alike at every level are equal.
-pub fn locale_compare(a: &str, b: &str, numeric: bool) -> Ordering {
-    let (a, b) = (elements(a, numeric), elements(b, numeric));
-    let primary = |of: &[Element]| of.iter().map(|one| one.primary.clone()).collect::<Vec<_>>();
-    primary(&a)
-        .cmp(&primary(&b))
-        .then_with(|| {
-            let secondary = |of: &[Element]| of.iter().map(|one| one.secondary).collect::<Vec<_>>();
-            secondary(&a).cmp(&secondary(&b))
-        })
-        .then_with(|| {
-            let tertiary = |of: &[Element]| of.iter().map(|one| one.tertiary).collect::<Vec<_>>();
-            tertiary(&a).cmp(&tertiary(&b))
-        })
+    let whole = value.trunc();
+    whole.rem_euclid(4_294_967_296.0) as u32
 }

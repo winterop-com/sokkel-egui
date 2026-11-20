@@ -7,7 +7,7 @@ use crate::data::catalog::{CatalogEntry, QUANTS, catalog, model_id};
 use crate::data::format::{GB, bytes, context, counted, counted_as, params};
 use crate::data::model::{Download, SOURCE_IDS};
 use crate::data::seed::memory_of;
-use crate::js::locale;
+use crate::js::locale_number as locale;
 
 /// What the library holds of an entry: this very variant, another of the same model, or none.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]

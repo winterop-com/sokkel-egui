@@ -24,7 +24,7 @@ pub mod check;
 pub mod detail;
 pub mod editor;
 pub mod expression;
-pub mod js;
+pub use tidevann_shared::js;
 pub mod metadata;
 pub mod pages;
 pub mod pattern;

@@ -1,6 +1,6 @@
 [package]
 name = "tidevann-shared"
-description = "What more than one of Tidevann's examples uses, as sokkel-ui's examples/shared: the clips' scenes painted at any second, and their sound."
+description = "What more than one of Tidevann's examples uses, as sokkel-ui's examples/shared: the clips' scenes painted at any second and their sound, the fake backend's clock and collections, and the stand-ins for what the browser does."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,7 +8,8 @@ publish.workspace = true
 
 [dependencies]
 egui.workspace = true
+sokkel-egui.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]
-sokkel-egui.workspace = true
 egui_kittest.workspace = true

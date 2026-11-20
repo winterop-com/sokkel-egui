@@ -1,6 +1,6 @@
 //! How the app writes sizes, counts, contexts and times, as the web's `data/format.ts` writes them.
 
-use crate::js::{date_medium, locale, number_to_string, round, to_fixed, utc_parts};
+use crate::js::{intl_date as date_medium, locale_number as locale, number_to_string, round, to_fixed, utc_parts};
 
 pub const GB: f64 = 1_000_000_000.0;
 pub const MB: f64 = 1_000_000.0;

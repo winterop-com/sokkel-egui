@@ -81,7 +81,7 @@ pub fn panel(model: Option<&Model>, models: &[Model], loaded: &[Loaded]) -> Pane
     Panel {
         options: model_options(models),
         facts: model.map(|model| model_facts(model, loaded)),
-        max_hint: model.map(|model| format!("up to {}", crate::js::locale(model.context))),
+        max_hint: model.map(|model| format!("up to {}", crate::js::locale_number(model.context))),
         back: model.map(|model| back_to_defaults(model).0),
     }
 }

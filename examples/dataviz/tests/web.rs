@@ -675,12 +675,12 @@ fn rows_json(rows: &[DataRow]) -> String {
     let written: Vec<String> = rows
         .iter()
         .map(|row| {
-            let mut parts = vec![format!("\"id\":{}", dataviz::js::quoted(&row.id))];
+            let mut parts = vec![format!("\"id\":{}", dataviz::js::quote(&row.id))];
             parts.extend(
                 row.values
                     .iter()
                     .filter(|(key, _)| key != "id")
-                    .map(|(key, value)| format!("{}:{}", dataviz::js::quoted(key), dataviz::js::quoted(value))),
+                    .map(|(key, value)| format!("{}:{}", dataviz::js::quote(key), dataviz::js::quote(value))),
             );
             format!("{{{}}}", parts.join(","))
         })

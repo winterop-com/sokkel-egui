@@ -8,7 +8,7 @@ use crate::data::disk::{usage_of, valid_root};
 use crate::data::format::{GB, bytes, clock_seconds, counted, uptime};
 use crate::data::model::{Download, Level, LoadState, Loaded, LogEvent, LogSource, Model, Prefs, Runner, RunnerStatus};
 use crate::engine::runner::MACHINE_MEMORY;
-use crate::js::{locale, number_to_string, round};
+use crate::js::{locale_number as locale, number_to_string, round};
 
 /// One health check: its name, status, detail and hint.
 #[derive(Clone, Debug, PartialEq, Serialize)]

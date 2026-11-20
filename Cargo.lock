@@ -963,6 +963,7 @@ dependencies = [
  "sokkel-egui",
  "sokkel-egui-charts",
  "sokkel-egui-maps",
+ "tidevann-shared",
 ]
 
 [[package]]
@@ -982,6 +983,7 @@ dependencies = [
  "sokkel-egui",
  "sokkel-egui-charts",
  "sokkel-egui-dhis2",
+ "tidevann-shared",
 ]
 
 [[package]]
@@ -1462,6 +1464,7 @@ dependencies = [
  "sokkel-egui",
  "sokkel-egui-charts",
  "sokkel-egui-fhir",
+ "tidevann-shared",
 ]
 
 [[package]]
@@ -2801,6 +2804,7 @@ dependencies = [
  "serde_json",
  "sokkel-egui",
  "sokkel-egui-charts",
+ "tidevann-shared",
 ]
 
 [[package]]
@@ -2823,6 +2827,7 @@ dependencies = [
  "serde_json",
  "sokkel-egui",
  "sokkel-egui-media",
+ "tidevann-shared",
  "unicode-normalization",
 ]
 
@@ -3623,6 +3628,7 @@ dependencies = [
  "serde_json",
  "sokkel-egui",
  "sokkel-egui-media",
+ "tidevann-shared",
 ]
 
 [[package]]
@@ -4808,6 +4814,7 @@ dependencies = [
  "serde_json",
  "sokkel-egui",
  "sokkel-egui-graph",
+ "tidevann-shared",
  "url",
 ]
 
@@ -4977,6 +4984,7 @@ version = "0.1.0"
 dependencies = [
  "egui",
  "egui_kittest",
+ "serde_json",
  "sokkel-egui",
 ]
 

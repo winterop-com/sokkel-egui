@@ -461,7 +461,7 @@ pub struct Measured {
 pub fn measured(rows: &[Stored]) -> Vec<Measured> {
     let mut out: Vec<Measured> = Vec::new();
     for row in rows.iter().filter(|row| row.kind == "Observation") {
-        let at = crate::js::slice_units(
+        let at = crate::js::slice16(
             &field(&row.resource, "effectiveDateTime")
                 .filter(|one| !one.is_null())
                 .map(js_string)

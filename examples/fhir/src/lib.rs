@@ -24,7 +24,7 @@ pub mod detail;
 pub mod editing;
 pub mod evaluate;
 pub mod fhirpath;
-pub mod js;
+pub use tidevann_shared::js;
 pub mod model;
 pub mod pages;
 pub mod screens;

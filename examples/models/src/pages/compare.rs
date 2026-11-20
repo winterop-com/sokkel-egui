@@ -8,7 +8,7 @@ use crate::data::format::{bytes, clock, day};
 use crate::data::model::{ColumnState, Comparison, Model, Usage};
 use crate::engine::chat::compare_key;
 use crate::engine::stream::{Live, Phase, usage_of, writing};
-use crate::js::{locale, to_fixed};
+use crate::js::{locale_number as locale, to_fixed};
 
 /// What the next comparison will ask: its models in order, its prompt and its settings.
 #[derive(Clone, Debug, PartialEq, Serialize, serde::Deserialize)]

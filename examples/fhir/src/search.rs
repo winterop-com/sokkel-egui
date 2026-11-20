@@ -447,7 +447,7 @@ fn match_one(param: &SearchParam, modifier: Option<&str>, wanted: &str, value: &
                 return false;
             };
             let (prefix, rest) = prefixed(wanted);
-            let have = crate::js::slice_units(text, rest.encode_utf16().count());
+            let have = crate::js::slice16(text, rest.encode_utf16().count());
             compare(locale_compare(&have, &rest, false), prefix)
         }
         ParamType::Quantity => {

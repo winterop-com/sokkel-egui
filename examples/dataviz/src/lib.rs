@@ -27,7 +27,7 @@ pub mod dialogs;
 pub mod draw;
 pub mod import_dialog;
 pub mod inputs;
-pub mod js;
+pub use tidevann_shared::js;
 pub mod model;
 pub mod overlays;
 pub mod pages;

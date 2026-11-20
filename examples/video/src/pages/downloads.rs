@@ -57,7 +57,7 @@ pub fn view(data: &Data) -> DownloadsView {
         .map(|one| one.bytes)
         .sum();
     DownloadsView {
-        loading: !data.downloads.ready(),
+        loading: !data.downloads.loaded(),
         count: format!("{}, {}", plural(rows.len() as f64, "video", None), bytes_of(bytes)),
         rows,
     }

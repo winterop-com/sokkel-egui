@@ -11,7 +11,9 @@ use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 
-use crate::js::{length, locale_compare, number_to_string, round, slice, slice_range, sort_by, to_number};
+use crate::js::{
+    len16 as length, locale_compare, number_of_text as to_number, number_to_string, round, slice, slice_range, sort_by,
+};
 
 /// A value in a table or a result.
 #[derive(Clone, Debug, PartialEq)]
@@ -868,12 +870,12 @@ fn compare(a: &Value, b: &Value) -> f64 {
         (Value::Null, _) => -1.0,
         (_, Value::Null) => 1.0,
         (Value::Num(x), Value::Num(y)) => x - y,
-        (Value::Str(_), _) | (_, Value::Str(_)) => match locale_compare(&a.say(), &b.say()) {
+        (Value::Str(_), _) | (_, Value::Str(_)) => match locale_compare(&a.say(), &b.say(), false) {
             Ordering::Less => -1.0,
             Ordering::Equal => 0.0,
             Ordering::Greater => 1.0,
         },
-        _ if a.number().is_nan() || b.number().is_nan() => match locale_compare(&a.say(), &b.say()) {
+        _ if a.number().is_nan() || b.number().is_nan() => match locale_compare(&a.say(), &b.say(), false) {
             Ordering::Less => -1.0,
             Ordering::Equal => 0.0,
             Ordering::Greater => 1.0,

@@ -95,7 +95,7 @@ pub fn view(data: &Data, chip: Chip) -> HomeView {
         .map(|video| video.id)
         .collect();
     HomeView {
-        loading: !data.history.ready(),
+        loading: !data.history.loaded(),
         empty: videos.is_empty().then(|| chip.says()),
         videos,
     }

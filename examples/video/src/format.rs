@@ -1,6 +1,6 @@
 //! How the site writes its numbers and ages, as the web's `format.ts` writes them.
 
-use crate::js::{compact, locale_number, number_to_string, round, to_fixed};
+use crate::js::{compact_number as compact, locale_number, number_to_string, round, to_fixed};
 
 /// A count written short: `52.4K`, `1.2M`.
 pub fn short(count: f64) -> String {

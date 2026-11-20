@@ -19,7 +19,7 @@ pub mod catalog;
 pub mod data;
 pub mod dialogs;
 pub mod downloads;
-pub mod js;
+pub use tidevann_shared::js;
 pub mod look;
 pub mod lyrics;
 pub mod pages;

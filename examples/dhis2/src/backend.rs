@@ -7,8 +7,8 @@
 //! the rows as they were when it was made. A page reads a collection's rows as they were last told
 //! or listed (`Collection::seen`), none until the first answer, so what a page shows lags a change
 //! by the same moment the web's does. `Backend::advance` moves the clock; where the changes stand
-//! (`saving`) follows the web's `savingNow`. Carried from the dataviz example's backend
-//! (`examples/dataviz/src/backend.rs`).
+//! (`saving`) follows the web's `savingNow`. The collections, the clock and `Saving` are the shared
+//! backend's (`tidevann_shared::backend`).
 
 use serde::{Deserialize, Serialize};
 
@@ -17,6 +17,8 @@ use crate::js::trim;
 use crate::metadata::{age_combo, constant, constants, data_set, days_in, de, org_unit, shift_period, uid};
 use crate::program::{ProgramRule, rule_seed};
 use crate::values::{data_value, reports};
+use tidevann_shared::backend;
+pub use tidevann_shared::backend::{Clock, LATENCY, Row, Saving, saving_note};
 
 /// The server the workbench talks to, by its name and address.
 pub const SERVER_NAME: &str = "tidevann-metadata";
@@ -601,14 +603,6 @@ pub fn unit_name(id: &str) -> String {
 
 // --- The collections ------------------------------------------------------------------------------
 
-/// How long each call to the backend takes, in milliseconds.
-pub const LATENCY: i64 = 150;
-
-/// A row of a collection, kept under its id.
-pub trait Row: Clone {
-    fn id(&self) -> &str;
-}
-
 impl Row for Indicator {
     fn id(&self) -> &str {
         &self.id
@@ -635,8 +629,8 @@ pub enum Name {
     ProgramRules,
 }
 
-impl Name {
-    pub fn key(self) -> &'static str {
+impl backend::Name for Name {
+    fn key(self) -> &'static str {
         match self {
             Name::Indicators => "indicators",
             Name::ValidationRules => "validation-rules",
@@ -681,23 +675,6 @@ impl Toast {
     }
 }
 
-/// Where the example's changes stand: some still on their way, the last one refused, or all kept.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Saving {
-    Saving,
-    Failed(String),
-    Saved,
-}
-
-/// The words a status line says for where the changes stand, its tone and whether it pulses.
-pub fn saving_note(saving: &Saving) -> (String, &'static str, bool) {
-    match saving {
-        Saving::Saving => ("Saving".to_owned(), "quiet", true),
-        Saving::Failed(reason) => (format!("Not saved: {reason}"), "error", false),
-        Saving::Saved => ("All changes saved".to_owned(), "quiet", false),
-    }
-}
-
 /// Something a page hears once its change is answered.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Event {
@@ -720,93 +697,20 @@ pub enum Then {
 }
 
 #[derive(Clone, Debug)]
-enum Job {
+pub enum Job {
     /// A collection's change told, or its list answered, with the rows kept under the timer's seq.
     Heard(Name),
     /// A change answered: kept or refused, and what follows it.
     Answer { failure: Option<String>, then: Vec<Then> },
 }
 
-#[derive(Clone, Debug)]
-struct Timer {
-    at: i64,
-    seq: u64,
-    job: Job,
-}
-
-/// The web's clock and its timers.
-#[derive(Clone, Debug, Default)]
-pub struct Clock {
-    pub now: i64,
-    seq: u64,
-    timers: Vec<Timer>,
-}
-
-impl Clock {
-    fn after(&mut self, ms: i64, job: Job) -> u64 {
-        self.seq += 1;
-        self.timers.push(Timer {
-            at: self.now + ms,
-            seq: self.seq,
-            job,
-        });
-        self.seq
-    }
-}
-
-/// One collection: its rows as the backend keeps them, and as the pages last heard them.
-#[derive(Clone, Debug)]
-pub struct Collection<T: Row> {
-    pub name: Name,
-    /// The rows as kept, every change made at once.
-    pub rows: Vec<T>,
-    /// The rows as last told or listed, none until the first answer.
-    pub seen: Option<Vec<T>>,
-    pending: Vec<(u64, Vec<T>)>,
-}
-
-impl<T: Row> Collection<T> {
-    fn new(name: Name, rows: Vec<T>) -> Self {
-        Collection {
-            name,
-            rows,
-            seen: None,
-            pending: Vec::new(),
-        }
-    }
-
-    /// The rows a page shows: none until the first answer.
-    pub fn seen(&self) -> &[T] {
-        self.seen.as_deref().unwrap_or_default()
-    }
-
-    /// The row under `id` as kept.
-    pub fn get(&self, id: &str) -> Option<&T> {
-        self.rows.iter().find(|row| row.id() == id)
-    }
-
-    fn heard(&mut self, seq: u64) {
-        if let Some(at) = self.pending.iter().position(|(one, _)| *one == seq) {
-            self.seen = Some(self.pending.remove(at).1);
-        }
-    }
-
-    fn list(&mut self, clock: &mut Clock) {
-        let seq = clock.after(LATENCY, Job::Heard(self.name));
-        self.pending.push((seq, self.rows.clone()));
-    }
-
-    fn save(&mut self, clock: &mut Clock, next: Vec<T>) {
-        self.rows = next;
-        let seq = clock.after(LATENCY, Job::Heard(self.name));
-        self.pending.push((seq, self.rows.clone()));
-    }
-}
+/// A collection of the backend, under its name.
+pub type Collection<T> = backend::Collection<T, Name>;
 
 /// The workbench's backend on the web's clock, and what the app said and where it went.
 #[derive(Clone, Debug)]
 pub struct Backend {
-    pub clock: Clock,
+    pub clock: Clock<Job>,
     pub indicators: Collection<Indicator>,
     pub validation_rules: Collection<ValidationRule>,
     pub program_rules: Collection<ProgramRule>,
@@ -828,10 +732,7 @@ impl Backend {
     /// app lists them.
     pub fn new(now: i64) -> Self {
         let mut backend = Backend {
-            clock: Clock {
-                now,
-                ..Clock::default()
-            },
+            clock: Clock::new(now),
             indicators: Collection::new(Name::Indicators, indicator_seed()),
             validation_rules: Collection::new(Name::ValidationRules, rules_seed()),
             program_rules: Collection::new(Name::ProgramRules, rule_seed()),
@@ -857,9 +758,9 @@ impl Backend {
 
     /// Every collection listed, as a page that reads them does when it is drawn.
     pub fn list_all(&mut self) {
-        self.indicators.list(&mut self.clock);
-        self.validation_rules.list(&mut self.clock);
-        self.program_rules.list(&mut self.clock);
+        self.indicators.tell(&mut self.clock, Job::Heard);
+        self.validation_rules.tell(&mut self.clock, Job::Heard);
+        self.program_rules.tell(&mut self.clock, Job::Heard);
     }
 
     pub fn now(&self) -> i64 {
@@ -868,26 +769,15 @@ impl Backend {
 
     /// Fires every timer due by `to`, each at its time, in the order they were set.
     pub fn advance(&mut self, to: i64) {
-        loop {
-            let next = self
-                .clock
-                .timers
-                .iter()
-                .enumerate()
-                .filter(|(_, timer)| timer.at <= to)
-                .min_by_key(|(_, timer)| (timer.at, timer.seq))
-                .map(|(index, _)| index);
-            let Some(index) = next else { break };
-            let timer = self.clock.timers.remove(index);
-            self.clock.now = timer.at;
-            self.fire(timer.seq, timer.job);
+        while let Some((seq, job)) = self.clock.take_due(to) {
+            self.fire(seq, job);
         }
-        self.clock.now = self.clock.now.max(to);
+        self.clock.reach(to);
     }
 
     /// The time of the next timer due, if any.
     pub fn next_due(&self) -> Option<i64> {
-        self.clock.timers.iter().map(|timer| timer.at).min()
+        self.clock.next_due()
     }
 
     fn fire(&mut self, seq: u64, job: Job) {
@@ -896,15 +786,7 @@ impl Backend {
             Job::Heard(Name::ValidationRules) => self.validation_rules.heard(seq),
             Job::Heard(Name::ProgramRules) => self.program_rules.heard(seq),
             Job::Answer { failure, then } => {
-                self.pending -= 1;
-                match &failure {
-                    Some(reason) => self.saving = Saving::Failed(reason.clone()),
-                    None => {
-                        if self.pending == 0 && self.saving == Saving::Saving {
-                            self.saving = Saving::Saved;
-                        }
-                    }
-                }
+                self.saving.settle(&mut self.pending, failure.as_deref());
                 for one in then {
                     match (one, &failure) {
                         (Then::Refused(title), Some(reason)) => self.toasts.push(Toast::error(title, reason.clone())),
@@ -932,127 +814,61 @@ impl Backend {
 
     /// A change made: followed by `saving` until it is answered, with what follows it.
     fn answered(&mut self, failure: Option<String>, then: Vec<Then>) {
-        self.pending += 1;
-        if self.saving != Saving::Saving {
-            self.saving = Saving::Saving;
-        }
+        self.saving.follow(&mut self.pending);
         self.clock.after(LATENCY, Job::Answer { failure, then });
     }
 
     // --- Indicators ---
 
     pub fn create_indicator(&mut self, row: Indicator, then: Vec<Then>) {
-        let mut next = vec![row];
-        next.extend(self.indicators.rows.iter().cloned());
-        self.indicators.save(&mut self.clock, next);
+        self.indicators.prepend(&mut self.clock, row, Job::Heard);
         self.answered(None, then);
     }
 
     /// Changes the indicator under `id`; there being none is refused.
     pub fn update_indicator(&mut self, id: &str, change: impl FnOnce(&mut Indicator), then: Vec<Then>) {
-        match self.indicators.get(id).cloned() {
-            None => self.answered(Some(format!("No indicators with the id {id}.")), then),
-            Some(mut row) => {
-                change(&mut row);
-                let next = self
-                    .indicators
-                    .rows
-                    .iter()
-                    .map(|one| if one.id == id { row.clone() } else { one.clone() })
-                    .collect();
-                self.indicators.save(&mut self.clock, next);
-                self.answered(None, then);
-            }
-        }
+        let kept = self.indicators.update(&mut self.clock, id, change, Job::Heard);
+        self.answered(kept.err(), then);
     }
 
     pub fn remove_indicator(&mut self, id: &str, then: Vec<Then>) {
-        let next = self
-            .indicators
-            .rows
-            .iter()
-            .filter(|one| one.id != id)
-            .cloned()
-            .collect();
-        self.indicators.save(&mut self.clock, next);
+        self.indicators.remove(&mut self.clock, id, Job::Heard);
         self.answered(None, then);
     }
 
     // --- Validation rules ---
 
     pub fn create_rule(&mut self, row: ValidationRule, then: Vec<Then>) {
-        let mut next = vec![row];
-        next.extend(self.validation_rules.rows.iter().cloned());
-        self.validation_rules.save(&mut self.clock, next);
+        self.validation_rules.prepend(&mut self.clock, row, Job::Heard);
         self.answered(None, then);
     }
 
     /// Changes the validation rule under `id`; there being none is refused.
     pub fn update_rule(&mut self, id: &str, change: impl FnOnce(&mut ValidationRule), then: Vec<Then>) {
-        match self.validation_rules.get(id).cloned() {
-            None => self.answered(Some(format!("No validation-rules with the id {id}.")), then),
-            Some(mut row) => {
-                change(&mut row);
-                let next = self
-                    .validation_rules
-                    .rows
-                    .iter()
-                    .map(|one| if one.id == id { row.clone() } else { one.clone() })
-                    .collect();
-                self.validation_rules.save(&mut self.clock, next);
-                self.answered(None, then);
-            }
-        }
+        let kept = self.validation_rules.update(&mut self.clock, id, change, Job::Heard);
+        self.answered(kept.err(), then);
     }
 
     pub fn remove_rule(&mut self, id: &str, then: Vec<Then>) {
-        let next = self
-            .validation_rules
-            .rows
-            .iter()
-            .filter(|one| one.id != id)
-            .cloned()
-            .collect();
-        self.validation_rules.save(&mut self.clock, next);
+        self.validation_rules.remove(&mut self.clock, id, Job::Heard);
         self.answered(None, then);
     }
 
     // --- Program rules ---
 
     pub fn create_program_rule(&mut self, row: ProgramRule, then: Vec<Then>) {
-        let mut next = vec![row];
-        next.extend(self.program_rules.rows.iter().cloned());
-        self.program_rules.save(&mut self.clock, next);
+        self.program_rules.prepend(&mut self.clock, row, Job::Heard);
         self.answered(None, then);
     }
 
     /// Changes the program rule under `id`; there being none is refused.
     pub fn update_program_rule(&mut self, id: &str, change: impl FnOnce(&mut ProgramRule), then: Vec<Then>) {
-        match self.program_rules.get(id).cloned() {
-            None => self.answered(Some(format!("No program-rules with the id {id}.")), then),
-            Some(mut row) => {
-                change(&mut row);
-                let next = self
-                    .program_rules
-                    .rows
-                    .iter()
-                    .map(|one| if one.id == id { row.clone() } else { one.clone() })
-                    .collect();
-                self.program_rules.save(&mut self.clock, next);
-                self.answered(None, then);
-            }
-        }
+        let kept = self.program_rules.update(&mut self.clock, id, change, Job::Heard);
+        self.answered(kept.err(), then);
     }
 
     pub fn remove_program_rule(&mut self, id: &str, then: Vec<Then>) {
-        let next = self
-            .program_rules
-            .rows
-            .iter()
-            .filter(|one| one.id != id)
-            .cloned()
-            .collect();
-        self.program_rules.save(&mut self.clock, next);
+        self.program_rules.remove(&mut self.clock, id, Job::Heard);
         self.answered(None, then);
     }
 

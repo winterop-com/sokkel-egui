@@ -18,17 +18,9 @@ use crate::catalog::video_by_id;
 use crate::catalog::{Person, VIDEOS, VIEWER, channel_of};
 use crate::clips::{RenditionId, clip_of, rendition_of};
 
-pub const MINUTE: i64 = 60_000;
-pub const HOUR: i64 = 60 * MINUTE;
-pub const DAY: i64 = 24 * HOUR;
-
-/// How long each call to the backend takes, in milliseconds.
-pub const LATENCY: i64 = 150;
-
-/// A row of a collection, kept under its id.
-pub trait Row: Clone {
-    fn id(&self) -> &str;
-}
+pub use crate::js::{DAY, HOUR, MINUTE, base36};
+use tidevann_shared::backend;
+pub use tidevann_shared::backend::{Clock, LATENCY, Row};
 
 macro_rules! row {
     ($($kind:ty),*) => {
@@ -517,6 +509,12 @@ impl Name {
     }
 }
 
+impl backend::Name for Name {
+    fn key(self) -> &'static str {
+        Name::key(self)
+    }
+}
+
 /// A note the site shows for a moment.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Toast {
@@ -565,7 +563,7 @@ pub const TICK: i64 = 120;
 pub const FETCH_TAKES: i64 = 2000;
 
 #[derive(Clone, Debug, PartialEq)]
-enum Job {
+pub enum Job {
     /// A collection's change told to those listening, with the rows kept under the timer's seq.
     Tell(Name),
     /// A collection's list answered, with the rows of the snapshot under the timer's seq.
@@ -590,149 +588,27 @@ enum Job {
 
 /// Who asked for a list: the module itself, as `data.ts` does as it loads, or a page.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Listener {
+pub enum Listener {
     Module,
     Page,
 }
 
-#[derive(Clone, Debug)]
-struct Timer {
-    at: i64,
-    seq: u64,
-    every: Option<i64>,
-    job: Job,
-}
+/// A collection the viewer keeps, under its name.
+pub type Collection<T> = backend::Collection<T, Name>;
 
-/// The web's clock and its timers.
-#[derive(Clone, Debug, Default)]
-pub struct Clock {
-    pub now: i64,
-    /// How many rows the backend added, whose count ends the ids it makes.
-    made: u64,
-    seq: u64,
-    timers: Vec<Timer>,
-}
-
-impl Clock {
-    fn after(&mut self, ms: i64, job: Job) -> u64 {
-        self.seq += 1;
-        self.timers.push(Timer {
-            at: self.now + ms,
-            seq: self.seq,
-            every: None,
-            job,
-        });
-        self.seq
-    }
-
-    fn every(&mut self, ms: i64, job: Job) -> u64 {
-        self.seq += 1;
-        self.timers.push(Timer {
-            at: self.now + ms,
-            seq: self.seq,
-            every: Some(ms),
-            job,
-        });
-        self.seq
-    }
-
-    fn clear(&mut self, seq: u64) {
-        self.timers.retain(|timer| timer.seq != seq);
-    }
-}
-
-/// One collection: its rows as the backend keeps them, and as the pages last heard them.
-#[derive(Clone, Debug)]
-pub struct Collection<T: Row> {
-    pub name: Name,
-    /// The rows as kept, every change made at once.
-    pub rows: Vec<T>,
-    /// The rows as last told or listed, none until the first answer.
-    pub seen: Option<Vec<T>>,
-    /// The rows each change or list will tell, under its timer's seq.
-    pending: Vec<(u64, Vec<T>)>,
-}
-
-impl<T: Row> Collection<T> {
-    fn new(name: Name, rows: Vec<T>) -> Self {
-        Collection {
-            name,
-            rows,
-            seen: None,
-            pending: Vec::new(),
-        }
-    }
-
-    /// The rows a page shows: none until the first answer.
-    pub fn seen(&self) -> &[T] {
-        self.seen.as_deref().unwrap_or_default()
-    }
-
-    /// Whether the first answer has come.
-    pub fn ready(&self) -> bool {
-        self.seen.is_some()
-    }
-
-    /// The row under `id` a page shows.
-    pub fn seen_get(&self, id: &str) -> Option<&T> {
-        self.seen().iter().find(|row| row.id() == id)
-    }
-
-    /// The row under `id` as kept.
-    pub fn get(&self, id: &str) -> Option<&T> {
-        self.rows.iter().find(|row| row.id() == id)
-    }
-
-    fn save(&mut self, clock: &mut Clock, next: Vec<T>) {
-        self.rows = next;
-        let seq = clock.after(LATENCY, Job::Tell(self.name));
-        self.pending.push((seq, self.rows.clone()));
-    }
-
-    fn list(&mut self, clock: &mut Clock, listener: Listener) {
-        let seq = clock.after(LATENCY, Job::Listed(self.name, listener));
-        self.pending.push((seq, self.rows.clone()));
-    }
-
-    fn take(&mut self, seq: u64) -> Option<Vec<T>> {
-        let at = self.pending.iter().position(|(one, _)| *one == seq)?;
-        Some(self.pending.remove(at).1)
-    }
-
-    /// Adds a row at the front, as the backend's `create` and `upsert` add one.
-    fn create(&mut self, clock: &mut Clock, row: T) {
-        clock.made += 1;
-        let mut next = vec![row];
-        next.extend(self.rows.iter().cloned());
-        self.save(clock, next);
-    }
-
-    /// Changes the row under `id`; there being none is refused, and nothing is kept.
-    fn update(&mut self, clock: &mut Clock, id: &str, change: impl FnOnce(&mut T)) -> Result<(), String> {
-        let Some(found) = self.get(id) else {
-            return Err(format!("No {} with the id {id}.", self.name.key()));
-        };
-        let mut row = found.clone();
-        change(&mut row);
-        let next = self
-            .rows
-            .iter()
-            .map(|one| if one.id() == id { row.clone() } else { one.clone() })
-            .collect();
-        self.save(clock, next);
-        Ok(())
-    }
-
-    fn remove(&mut self, clock: &mut Clock, id: &str) {
-        let next = self.rows.iter().filter(|row| row.id() != id).cloned().collect();
-        self.save(clock, next);
-    }
+/// Adds a row at the front of a collection, as the backend's `create` and `upsert` add one,
+/// counted among the rows the backend made.
+fn create<T: Row>(made: &mut u64, clock: &mut Clock<Job>, collection: &mut Collection<T>, row: T) {
+    *made += 1;
+    collection.prepend(clock, row, Job::Tell);
 }
 
 /// Everything the viewer keeps, on the web's clock, and what the site said and where it went.
 #[derive(Clone, Debug)]
 pub struct Data {
-    pub clock: Clock,
+    pub clock: Clock<Job>,
+    /// How many rows the backend added, whose count ends the ids it makes.
+    made: u64,
     pub follows: Collection<Follow>,
     pub ratings: Collection<Rating>,
     pub history: Collection<Watched>,
@@ -766,18 +642,16 @@ impl Data {
     /// The site as it opens at `now`: every collection from its seed, listed once as `data.ts`
     /// and the pages list them.
     pub fn new(now: i64) -> Self {
-        let mut clock = Clock {
-            now,
-            ..Clock::default()
-        };
+        let mut clock = Clock::new(now);
         let mut follows = Collection::new(Name::Follows, seed_follows(now));
         let mut history = Collection::new(Name::History, seed_history(now));
         let mut prefs_rows = Collection::new(Name::Prefs, vec![default_prefs()]);
-        follows.list(&mut clock, Listener::Module);
-        history.list(&mut clock, Listener::Module);
-        prefs_rows.list(&mut clock, Listener::Module);
+        follows.tell(&mut clock, |name| Job::Listed(name, Listener::Module));
+        history.tell(&mut clock, |name| Job::Listed(name, Listener::Module));
+        prefs_rows.tell(&mut clock, |name| Job::Listed(name, Listener::Module));
         let mut data = Data {
             clock,
+            made: 0,
             follows,
             ratings: Collection::new(Name::Ratings, seed_ratings()),
             history,
@@ -798,12 +672,12 @@ impl Data {
         };
         // The pages' own lists, as the site's frame mounts them.
         let clock = &mut data.clock;
-        data.follows.list(clock, Listener::Page);
-        data.playlists.list(clock, Listener::Page);
-        data.ratings.list(clock, Listener::Page);
-        data.downloads.list(clock, Listener::Page);
-        data.history.list(clock, Listener::Page);
-        data.comments.list(clock, Listener::Page);
+        data.follows.tell(clock, |name| Job::Listed(name, Listener::Page));
+        data.playlists.tell(clock, |name| Job::Listed(name, Listener::Page));
+        data.ratings.tell(clock, |name| Job::Listed(name, Listener::Page));
+        data.downloads.tell(clock, |name| Job::Listed(name, Listener::Page));
+        data.history.tell(clock, |name| Job::Listed(name, Listener::Page));
+        data.comments.tell(clock, |name| Job::Listed(name, Listener::Page));
         data
     }
 
@@ -813,33 +687,15 @@ impl Data {
 
     /// Fires every timer due by `to`, each at its time, in the order they were set.
     pub fn advance(&mut self, to: i64) {
-        loop {
-            let next = self
-                .clock
-                .timers
-                .iter()
-                .enumerate()
-                .filter(|(_, timer)| timer.at <= to)
-                .min_by_key(|(_, timer)| (timer.at, timer.seq))
-                .map(|(index, _)| index);
-            let Some(index) = next else { break };
-            let timer = &mut self.clock.timers[index];
-            self.clock.now = timer.at;
-            let (seq, job) = (timer.seq, timer.job.clone());
-            match timer.every {
-                Some(every) => timer.at += every,
-                None => {
-                    self.clock.timers.remove(index);
-                }
-            }
+        while let Some((seq, job)) = self.clock.take_due(to) {
             self.fire(seq, job);
         }
-        self.clock.now = self.clock.now.max(to);
+        self.clock.reach(to);
     }
 
     /// The time of the next timer due, if any.
     pub fn next_due(&self) -> Option<i64> {
-        self.clock.timers.iter().map(|timer| timer.at).min()
+        self.clock.next_due()
     }
 
     fn fire(&mut self, seq: u64, job: Job) {
@@ -848,7 +704,9 @@ impl Data {
             Job::Listed(name, listener) => self.heard(name, seq, listener, false),
             Job::HistoryMade(id) => {
                 for patch in self.making_history.remove(&id).unwrap_or_default() {
-                    let _ = self.history.update(&mut self.clock, &id, |row| row.apply(&patch));
+                    let _ = self
+                        .history
+                        .update(&mut self.clock, &id, |row| row.apply(&patch), Job::Tell);
                 }
             }
             Job::Then(Then::Toast(toast)) => self.toasts.push(toast),
@@ -955,8 +813,10 @@ impl Data {
         if on {
             self.followed_now.insert(channel.to_owned());
             let since = self.clock.now;
-            self.follows.create(
+            create(
+                &mut self.made,
                 &mut self.clock,
+                &mut self.follows,
                 Follow {
                     id: channel.to_owned(),
                     since,
@@ -964,7 +824,7 @@ impl Data {
             );
         } else {
             self.followed_now.remove(channel);
-            self.follows.remove(&mut self.clock, channel);
+            self.follows.remove(&mut self.clock, channel, Job::Tell);
         }
     }
 
@@ -975,7 +835,9 @@ impl Data {
             return;
         }
         if self.in_history.contains(id) {
-            let _ = self.history.update(&mut self.clock, id, |row| row.apply(&patch));
+            let _ = self
+                .history
+                .update(&mut self.clock, id, |row| row.apply(&patch), Job::Tell);
             return;
         }
         let mut row = Watched {
@@ -986,7 +848,7 @@ impl Data {
             times: 0,
         };
         row.apply(&patch);
-        self.history.create(&mut self.clock, row);
+        create(&mut self.made, &mut self.clock, &mut self.history, row);
         self.making_history.insert(id.to_owned(), Vec::new());
         self.clock.after(LATENCY, Job::HistoryMade(id.to_owned()));
     }
@@ -994,26 +856,32 @@ impl Data {
     /// Changes settings at once on the page and tells the backend.
     pub fn set_prefs(&mut self, patch: &PrefsPatch) {
         self.prefs.apply(patch);
-        let _ = self.prefs_rows.update(&mut self.clock, "me", |row| row.apply(patch));
+        let _ = self
+            .prefs_rows
+            .update(&mut self.clock, "me", |row| row.apply(patch), Job::Tell);
     }
 
     // --- The collections, as the pages change them ----------------------------------------------
 
     /// The id the backend makes for a row added without one.
     fn made_id(&self, name: Name) -> String {
-        format!("{}-{}-{}", name.key(), base36(self.clock.now), self.clock.made + 1)
+        format!("{}-{}-{}", name.key(), base36(self.clock.now), self.made + 1)
     }
 
     /// Rates a video, or takes the rating back: a rating the page knows is changed, else made.
     pub fn rate_video(&mut self, id: &str, rating: Option<RatingKind>) {
         let known = self.ratings.seen_get(id).is_some();
         match rating {
-            None => self.ratings.remove(&mut self.clock, id),
+            None => self.ratings.remove(&mut self.clock, id, Job::Tell),
             Some(rating) if known => {
-                let _ = self.ratings.update(&mut self.clock, id, |row| row.rating = rating);
+                let _ = self
+                    .ratings
+                    .update(&mut self.clock, id, |row| row.rating = rating, Job::Tell);
             }
-            Some(rating) => self.ratings.create(
+            Some(rating) => create(
+                &mut self.made,
                 &mut self.clock,
+                &mut self.ratings,
                 Rating {
                     id: id.to_owned(),
                     rating,
@@ -1024,7 +892,7 @@ impl Data {
 
     /// Takes a rating away, with a note once it is gone.
     pub fn remove_rating(&mut self, id: &str, toast: Option<Toast>) {
-        self.ratings.remove(&mut self.clock, id);
+        self.ratings.remove(&mut self.clock, id, Job::Tell);
         if let Some(toast) = toast {
             self.then_toast(toast);
         }
@@ -1049,18 +917,23 @@ impl Data {
     /// Changes a playlist, its time of change now, and follows the answer with `then` when kept.
     pub fn save_playlist(&mut self, list: &str, patch: PlaylistPatch, then: Vec<Then>) {
         let now = self.clock.now;
-        let kept = self.playlists.update(&mut self.clock, list, |row| {
-            if let Some(name) = &patch.name {
-                row.name = name.clone();
-            }
-            if let Some(description) = &patch.description {
-                row.description = description.clone();
-            }
-            if let Some(videos) = &patch.videos {
-                row.videos = videos.clone();
-            }
-            row.updated = now;
-        });
+        let kept = self.playlists.update(
+            &mut self.clock,
+            list,
+            |row| {
+                if let Some(name) = &patch.name {
+                    row.name = name.clone();
+                }
+                if let Some(description) = &patch.description {
+                    row.description = description.clone();
+                }
+                if let Some(videos) = &patch.videos {
+                    row.videos = videos.clone();
+                }
+                row.updated = now;
+            },
+            Job::Tell,
+        );
         if kept.is_ok() {
             for one in then {
                 self.then(one);
@@ -1086,7 +959,7 @@ impl Data {
             updated: now,
         };
         let jobs = then(&row);
-        self.playlists.create(&mut self.clock, row);
+        create(&mut self.made, &mut self.clock, &mut self.playlists, row);
         for job in jobs {
             self.then(job);
         }
@@ -1095,7 +968,7 @@ impl Data {
 
     /// Deletes a playlist, with a note once it is gone.
     pub fn delete_playlist(&mut self, list: &str, toast: Option<Toast>) {
-        self.playlists.remove(&mut self.clock, list);
+        self.playlists.remove(&mut self.clock, list, Job::Tell);
         if let Some(toast) = toast {
             self.then_toast(toast);
         }
@@ -1103,7 +976,7 @@ impl Data {
 
     /// Takes a video out of the history, with a note once it is gone.
     pub fn remove_watched(&mut self, id: &str, toast: Option<Toast>) {
-        self.history.remove(&mut self.clock, id);
+        self.history.remove(&mut self.clock, id, Job::Tell);
         if let Some(toast) = toast {
             self.then_toast(toast);
         }
@@ -1126,16 +999,16 @@ impl Data {
             reported: false,
             reactions: None,
         };
-        self.comments.create(&mut self.clock, row);
+        create(&mut self.made, &mut self.clock, &mut self.comments, row);
     }
 
     /// Changes a comment as kept.
     pub fn update_comment(&mut self, id: &str, change: impl FnOnce(&mut Comment)) {
-        let _ = self.comments.update(&mut self.clock, id, change);
+        let _ = self.comments.update(&mut self.clock, id, change, Job::Tell);
     }
 
     pub fn remove_comment(&mut self, id: &str) {
-        self.comments.remove(&mut self.clock, id);
+        self.comments.remove(&mut self.clock, id, Job::Tell);
     }
 
     // --- Downloads, as the watch page makes them ------------------------------------------------
@@ -1186,8 +1059,10 @@ impl Data {
         let Some(found) = video_by_id(video) else { return };
         let clip = clip_of(found, rendition_of(fetch.rendition.id()));
         let at = self.clock.now;
-        self.downloads.create(
+        create(
+            &mut self.made,
             &mut self.clock,
+            &mut self.downloads,
             Download {
                 id: video.to_owned(),
                 rendition: fetch.rendition,
@@ -1227,7 +1102,7 @@ impl Data {
         if before && let Some(toast) = toast.clone() {
             self.toasts.push(toast);
         }
-        self.downloads.remove(&mut self.clock, video);
+        self.downloads.remove(&mut self.clock, video, Job::Tell);
         if !before && let Some(toast) = toast {
             self.then_toast(toast);
         }
@@ -1247,23 +1122,6 @@ pub struct PlaylistPatch {
 pub enum Then {
     Toast(Toast),
     Go(String),
-}
-
-/// A number in base 36, as `Number.prototype.toString(36)` writes a whole one.
-pub fn base36(value: i64) -> String {
-    if value == 0 {
-        return "0".to_owned();
-    }
-    let digits = b"0123456789abcdefghijklmnopqrstuvwxyz";
-    let mut left = value.unsigned_abs();
-    let mut out = Vec::new();
-    while left > 0 {
-        out.push(digits[(left % 36) as usize]);
-        left /= 36;
-    }
-    out.reverse();
-    let text = String::from_utf8(out).unwrap_or_default();
-    if value < 0 { format!("-{text}") } else { text }
 }
 
 /// The rows kept between visits, as the shared backend keeps them in the browser's storage.

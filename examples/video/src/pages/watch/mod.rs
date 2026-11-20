@@ -89,7 +89,7 @@ impl Watching {
     /// Whether the player is handed the clip yet: once the history has come, so it starts where
     /// the viewer stopped.
     pub fn attached(&self, data: &Data) -> bool {
-        data.history.ready()
+        data.history.loaded()
     }
 
     /// Where the viewer stopped, when it is worth starting there.

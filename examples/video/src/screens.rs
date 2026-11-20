@@ -538,7 +538,7 @@ fn history(ui: &mut Ui, app: &VideoApp, views: &mut Views, acts: &mut Vec<Act>) 
 
 /// One playlist, or Watch later.
 fn playlist(ui: &mut Ui, app: &VideoApp, id: &str, acts: &mut Vec<Act>) {
-    if !app.data.playlists.ready() {
+    if !app.data.playlists.loaded() {
         return;
     }
     let Some(shown) = pages::playlist::view(&app.data, id) else {
@@ -644,7 +644,7 @@ fn liked(ui: &mut Ui, app: &VideoApp, acts: &mut Vec<Act>) {
     if play && let Some(first) = videos.first() {
         acts.push(Act::Go(format!("watch/{}", first.id)));
     }
-    if !app.data.ratings.ready() {
+    if !app.data.ratings.loaded() {
         return;
     }
     if videos.is_empty() {

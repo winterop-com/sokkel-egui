@@ -11,8 +11,10 @@ to one as `examples/video`. Its manifest is `parity/video.json`; the web's scree
 - The data is the web's to the value (`catalog.rs`, `clips/`, `data.rs`, `format.rs`, `site.rs`,
   `parts.rs`, `dialogs.rs` and each page's view and actions in `pages/`, checked in `tests/web.rs`
   against the web's own modules run under bun). The pure parts it leaned on now live in the core:
-  `numbers` (en-US compact counts, grouping and `toFixed`, which `js::compact`, `locale_number` and
-  `to_fixed` now are), `captions` (the sizes, inks, boxes and edges, a choice read back field by
+  `numbers` (en-US compact counts, grouping and `toFixed`, which `js::compact_number`,
+  `locale_number` and `to_fixed` now are; `js` itself is `tidevann_shared::js`, the browser
+  stand-ins the examples share, and the data layer's collections and clock are
+  `tidevann_shared::backend`), `captions` (the sizes, inks, boxes and edges, a choice read back field by
   field, the track chosen, and the tokens a cue is painted with) and `toggle_reaction` with its
   `Reaction` (the comments' `CommentReaction`). The data layer gained `Kept` and `restore`, the rows
   eframe's storage keeps put back on a new visit.

@@ -35,7 +35,7 @@ pub fn view(data: &Data, chosen: &str) -> SubscriptionsView {
     shown.sort_by(|left, right| left.days.total_cmp(&right.days));
     let ids = |keep: &dyn Fn(&Video) -> bool| shown.iter().filter(|one| keep(one)).map(|one| one.id).collect();
     SubscriptionsView {
-        loading: !data.follows.ready(),
+        loading: !data.follows.loaded(),
         count: plural(channels.len() as f64, "channel", None),
         chosen: if following(chosen) {
             chosen.to_owned()

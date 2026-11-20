@@ -9,6 +9,7 @@ publish.workspace = true
 [dependencies]
 sokkel-egui.workspace = true
 sokkel-egui-charts.workspace = true
+tidevann-shared = { path = "../shared" }
 eframe.workspace = true
 serde.workspace = true
 serde_json.workspace = true

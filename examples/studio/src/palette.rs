@@ -33,7 +33,7 @@ impl StudioApp {
     /// The files by name, in reading order.
     fn by_name(&self) -> Vec<WorkFile> {
         let mut files = self.backend.files.clone();
-        files.sort_by(|a, b| locale_compare(&a.name, &b.name));
+        files.sort_by(|a, b| locale_compare(&a.name, &b.name, false));
         files
     }
 

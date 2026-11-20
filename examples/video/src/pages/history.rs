@@ -78,7 +78,7 @@ pub fn view(data: &Data, search: &str) -> HistoryView {
         )
     });
     HistoryView {
-        loading: !data.history.ready(),
+        loading: !data.history.loaded(),
         count: plural(rows.len() as f64, "video", None),
         clear_disabled: rows.is_empty(),
         keep: data.prefs.history,
