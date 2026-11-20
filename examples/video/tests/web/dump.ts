@@ -43,6 +43,15 @@ const clearTimer = (id: number | undefined) => {
     timers = timers.filter((timer) => timer.seq !== id)
 }
 Date.now = () => now
+
+// `new Date()` with no arguments reads the held clock too, as a page's own "today" does
+const RealDate = Date
+globalThis.Date = class extends RealDate {
+    constructor(...args: unknown[]) {
+        if (args.length === 0) super(RealDate.now())
+        else super(...(args as [string]))
+    }
+} as DateConstructor
 performance.now = () => now
 
 const kept = new Map<string, string>()
