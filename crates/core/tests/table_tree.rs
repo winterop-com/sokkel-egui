@@ -2,7 +2,8 @@
 //! nothing more, Left closes it or moves to its parent, Down walks the rows as drawn (children
 //! sorted among themselves under their parent), Home and End reach the ends. A branch whose
 //! children are not given asks for them once while it waits, and one refused offers Try again.
-//! Selecting a branch selects every row under it, and pages count the top-level rows.
+//! Selecting a branch selects every row under it, and pages count the top-level rows. A press or
+//! Space with Shift selects the range from the row selected last, a press with Cmd or Ctrl one row.
 
 use std::collections::BTreeSet;
 
@@ -217,4 +218,55 @@ fn a_branch_closed_while_it_waits_asks_again_when_opened() {
     harness.state_mut().state.expanded.insert(1);
     harness.run_steps(2);
     assert_eq!(harness.state().asked, [1, 1]);
+}
+
+fn chosen(harness: &Harness<'static, Tree>) -> Vec<usize> {
+    harness.state().state.selected.iter().copied().collect()
+}
+
+fn press(harness: &mut Harness<'static, Tree>, label: &str, modifiers: egui::Modifiers) {
+    harness.get_by_label(label).click_modifiers(modifiers);
+    harness.run_steps(2);
+}
+
+#[test]
+fn a_press_with_shift_selects_the_range_and_with_cmd_or_ctrl_one_row() {
+    let mut harness = tree();
+    harness.state_mut().selectable = true;
+    harness.state_mut().state.expanded.extend([0, 3]);
+    harness.run_steps(2);
+    // drawn: harbor, nightly-export, run_4120, sync-inventory, juniper
+    press(&mut harness, "run_4120", egui::Modifiers::COMMAND);
+    assert_eq!(chosen(&harness), [4]);
+    // Shift: from the row pressed last to this one, as drawn
+    press(&mut harness, "sync-inventory", egui::Modifiers::SHIFT);
+    assert_eq!(chosen(&harness), [2, 4]);
+    press(&mut harness, "harbor", egui::Modifiers::SHIFT);
+    assert_eq!(chosen(&harness), [0, 2, 3, 4]);
+    // Ctrl on a branch clears it with every row under it
+    press(&mut harness, "nightly-export", egui::Modifiers::CTRL);
+    assert_eq!(chosen(&harness), [0, 2]);
+    // a range from a row that is off, onto one that is on, clears the range
+    press(&mut harness, "harbor", egui::Modifiers::SHIFT);
+    assert_eq!(chosen(&harness), [2]);
+    // a plain press selects nothing
+    press(&mut harness, "juniper", egui::Modifiers::NONE);
+    assert_eq!(chosen(&harness), [2]);
+}
+
+#[test]
+fn shift_space_selects_the_range_from_the_row_selected_last() {
+    let mut harness = tree();
+    harness.state_mut().selectable = true;
+    harness.state_mut().state.expanded.extend([0, 3]);
+    harness.state_mut().state.focus_row(4);
+    harness.run_steps(2);
+    key(&mut harness, Key::Space);
+    assert_eq!(chosen(&harness), [4]);
+    key(&mut harness, Key::ArrowDown);
+    key(&mut harness, Key::ArrowDown);
+    assert_eq!(active(&harness), Some(1));
+    harness.key_press_modifiers(egui::Modifiers::SHIFT, Key::Space);
+    harness.run_steps(1);
+    assert_eq!(chosen(&harness), [1, 2, 4]);
 }

@@ -1,7 +1,7 @@
 use eframe::egui::Ui;
 use sokkel_egui::{
-    Cell, ChipTone, Column, DataTable, Icon, ItemCard, MenuItem, ReadOutcome, TableState, TableVariant, TextRole,
-    tokens,
+    Cell, ChipTone, Column, DataTable, Icon, ItemCard, MenuItem, ReadOutcome, StackLayout, StackPlace, TableState,
+    TableVariant, TextRole, tokens,
 };
 
 use super::{State, section};
@@ -451,6 +451,87 @@ pub fn data_table_tree(_: &mut State, ui: &mut Ui) {
         tokens.asked.push((row, now));
     }
     ui.data_mut(|d| d.insert_temp(id, tokens));
+}
+
+/// A small tree of runs under their jobs under harbor, sync-inventory's runs refused, for the
+/// stacked layouts: the rows, their parents, and the state with every branch open.
+fn stacked_tree() -> (Vec<Vec<Cell>>, Vec<Option<usize>>, TableState) {
+    let run = |id: &str, state: &str, tone: ChipTone, started: &str| {
+        vec![
+            Cell::MutedCode(id.into()),
+            Cell::Chip(state.into(), tone),
+            Cell::Text(started.into()),
+        ]
+    };
+    let rows = vec![
+        vec![Cell::Mono("harbor".into()), Cell::Empty, Cell::Empty],
+        vec![
+            Cell::Mono("nightly-export".into()),
+            Cell::Empty,
+            Cell::Text("Nov 5, 02:00".into()),
+        ],
+        run("run_4120", "succeeded", ChipTone::Good, "Nov 5, 02:00"),
+        run("run_4119", "failed", ChipTone::Critical, "Nov 4, 02:00"),
+        vec![
+            Cell::Mono("sync-inventory".into()),
+            Cell::Empty,
+            Cell::Text("Nov 5, 06:30".into()),
+        ],
+        vec![Cell::Mono("juniper".into()), Cell::Empty, Cell::Empty],
+    ];
+    let parents = vec![None, Some(0), Some(1), Some(1), Some(0), None];
+    let mut state = TableState::default();
+    state.expanded.extend([0, 1, 4]);
+    state.refuse_children(4);
+    state.selected.insert(3);
+    (rows, parents, state)
+}
+
+pub fn data_table_tree_stacked(_: &mut State, ui: &mut Ui) {
+    let columns = [
+        Column::new("Name", 220.0).fill(),
+        Column::new("State", 120.0),
+        Column::new("Started", 140.0),
+    ];
+    let compact = [
+        Column::new("Name", 220.0).fill(),
+        Column::new("State", 120.0).stack(StackPlace::Secondary),
+        Column::new("Started", 140.0).stack(StackPlace::Secondary),
+    ];
+    let looks: [(&str, &str, TableVariant, StackLayout); 3] = [
+        ("story-tree-cards", "Cards", TableVariant::Table, StackLayout::Labeled),
+        ("story-tree-listed", "Listed", TableVariant::List, StackLayout::Labeled),
+        (
+            "story-tree-compact",
+            "Compact",
+            TableVariant::List,
+            StackLayout::Compact,
+        ),
+    ];
+    ui.columns(3, |thirds| {
+        for (third, (key, title, variant, layout)) in thirds.iter_mut().zip(looks) {
+            section(third, title);
+            let id = eframe::egui::Id::unique((key, "state"));
+            let (rows, parents, fresh) = stacked_tree();
+            let mut state = third.data_mut(|d| d.get_temp::<TableState>(id)).unwrap_or(fresh);
+            let heads: &[Column] = if layout == StackLayout::Compact {
+                &compact
+            } else {
+                &columns
+            };
+            DataTable::new(key, heads, &rows, &mut state)
+                .tree(parents)
+                .lazy(|row| row == 4)
+                .selectable(true)
+                .variant(variant)
+                .stack_layout(layout)
+                .stack_below(10_000.0)
+                .footer(false)
+                .height(f32::INFINITY)
+                .show(third);
+            third.data_mut(|d| d.insert_temp(id, state));
+        }
+    });
 }
 
 pub fn data_table_loading(_: &mut State, ui: &mut Ui) {

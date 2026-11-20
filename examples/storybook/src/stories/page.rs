@@ -45,8 +45,11 @@ pub fn page_state(_: &mut State, ui: &mut Ui) {
     section(ui, "Loading");
     PageState::loading().show(ui);
     section(ui, "Refused, with its problems and a retry");
-    PageState::refused("The token was revoked by ada at 09:12.")
-        .problems(["scheduler: the token is not valid", "worker: no read access to harbor"])
+    PageState::refused("The token was revoked by ada at 09:12. Sign in again, or set `api.token` in the service.")
+        .problems([
+            "scheduler: the token is not valid",
+            "worker: no `runs:read` access to harbor",
+        ])
         .retry(true)
         .show(ui);
     section(ui, "Not answering");

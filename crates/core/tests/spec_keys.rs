@@ -3,7 +3,8 @@
 //! a server menu opens on ArrowDown and Escape returns to its face; a sortable grid's arrows move
 //! the focused card, the focus following it, and Escape puts a picked-up card back; a number cell
 //! refuses what is not a number and saves its digits; a prompt submits on Enter, refuses an empty
-//! value, holds while busy and starts over at each opening.
+//! value, holds while busy and starts over at each opening; a chip's face and remove button are
+//! Tab stops whose Enter, Space and clicks stop at the chip, and a menu chip opens on ArrowDown.
 
 use egui::{Event, Key, PointerButton, Pos2};
 use egui_kittest::{Harness, kittest::Queryable};
@@ -337,4 +338,90 @@ fn a_prompt_submits_on_enter_and_refuses_an_empty_value() {
     harness.key_press(Key::Enter);
     harness.run_steps(3);
     assert_eq!(harness.state().answers.len(), 2);
+}
+
+#[derive(Default)]
+struct ChipPresses {
+    row: usize,
+    row_keys: usize,
+    pressed: usize,
+    removed: usize,
+    chosen: Option<usize>,
+}
+
+fn chips() -> Harness<'static, ChipPresses> {
+    let mut harness = Harness::builder().with_size([400.0, 300.0]).build_ui_state(
+        |ui, presses: &mut ChipPresses| {
+            install(ui.ctx(), &Default::default());
+            // a row under the chips, pressed by a click and by Enter or Space
+            let row = ui.interact(ui.max_rect(), ui.scope_id().with("row"), egui::Sense::CLICK);
+            ui.horizontal(|ui| {
+                ui.add(sokkel_egui::Chip::new("nightly"));
+                let chip = sokkel_egui::Chip::new("harbor")
+                    .button()
+                    .select_label("Filter by harbor")
+                    .removable(true)
+                    .show(ui);
+                presses.pressed += usize::from(chip.pressed);
+                presses.removed += usize::from(chip.removed);
+                let menu = sokkel_egui::Chip::new("juniper")
+                    .menu(
+                        [sokkel_egui::MenuItem::action("Filter by juniper")],
+                        sokkel_egui::ChipMenuAlign::Start,
+                    )
+                    .show(ui);
+                if menu.chosen.is_some() {
+                    presses.chosen = menu.chosen;
+                }
+            });
+            presses.row += usize::from(row.clicked());
+            presses.row_keys += usize::from(ui.input(|i| i.key_pressed(Key::Enter) || i.key_pressed(Key::Space)));
+        },
+        ChipPresses::default(),
+    );
+    harness.run_steps(3);
+    harness
+}
+
+#[test]
+fn a_chips_face_and_remove_button_are_tab_stops_whose_presses_stop_at_the_chip() {
+    let mut harness = chips();
+    // a plain chip takes no focus: the first stop is the button's face, then its remove button
+    harness.key_press(Key::Tab);
+    harness.run_steps(2);
+    assert!(harness.get_by_label("Filter by harbor").is_focused());
+    harness.key_press(Key::Enter);
+    harness.run_steps(2);
+    harness.key_press(Key::Space);
+    harness.run_steps(2);
+    assert_eq!(harness.state().pressed, 2);
+    harness.key_press(Key::Tab);
+    harness.run_steps(2);
+    assert!(harness.get_by_label("Remove").is_focused());
+    harness.key_press(Key::Enter);
+    harness.run_steps(2);
+    assert_eq!(harness.state().removed, 1);
+    assert_eq!(harness.state().row_keys, 0, "Enter and Space stop at the chip");
+    // a click on the face presses the chip, not the row under it
+    harness.get_by_label("Filter by harbor").click();
+    harness.run_steps(2);
+    assert_eq!(harness.state().pressed, 3);
+    assert_eq!(harness.state().row, 0);
+}
+
+#[test]
+fn a_menu_chip_opens_on_arrow_down() {
+    let mut harness = chips();
+    for _ in 0..3 {
+        harness.key_press(Key::Tab);
+        harness.run_steps(2);
+    }
+    assert!(harness.get_by_label("juniper").is_focused());
+    assert!(harness.query_by_label("Filter by juniper").is_none());
+    harness.key_press(Key::ArrowDown);
+    harness.run_steps(3);
+    harness.get_by_label("Filter by juniper").click();
+    harness.run_steps(3);
+    assert_eq!(harness.state().chosen, Some(0));
+    assert_eq!(harness.state().row, 0);
 }

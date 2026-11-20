@@ -63,3 +63,20 @@ fn a_paint_reads_its_colors() {
             .is_some_and(|(_, width, offset)| width == 2.0 && offset == 2.0)
     );
 }
+
+#[test]
+fn a_chip_paint_reads_its_washes_and_the_remove_buttons_opacity() {
+    let tokens = Tokens::resolve(&Appearance::default(), false);
+    let selected = tokens
+        .paint("chip.good.selected.container")
+        .expect("a chosen good chip's paint");
+    assert_eq!(selected.edge, selected.ink);
+    assert_eq!(selected.ink, Some(tokens.color("good-ink")));
+    let rest = tokens
+        .paint("chip.base.rest.remove")
+        .expect("the remove button's paint");
+    assert_eq!(rest.opacity, Some(0.7));
+    let hover = tokens.paint("chip.base.hover.remove").expect("its hover paint");
+    assert_eq!(hover.opacity, Some(1.0));
+    assert!(hover.ground.is_some());
+}

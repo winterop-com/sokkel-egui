@@ -426,6 +426,8 @@ pub struct TableState {
     pub sort: Option<(usize, bool)>,
     /// The selected rows, by their index in the rows given.
     pub selected: BTreeSet<usize>,
+    /// The row a selection was last turned on or off at, where a Shift press's range starts.
+    anchor: Option<usize>,
     /// The row opened for its detail, by its index in the rows given.
     pub opened: Option<usize>,
     /// The rows opened into their own detail under them (a table with `detail`), by their index.
@@ -726,6 +728,15 @@ impl TreeShape {
 
 /// A placeholder bar's pulse: opacity 1 to 0.5 and back over two seconds, as `animate-pulse`;
 /// held at 1 while motion is off.
+/// A stacked row's place in a tree: its indent, whether it opens, and whether its children are on
+/// their way.
+#[derive(Clone, Copy)]
+struct StackedTree {
+    indent: f32,
+    branch: bool,
+    waiting: bool,
+}
+
 fn pulse(ui: &Ui) -> f32 {
     if super::sign_in_art::still(ui) {
         return 1.0;
@@ -1361,7 +1372,7 @@ impl<'a> DataTable<'a> {
         t: &crate::Tokens,
         rect: Rect,
         index: usize,
-        (pad, lead): (f32, f32),
+        (pad, lead, tree): (f32, f32, Option<StackedTree>),
         editing: &Editing<'_>,
     ) -> (bool, Option<CellEdit>) {
         let mut toggled = false;
@@ -1407,6 +1418,14 @@ impl<'a> DataTable<'a> {
                 t.color("muted-foreground"),
             );
             x += GRIP + 8.0;
+        }
+        // a tree's indent and the control that opens the row, 4 before what follows, as the web's
+        // compact row
+        if let Some(tree) = tree {
+            x += tree.indent;
+            let control = Rect::from_min_size(pos2(x, line.center().y - 10.0), vec2(20.0, 20.0));
+            self.tree_control(ui, t, control, index, tree.branch, tree.waiting);
+            x += 24.0;
         }
         let rows = self.rows;
         let row = &rows[index];
@@ -1755,6 +1774,7 @@ impl<'a> DataTable<'a> {
     /// stretched to fill the row: each card drawn by the table's `card`, a press on it opening its
     /// row, and the row's actions behind a small button at its top corner.
     fn card_grid(&mut self, ui: &mut Ui, t: &crate::Tokens, order: &[usize], out: &mut TableOutput) {
+        let shape = self.tree_shape();
         let Some(cards) = self.cards.take() else { return };
         const GAP: f32 = 16.0;
         let room = ui.available_width() - 2.0 * GAP;
@@ -1789,7 +1809,9 @@ impl<'a> DataTable<'a> {
                         );
                         let pressed = (cards.card)(&mut child, index, width);
                         tallest = tallest.max(pressed.rect.height());
-                        if pressed.clicked() {
+                        if pressed.clicked()
+                            && !(self.selectable && select_press(ui, self.state, shape.as_ref(), order, index))
+                        {
                             self.state.opened = Some(index);
                         }
                         // the row's actions at the card's top corner, 10 in
@@ -1924,6 +1946,7 @@ impl<'a> DataTable<'a> {
         (keys, side): (&[Id], f32),
         out: &mut TableOutput,
     ) {
+        let shape = self.tree_shape();
         let columns = self.columns;
         let rows = self.rows;
         let groups: Option<Vec<String>> = self.groups.clone().filter(|g| g.len() == rows.len());
@@ -2020,7 +2043,20 @@ impl<'a> DataTable<'a> {
                 };
                 let primaries: Vec<usize> = primary.iter().copied().filter(|c| said(&row[*c])).collect();
                 let has_facts = facts.iter().any(|c| said(&row[*c]));
-                let text_width = (ui.available_width() - inset * 2.0 - 2.0 * (1.0 + 12.0)).max(1.0);
+                // a tree's row: its control in the title's line after its indent; listed, every line
+                // starts where its title does, as the web's listed rows
+                let opens = shape.is_some() || self.detail.is_some();
+                let depth = shape.as_ref().map_or(0, |s| s.depth[index]) as f32;
+                let refused = self.state.refusals.contains(&index);
+                let tree = opens.then(|| StackedTree {
+                    indent: depth * 20.0,
+                    branch: self.detail.is_some() || shape.as_ref().is_some_and(|s| s.branch(index)),
+                    waiting: self.state.expanded.contains(&index)
+                        && shape.as_ref().is_some_and(|s| s.lazy[index])
+                        && !refused,
+                });
+                let indent = if listed && opens { depth * 20.0 + 24.0 } else { 0.0 };
+                let text_width = (ui.available_width() - inset * 2.0 - 2.0 * (1.0 + 12.0) - indent).max(1.0);
                 // the primary values in the body's type, each over at most two 22 lines, wrapped
                 let primary_galleys: Vec<std::sync::Arc<egui::Galley>> = primaries
                     .iter()
@@ -2067,7 +2103,7 @@ impl<'a> DataTable<'a> {
                 let card = Rect::from_min_size(pos2(outer.left() + inset, outer.top()), vec2(width, height));
                 card_rects.push(card);
                 let hit = ui.interact(card, self.id.with(("card", index)), Sense::click());
-                if hit.clicked() {
+                if hit.clicked() && !(self.selectable && select_press(ui, self.state, shape.as_ref(), order, index)) {
                     self.state.opened = Some(index);
                 }
                 if listed {
@@ -2121,6 +2157,13 @@ impl<'a> DataTable<'a> {
                     );
                     title_left += GRIP + 8.0;
                 }
+                if let Some(tree) = tree {
+                    let control =
+                        Rect::from_min_size(pos2(title_left + tree.indent, y + 12.0 - 10.0), vec2(20.0, 20.0));
+                    self.tree_control(ui, t, control, index, tree.branch, tree.waiting);
+                    title_left += tree.indent + 24.0;
+                }
+                let left = left + indent;
                 // the title, the menu at the line's end
                 let menu = if items.is_empty() { 0.0 } else { 28.0 + 8.0 };
                 if let Some(c) = title {
@@ -2227,6 +2270,16 @@ impl<'a> DataTable<'a> {
                         x += paint_fact(ui, t, &row[c], pos2(x, middle), (right - x).max(1.0));
                     }
                 }
+                // listed, the line under a branch whose children did not load, from where its
+                // children would start, padded 8 over and under, as the web's listed refusal
+                if listed && refused && shape.is_some() {
+                    let height = TextRole::Body.line_height(t) + 16.0 + 1.0;
+                    let (line, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
+                    ui.painter()
+                        .hline(line.x_range(), line.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
+                    let start = line.left() + (depth + 1.0) * 20.0 + 24.0;
+                    self.refused_line(ui, t, line, (start, 12.0), index);
+                }
                 ui.add_space(apart);
             }
             // a dragged card: the line where it lands, and its move on release
@@ -2262,6 +2315,112 @@ impl<'a> DataTable<'a> {
                 .id_salt(cards_id)
                 .auto_shrink([false, true])
                 .show(ui, |ui| body(ui));
+        }
+    }
+
+    /// A row's control that opens its branch or its detail, 20 square in `control`: a spinner
+    /// while its children load (`waiting`), a chevron on a branch, room alone on a row with nothing
+    /// to open. A press opens or closes it; true when pressed.
+    fn tree_control(
+        &mut self,
+        ui: &mut Ui,
+        t: &crate::Tokens,
+        control: Rect,
+        index: usize,
+        branch: bool,
+        waiting: bool,
+    ) -> bool {
+        let open = self.state.expanded.contains(&index);
+        if waiting {
+            let hit = ui.interact(control, self.id.with(("expand", index)), Sense::hover());
+            let words = &self.words.loading_children;
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::ProgressIndicator, true, words));
+            super::spinner(ui, ui.painter(), control.center(), 5.5, t.color("muted-foreground"));
+            return false;
+        }
+        if !branch {
+            return false;
+        }
+        let hit = ui.interact(control, self.id.with(("expand", index)), Sense::click());
+        let words = match &self.expand_label {
+            Some(label) => label(index, open),
+            None if open => self.words.collapse.clone(),
+            None => self.words.expand.clone(),
+        };
+        hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &words));
+        if hit.hovered() {
+            ui.painter().rect_filled(control, t.radius("sm"), t.color("accent"));
+        }
+        icons::paint(
+            ui.painter(),
+            control.center(),
+            if open { Icon::ChevronDown } else { Icon::ChevronRight },
+            14.0,
+            t.color(if hit.hovered() {
+                "foreground"
+            } else {
+                "muted-foreground"
+            }),
+        );
+        let clicked = hit.clicked();
+        hit.on_hover_text(words);
+        if clicked && !self.state.expanded.remove(&index) {
+            self.state.expanded.insert(index);
+        }
+        clicked
+    }
+
+    /// What the line under a branch whose children did not load says, in `line` from `left` (`pad`
+    /// kept at its end): the refusal in `critical`, then Try again 8 after it, which asks again.
+    fn refused_line(&mut self, ui: &mut Ui, t: &crate::Tokens, line: Rect, (left, pad): (f32, f32), index: usize) {
+        let retry = WidgetText::from(TextRole::Help.rich(t, &self.words.retry).color(t.color("foreground")))
+            .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Help.font(t));
+        // the refusal cut short where Try again would not fit after it, which keeps its width
+        let said = WidgetText::from(TextRole::Body.rich(t, &self.words.refused).color(t.color("critical")))
+            .into_galley(
+                ui,
+                Some(TextWrapMode::Truncate),
+                (line.right() - pad - left - 8.0 - 18.0 - retry.size().x).max(1.0),
+                TextRole::Body.font(t),
+            );
+        let said_w = said.size().x;
+        // read as the words it says
+        let said_at = Rect::from_min_size(pos2(left, line.center().y - said.size().y / 2.0), said.size());
+        let refusal = &self.words.refused;
+        ui.interact(said_at, self.id.with(("refused-children", index)), Sense::hover())
+            .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, refusal));
+        ui.painter().galley(said_at.min, said, t.color("critical"));
+        // the icon 14, 4 before the words, 8 after the refusal
+        let button = Rect::from_min_size(
+            pos2(left + said_w + 8.0, line.center().y - 10.0),
+            vec2(14.0 + 4.0 + retry.size().x, 20.0),
+        );
+        let hit = ui.interact(button, self.id.with(("retry-children", index)), Sense::click());
+        let words = &self.words.retry;
+        hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, words));
+        if hit.hovered() {
+            ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
+        }
+        icons::paint(
+            ui.painter(),
+            pos2(button.left() + 7.0, button.center().y),
+            Icon::RotateCw,
+            14.0,
+            t.color("foreground"),
+        );
+        let at = pos2(button.left() + 18.0, button.center().y - retry.size().y / 2.0);
+        let words_rect = Rect::from_min_size(at, retry.size());
+        ui.painter().galley(at, retry, t.color("foreground"));
+        if hit.hovered() {
+            ui.painter().hline(
+                words_rect.x_range(),
+                words_rect.bottom() - 1.0,
+                Stroke::new(1.0, t.color("foreground")),
+            );
+        }
+        if hit.clicked() {
+            self.state.refusals.remove(&index);
+            self.state.asked.remove(&index);
         }
     }
 
@@ -2963,8 +3122,11 @@ impl<'a> DataTable<'a> {
                 let refusals = self.state.refusals.clone();
                 let refused_under = |index: usize| refusals.contains(&index);
                 let refused_lines = order.iter().filter(|i| refused_under(**i)).count();
-                let free = !stacked && (self.auto || self.detail.is_some() || groups.is_some() || refused_lines > 0);
-                let heights: Vec<f32> = if free && self.auto {
+                let free = (!stacked && (self.auto || self.detail.is_some() || groups.is_some())) || refused_lines > 0;
+                // a listed row's refusal: its words padded 8 over and under, as the web's `py-2`
+                let refused_item = TextRole::Body.line_height(&t) + 16.0 + 1.0;
+                let refused_height = if stacked { refused_item } else { row_height };
+                let heights: Vec<f32> = if free && self.auto && !stacked {
                     let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
                     let left = ui.cursor().left();
                     let places = self.layout(
@@ -3012,7 +3174,8 @@ impl<'a> DataTable<'a> {
                     .filter(|i| !folded(**i))
                     .map(|i| heights[*i] + detail_height(ui, *i))
                     .sum::<f32>()
-                    + (heads + more + refused_lines) as f32 * row_height;
+                    + (heads + more) as f32 * row_height
+                    + refused_lines as f32 * refused_height;
                 let tall = if self.stretch {
                     // what is left under the bar and the head, less the foot and the frame's edge
                     (limit - ui.cursor().top() - foot_room - 1.0).max(row_height)
@@ -3124,7 +3287,7 @@ impl<'a> DataTable<'a> {
                                 continue;
                             }
                         }
-                        let height = if free {
+                        let height = if free && !stacked {
                             heights[index]
                         } else {
                             row_height + grown(self.state, index)
@@ -3142,12 +3305,15 @@ impl<'a> DataTable<'a> {
                                 .join(", ");
                             egui::WidgetInfo::labeled(egui::Role::Button, true, name)
                         });
-                        if row.clicked() && self.detail.is_some() {
+                        // a press with Shift, Cmd or Ctrl selects, and opens nothing
+                        let picked = row.clicked()
+                            && !(self.selectable && select_press(ui, self.state, shape.as_ref(), &order, index));
+                        if picked && self.detail.is_some() {
                             // a press opens the row's detail or closes it
                             if !self.state.expanded.remove(&index) {
                                 self.state.expanded.insert(index);
                             }
-                        } else if row.clicked() {
+                        } else if picked {
                             self.state.opened = if self.state.opened == Some(index) {
                                 None
                             } else {
@@ -3230,13 +3396,9 @@ impl<'a> DataTable<'a> {
                             )
                             .clicked()
                             {
-                                for row in branch.unwrap_or_else(|| vec![index]) {
-                                    if checked {
-                                        self.state.selected.insert(row);
-                                    } else {
-                                        self.state.selected.remove(&row);
-                                    }
-                                }
+                                // Shift on the box selects the range from the row pressed last
+                                let range = ui.input(|i| i.modifiers.shift);
+                                toggle_selection(self.state, shape.as_ref(), &order, index, range);
                             }
                         }
                         if stacked {
@@ -3245,8 +3407,15 @@ impl<'a> DataTable<'a> {
                                 order: &order,
                                 position,
                             };
+                            let tree = (has_detail || shape.is_some()).then(|| StackedTree {
+                                indent: shape.as_ref().map_or(0.0, |s| s.depth[index] as f32 * 20.0),
+                                branch: has_detail || shape.as_ref().is_some_and(|s| s.branch(index)),
+                                waiting: self.state.expanded.contains(&index)
+                                    && shape.as_ref().is_some_and(|s| s.lazy[index])
+                                    && !refused_under(index),
+                            });
                             let (toggled, edited) =
-                                self.stacked_row(ui, &t, rect, index, (pad, select_width), &editing);
+                                self.stacked_row(ui, &t, rect, index, (pad, select_width, tree), &editing);
                             if toggled {
                                 out.toggled = Some(index);
                             }
@@ -3315,58 +3484,15 @@ impl<'a> DataTable<'a> {
                                     vec2(20.0, 20.0),
                                 );
                                 let branch = has_detail || shape.as_ref().is_some_and(|s| s.branch(index));
-                                let open = self.state.expanded.contains(&index);
                                 // a branch whose children did not load shows its chevron again
-                                let waiting =
-                                    open && shape.as_ref().is_some_and(|s| s.lazy[index]) && !refused_under(index);
-                                if waiting {
-                                    let hit = ui.interact(control, self.id.with(("expand", index)), Sense::hover());
-                                    let words = &self.words.loading_children;
-                                    hit.widget_info(|| {
-                                        egui::WidgetInfo::labeled(egui::Role::ProgressIndicator, true, words)
-                                    });
-                                    super::spinner(
-                                        ui,
-                                        ui.painter(),
-                                        control.center(),
-                                        5.5,
-                                        t.color("muted-foreground"),
-                                    );
-                                } else if branch {
-                                    let hit = ui.interact(control, self.id.with(("expand", index)), Sense::click());
-                                    let words = match &self.expand_label {
-                                        Some(label) => label(index, open),
-                                        None if open => self.words.collapse.clone(),
-                                        None => self.words.expand.clone(),
-                                    };
-                                    hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &words));
-                                    if hit.hovered() {
-                                        ui.painter().rect_filled(control, t.radius("sm"), t.color("accent"));
-                                    }
-                                    icons::paint(
-                                        ui.painter(),
-                                        control.center(),
-                                        if open { Icon::ChevronDown } else { Icon::ChevronRight },
-                                        14.0,
-                                        t.color(if hit.hovered() {
-                                            "foreground"
-                                        } else {
-                                            "muted-foreground"
-                                        }),
-                                    );
-                                    let clicked = hit.clicked();
-                                    hit.on_hover_text(words);
-                                    if clicked {
-                                        if !self.state.expanded.remove(&index) {
-                                            self.state.expanded.insert(index);
-                                        }
-                                        if tree_keys {
-                                            self.state.active = Some((index, 0));
-                                            self.state.focused = true;
-                                            self.state.keyed = false;
-                                            self.state.head = None;
-                                        }
-                                    }
+                                let waiting = self.state.expanded.contains(&index)
+                                    && shape.as_ref().is_some_and(|s| s.lazy[index])
+                                    && !refused_under(index);
+                                if self.tree_control(ui, &t, control, index, branch, waiting) && tree_keys {
+                                    self.state.active = Some((index, 0));
+                                    self.state.focused = true;
+                                    self.state.keyed = false;
+                                    self.state.head = None;
                                 }
                                 cell.min.x += lead;
                             }
@@ -3547,79 +3673,22 @@ impl<'a> DataTable<'a> {
                             ui.ctx().data_mut(|d| d.insert_temp(detail_id(index), drawn.height()));
                         }
                         if refused_under(index) {
-                            // the line under a branch whose children did not load: the refusal in
-                            // `critical`, then Try again, from where its children would start
-                            let (line, _) =
-                                ui.allocate_exact_size(vec2(ui.available_width(), row_height), Sense::hover());
+                            // the line under a branch whose children did not load, from where its
+                            // children would start: a row's height, or a listed row's, padded 8
+                            let height = if stacked { refused_item } else { row_height };
+                            let (line, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
                             ui.painter().rect_filled(line, CornerRadius::ZERO, t.color("card"));
                             ui.painter().hline(
                                 line.x_range(),
                                 line.bottom() - 0.5,
                                 Stroke::new(1.0, t.color("border")),
                             );
-                            let left = line.left() + pad + select_width + lead_of(index) + 20.0;
-                            let said = WidgetText::from(
-                                TextRole::Body.rich(&t, &self.words.refused).color(t.color("critical")),
-                            )
-                            .into_galley(
-                                ui,
-                                Some(TextWrapMode::Truncate),
-                                (line.right() - pad - left - 120.0).max(1.0),
-                                TextRole::Body.font(&t),
-                            );
-                            let said_w = said.size().x;
-                            // read as the words it says
-                            let said_at =
-                                Rect::from_min_size(pos2(left, line.center().y - said.size().y / 2.0), said.size());
-                            let refusal = &self.words.refused;
-                            ui.interact(said_at, self.id.with(("refused-children", index)), Sense::hover())
-                                .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, refusal));
-                            ui.painter().galley(
-                                pos2(left, line.center().y - said.size().y / 2.0),
-                                said,
-                                t.color("critical"),
-                            );
-                            let retry = WidgetText::from(
-                                TextRole::Help.rich(&t, &self.words.retry).color(t.color("foreground")),
-                            )
-                            .into_galley(
-                                ui,
-                                Some(TextWrapMode::Extend),
-                                f32::INFINITY,
-                                TextRole::Help.font(&t),
-                            );
-                            // the icon 14, 4 before the words, 8 after the refusal
-                            let button = Rect::from_min_size(
-                                pos2(left + said_w + 8.0, line.center().y - 10.0),
-                                vec2(14.0 + 4.0 + retry.size().x, 20.0),
-                            );
-                            let hit = ui.interact(button, self.id.with(("retry-children", index)), Sense::click());
-                            let words = &self.words.retry;
-                            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, words));
-                            if hit.hovered() {
-                                ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
-                            }
-                            icons::paint(
-                                ui.painter(),
-                                pos2(button.left() + 7.0, button.center().y),
-                                Icon::RotateCw,
-                                14.0,
-                                t.color("foreground"),
-                            );
-                            let at = pos2(button.left() + 18.0, button.center().y - retry.size().y / 2.0);
-                            let words_rect = Rect::from_min_size(at, retry.size());
-                            ui.painter().galley(at, retry, t.color("foreground"));
-                            if hit.hovered() {
-                                ui.painter().hline(
-                                    words_rect.x_range(),
-                                    words_rect.bottom() - 1.0,
-                                    Stroke::new(1.0, t.color("foreground")),
-                                );
-                            }
-                            if hit.clicked() {
-                                self.state.refusals.remove(&index);
-                                self.state.asked.remove(&index);
-                            }
+                            let left = if stacked {
+                                line.left() + lead_of(index) + 20.0
+                            } else {
+                                line.left() + pad + select_width + lead_of(index) + 20.0
+                            };
+                            self.refused_line(ui, &t, line, (left, pad), index);
                         }
                     }
                 };
@@ -3816,7 +3885,11 @@ impl<'a> DataTable<'a> {
                     i.consume_key(none, egui::Key::ArrowDown),
                 )
             });
-            let space = tree_keys && ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Space));
+            // Space with Shift too: consuming a key leaves Shift aside
+            let (space, space_shift) = ui.input_mut(|i| {
+                let space = tree_keys && i.consume_key(egui::Modifiers::NONE, egui::Key::Space);
+                (space, i.modifiers.shift)
+            });
             let (home, end, page_up, page_down) = ui.input_mut(|i| {
                 let none = egui::Modifiers::NONE;
                 (
@@ -3896,16 +3969,9 @@ impl<'a> DataTable<'a> {
                 // Space selects the active row, or picks it in a table that does not select; Enter
                 // picks it: its detail opens or closes, or it is opened beside the list
                 if space && self.selectable {
-                    // a branch takes every row under it, as its box does
-                    let on = !self.state.selected.contains(&row);
-                    let rows = shape.as_ref().map_or_else(|| vec![row], |s| s.branch_rows(row));
-                    for r in rows {
-                        if on {
-                            self.state.selected.insert(r);
-                        } else {
-                            self.state.selected.remove(&r);
-                        }
-                    }
+                    // a branch takes every row under it, as its box does; Shift takes the range
+                    // from the row pressed last
+                    toggle_selection(self.state, shape.as_ref(), &order, row, space_shift);
                 } else if has_detail {
                     if !self.state.expanded.remove(&row) {
                         self.state.expanded.insert(row);
@@ -4627,6 +4693,55 @@ fn put_at(ui: &mut Ui, rect: Rect, widget: impl egui::Widget) -> Response {
 }
 
 /// Sort by `column`: ascending, then descending, then as given.
+/// Select or clear `row`, as the web's `toggle`: with `range` and a row pressed before, every row
+/// shown from that one to this, all on unless this one is on and that one is not; else the row
+/// alone, a branch with every row under it. The row becomes the next range's start.
+fn toggle_selection(state: &mut TableState, shape: Option<&TreeShape>, order: &[usize], row: usize, range: bool) {
+    if range && let Some(anchor) = state.anchor {
+        let on = !state.selected.contains(&row) || state.selected.contains(&anchor);
+        let rows = match (
+            order.iter().position(|r| *r == anchor),
+            order.iter().position(|r| *r == row),
+        ) {
+            (Some(a), Some(b)) => order[a.min(b)..=a.max(b)].to_vec(),
+            _ => vec![row],
+        };
+        for r in rows {
+            if on {
+                state.selected.insert(r);
+            } else {
+                state.selected.remove(&r);
+            }
+        }
+    } else {
+        let on = !state.selected.contains(&row);
+        for r in shape.map_or_else(|| vec![row], |s| s.branch_rows(row)) {
+            if on {
+                state.selected.insert(r);
+            } else {
+                state.selected.remove(&r);
+            }
+        }
+    }
+    state.anchor = Some(row);
+}
+
+/// A press on a row of a table that selects: with Shift it selects the range from the row
+/// pressed last, with Cmd or Ctrl it selects or clears the row, as the web's `press`. True when it
+/// did, so the press opens nothing.
+fn select_press(ui: &Ui, state: &mut TableState, shape: Option<&TreeShape>, order: &[usize], row: usize) -> bool {
+    let modifiers = ui.input(|i| i.modifiers);
+    if modifiers.shift {
+        toggle_selection(state, shape, order, row, true);
+        true
+    } else if modifiers.command || modifiers.ctrl || modifiers.mac_cmd {
+        toggle_selection(state, shape, order, row, false);
+        true
+    } else {
+        false
+    }
+}
+
 fn cycle_sort(state: &mut TableState, column: usize) {
     state.sort = match state.sort.filter(|(c, _)| *c == column) {
         None => Some((column, true)),

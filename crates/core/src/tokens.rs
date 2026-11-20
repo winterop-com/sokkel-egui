@@ -99,6 +99,8 @@ pub struct Paint {
     pub outline: Option<(Color32, f32, f32)>,
     /// The invalid ring: its color and width.
     pub ring: Option<(Color32, f32)>,
+    /// How much of the part shows, as CSS's `opacity`.
+    pub opacity: Option<f32>,
 }
 
 impl Paint {
@@ -129,6 +131,7 @@ impl Paint {
             ink: color("ink"),
             outline,
             ring,
+            opacity: value.get("opacity").and_then(|v| v.as_f64()).map(|v| v as f32),
         }
     }
 }

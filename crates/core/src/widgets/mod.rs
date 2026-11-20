@@ -111,7 +111,7 @@ pub use chat::{
     ReplyFeedback, UsageFigures, UsageLine, UsageLineWords, conversation_group, conversation_time, usage_count,
     usage_speed, usage_time, word_count,
 };
-pub use chip::{Chip, ChipTone, TagChips};
+pub use chip::{Chip, ChipHue, ChipMenuAlign, ChipResponse, ChipSize, ChipTone, ChipWords, TagChips};
 pub use chip_bar::{ChipBar, ChipBarWords};
 pub use choice::{
     Checkbox, Choice, ChoiceList, Segmented, SegmentedVariant, SwatchGroup, Tabs, TabsVariant, checkbox_list,
@@ -351,6 +351,33 @@ pub const PAINTS_READ: &[&str] = &[
     "badge.kind-pink.rest.container",
     "badge.kind-teal.rest.container",
     "badge.kind-violet.rest.container",
+    "chip.neutral.rest.container",
+    "chip.neutral.selected.container",
+    "chip.good.rest.container",
+    "chip.good.selected.container",
+    "chip.critical.rest.container",
+    "chip.critical.selected.container",
+    "chip.warning.rest.container",
+    "chip.warning.selected.container",
+    "chip.info.rest.container",
+    "chip.info.selected.container",
+    "chip.outline.rest.container",
+    "chip.outline.selected.container",
+    "chip.absent.rest.container",
+    "chip.hue-1.rest.container",
+    "chip.hue-2.rest.container",
+    "chip.hue-3.rest.container",
+    "chip.hue-4.rest.container",
+    "chip.hue-5.rest.container",
+    "chip.hue-blue.rest.container",
+    "chip.hue-green.rest.container",
+    "chip.hue-jade.rest.container",
+    "chip.hue-pink.rest.container",
+    "chip.hue-teal.rest.container",
+    "chip.hue-violet.rest.container",
+    "chip.base.focus.face",
+    "chip.base.rest.remove",
+    "chip.base.hover.remove",
 ];
 
 /// A popup's surface (a select's list, a menu, a submenu, the account menu): the popover's

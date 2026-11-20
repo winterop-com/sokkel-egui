@@ -307,6 +307,7 @@ pub struct DropdownMenu<'a> {
     width: f32,
     default_open: bool,
     end: bool,
+    center: bool,
 }
 
 impl<'a> DropdownMenu<'a> {
@@ -316,12 +317,19 @@ impl<'a> DropdownMenu<'a> {
             width: 220.0,
             default_open: false,
             end: false,
+            center: false,
         }
     }
 
     /// Line the menu's end up with its trigger's, as `align="end"` does.
     pub fn end(mut self, end: bool) -> Self {
         self.end = end;
+        self
+    }
+
+    /// Line the menu's center up with its trigger's, as `align="center"` does.
+    pub fn center(mut self, center: bool) -> Self {
+        self.center = center;
         self
     }
 
@@ -380,7 +388,9 @@ impl<'a> DropdownMenu<'a> {
         let mut pressed = None;
         Popup::menu(trigger)
             .id(popup_id)
-            .align(if self.end {
+            .align(if self.center {
+                egui::RectAlign::BOTTOM
+            } else if self.end {
                 egui::RectAlign::BOTTOM_END
             } else {
                 egui::RectAlign::BOTTOM_START

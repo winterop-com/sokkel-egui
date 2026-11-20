@@ -547,16 +547,17 @@ impl PageState {
                                 };
                                 ui.label(TextRole::Action.rich(&t, heading).color(t.color("foreground")));
                                 if let Some(detail) = &self.detail {
-                                    ui.label(TextRole::Help.rich(&t, detail).color(muted));
+                                    prose(ui, &t, detail, muted);
                                 }
                                 for problem in &self.problems {
-                                    ui.label(TextRole::Help.rich(&t, format!("•  {problem}")).color(muted));
+                                    prose(ui, &t, &format!("•  {problem}"), muted);
                                 }
                                 if self.retry {
                                     ui.add_space(8.0);
                                     let button = Button::new(self.words.retry.clone())
                                         .variant(ButtonVariant::Outline)
-                                        .size(ButtonSize::Sm);
+                                        .size(ButtonSize::Sm)
+                                        .icon(Icon::RotateCw);
                                     pressed = ui.add(button).clicked();
                                 }
                             });
@@ -566,4 +567,63 @@ impl PageState {
             });
         pressed
     }
+}
+
+/// A written diagnostic in `text.help`, its backticked parts in the code face on a muted chip
+/// padded 4 across, as the web's `ProseText`; an unmatched last backtick is drawn as written.
+fn prose(ui: &mut Ui, t: &crate::Tokens, text: &str, ink: egui::Color32) {
+    const CHIP_PAD: f32 = 4.0;
+    let parts: Vec<&str> = text.split('`').collect();
+    let closed = parts.len() % 2 == 1;
+    let mut job = egui::text::LayoutJob::default();
+    let mut codes = Vec::new();
+    let mut at = 0;
+    let mut pad = 0.0;
+    for (index, part) in parts.iter().enumerate() {
+        let code = index % 2 == 1 && (closed || index < parts.len() - 1);
+        let words = if index % 2 == 1 && !code {
+            format!("`{part}")
+        } else {
+            (*part).to_owned()
+        };
+        if words.is_empty() {
+            continue;
+        }
+        let rich = if code {
+            egui::RichText::new(&words).font(crate::code_font(ui.ctx(), t, TextRole::Help))
+        } else {
+            TextRole::Help.rich(t, &words)
+        };
+        rich.color(ink)
+            .append_to(&mut job, ui.style(), egui::FontSelection::Default, Align::Min);
+        if let Some(section) = job.sections.last_mut() {
+            section.leading_space += pad + if code { CHIP_PAD } else { 0.0 };
+        }
+        pad = if code { CHIP_PAD } else { 0.0 };
+        let count = words.chars().count();
+        if code {
+            codes.push((at, at + count));
+        }
+        at += count;
+    }
+    if job.sections.is_empty() {
+        return;
+    }
+    job.wrap.max_width = ui.available_width();
+    let galley = ui.painter().layout_job(job);
+    let (rect, response) = ui.allocate_exact_size(galley.size(), egui::Sense::hover());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, galley.text()));
+    if !ui.is_rect_visible(rect) {
+        return;
+    }
+    for &(from, to) in &codes {
+        for piece in super::markdown::pieces(&galley, rect.min, from, to) {
+            ui.painter().rect_filled(
+                piece.rect.expand2(vec2(CHIP_PAD, 0.0)),
+                t.radius("sm"),
+                t.color("muted"),
+            );
+        }
+    }
+    ui.painter().galley(rect.min, galley, ink);
 }

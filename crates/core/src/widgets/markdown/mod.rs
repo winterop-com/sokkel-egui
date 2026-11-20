@@ -348,13 +348,13 @@ struct Span {
 }
 
 /// One row's piece of a span: the glyphs' box from the face's top to its foot, and the baseline.
-struct Piece {
-    rect: Rect,
-    baseline: f32,
+pub(crate) struct Piece {
+    pub(crate) rect: Rect,
+    pub(crate) baseline: f32,
 }
 
 /// Where a span's characters stand in a galley painted at `origin`, one piece per row.
-fn pieces(galley: &Galley, origin: Pos2, from: usize, to: usize) -> Vec<Piece> {
+pub(crate) fn pieces(galley: &Galley, origin: Pos2, from: usize, to: usize) -> Vec<Piece> {
     let mut out = Vec::new();
     let mut at = 0;
     for placed in &galley.rows {

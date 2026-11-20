@@ -73,6 +73,10 @@ pub struct State {
     pub cards: sokkel_egui::TableState,
     pub hovered: sokkel_egui::TableState,
     pub palette: usize,
+    pub chip_tags: Vec<String>,
+    pub chip_filter: Option<String>,
+    pub chip_on: Vec<String>,
+    pub chip_channel: String,
 }
 
 impl Default for State {
@@ -126,6 +130,12 @@ impl Default for State {
             },
             hovered: sokkel_egui::TableState::default(),
             palette: 1,
+            chip_tags: ["nightly", "harbor", "export", "critical-path"]
+                .map(String::from)
+                .to_vec(),
+            chip_filter: Some("harbor".into()),
+            chip_on: ["harbor", "larkspur"].map(String::from).to_vec(),
+            chip_channel: "nightly".into(),
         }
     }
 }
@@ -293,8 +303,13 @@ pub const STORIES: &[Story] = &[
     },
     Story {
         path: "Patterns/Chip",
-        doc: "The tones a chip says a state in, and a chosen chip's stronger wash and edge.",
+        doc: "Every tone, the chart palette's hues and the kind colors, the code face and icons, a long value cut short, and the control size.",
         show: primitives::chip,
+    },
+    Story {
+        path: "Patterns/Chip actions",
+        doc: "Chips a press acts on: buttons with remove buttons, links, toggles on and off in every tone and hue, and a menu's trigger with its menu open.",
+        show: primitives::chip_actions,
     },
     Story {
         path: "Patterns/Chip bar",
@@ -350,6 +365,11 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Data table tree",
         doc: "Rows with children: runs under their jobs under their projects, each level indented 20 with the chevron that opens it, harbor open; a branch's box takes every row under it and is mixed while some are chosen. The arrows move along the rows and Home, End, PageUp and PageDown reach along them; Right opens a branch, Left closes it or moves to its parent. Then each person's tokens, loaded as their row first opens, the control a spinner while they come and named for its person (Show the tokens of ada); a load that failed says so under its branch with Try again.",
         show: table::data_table_tree,
+    },
+    Story {
+        path: "Patterns/Data table tree stacked",
+        doc: "A tree stacked as cards, as a listed list and as a compact list: each row's control after its indent, 20 a level; listed, every line starts where its title does; sync-inventory's runs refused, said under it with Try again in the two lists (the web's cards leave the line out).",
+        show: table::data_table_tree_stacked,
     },
     Story {
         path: "Patterns/Data table loading and failed",
