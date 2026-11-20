@@ -41,8 +41,9 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   `PeriodPicker`, `TreeSelect`, `Select::codes`, a read-only `Input`, and `FormBar::show_with`.
   The monthly report's count grid is the web's: questions in rows or in columns, a search and
   Unfilled only over a long run, the rows in groups that fold with their count, and each row's cells
-  as fields named by their band and cut where the columns do not fit (`EntryGrid`, new in the
-  library; a banded table of number inputs where they do). An input is now 32 tall with its edge,
+  as fields named by their band where the columns do not fit: the web's `DataTable` with editing,
+  grouped with each group's sums, the counts under band heads and edited in place as numbers,
+  stacked below 720 into labeled fields (the library's `EntryGrid` became this table). An input is now 32 tall with its edge,
   as the web's, in every app.
 - A form's Layout: its sections and questions in a tree dragged into the order every fill follows
   and kept on the server (`Tree::movable`, `Tree::choosing`, `move_tree_node`, new in the
@@ -53,8 +54,8 @@ API and the metadata's health), ported one to one as `examples/records`. Its man
   it on or withdraw it), and the response chosen open in a sheet beside the list (`DetailSheet`,
   new in the library: the code over the title, the chips and actions, the body, the foot, and an
   edge that drags it wider). A response's own page and the sheet share its body: received, filed
-  for (with links as the web's `TextLink`), its answers (a monthly report's as a read-only
-  `EntryGrid`), and its history; Withdraw asks first. A table asked to show all its rows now does
+  for (with links as the web's `TextLink`), its answers (a monthly report's as a grouped,
+  banded `DataTable` list), and its history; Withdraw asks first. A table asked to show all its rows now does
   so inside a page that scrolls. Open: the web's Raw record opens the record in a `SourceSheet`,
   a code view, which waits for the code editor.
 - Households: the list searched by identifier (`DataTable::search_placeholder`) and filtered by

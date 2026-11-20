@@ -6,7 +6,7 @@ use eframe::egui::{Stroke, vec2};
 use sokkel_egui::{
     ApiLink, Button, ButtonSize, Cell, CellFocus, Chip, ChipTone, Column, DataTable, Editor, Icon, IssueCount,
     IssueEntry, ItemCard, MenuItem, PromptDialog, SecretField, ServerCheck, ServerMenu, ServerOwnState, ServerState,
-    SortableGrid, SortableHandle, TableState, TextRole, Unfoldable, sum_aggregate, tokens,
+    SortableGrid, SortableHandle, StackLayout, TableState, TableVariant, TextRole, Unfoldable, sum_aggregate, tokens,
 };
 
 use super::{State, section};
@@ -371,6 +371,68 @@ pub fn table_bands(_: &mut State, ui: &mut Ui) {
         .height(420.0)
         .show(ui);
     ui.data_mut(|d| d.insert_temp(id, state));
+}
+
+/// A count's draft refused before it is kept: not a whole number of 0 or more.
+fn whole_count(draft: &str) -> Option<String> {
+    let count: f64 = draft.trim().replace(',', "").parse().ok()?;
+    (count.fract() != 0.0 || count < 0.0).then(|| "Counts are whole numbers, 0 or more.".into())
+}
+
+pub fn table_entry_grid(_: &mut State, ui: &mut Ui) {
+    let count = |title: &str, band: &str| {
+        Column::new(title, 96.0)
+            .numeric()
+            .sortable(false)
+            .band(band)
+            .aggregate(sum_aggregate)
+            .editable(Editor::Number)
+            .validate(whole_count)
+    };
+    let columns = [
+        Column::new("Job", 160.0).fill().sortable(false),
+        count("Succeeded", "This week"),
+        count("Failed", "This week"),
+        count("Succeeded", "Last week"),
+        count("Failed", "Last week"),
+    ];
+    let jobs = [
+        ("harbor", "nightly-export", ["7", "0", "6", "1"]),
+        ("harbor", "send-digest", ["7", "", "7", "0"]),
+        ("juniper", "sync-inventory", ["1,204", "3", "", "12"]),
+    ];
+    let rows: Vec<Vec<Cell>> = jobs
+        .iter()
+        .map(|(_, job, counts)| {
+            std::iter::once(Cell::Text((*job).into()))
+                .chain(counts.iter().map(|c| Cell::Text((*c).into())))
+                .collect()
+        })
+        .collect();
+    for (title, width, active) in [("Wide", 760.0, Some((0, 2))), ("Stacked", 420.0, None)] {
+        section(ui, title);
+        let id = eframe::egui::Id::unique(("story-entry-grid", title));
+        let mut state = ui.data_mut(|d| d.get_temp::<TableState>(id)).unwrap_or_else(|| {
+            let mut state = TableState::default();
+            if let Some((row, column)) = active {
+                state.focus_cell(row, column);
+            }
+            state
+        });
+        ui.allocate_ui(vec2(width, 0.0), |ui| {
+            ui.set_width(width);
+            DataTable::new(("story-entry-grid", title), &columns, &rows, &mut state)
+                .variant(TableVariant::List)
+                .groups(jobs.iter().map(|(project, ..)| *project))
+                .stack_layout(StackLayout::Labeled)
+                .stack_below(560.0)
+                .fits(true)
+                .footer(false)
+                .height(f32::INFINITY)
+                .show(ui);
+        });
+        ui.data_mut(|d| d.insert_temp(id, state));
+    }
 }
 
 pub fn secret_field(_: &mut State, ui: &mut Ui) {

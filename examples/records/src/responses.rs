@@ -4,9 +4,8 @@
 use eframe::egui::{self, Ui};
 use sokkel_egui::{
     ApiLink, Banner, BannerTone, Button, ButtonSize, ButtonVariant, Cell, ChipTone, Column, ConfirmAnswer,
-    ConfirmDialog, DataTable, DescriptionList, DetailSheet, EntryColumn, EntryGrid, EntryRow, FilterChip, Icon,
-    MenuItem, PageHeader, PageState, Section, Segmented, TableState, TableVariant, TextLink, Timeline, TimelineEvent,
-    Toast, ToastKind, tokens,
+    ConfirmDialog, DataTable, DescriptionList, DetailSheet, FilterChip, Icon, MenuItem, PageHeader, PageState, Section,
+    Segmented, StackLayout, TableState, TableVariant, TextLink, Timeline, TimelineEvent, Toast, ToastKind, tokens,
 };
 
 use crate::app::{Foot, RecordsApp};
@@ -477,29 +476,45 @@ impl RecordsApp {
                     }
                     Some(form) => {
                         let grid = form.grid.as_ref().expect("a grid form");
-                        let rows: Vec<EntryRow> = grid
+                        let cells = grid_cells(grid);
+                        let mut columns = vec![Column::new("Question", 192.0).fill().sortable(false)];
+                        columns.extend(cells.iter().map(|c| {
+                            let column = Column::new(c.label.clone(), 96.0).numeric().sortable(false);
+                            match &c.band {
+                                Some(band) => column.band(band.clone()),
+                                None => column,
+                            }
+                        }));
+                        let rows: Vec<Vec<Cell>> = grid
                             .rows
                             .iter()
-                            .map(|r| EntryRow {
-                                id: r.id.into(),
-                                label: r.label.into(),
-                                group: Some(r.part.into()),
+                            .map(|r| {
+                                std::iter::once(Cell::Text(r.label.into()))
+                                    .chain(cells.iter().map(|c| {
+                                        Cell::Text(
+                                            receipt
+                                                .answers
+                                                .number(&cell_key(r.id, &c.value))
+                                                .map(sokkel_egui::numbers::locale_number)
+                                                .unwrap_or_default(),
+                                        )
+                                    }))
+                                    .collect()
                             })
                             .collect();
-                        let columns: Vec<EntryColumn> = grid_cells(grid)
-                            .into_iter()
-                            .map(|c| EntryColumn {
-                                id: c.value,
-                                label: c.label,
-                                band: c.band,
-                            })
-                            .collect();
-                        let value = |row: &str, column: &str| receipt.answers.number(&cell_key(row, column));
-                        EntryGrid::new(("grid-answers", &receipt.receipt), &rows, &columns, &value)
-                            .widths(192.0, 96.0)
-                            .total(false)
-                            .read_only(true)
-                            .show(ui, |_| {});
+                        let held = egui::Id::unique(("grid-answers", &receipt.receipt));
+                        let mut state: TableState = ui.data(|d| d.get_temp(held)).unwrap_or_default();
+                        DataTable::new(("grid-answers", &receipt.receipt), &columns, &rows, &mut state)
+                            .variant(TableVariant::List)
+                            .keys(grid.rows.iter().map(|r| r.id))
+                            .groups(grid.rows.iter().map(|r| r.part))
+                            .stack_layout(StackLayout::Labeled)
+                            .stack_below(640.0)
+                            .fits(true)
+                            .footer(false)
+                            .height(f32::INFINITY)
+                            .show(ui);
+                        ui.data_mut(|d| d.insert_temp(held, state));
                     }
                 });
             Section::new("History")

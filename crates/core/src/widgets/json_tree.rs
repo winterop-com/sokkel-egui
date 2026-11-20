@@ -75,7 +75,11 @@ impl<'a> JsonTree<'a> {
 
     fn node(&self, ui: &mut Ui, id: egui::Id, name: Option<&str>, value: &Value, depth: usize) {
         let t = tokens(ui.ctx());
-        let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+        let mono = crate::mono_font(
+            ui.ctx(),
+            crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+            400.0,
+        );
         let text = |s: &str, ink: &str| egui::RichText::new(s).font(mono.clone()).color(t.color(ink));
         let line = |ui: &mut Ui, parts: Vec<egui::RichText>, lead: f32| -> egui::Response {
             let mut job = egui::text::LayoutJob::default();

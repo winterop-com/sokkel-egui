@@ -458,7 +458,7 @@ pub fn draw(
                         Stack::new(Gap::Xs).show(ui, |ui| {
                             ui.label(
                                 egui::RichText::new(*service)
-                                    .font(egui::FontId::monospace(TextRole::Body.font(&t).size))
+                                    .font(sokkel_egui::code_font(ui.ctx(), &t, TextRole::Body))
                                     .color(t.color("foreground")),
                             );
                             UptimeBar::new(("uptime", &widget.id, i), &live.uptime[i]).show(ui);

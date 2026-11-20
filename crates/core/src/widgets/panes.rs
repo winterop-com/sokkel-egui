@@ -158,7 +158,11 @@ impl Inspector {
                 if let Some(code) = &self.code {
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 4.0;
-                        let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                        let mono = crate::mono_font(
+                            ui.ctx(),
+                            crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                            400.0,
+                        );
                         ui.label(egui::RichText::new(code).font(mono).color(t.color("muted-foreground")));
                         let copied_id = self.id.with("copied");
                         let now = ui.input(|i| i.time);

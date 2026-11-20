@@ -406,9 +406,11 @@ impl<'a> StatPanel<'a> {
                             f32::INFINITY,
                             TextRole::Help.font(&t),
                         ),
-                        WidgetText::from(
-                            egui::RichText::new(written).font(egui::FontId::monospace(TextRole::Help.font(&t).size)),
-                        )
+                        WidgetText::from(egui::RichText::new(written).font(crate::mono_font(
+                            ui.ctx(),
+                            crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                            400.0,
+                        )))
                         .into_galley(
                             ui,
                             Some(TextWrapMode::Extend),

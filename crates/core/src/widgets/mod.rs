@@ -25,7 +25,6 @@ mod dot;
 mod download_button;
 mod edit_preview;
 mod empty;
-mod entry_grid;
 mod fields;
 mod file_preview;
 mod filters;
@@ -148,7 +147,6 @@ pub use download_button::{
 };
 pub use edit_preview::{EditPreview, EditPreviewView};
 pub use empty::Empty;
-pub use entry_grid::{EntryColumn, EntryEdit, EntryGrid, EntryGridWords, EntryRow};
 pub(crate) use fields::search_field;
 pub use fields::{
     DueState, DueText, Field, FieldWords, FormBar, QuickAdd, SaveBar, SaveBarResponse, SaveBarWords, SearchField,

@@ -499,7 +499,7 @@ fn model_page(ui: &mut Ui, app: &ModelsApp, id: &str, views: &mut Views, acts: &
                                         ui.horizontal(|ui| {
                                             ui.spacing_mut().item_spacing.x = 2.0;
                                             let t = tokens(ui.ctx());
-                                            let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                                            let mono = sokkel_egui::code_font(ui.ctx(), &t, TextRole::Help);
                                             ui.label(
                                                 egui::RichText::new(&path).font(mono).color(t.color("foreground")),
                                             );
@@ -846,7 +846,7 @@ fn disk_page(ui: &mut Ui, app: &ModelsApp, views: &mut Views, acts: &mut Vec<Act
             for (words, mono) in [("Models are kept under ", false), (path.as_str(), true), (".", false)] {
                 let mut rich = TextRole::Help.rich(&t, words).color(t.color("muted-foreground"));
                 if mono {
-                    rich = rich.font(egui::FontId::monospace(TextRole::Help.font(&t).size));
+                    rich = rich.font(sokkel_egui::code_font(ui.ctx(), &t, TextRole::Help));
                 }
                 rich.append_to(&mut job, ui.style(), egui::FontSelection::Default, egui::Align::Center);
             }

@@ -78,7 +78,11 @@ fn legend_table(
     write: impl Fn(f64) -> String,
 ) {
     let t = tokens(ui.ctx());
-    let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+    let mono = sokkel_egui::mono_font(
+        ui.ctx(),
+        sokkel_egui::mono_small_size(&t, TextRole::Help.font(&t).size),
+        400.0,
+    );
     let rows: Vec<Vec<Cell>> = entries
         .iter()
         .map(|(name, color, values)| {
@@ -649,7 +653,11 @@ impl<'a> BarGauge<'a> {
 
     pub fn show(self, ui: &mut Ui) {
         let t = tokens(ui.ctx());
-        let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+        let mono = sokkel_egui::mono_font(
+            ui.ctx(),
+            sokkel_egui::mono_small_size(&t, TextRole::Help.font(&t).size),
+            400.0,
+        );
         let value_font = sokkel_egui::mono_font(
             ui.ctx(),
             sokkel_egui::mono_size(&t, TextRole::Help.font(&t).size),

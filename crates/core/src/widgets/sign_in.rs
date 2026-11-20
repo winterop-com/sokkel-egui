@@ -432,7 +432,7 @@ impl<'a> SignIn<'a> {
         let name = galley(ui, TextRole::BrandName.rich(&t, &self.name), name_room, true);
         let row = tile.max(name.size().y);
         let help = TextRole::Help;
-        let mono = small_mono(&t);
+        let mono = small_mono(ui.ctx(), &t);
         let labels: Vec<Arc<Galley>> = self
             .facts
             .iter()
@@ -538,7 +538,7 @@ impl<'a> SignIn<'a> {
         if let Some(fact) = self.facts.first()
             && fact_room > 1.0
         {
-            let mono = small_mono(&t);
+            let mono = small_mono(ui.ctx(), &t);
             let value = truncated(ui, egui::RichText::new(&fact.value).font(mono), fact_room);
             let at = pos2(right - value.size().x, middle - value.size().y / 2.0);
             if at.x > x + name_width {
@@ -807,13 +807,8 @@ fn galley(ui: &Ui, text: egui::RichText, width: f32, wrap: bool) -> Arc<Galley> 
 
 /// The code face in small text (`font-mono text-xs`), as tall in x-height as the web sets mono
 /// inside small text: `mono-x-height-small` of the size rather than `mono-x-height`.
-fn small_mono(t: &Tokens) -> egui::FontId {
-    let size = crate::mono_size(t, TextRole::Help.font(t).size);
-    let ratio = match (t.number("mono-x-height-small"), t.number("mono-x-height")) {
-        (Some(small), Some(body)) if body > 0.0 => small / body,
-        _ => 1.0,
-    };
-    egui::FontId::monospace(size * ratio)
+fn small_mono(ctx: &egui::Context, t: &Tokens) -> egui::FontId {
+    crate::code_font(ctx, t, TextRole::Help)
 }
 
 /// Text on one line, cut short with an ellipsis to fit `width`.

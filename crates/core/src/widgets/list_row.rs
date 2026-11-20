@@ -1,7 +1,7 @@
 //! A row of a list that is not a table, and the list of them, after sokkel-ui's `ListRow` and
 //! `ListRows`.
 
-use egui::{FontId, Rect, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
+use egui::{Rect, Sense, Stroke, TextWrapMode, Ui, WidgetText, pos2, vec2};
 
 use super::{AvatarSize, Chip, ChipTone, PersonAvatar};
 use crate::{Icon, TextRole, icons, tokens};
@@ -137,8 +137,12 @@ impl ListRow {
             TextWrapMode::Truncate
         };
         let title = if self.mono {
-            WidgetText::from(egui::RichText::new(&self.title).font(FontId::monospace(TextRole::Help.font(&t).size)))
-                .into_galley(ui, Some(mode), room, TextRole::Help.font(&t))
+            WidgetText::from(egui::RichText::new(&self.title).font(crate::mono_font(
+                ui.ctx(),
+                crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                400.0,
+            )))
+            .into_galley(ui, Some(mode), room, TextRole::Help.font(&t))
         } else {
             WidgetText::from(TextRole::Body.rich(&t, &self.title)).into_galley(
                 ui,

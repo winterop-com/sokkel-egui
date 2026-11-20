@@ -267,6 +267,22 @@ pub fn description_list(state: &mut State, ui: &mut Ui) {
             .show(ui);
         ui.horizontal_top(|ui| {
             ui.spacing_mut().item_spacing.x = 32.0;
+            // counts and times in a column, their figures lined up
+            ui.allocate_ui(vec2(344.0, 0.0), |ui| {
+                ui.vertical(|ui| {
+                    section(ui, "Numeric, figures at one width");
+                    DescriptionList::new()
+                        .numeric("Runs", "1,111")
+                        .numeric("Succeeded", "1,088")
+                        .numeric("Failed", "23")
+                        .numeric("Took", "4:18.09")
+                        .numeric("Waited", "0:07.11")
+                        .show(ui);
+                });
+            });
+        });
+        ui.horizontal_top(|ui| {
+            ui.spacing_mut().item_spacing.x = 32.0;
             ui.allocate_ui(vec2(344.0, 0.0), |ui| {
                 ui.vertical(|ui| {
                     section(ui, "Terms as wide as the longest");

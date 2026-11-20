@@ -222,7 +222,7 @@ impl<'a> DiffView<'a> {
         // leading-relaxed
         let line_height = (size * 1.625).round();
         let pad = if self.small { 10.0 } else { 12.0 };
-        let mono = egui::FontId::monospace(crate::mono_size(&t, size));
+        let mono = crate::mono_font(ui.ctx(), crate::mono_size(&t, size), 400.0);
         let sans = egui::FontId::proportional(size);
         let head = if self.title.is_some() { line_height + pad } else { 0.0 };
         let width = ui.available_width();
@@ -332,7 +332,11 @@ impl<'a> DiffView<'a> {
                     pos2(rect.left() + pad, middle),
                     Align2::LEFT_CENTER,
                     title,
-                    egui::FontId::monospace(crate::mono_size(&t, font.size)),
+                    crate::mono_font(
+                        ui.ctx(),
+                        crate::mono_size(&t, font.size),
+                        t.text(TextRole::Label.key()).weight,
+                    ),
                     t.color("foreground"),
                 );
                 (rect.right() - pad - words_width, middle)

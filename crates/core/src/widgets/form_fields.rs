@@ -92,7 +92,11 @@ impl ComputedField {
                             egui::Label::new(TextRole::Help.rich(&t, &why).color(t.color("muted-foreground"))).wrap(),
                         );
                         if let Some(formula) = &formula {
-                            let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                            let mono = crate::mono_font(
+                                ui.ctx(),
+                                crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                                400.0,
+                            );
                             ui.label(
                                 egui::RichText::new(formula)
                                     .font(mono)

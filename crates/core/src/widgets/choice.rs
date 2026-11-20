@@ -350,7 +350,11 @@ impl Widget for Segmented<'_> {
         // the code face at 70 percent)
         let count_galley = |ui: &Ui, index: usize| {
             self.counts.get(index).copied().flatten().map(|n| {
-                let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                let mono = crate::mono_font(
+                    ui.ctx(),
+                    crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                    400.0,
+                );
                 WidgetText::from(egui::RichText::new(n.to_string()).font(mono.clone())).into_galley(
                     ui,
                     Some(TextWrapMode::Extend),

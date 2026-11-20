@@ -90,7 +90,7 @@ pub(crate) fn tooltip(ui: &Ui, id: Id, anchor: Rect, t: &Tokens, mono: &FontId, 
                                 .show(ui, |ui| {
                                     ui.label(
                                         egui::RichText::new(words)
-                                            .font(FontId::monospace(mono.size.min(t.text("xs").size)))
+                                            .font(crate::mono_font(ui.ctx(), mono.size.min(t.text("xs").size), 400.0))
                                             .color(t.color("muted-foreground")),
                                     );
                                 });

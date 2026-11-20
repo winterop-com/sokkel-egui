@@ -433,7 +433,11 @@ impl Widget for Select<'_> {
             },
         );
         let code_of = |index: usize| self.codes.as_ref().and_then(|c| c.get(index)).cloned();
-        let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+        let mono = crate::mono_font(
+            ui.ctx(),
+            crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+            400.0,
+        );
         if let Some(code) = code_of(*self.chosen) {
             painter.text(
                 pos2(rect.left() + pad + lead + label_width + 8.0, rect.center().y),

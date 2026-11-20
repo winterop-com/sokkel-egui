@@ -286,7 +286,11 @@ impl<'a> SearchField<'a> {
         }
         if let Some(keys) = &self.keys {
             if self.text.is_empty() && !response.has_focus() {
-                let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                let mono = crate::mono_font(
+                    ui.ctx(),
+                    crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                    400.0,
+                );
                 let galley = egui::WidgetText::from(egui::RichText::new(keys).font(mono.clone())).into_galley(
                     ui,
                     Some(egui::TextWrapMode::Extend),

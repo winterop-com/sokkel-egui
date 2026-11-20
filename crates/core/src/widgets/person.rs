@@ -318,7 +318,8 @@ impl AccountMenu {
                 ui.painter()
                     .galley(pos2(text_x, top), name, t.color("popover-foreground"));
                 if let Some(place) = &self.place {
-                    let mono = egui::FontId::monospace(TextRole::Help.font(&t).size * 0.9);
+                    // in the code face at `text-xs`, as the web's `font-mono text-xs`
+                    let mono = crate::mono_font(ui.ctx(), crate::mono_small_size(&t, t.text("xs").size), 400.0);
                     ui.painter().text(
                         pos2(text_x, top + name_h + 2.0),
                         egui::Align2::LEFT_TOP,

@@ -295,7 +295,11 @@ impl PersonRow {
         let (rect, response) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
         let avatar = Rect::from_center_size(pos2(rect.left() + 12.0, rect.center().y), vec2(24.0, 24.0));
         super::person::paint_avatar(ui, &t, avatar, &self.name, AvatarSize::Sm, false);
-        let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+        let mono = crate::mono_font(
+            ui.ctx(),
+            crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+            400.0,
+        );
         let name = WidgetText::from(egui::RichText::new(&self.name).font(mono.clone())).into_galley(
             ui,
             Some(TextWrapMode::Truncate),
@@ -484,6 +488,8 @@ pub enum DescriptionLayout {
 /// A fact's value: words, a code, nothing (a dash in faint), or what the app draws.
 enum FactValue<'a> {
     Text(String),
+    /// A number, time or duration, its figures at one width.
+    Numeric(String),
     Code(String),
     Missing,
     /// What the app draws; `true` for a value edited in place, whose box reaches into the gap.
@@ -609,10 +615,17 @@ impl<'a> DescriptionList<'a> {
         }
     }
 
-    /// A pair whose value is a number, time or duration, as the web's `numeric`. The web sets its
-    /// figures at one width; egui's text has no OpenType features, so the figures are the face's own.
-    pub fn numeric(self, term: impl Into<String>, value: impl Into<String>) -> Self {
-        self.text(term, value)
+    /// A pair whose value is a number, time or duration, as the web's `numeric`: its figures at one
+    /// width ([`crate::tabular_job`]), so values in a column line up; empty, a dash in faint.
+    pub fn numeric(mut self, term: impl Into<String>, value: impl Into<String>) -> Self {
+        let value = value.into();
+        let value = if value.is_empty() {
+            FactValue::Missing
+        } else {
+            FactValue::Numeric(value)
+        };
+        self.push(term.into(), value);
+        self
     }
 
     /// A pair whose value is drawn by `value`, such as a select or a switch.
@@ -683,6 +696,18 @@ impl<'a> DescriptionList<'a> {
                     egui::RichText::new(code).font(crate::mono_font(ui.ctx(), crate::mono_size(&t, value_size), 400.0)),
                     ink,
                 ),
+                FactValue::Numeric(figures) => {
+                    let format = egui::TextFormat {
+                        font_id: egui::FontId::proportional(value_size),
+                        color: ink,
+                        line_height: Some(line),
+                        ..Default::default()
+                    };
+                    let mut job = crate::tabular_job(ui.ctx(), figures, format);
+                    job.wrap.max_width = width.max(1.0);
+                    job.wrap.break_anywhere = true;
+                    return Some((ui.fonts_mut(|f| f.layout_job(job)), ink));
+                }
                 FactValue::Missing => (egui::RichText::new("\u{2014}").size(value_size), t.color("faint")),
                 FactValue::Drawn(..) => return None,
             };

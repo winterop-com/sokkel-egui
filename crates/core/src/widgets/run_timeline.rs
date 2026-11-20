@@ -328,7 +328,11 @@ impl<'a> RunTimeline<'a> {
             let chosen = self.selected == Some(lane.id.as_str());
             let name = WidgetText::from(
                 egui::RichText::new(&lane.name)
-                    .font(egui::FontId::monospace(TextRole::Help.font(&t).size))
+                    .font(crate::mono_font(
+                        ui.ctx(),
+                        crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                        400.0,
+                    ))
                     .line_height(Some(TextRole::Body.line_height(&t))),
             )
             .into_galley(
@@ -464,7 +468,7 @@ impl<'a> RunTimeline<'a> {
                     ui.data_mut(|d| d.insert_temp(drag_id, moved));
                     if let Some(pointer) = grip.interact_pointer_pos() {
                         let card = self.words.by.replace("{amount}", &format_shift(to_ms(moved)));
-                        let mono = egui::FontId::monospace(help.font(&t).size);
+                        let mono = crate::mono_font(ui.ctx(), crate::mono_small_size(&t, help.font(&t).size), 400.0);
                         let galley = WidgetText::from(egui::RichText::new(card).font(mono.clone())).into_galley(
                             ui,
                             Some(TextWrapMode::Extend),

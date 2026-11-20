@@ -323,7 +323,7 @@ pub const STORIES: &[Story] = &[
     },
     Story {
         path: "Patterns/Description list",
-        doc: "Facts as terms and values: side by side in two columns with a missing value and a wide fact, in a line, terms as wide as the longest, small, and stacked with values changed in place.",
+        doc: "Facts as terms and values: side by side in two columns with a missing value and a wide fact, in a line, numeric values with their figures at one width, terms as wide as the longest, small, and stacked with values changed in place.",
         show: parts::description_list,
     },
     Story {
@@ -750,6 +750,11 @@ pub const STORIES: &[Story] = &[
         path: "Patterns/Data table bands",
         doc: "Counts entered by row and column, as a tally is: columns under band heads with a rule where each band starts and ends, rows in groups whose heads sum each count column, the counts edited in place as numbers.",
         show: spec::table_bands,
+    },
+    Story {
+        path: "Patterns/Data table entry grid",
+        doc: "The entry grid is the table with editing: a list grouped with each group's sums in its head, the counts under band heads, each count edited in place and kept on its own (the arrows move the active cell; Enter, F2 or a character opens it; Tab saves and moves on; Escape drops). Below its stackBelow each row stacks into a field per count, named by its band and its own name.",
+        show: spec::table_entry_grid,
     },
     Story {
         path: "Primitives/Inputs/Secret field",

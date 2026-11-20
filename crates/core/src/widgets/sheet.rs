@@ -133,7 +133,11 @@ impl<'a> DetailSheet<'a> {
                                 ui.set_width(inner);
                                 ui.spacing_mut().item_spacing.y = 6.0;
                                 if let Some(code) = &self.code {
-                                    let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                                    let mono = crate::mono_font(
+                                        ui.ctx(),
+                                        crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                                        400.0,
+                                    );
                                     let galley = WidgetText::from(egui::RichText::new(code).font(mono.clone()))
                                         .into_galley(ui, Some(TextWrapMode::Truncate), inner, mono);
                                     ui.label(galley);

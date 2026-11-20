@@ -133,7 +133,11 @@ impl Problem {
                                         .inner_margin(Margin::symmetric(8, 6))
                                         .show(ui, |ui| {
                                             ui.set_width(ui.available_width());
-                                            let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                                            let mono = crate::mono_font(
+                                                ui.ctx(),
+                                                crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                                                400.0,
+                                            );
                                             ui.add(
                                                 egui::Label::new(
                                                     egui::RichText::new(technical)
@@ -176,7 +180,11 @@ fn prose(ui: &Ui, t: &crate::Tokens, text: &str) -> egui::text::LayoutJob {
         }
         let rich = if index % 2 == 1 {
             egui::RichText::new(part)
-                .font(egui::FontId::monospace(TextRole::Help.font(t).size))
+                .font(crate::mono_font(
+                    ui.ctx(),
+                    crate::mono_small_size(t, TextRole::Help.font(t).size),
+                    400.0,
+                ))
                 .color(t.color("muted-foreground"))
         } else {
             TextRole::Body.rich(t, part).color(t.color("muted-foreground"))

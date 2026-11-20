@@ -1276,7 +1276,11 @@ impl Widget for StatusLine {
             let label_width = galley(ui, TextRole::Help, label, 160.0).size().x;
             let room = (right - least - label_width - 6.0).max(48.0);
             let value = if *code {
-                let rich = egui::RichText::new(value).font(egui::FontId::monospace(TextRole::Help.font(&t).size));
+                let rich = egui::RichText::new(value).font(crate::mono_font(
+                    ui.ctx(),
+                    crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                    400.0,
+                ));
                 WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), room, TextRole::Help.font(&t))
             } else {
                 galley(ui, TextRole::Help, value, room)

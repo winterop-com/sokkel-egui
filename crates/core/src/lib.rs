@@ -54,6 +54,57 @@ pub fn mono_size(tokens: &Tokens, size: f32) -> f32 {
     size * tokens.number("mono-x-height").unwrap_or(PLEX_MONO_X_HEIGHT) / PLEX_MONO_X_HEIGHT
 }
 
+/// The size mono is set at inside small text of `size` (`text-xs`, `text-help`, `text-badge`,
+/// `text-head`): as tall in x-height as `mono-x-height-small` of `size`, as sokkel-ui's
+/// `--mono-adjust` sets it there; [`mono_size`] is the share at body size and above.
+pub fn mono_small_size(tokens: &Tokens, size: f32) -> f32 {
+    let share = tokens
+        .number("mono-x-height-small")
+        .or_else(|| tokens.number("mono-x-height"))
+        .unwrap_or(PLEX_MONO_X_HEIGHT);
+    size * share / PLEX_MONO_X_HEIGHT
+}
+
+/// The code face inside text of `role`: at the role's size and weight, as tall in x-height as the
+/// web sets mono there ([`mono_small_size`] in text smaller than `text.sm`, [`mono_size`] from it).
+pub fn code_font(ctx: &Context, tokens: &Tokens, role: TextRole) -> egui::FontId {
+    let size = role.font(tokens).size;
+    let size = if size < tokens.text("sm").size {
+        mono_small_size(tokens, size)
+    } else {
+        mono_size(tokens, size)
+    };
+    mono_font(ctx, size, tokens.text(role.key()).weight)
+}
+
+/// `text` in `format` with its figures at one width, as CSS's `tabular-nums` sets them: egui
+/// cannot ask a face for its tabular figures, so each digit 0 to 9 stands in a slot as wide as the
+/// face's widest digit at that size, the room it does not fill before it. Figures in a column then
+/// line up, and a number keeps its width as it changes.
+pub fn tabular_job(ctx: &Context, text: &str, format: egui::TextFormat) -> egui::text::LayoutJob {
+    let font = format.font_id.clone();
+    let widths: [f32; 10] =
+        ctx.fonts_mut(|fonts| std::array::from_fn(|digit| fonts.glyph_width(&font, char::from(b'0' + digit as u8))));
+    let widest = widths.iter().copied().fold(0.0, f32::max);
+    let mut job = egui::text::LayoutJob::default();
+    let mut words = String::new();
+    for c in text.chars() {
+        match c.to_digit(10) {
+            Some(digit) => {
+                if !words.is_empty() {
+                    job.append(&std::mem::take(&mut words), 0.0, format.clone());
+                }
+                job.append(&c.to_string(), widest - widths[digit as usize], format.clone());
+            }
+            None => words.push(c),
+        }
+    }
+    if !words.is_empty() {
+        job.append(&words, 0.0, format);
+    }
+    job
+}
+
 /// Plex Mono at `size` itself and the weight nearest `weight` it ships (400, 500 or 600), for text
 /// that sets its own size, as a graph does; [`mono_size`] gives the size mono takes beside sans.
 /// Before the fonts reach the painter (the first frame after `install`) every weight is the

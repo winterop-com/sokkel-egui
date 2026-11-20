@@ -1147,7 +1147,7 @@ impl CodeEditor<'_> {
             }
             CodeSize::Lg => (t.text("base").size, t.text("base").line_height),
         };
-        let regular = FontId::monospace(size);
+        let regular = crate::mono_font(&ctx, size, 400.0);
         let bold = crate::mono_font(&ctx, size, 600.0);
         let char_width = ui.fonts_mut(|f| f.glyph_width(&regular, '0'));
 

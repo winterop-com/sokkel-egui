@@ -140,7 +140,11 @@ impl<'a> LogView<'a> {
     pub fn show(self, ui: &mut egui::Ui) {
         use egui::{Align2, Rect, Sense, pos2, vec2};
         let t = crate::tokens(ui.ctx());
-        let mono = egui::FontId::monospace(crate::TextRole::Help.font(&t).size);
+        let mono = crate::mono_font(
+            ui.ctx(),
+            crate::mono_small_size(&t, crate::TextRole::Help.font(&t).size),
+            400.0,
+        );
         let width = ui.available_width();
         let extra = if self.grow { crate::body_room(ui) } else { 0.0 };
         if extra > 0.0 {

@@ -222,7 +222,7 @@ impl Widget for Input<'_> {
         });
         let room = suffix.as_ref().map_or(0.0, |g| g.size().x + 8.0);
         let face = if self.mono {
-            egui::FontId::monospace(body.font(&t).size)
+            crate::mono_font(ui.ctx(), crate::mono_size(&t, body.font(&t).size), 400.0)
         } else {
             body.font(&t)
         };

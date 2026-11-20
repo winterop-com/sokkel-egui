@@ -320,12 +320,13 @@ impl CellRun {
 }
 
 /// The runs as one text, each in its ink and face, at `role`'s size.
-fn runs_job(t: &crate::Tokens, runs: &[CellRun], role: TextRole, style: &egui::Style) -> egui::text::LayoutJob {
+fn runs_job(ui: &Ui, t: &crate::Tokens, runs: &[CellRun], role: TextRole) -> egui::text::LayoutJob {
+    let style = ui.style();
     let mut job = egui::text::LayoutJob::default();
     for run in runs {
         let rich = if run.mono {
             egui::RichText::new(&run.text)
-                .font(egui::FontId::monospace(role.font(t).size))
+                .font(crate::code_font(ui.ctx(), t, role))
                 .line_height(Some(role.line_height(t)))
         } else {
             role.rich(t, &run.text)
@@ -633,8 +634,21 @@ pub enum CellFocus {
     Row,
 }
 
-/// The rules where each band starts and ends, across `row`: a 1px `border` line half the gap
-/// before a column whose band differs from the one before it.
+/// Which columns start a band edge: a shown column whose band differs from the shown one before
+/// it, either having one. Such a column stands a further gap after the one before, its rule in
+/// the middle, so its words sit 12 from the rule on each side, as the web's cell padding.
+fn band_edges(columns: &[Column], hidden: &BTreeSet<usize>) -> Vec<bool> {
+    let mut edges = vec![false; columns.len()];
+    let shown: Vec<usize> = (0..columns.len()).filter(|i| !hidden.contains(i)).collect();
+    for pair in shown.windows(2) {
+        let (before, here) = (&columns[pair[0]].band, &columns[pair[1]].band);
+        edges[pair[1]] = before != here && (before.is_some() || here.is_some());
+    }
+    edges
+}
+
+/// The rules where each band starts and ends, across `row`: a 1px `border` line a gap before a
+/// column at a band edge, in the middle of the two gaps that column stands after.
 fn band_rules(
     painter: &egui::Painter,
     t: &crate::Tokens,
@@ -643,11 +657,9 @@ fn band_rules(
     places: &[(f32, f32)],
     row: Rect,
 ) {
-    let shown: Vec<usize> = (0..columns.len()).filter(|i| !hidden.contains(i)).collect();
-    for pair in shown.windows(2) {
-        let (before, here) = (&columns[pair[0]].band, &columns[pair[1]].band);
-        if before != here && (before.is_some() || here.is_some()) {
-            let x = (places[pair[1]].0 - GAP / 2.0).round() + 0.5;
+    for (c, edge) in band_edges(columns, hidden).into_iter().enumerate() {
+        if edge {
+            let x = (places[c].0 - GAP).round() + 0.5;
             painter.vline(x, row.y_range(), Stroke::new(1.0, t.color("border")));
         }
     }
@@ -973,7 +985,12 @@ impl<'a> DataTable<'a> {
             return width < below;
         }
         let columns: f32 = self.columns.iter().map(|c| c.width).sum::<f32>()
-            + GAP * self.columns.len().saturating_sub(1) as f32
+            + GAP
+                * (self.columns.len().saturating_sub(1)
+                    + band_edges(self.columns, &self.state.hidden)
+                        .iter()
+                        .filter(|e| **e)
+                        .count()) as f32
             + 2.0 * pad
             + select_width
             + if self.reorder { GRIP } else { 0.0 }
@@ -1409,7 +1426,7 @@ impl<'a> DataTable<'a> {
         }
         let count = self.rows.len();
         let words = if count == 1 { &self.words.row } else { &self.words.rows };
-        let mono = egui::FontId::monospace(TextRole::Help.font(t).size);
+        let mono = crate::mono_font(ui.ctx(), crate::mono_small_size(t, TextRole::Help.font(t).size), 400.0);
         child.label(
             egui::RichText::new(words.replace("{count}", &super::format_value(count as f64, Some(0))))
                 .font(mono)
@@ -1544,11 +1561,107 @@ impl<'a> DataTable<'a> {
         self.cards = Some(cards);
     }
 
+    /// An editable line's field in a stacked row, at `field`: its open editor in a box of its own,
+    /// or the value (a refused draft marked) in a field's box that opens the editor on a press, as
+    /// the web's stacked editing line. The saved edit, if any.
+    fn stacked_field(
+        &mut self,
+        ui: &mut Ui,
+        t: &crate::Tokens,
+        field: Rect,
+        (index, c): (usize, usize),
+        editor: &Editor,
+        editing: &Editing<'_>,
+    ) -> Option<CellEdit> {
+        let column = &self.columns[c];
+        let open_here = self
+            .state
+            .open
+            .as_ref()
+            .is_some_and(|o| (o.row, o.column) == (index, c));
+        if open_here {
+            if let Some(open) = &mut self.state.open {
+                open.boxed = true;
+            }
+            let id = self.id.with(("editor", editing.keys[index], c));
+            return self.run_editor(ui, editor, field, id, editing);
+        }
+        let refused = self.state.refused.get(&(editing.keys[index], c));
+        let radius = t.radius("control");
+        let (ground, edge) = if refused.is_some() {
+            (t.color_at("critical", 0.08), t.color_at("critical", 0.8))
+        } else {
+            (t.color("field"), t.color("input"))
+        };
+        ui.painter().rect_filled(field, radius, ground);
+        ui.painter()
+            .rect_stroke(field, radius, Stroke::new(1.0, edge), egui::StrokeKind::Inside);
+        let words = refused.map_or_else(|| self.rows[index][c].draft(), |(draft, _)| draft.clone());
+        let inner = field.shrink2(vec2(10.0, 0.0));
+        let galley = WidgetText::from(TextRole::Body.rich(t, &words)).into_galley(
+            ui,
+            Some(TextWrapMode::Truncate),
+            inner.width().max(1.0),
+            TextRole::Body.font(t),
+        );
+        let x = if column.numeric {
+            inner.right() - galley.size().x
+        } else {
+            inner.left()
+        };
+        ui.painter().galley(
+            pos2(x, inner.center().y - galley.size().y / 2.0),
+            galley,
+            t.color("foreground"),
+        );
+        let hit = ui.interact(field, self.id.with(("edit", index, c)), Sense::click());
+        let name = match &column.band {
+            Some(band) => format!("{band} · {}", column.title),
+            None => column.title.clone(),
+        };
+        hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &name));
+        if hit.hovered() {
+            ui.ctx().set_cursor_icon(CursorIcon::Text);
+        }
+        if let Some((_, error)) = refused
+            && hit.hovered()
+        {
+            hit.clone().on_hover_text(error.clone());
+        }
+        if hit.clicked() {
+            open_cell(self.state, self.rows, editing.keys, (index, c));
+        }
+        None
+    }
+
     /// The rows as labeled cards (`StackLayout::Labeled`), 16 in and 16 apart: each card 12 across
     /// and 8 down, its title on a 24 line with the menu at its end, a 20 line for each `Line`
     /// column with a value, its name before it as wide as the widest name, and the `Secondary`
     /// columns on one 24 line of facts. A card's height follows its lines, so every card is drawn.
-    fn labeled_cards(&mut self, ui: &mut Ui, t: &crate::Tokens, order: &[usize], out: &mut TableOutput) {
+    /// A line whose column edits is always drawn, a field that opens its editor on a press in its
+    /// place, a control tall (36 in a card); a line's name is its band before its own. Grouped rows
+    /// stand under their group heads, as a table's.
+    fn labeled_cards(
+        &mut self,
+        ui: &mut Ui,
+        t: &crate::Tokens,
+        order: &[usize],
+        (keys, side): (&[Id], f32),
+        out: &mut TableOutput,
+    ) {
+        let columns = self.columns;
+        let rows = self.rows;
+        let groups: Option<Vec<String>> = self.groups.clone().filter(|g| g.len() == rows.len());
+        // a column's name where it stands alone: its band before its own, as the web's `columnName`
+        let name_of = |c: usize| match &columns[c].band {
+            Some(band) => format!("{band} · {}", columns[c].title),
+            None => columns[c].title.clone(),
+        };
+        let field_height = if self.variant == TableVariant::List {
+            t.density("control")
+        } else {
+            36.0
+        };
         let title = self.columns.iter().position(|c| c.stack != StackPlace::Lead);
         let lines: Vec<usize> = (0..self.columns.len())
             .filter(|c| Some(*c) != title && self.columns[*c].stack == StackPlace::Line)
@@ -1571,7 +1684,7 @@ impl<'a> DataTable<'a> {
         let name_width = lines
             .iter()
             .map(|c| {
-                WidgetText::from(TextRole::Help.rich(t, &self.columns[*c].title))
+                WidgetText::from(TextRole::Help.rich(t, name_of(*c)))
                     .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Help.font(t))
                     .size()
                     .x
@@ -1582,243 +1695,299 @@ impl<'a> DataTable<'a> {
             !matches!(cell, Cell::Empty)
                 && !matches!(cell, Cell::Tags(tags) | Cell::OutlineTags(tags) if tags.is_empty())
         };
-        egui::ScrollArea::vertical()
-            .id_salt(self.id.with("cards"))
-            .auto_shrink([false, true])
-            .show(ui, |ui| {
-                ui.add_space(apart);
-                for &index in order {
-                    let row = &self.rows[index];
-                    let shown: Vec<usize> = lines.iter().copied().filter(|c| said(&row[*c])).collect();
-                    let primaries: Vec<usize> = primary.iter().copied().filter(|c| said(&row[*c])).collect();
-                    let has_facts = facts.iter().any(|c| said(&row[*c]));
-                    let text_width = (ui.available_width() - inset * 2.0 - 2.0 * (1.0 + 12.0)).max(1.0);
-                    // the primary values in the body's type, each over at most two 22 lines, wrapped
-                    let primary_galleys: Vec<std::sync::Arc<egui::Galley>> = primaries
-                        .iter()
-                        .map(|&c| {
-                            let mut job = egui::text::LayoutJob::single_section(
-                                row[c].draft(),
-                                egui::TextFormat {
-                                    font_id: TextRole::Body.font(t),
-                                    color: t.color("card-foreground"),
-                                    line_height: Some(22.0),
-                                    ..Default::default()
-                                },
-                            );
-                            job.wrap = egui::text::TextWrapping {
-                                max_width: text_width,
-                                max_rows: PRIMARY_LINES as usize,
-                                break_anywhere: false,
-                                overflow_character: Some('…'),
-                            };
-                            ui.fonts_mut(|f| f.layout_job(job))
-                        })
-                        .collect();
-                    // a listed row is as tall as its words; a card keeps each primary value's every
-                    // line, as the web places its cards by `stackedCardPixels`
-                    let primary_lines: f32 = if listed {
-                        primary_galleys.iter().map(|g| g.rows.len().max(1) as f32).sum()
-                    } else {
-                        PRIMARY_LINES * primary_galleys.len() as f32
-                    };
-                    let items = self.actions.as_ref().map(|actions| actions(index)).unwrap_or_default();
-                    // 22 a primary line, 20 a labeled one
-                    let parts = primaries.len() + shown.len() + usize::from(has_facts);
-                    let height = 1.0
-                        + pad
-                        + 24.0
-                        + 22.0 * primary_lines
-                        + 20.0 * shown.len() as f32
-                        + if has_facts { 24.0 } else { 0.0 }
-                        + gap * parts as f32
-                        + pad
-                        + 1.0;
-                    let width = ui.available_width() - inset * 2.0;
-                    let (outer, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
-                    let card = Rect::from_min_size(pos2(outer.left() + inset, outer.top()), vec2(width, height));
-                    card_rects.push(card);
-                    let hit = ui.interact(card, self.id.with(("card", index)), Sense::click());
-                    if hit.clicked() {
-                        self.state.opened = Some(index);
-                    }
-                    if listed {
-                        if hit.hovered() {
-                            ui.painter().rect_filled(card, 0.0, t.color("hover"));
-                        }
-                        ui.painter()
-                            .hline(card.x_range(), card.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
-                    } else {
-                        let ground = if hit.hovered() {
-                            t.color("hover")
-                        } else {
-                            t.color("card")
-                        };
-                        let radius = t.radius("surface");
-                        ui.painter().rect_filled(card, radius, ground);
-                        ui.painter().rect_stroke(
-                            card,
-                            radius,
-                            Stroke::new(1.0, t.color("border")),
-                            egui::StrokeKind::Inside,
-                        );
-                    }
-                    let left = card.left() + 1.0 + 12.0;
-                    let right = card.right() - 1.0 - 12.0;
-                    let mut y = card.top() + 1.0 + pad;
-                    // the grip before the title, dragged to move the card
-                    let mut title_left = left;
-                    if self.reorder {
-                        let grip = Rect::from_min_size(pos2(left, y), vec2(GRIP, 24.0));
-                        let hold = ui.interact(grip, self.id.with(("card-grip", index)), Sense::drag());
-                        hold.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "Move"));
-                        if hold.hovered() || hold.dragged() {
-                            ui.ctx().set_cursor_icon(if hold.dragged() {
-                                CursorIcon::Grabbing
+        let cards_id = self.id.with("cards");
+        // a table shown whole (`height` without bound) lays its rows in the page, which scrolls
+        let whole = !self.height.is_finite();
+        let mut body = |ui: &mut Ui| {
+            ui.add_space(apart);
+            let mut last_group: Option<&String> = None;
+            for (position, &index) in order.iter().enumerate() {
+                let row = &rows[index];
+                if let Some(groups) = &groups {
+                    let key = &groups[index];
+                    if last_group != Some(key) {
+                        last_group = Some(key);
+                        let shut = self.state.folded.contains(key);
+                        let head = GroupHead {
+                            key,
+                            held: order.iter().filter(|i| groups[**i] == *key).count(),
+                            shut,
+                            start: side,
+                            label_end: None,
+                            aggregates: &[],
+                            // a listed group's head is its words 6 over and under, as the web's `py-1.5`
+                            height: if listed {
+                                t.text(TextRole::ColumnHead.key()).line_height + 12.0
                             } else {
-                                CursorIcon::Grab
-                            });
-                        }
-                        if hold.drag_started()
-                            && let Some(position) = order.iter().position(|r| *r == index)
-                        {
-                            ui.ctx().data_mut(|d| d.insert_temp(drag_id, position));
-                        }
-                        icons::paint(
-                            ui.painter(),
-                            pos2(left + 6.0, y + 12.0),
-                            Icon::GripVertical,
-                            14.0,
-                            t.color("muted-foreground"),
-                        );
-                        title_left += GRIP + 8.0;
-                    }
-                    // the title, the menu at the line's end
-                    let menu = if items.is_empty() { 0.0 } else { 28.0 + 8.0 };
-                    if let Some(c) = title {
-                        let words = row[c].draft();
-                        // a code stays in the code face, at the title's size
-                        let rich = match &row[c] {
-                            // in the title's weight, as the web's `font-mono` inside `font-medium`
-                            Cell::Mono(_) | Cell::Marked { .. } => egui::RichText::new(words).font(crate::mono_font(
-                                ui.ctx(),
-                                crate::mono_size(t, TextRole::Action.font(t).size),
-                                t.text(TextRole::Action.key()).weight,
-                            )),
-                            _ => TextRole::Action.rich(t, words),
+                                t.density("row")
+                            },
                         };
-                        let galley = WidgetText::from(rich).into_galley(
-                            ui,
-                            Some(TextWrapMode::Truncate),
-                            (right - title_left - menu).max(1.0),
-                            TextRole::Action.font(t),
-                        );
-                        ui.painter().galley(
-                            pos2(title_left, y + 12.0 - galley.size().y / 2.0),
-                            galley,
-                            t.color("card-foreground"),
-                        );
-                    }
-                    if !items.is_empty() {
-                        let button = Rect::from_center_size(pos2(right - 14.0, y + 12.0), vec2(28.0, 24.0));
-                        let trigger = ui.interact(button, self.id.with(("actions", index)), Sense::click());
-                        trigger.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "Actions"));
-                        if trigger.hovered() {
-                            ui.painter().rect_filled(button, t.radius("control"), t.color("hover"));
-                        }
-                        icons::paint(
-                            ui.painter(),
-                            button.center(),
-                            Icon::Ellipsis,
-                            16.0,
-                            t.color("muted-foreground"),
-                        );
-                        if let Some(chosen) = DropdownMenu::new(&items).show(&trigger) {
-                            out.action = Some((index, chosen));
-                        }
-                    }
-                    y += 24.0 + gap;
-                    // the primary values, as laid out above
-                    for galley in primary_galleys {
-                        // the lines it takes, which the card's height counted
-                        let lines = galley.rows.len().max(1) as f32;
-                        ui.painter().galley(pos2(left, y), galley, t.color("card-foreground"));
-                        y += 22.0 * lines + gap;
-                    }
-                    // a line per column with a value: its name, then the value
-                    for &c in &shown {
-                        let name = WidgetText::from(TextRole::Help.rich(t, &self.columns[c].title)).into_galley(
-                            ui,
-                            Some(TextWrapMode::Truncate),
-                            name_width,
-                            TextRole::Help.font(t),
-                        );
-                        ui.painter().galley(
-                            pos2(left, y + 10.0 - name.size().y / 2.0),
-                            name,
-                            t.color("muted-foreground"),
-                        );
-                        let x = left + name_width + 8.0;
-                        let place = Rect::from_min_max(pos2(x, y), pos2(right, y + 20.0));
-                        line_value(ui, t, &row[c], place);
-                        y += 20.0 + gap;
-                    }
-                    // the facts, one quiet line, a faint dot between them
-                    if has_facts {
-                        let mut x = left;
-                        let middle = y + 12.0;
-                        let mut first = true;
-                        for &c in &facts {
-                            if !said(&row[c]) {
-                                continue;
+                        if group_head(ui, t, &head, &self.words) {
+                            if shut {
+                                self.state.folded.remove(key);
+                            } else {
+                                self.state.folded.insert(key.clone());
                             }
-                            if !first {
-                                let dot = WidgetText::from(TextRole::Help.rich(t, "·")).into_galley(
-                                    ui,
-                                    None,
-                                    f32::INFINITY,
-                                    TextRole::Help.font(t),
-                                );
-                                x += 6.0;
-                                ui.painter().galley(
-                                    pos2(x, middle - dot.size().y / 2.0),
-                                    dot.clone(),
-                                    t.color("faint"),
-                                );
-                                x += dot.size().x + 6.0;
-                            }
-                            first = false;
-                            x += paint_fact(ui, t, &row[c], pos2(x, middle), (right - x).max(1.0));
                         }
                     }
-                    ui.add_space(apart);
+                    if self.state.folded.contains(key) {
+                        continue;
+                    }
                 }
-                // a dragged card: the line where it lands, and its move on release
-                if let Some(from) = dragging {
-                    let released = ui.input(|i| i.pointer.any_released());
-                    if let Some(pointer) = ui.ctx().pointer_latest_pos()
-                        && let (Some(first), Some(last)) = (card_rects.first(), card_rects.last())
-                    {
-                        let to = card_rects.iter().filter(|r| pointer.y > r.center().y).count();
-                        let y = if to < card_rects.len() {
-                            card_rects[to].top() - 8.0
+                // an editable line is always drawn, as the field it is edited in
+                let shown: Vec<usize> = lines
+                    .iter()
+                    .copied()
+                    .filter(|c| columns[*c].edit.is_some() || said(&row[*c]))
+                    .collect();
+                let line_height = |c: usize| {
+                    if columns[c].edit.is_some() { field_height } else { 20.0 }
+                };
+                let primaries: Vec<usize> = primary.iter().copied().filter(|c| said(&row[*c])).collect();
+                let has_facts = facts.iter().any(|c| said(&row[*c]));
+                let text_width = (ui.available_width() - inset * 2.0 - 2.0 * (1.0 + 12.0)).max(1.0);
+                // the primary values in the body's type, each over at most two 22 lines, wrapped
+                let primary_galleys: Vec<std::sync::Arc<egui::Galley>> = primaries
+                    .iter()
+                    .map(|&c| {
+                        let mut job = egui::text::LayoutJob::single_section(
+                            row[c].draft(),
+                            egui::TextFormat {
+                                font_id: TextRole::Body.font(t),
+                                color: t.color("card-foreground"),
+                                line_height: Some(22.0),
+                                ..Default::default()
+                            },
+                        );
+                        job.wrap = egui::text::TextWrapping {
+                            max_width: text_width,
+                            max_rows: PRIMARY_LINES as usize,
+                            break_anywhere: false,
+                            overflow_character: Some('…'),
+                        };
+                        ui.fonts_mut(|f| f.layout_job(job))
+                    })
+                    .collect();
+                // a listed row is as tall as its words; a card keeps each primary value's every
+                // line, as the web places its cards by `stackedCardPixels`
+                let primary_lines: f32 = if listed {
+                    primary_galleys.iter().map(|g| g.rows.len().max(1) as f32).sum()
+                } else {
+                    PRIMARY_LINES * primary_galleys.len() as f32
+                };
+                let items = self.actions.as_ref().map(|actions| actions(index)).unwrap_or_default();
+                // 22 a primary line, 20 a labeled one
+                let parts = primaries.len() + shown.len() + usize::from(has_facts);
+                let height = 1.0
+                    + pad
+                    + 24.0
+                    + 22.0 * primary_lines
+                    + shown.iter().map(|c| line_height(*c)).sum::<f32>()
+                    + if has_facts { 24.0 } else { 0.0 }
+                    + gap * parts as f32
+                    + pad
+                    + 1.0;
+                let width = ui.available_width() - inset * 2.0;
+                let (outer, _) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::hover());
+                let card = Rect::from_min_size(pos2(outer.left() + inset, outer.top()), vec2(width, height));
+                card_rects.push(card);
+                let hit = ui.interact(card, self.id.with(("card", index)), Sense::click());
+                if hit.clicked() {
+                    self.state.opened = Some(index);
+                }
+                if listed {
+                    if hit.hovered() {
+                        ui.painter().rect_filled(card, 0.0, t.color("hover"));
+                    }
+                    ui.painter()
+                        .hline(card.x_range(), card.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
+                } else {
+                    let ground = if hit.hovered() {
+                        t.color("hover")
+                    } else {
+                        t.color("card")
+                    };
+                    let radius = t.radius("surface");
+                    ui.painter().rect_filled(card, radius, ground);
+                    ui.painter().rect_stroke(
+                        card,
+                        radius,
+                        Stroke::new(1.0, t.color("border")),
+                        egui::StrokeKind::Inside,
+                    );
+                }
+                let left = card.left() + 1.0 + 12.0;
+                let right = card.right() - 1.0 - 12.0;
+                let mut y = card.top() + 1.0 + pad;
+                // the grip before the title, dragged to move the card
+                let mut title_left = left;
+                if self.reorder {
+                    let grip = Rect::from_min_size(pos2(left, y), vec2(GRIP, 24.0));
+                    let hold = ui.interact(grip, self.id.with(("card-grip", index)), Sense::drag());
+                    hold.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "Move"));
+                    if hold.hovered() || hold.dragged() {
+                        ui.ctx().set_cursor_icon(if hold.dragged() {
+                            CursorIcon::Grabbing
                         } else {
-                            last.bottom() + 8.0
-                        };
-                        ui.painter()
-                            .hline(first.x_range(), y, Stroke::new(2.0, t.color("primary")));
-                        if released {
-                            let to = if to > from { to - 1 } else { to };
-                            if to != from {
-                                out.reordered = Some((from, to));
-                            }
-                        }
+                            CursorIcon::Grab
+                        });
                     }
-                    if released {
-                        ui.ctx().data_mut(|d| d.remove::<usize>(drag_id));
+                    if hold.drag_started()
+                        && let Some(position) = order.iter().position(|r| *r == index)
+                    {
+                        ui.ctx().data_mut(|d| d.insert_temp(drag_id, position));
+                    }
+                    icons::paint(
+                        ui.painter(),
+                        pos2(left + 6.0, y + 12.0),
+                        Icon::GripVertical,
+                        14.0,
+                        t.color("muted-foreground"),
+                    );
+                    title_left += GRIP + 8.0;
+                }
+                // the title, the menu at the line's end
+                let menu = if items.is_empty() { 0.0 } else { 28.0 + 8.0 };
+                if let Some(c) = title {
+                    let words = row[c].draft();
+                    // a code stays in the code face, at the title's size
+                    let rich = match &row[c] {
+                        // in the title's weight, as the web's `font-mono` inside `font-medium`
+                        Cell::Mono(_) | Cell::Marked { .. } => egui::RichText::new(words).font(crate::mono_font(
+                            ui.ctx(),
+                            crate::mono_size(t, TextRole::Action.font(t).size),
+                            t.text(TextRole::Action.key()).weight,
+                        )),
+                        _ => TextRole::Action.rich(t, words),
+                    };
+                    let galley = WidgetText::from(rich).into_galley(
+                        ui,
+                        Some(TextWrapMode::Truncate),
+                        (right - title_left - menu).max(1.0),
+                        TextRole::Action.font(t),
+                    );
+                    ui.painter().galley(
+                        pos2(title_left, y + 12.0 - galley.size().y / 2.0),
+                        galley,
+                        t.color("card-foreground"),
+                    );
+                }
+                if !items.is_empty() {
+                    let button = Rect::from_center_size(pos2(right - 14.0, y + 12.0), vec2(28.0, 24.0));
+                    let trigger = ui.interact(button, self.id.with(("actions", index)), Sense::click());
+                    trigger.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "Actions"));
+                    if trigger.hovered() {
+                        ui.painter().rect_filled(button, t.radius("control"), t.color("hover"));
+                    }
+                    icons::paint(
+                        ui.painter(),
+                        button.center(),
+                        Icon::Ellipsis,
+                        16.0,
+                        t.color("muted-foreground"),
+                    );
+                    if let Some(chosen) = DropdownMenu::new(&items).show(&trigger) {
+                        out.action = Some((index, chosen));
                     }
                 }
-            });
+                y += 24.0 + gap;
+                // the primary values, as laid out above
+                for galley in primary_galleys {
+                    // the lines it takes, which the card's height counted
+                    let lines = galley.rows.len().max(1) as f32;
+                    ui.painter().galley(pos2(left, y), galley, t.color("card-foreground"));
+                    y += 22.0 * lines + gap;
+                }
+                // a line per column with a value: its name, then the value
+                for &c in &shown {
+                    let height = line_height(c);
+                    let name = WidgetText::from(TextRole::Help.rich(t, name_of(c))).into_galley(
+                        ui,
+                        Some(TextWrapMode::Truncate),
+                        name_width,
+                        TextRole::Help.font(t),
+                    );
+                    ui.painter().galley(
+                        pos2(left, y + height / 2.0 - name.size().y / 2.0),
+                        name,
+                        t.color("muted-foreground"),
+                    );
+                    let x = left + name_width + 8.0;
+                    let place = Rect::from_min_max(pos2(x, y), pos2(right, y + height));
+                    match &columns[c].edit {
+                        Some(editor) => {
+                            let field =
+                                Rect::from_center_size(place.center(), vec2(place.width(), t.density("control")));
+                            let editing = Editing { keys, order, position };
+                            if let Some(edit) = self.stacked_field(ui, t, field, (index, c), editor, &editing) {
+                                out.edited = Some(edit);
+                            }
+                        }
+                        None => line_value(ui, t, &row[c], place),
+                    }
+                    y += height + gap;
+                }
+                // the facts, one quiet line, a faint dot between them
+                if has_facts {
+                    let mut x = left;
+                    let middle = y + 12.0;
+                    let mut first = true;
+                    for &c in &facts {
+                        if !said(&row[c]) {
+                            continue;
+                        }
+                        if !first {
+                            let dot = WidgetText::from(TextRole::Help.rich(t, "·")).into_galley(
+                                ui,
+                                None,
+                                f32::INFINITY,
+                                TextRole::Help.font(t),
+                            );
+                            x += 6.0;
+                            ui.painter()
+                                .galley(pos2(x, middle - dot.size().y / 2.0), dot.clone(), t.color("faint"));
+                            x += dot.size().x + 6.0;
+                        }
+                        first = false;
+                        x += paint_fact(ui, t, &row[c], pos2(x, middle), (right - x).max(1.0));
+                    }
+                }
+                ui.add_space(apart);
+            }
+            // a dragged card: the line where it lands, and its move on release
+            if let Some(from) = dragging {
+                let released = ui.input(|i| i.pointer.any_released());
+                if let Some(pointer) = ui.ctx().pointer_latest_pos()
+                    && let (Some(first), Some(last)) = (card_rects.first(), card_rects.last())
+                {
+                    let to = card_rects.iter().filter(|r| pointer.y > r.center().y).count();
+                    let y = if to < card_rects.len() {
+                        card_rects[to].top() - 8.0
+                    } else {
+                        last.bottom() + 8.0
+                    };
+                    ui.painter()
+                        .hline(first.x_range(), y, Stroke::new(2.0, t.color("primary")));
+                    if released {
+                        let to = if to > from { to - 1 } else { to };
+                        if to != from {
+                            out.reordered = Some((from, to));
+                        }
+                    }
+                }
+                if released {
+                    ui.ctx().data_mut(|d| d.remove::<usize>(drag_id));
+                }
+            }
+        };
+        if whole {
+            body(ui);
+        } else {
+            egui::ScrollArea::vertical()
+                .id_salt(cards_id)
+                .auto_shrink([false, true])
+                .show(ui, |ui| body(ui));
+        }
     }
 
     fn order(&self) -> Vec<usize> {
@@ -1919,7 +2088,8 @@ impl<'a> DataTable<'a> {
             })
             .collect();
         let shown = (0..self.columns.len()).filter(|i| !hidden(*i)).count();
-        let gaps = GAP * shown.saturating_sub(1) as f32;
+        let edges = band_edges(self.columns, &self.state.hidden);
+        let gaps = GAP * (shown.saturating_sub(1) + edges.iter().filter(|e| **e).count()) as f32;
         let tail = if self.actions.is_some() { ACTIONS + GAP } else { 0.0 };
         // a table that fits its room (the web's `minWidth="auto"`: one that stacks rather than
         // scrolls) shrinks its columns in proportion where they run past it, none under 56
@@ -1973,6 +2143,9 @@ impl<'a> DataTable<'a> {
             .enumerate()
             .map(|(i, w)| {
                 let w = *w;
+                if edges[i] {
+                    x += GAP;
+                }
                 let place = (x, w);
                 if !hidden(i) {
                     x += w + GAP;
@@ -2120,7 +2293,7 @@ impl<'a> DataTable<'a> {
                 }
                 // labeled cards in place of the rows
                 if stacked && self.stack_layout == StackLayout::Labeled && !self.rows.is_empty() {
-                    self.labeled_cards(ui, &t, &order, &mut out);
+                    self.labeled_cards(ui, &t, &order, (&keys, pad + select_width), &mut out);
                     return;
                 }
                 // the head, which a stacked table has none of
@@ -2477,6 +2650,7 @@ impl<'a> DataTable<'a> {
                                     start: pad + select_width,
                                     label_end: span_end,
                                     aggregates: &aggregates,
+                                    height: t.density("row"),
                                 };
                                 let rect = ui.available_rect_before_wrap();
                                 let pressed = group_head(ui, &t, &head, &self.words);
@@ -2612,6 +2786,7 @@ impl<'a> DataTable<'a> {
                         if !stacked {
                             band_rules(ui.painter(), &t, self.columns, &self.state.hidden, &places, rect);
                         }
+                        let edges = band_edges(self.columns, &self.state.hidden);
                         for (c, column) in self.columns.iter().enumerate().filter(|_| !stacked) {
                             if self.state.hidden.contains(&c) {
                                 continue;
@@ -2623,10 +2798,24 @@ impl<'a> DataTable<'a> {
                             let first_shown = (0..c).all(|i| self.state.hidden.contains(&i));
                             let last_shown = (c + 1..self.columns.len()).all(|i| self.state.hidden.contains(&i));
                             let cell_box = Rect::from_min_max(
-                                pos2(if first_shown { x - pad } else { x - GAP / 2.0 }, rect.top()),
+                                pos2(
+                                    if first_shown {
+                                        x - pad
+                                    } else if edges[c] {
+                                        x - GAP
+                                    } else {
+                                        x - GAP / 2.0
+                                    },
+                                    rect.top(),
+                                ),
                                 pos2(
                                     if last_shown {
                                         x + w + self.end_pad(pad)
+                                    } else if (c + 1..self.columns.len())
+                                        .find(|i| !self.state.hidden.contains(i))
+                                        .is_some_and(|next| edges[next])
+                                    {
+                                        x + w + GAP
                                     } else {
                                         x + w + GAP / 2.0
                                     },
@@ -2905,7 +3094,11 @@ impl<'a> DataTable<'a> {
                     let size = self.state.page_size.max(1);
                     let pages = total.div_ceil(size).max(1);
                     let page = self.state.page;
-                    let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                    let mono = crate::mono_font(
+                        ui.ctx(),
+                        crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                        400.0,
+                    );
                     let (line, _) = ui.allocate_exact_size(vec2(ui.available_width(), 44.0), Sense::hover());
                     ui.painter()
                         .hline(line.x_range(), line.top() + 0.5, Stroke::new(1.0, t.color("border")));
@@ -2969,7 +3162,11 @@ impl<'a> DataTable<'a> {
                 }
                 // the foot: a rule over it, its words in the code face, 12 in and 8 down
                 if let Some(foot) = &self.foot {
-                    let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+                    let mono = crate::mono_font(
+                        ui.ctx(),
+                        crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                        400.0,
+                    );
                     let (line, _) = ui.allocate_exact_size(vec2(ui.available_width(), 32.0), Sense::hover());
                     ui.painter()
                         .hline(line.x_range(), line.top() + 0.5, Stroke::new(1.0, t.color("border")));
@@ -3139,7 +3336,7 @@ fn paint_cell(
         ),
         Cell::Muted(label) => text(ui, TextRole::Body.rich(t, label), t.color("muted-foreground")),
         Cell::Runs(runs) => {
-            let job = runs_job(t, runs, TextRole::Body, ui.style());
+            let job = runs_job(ui, t, runs, TextRole::Body);
             let galley = WidgetText::from(job).into_galley(ui, Some(mode), room, TextRole::Body.font(t));
             let x = if numeric {
                 rect.right() - galley.size().x
@@ -3161,7 +3358,7 @@ fn paint_cell(
             let lay = |ui: &mut Ui, rich: egui::RichText, role: TextRole| {
                 WidgetText::from(rich).into_galley(ui, Some(mode), room, role.font(t))
             };
-            let name = lay(ui, code_rich(t, code, TextRole::Body), TextRole::Body);
+            let name = lay(ui, code_rich(ui, t, code, TextRole::Body), TextRole::Body);
             let small = lay(ui, TextRole::Help.rich(t, detail), TextRole::Help);
             let y = rect.center().y - (name.size().y + small.size().y) / 2.0;
             let height = name.size().y;
@@ -3169,7 +3366,7 @@ fn paint_cell(
             ui.painter()
                 .galley(pos2(rect.left(), y + height), small, t.color("muted-foreground"));
         }
-        Cell::Code(label) => text(ui, code_rich(t, label, TextRole::Body), t.color("foreground")),
+        Cell::Code(label) => text(ui, code_rich(ui, t, label, TextRole::Body), t.color("foreground")),
         Cell::TagName(name) => {
             icons::paint(
                 ui.painter(),
@@ -3219,7 +3416,11 @@ fn paint_cell(
                 egui::Align::BOTTOM,
             );
             egui::RichText::new(format!("  {code}"))
-                .font(egui::FontId::monospace(TextRole::Help.font(t).size))
+                .font(crate::mono_font(
+                    ui.ctx(),
+                    crate::mono_small_size(t, TextRole::Help.font(t).size),
+                    400.0,
+                ))
                 .color(t.color("muted-foreground"))
                 .append_to(&mut job, ui.style(), egui::FontSelection::Default, egui::Align::BOTTOM);
             job.wrap = egui::text::TextWrapping::truncate_at_width(room);
@@ -3254,7 +3455,7 @@ fn paint_cell(
                 TextRole::Body.rich(t, name).variation("wght", weight),
                 TextRole::Body,
             );
-            let second = lay(ui, code_rich(t, code, TextRole::Help), TextRole::Help);
+            let second = lay(ui, code_rich(ui, t, code, TextRole::Help), TextRole::Help);
             let y = rect.center().y - (first.size().y + second.size().y) / 2.0;
             let height = first.size().y;
             ui.painter().galley(pos2(rect.left(), y), first, t.color("foreground"));
@@ -3281,11 +3482,11 @@ fn paint_cell(
             ui.painter().galley(pos2(rect.left(), y), first, first_ink);
             ui.painter().galley(pos2(rect.left(), y + height), second, second_ink);
         }
-        Cell::Mono(label) => text(ui, code_rich(t, label, TextRole::Help), t.color("foreground")),
+        Cell::Mono(label) => text(ui, code_rich(ui, t, label, TextRole::Body), t.color("foreground")),
         Cell::Badge(label) => {
             paint_badge(ui, t, label, pos2(rect.left(), rect.center().y));
         }
-        Cell::MutedCode(label) => text(ui, code_rich(t, label, TextRole::Help), t.color("muted-foreground")),
+        Cell::MutedCode(label) => text(ui, code_rich(ui, t, label, TextRole::Body), t.color("muted-foreground")),
         Cell::Marked { text: label, dot } => {
             // a 10 dot, 8 before the code, as the web's `Dot` and `gap-2`
             let lead = if let Some(color) = dot {
@@ -3295,7 +3496,8 @@ fn paint_cell(
             } else {
                 0.0
             };
-            let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
+            // in the cell's text, as the web's `font-mono` in a `text-sm` cell
+            let rich = egui::RichText::new(label).font(crate::code_font(ui.ctx(), t, TextRole::Body));
             let galley = WidgetText::from(rich).into_galley(
                 ui,
                 Some(TextWrapMode::Truncate),
@@ -3366,7 +3568,11 @@ fn paint_cell(
             }
         }
         Cell::Clock { clock, at, now } => {
-            let mono = egui::RichText::new(clock).font(egui::FontId::monospace(TextRole::Help.font(t).size));
+            let mono = egui::RichText::new(clock).font(crate::mono_font(
+                ui.ctx(),
+                crate::mono_small_size(t, TextRole::Help.font(t).size),
+                400.0,
+            ));
             let galley =
                 WidgetText::from(mono).into_galley(ui, Some(TextWrapMode::Truncate), room, TextRole::Body.font(t));
             let width = galley.size().x;
@@ -3497,7 +3703,11 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         | Cell::TagName(label) => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
         Cell::ChipNote { label, tone, .. } => super::chip::paint_at(ui, at.x, at.y, label, *tone),
         Cell::CodeLines { code: label, .. } | Cell::Code(label) => {
-            let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
+            let rich = egui::RichText::new(label).font(crate::mono_font(
+                ui.ctx(),
+                crate::mono_small_size(t, TextRole::Help.font(t).size),
+                400.0,
+            ));
             text(ui, rich, quiet, at.x, room)
         }
         Cell::Relative { .. } => text(ui, TextRole::Help.rich(t, cell.draft()), quiet, at.x, room),
@@ -3511,7 +3721,11 @@ fn paint_fact(ui: &mut Ui, t: &crate::Tokens, cell: &Cell, at: egui::Pos2, room:
         Cell::Lines { title, .. } => text(ui, TextRole::Help.rich(t, title), quiet, at.x, room),
         Cell::Toned(label, ink) => text(ui, TextRole::Help.rich(t, label), t.color(ink), at.x, room),
         Cell::Mono(label) | Cell::MutedCode(label) | Cell::Marked { text: label, .. } => {
-            let rich = egui::RichText::new(label).font(egui::FontId::monospace(TextRole::Help.font(t).size));
+            let rich = egui::RichText::new(label).font(crate::mono_font(
+                ui.ctx(),
+                crate::mono_small_size(t, TextRole::Help.font(t).size),
+                400.0,
+            ));
             text(ui, rich, quiet, at.x, room)
         }
         Cell::Swatch { text: label, .. } => text(ui, TextRole::Help.rich(t, label), quiet, at.x, room),
@@ -3559,6 +3773,8 @@ struct GroupHead<'h> {
     start: f32,
     label_end: Option<f32>,
     aggregates: &'h [(f32, f32, bool, String)],
+    /// The head's height: a row's in a table, the head's words 6 over and under in a stacked list.
+    height: f32,
 }
 
 fn group_head(ui: &mut Ui, t: &crate::Tokens, head: &GroupHead<'_>, words: &TableWords) -> bool {
@@ -3569,8 +3785,8 @@ fn group_head(ui: &mut Ui, t: &crate::Tokens, head: &GroupHead<'_>, words: &Tabl
         start,
         label_end,
         aggregates,
+        height,
     } = *head;
-    let height = t.density("row");
     let (rect, row) = ui.allocate_exact_size(vec2(ui.available_width(), height), Sense::click());
     let said = if shut { &words.show_group } else { &words.hide_group };
     row.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, format!("{said}: {key}")));
@@ -3621,9 +3837,11 @@ fn group_head(ui: &mut Ui, t: &crate::Tokens, head: &GroupHead<'_>, words: &Tabl
         label,
         t.color_or("table-head-ink", t.color("foreground")),
     );
-    let count = WidgetText::from(
-        egui::RichText::new(thousands(held)).font(egui::FontId::monospace(TextRole::Help.font(t).size)),
-    )
+    let count = WidgetText::from(egui::RichText::new(thousands(held)).font(crate::mono_font(
+        ui.ctx(),
+        crate::mono_small_size(t, TextRole::Help.font(t).size),
+        400.0,
+    )))
     .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Help.font(t));
     ui.painter().galley(
         pos2(x + width + 8.0, rect.center().y - count.size().y / 2.0),
@@ -3668,9 +3886,9 @@ fn paint_badge(ui: &Ui, t: &crate::Tokens, label: &str, at: egui::Pos2) -> f32 {
     width
 }
 
-fn code_rich(t: &crate::Tokens, text: &str, role: TextRole) -> egui::RichText {
+fn code_rich(ui: &Ui, t: &crate::Tokens, text: &str, role: TextRole) -> egui::RichText {
     egui::RichText::new(text)
-        .font(egui::FontId::monospace(role.font(t).size))
+        .font(crate::code_font(ui.ctx(), t, role))
         .line_height(Some(TextRole::Body.line_height(t)))
 }
 
@@ -3679,8 +3897,8 @@ fn code_rich(t: &crate::Tokens, text: &str, role: TextRole) -> egui::RichText {
 fn lead_width(ui: &Ui, t: &crate::Tokens, cell: &Cell, most: f32) -> f32 {
     let rich = match cell {
         Cell::Text(label) | Cell::Strong(label) | Cell::Muted(label) => TextRole::Body.rich(t, label),
-        Cell::Mono(label) | Cell::MutedCode(label) => code_rich(t, label, TextRole::Help),
-        Cell::Code(label) => code_rich(t, label, TextRole::Body),
+        Cell::Mono(label) | Cell::MutedCode(label) => code_rich(ui, t, label, TextRole::Body),
+        Cell::Code(label) => code_rich(ui, t, label, TextRole::Body),
         _ => return 16.0,
     };
     let width = WidgetText::from(rich)
@@ -3706,10 +3924,10 @@ fn cell_height(ui: &Ui, t: &crate::Tokens, cell: &Cell, room: f32) -> f32 {
         | Cell::Muted(label)
         | Cell::Toned(label, _)
         | Cell::Number { text: label, .. } => lay(TextRole::Body.rich(t, label), TextRole::Body),
-        Cell::Mono(label) | Cell::MutedCode(label) => lay(code_rich(t, label, TextRole::Help), TextRole::Body),
-        Cell::Code(label) => lay(code_rich(t, label, TextRole::Body), TextRole::Body),
+        Cell::Mono(label) | Cell::MutedCode(label) => lay(code_rich(ui, t, label, TextRole::Body), TextRole::Body),
+        Cell::Code(label) => lay(code_rich(ui, t, label, TextRole::Body), TextRole::Body),
         Cell::Runs(runs) => {
-            WidgetText::from(runs_job(t, runs, TextRole::Body, ui.style()))
+            WidgetText::from(runs_job(ui, t, runs, TextRole::Body))
                 .into_galley(ui, Some(TextWrapMode::Wrap), room, TextRole::Body.font(t))
                 .size()
                 .y
@@ -3718,10 +3936,11 @@ fn cell_height(ui: &Ui, t: &crate::Tokens, cell: &Cell, room: f32) -> f32 {
             lay(TextRole::Body.rich(t, title), TextRole::Body) + lay(TextRole::Help.rich(t, detail), TextRole::Help)
         }
         Cell::NamedCode { name, code, .. } => {
-            lay(TextRole::Body.rich(t, name), TextRole::Body) + lay(code_rich(t, code, TextRole::Help), TextRole::Help)
+            lay(TextRole::Body.rich(t, name), TextRole::Body)
+                + lay(code_rich(ui, t, code, TextRole::Help), TextRole::Help)
         }
         Cell::CodeLines { code, detail } => {
-            lay(code_rich(t, code, TextRole::Body), TextRole::Body)
+            lay(code_rich(ui, t, code, TextRole::Body), TextRole::Body)
                 + lay(TextRole::Help.rich(t, detail), TextRole::Help)
         }
         _ => 20.0,

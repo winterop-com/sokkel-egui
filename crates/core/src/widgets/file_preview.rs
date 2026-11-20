@@ -1,6 +1,6 @@
 //! What a file holds, after sokkel-ui's `FilePreview` and the kinds of its `FileList`.
 
-use egui::{FontId, Frame, Id, Margin, RichText, ScrollArea, Stroke, Ui};
+use egui::{Frame, Id, Margin, RichText, ScrollArea, Stroke, Ui};
 
 use crate::{Icon, TextRole, icons, tokens};
 
@@ -245,14 +245,22 @@ impl<'a> FilePreview<'a> {
         ui.add_space(8.0);
         ui.label(
             RichText::new(foot)
-                .font(FontId::monospace(TextRole::Help.font(&t).size))
+                .font(crate::mono_font(
+                    ui.ctx(),
+                    crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+                    400.0,
+                ))
                 .color(t.color("muted-foreground")),
         );
     }
 
     fn code(&self, ui: &mut Ui, text: &str) {
         let t = tokens(ui.ctx());
-        let mono = FontId::monospace(TextRole::Help.font(&t).size);
+        let mono = crate::mono_font(
+            ui.ctx(),
+            crate::mono_small_size(&t, TextRole::Help.font(&t).size),
+            400.0,
+        );
         Frame::new()
             .fill(t.color("card"))
             .stroke(Stroke::new(1.0, t.color("border-strong")))

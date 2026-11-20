@@ -137,11 +137,12 @@ pub(crate) fn paint_at(ui: &Ui, left: f32, center_y: f32, text: &str, tone: Chip
     rect.width()
 }
 
-/// Paint a tag (sokkel-ui's `TagChips`): a chip in `tone` in the code face at the help's size, its
+/// Paint a tag (sokkel-ui's `TagChips`): a chip in `tone` in the code face in the badge's text, its
 /// start at `left` on the line through `center_y`; returns its width.
 pub(crate) fn paint_tag_at(ui: &Ui, left: f32, center_y: f32, text: &str, tone: ChipTone) -> f32 {
     let t = tokens(ui.ctx());
-    let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+    // in the chip's `text-badge`, its size and weight, as the web's mono chip
+    let mono = crate::code_font(ui.ctx(), &t, TextRole::Badge);
     let galley = WidgetText::from(egui::RichText::new(text).font(mono.clone())).into_galley(
         ui,
         Some(TextWrapMode::Extend),
@@ -153,7 +154,7 @@ pub(crate) fn paint_tag_at(ui: &Ui, left: f32, center_y: f32, text: &str, tone: 
     rect.width()
 }
 
-/// Tags, after sokkel-ui's `TagChips`: each a neutral chip in the code face at the help's size,
+/// Tags, after sokkel-ui's `TagChips`: each a neutral chip in the code face in the badge's text,
 /// 20 tall, 4 apart, wrapping onto lines 4 apart where they run out of room.
 pub struct TagChips<'a> {
     tags: &'a [String],
@@ -168,7 +169,7 @@ impl<'a> TagChips<'a> {
 impl egui::Widget for TagChips<'_> {
     fn ui(self, ui: &mut Ui) -> egui::Response {
         let t = tokens(ui.ctx());
-        let mono = egui::FontId::monospace(TextRole::Help.font(&t).size);
+        let mono = crate::code_font(ui.ctx(), &t, TextRole::Badge);
         ui.horizontal_wrapped(|ui| {
             ui.spacing_mut().item_spacing = vec2(4.0, 4.0);
             ui.spacing_mut().interact_size.y = 20.0;
