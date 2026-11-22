@@ -468,6 +468,8 @@ pub struct TableState {
     /// The active row was moved by a key last, not by a press: it is marked, as the web marks it
     /// only under keyboard focus.
     keyed: bool,
+    /// How far the columns are scrolled sideways, where they run past a table's room.
+    pub scroll_x: f32,
 }
 
 impl TableState {
@@ -852,6 +854,18 @@ fn band_edges(columns: &[Column], hidden: &BTreeSet<usize>) -> Vec<bool> {
         edges[pair[1]] = before != here && (before.is_some() || here.is_some());
     }
     edges
+}
+
+/// The lines beside a table's pinned columns across `row`, as the web's sticky cells' 1px
+/// `border` shadows: after the first column's end and before the end column's start.
+fn pinned_rules(painter: &egui::Painter, t: &crate::Tokens, row: Rect, (start, end): (Option<f32>, Option<f32>)) {
+    let stroke = Stroke::new(1.0, t.color("border"));
+    if let Some(x) = start {
+        painter.vline(x + 0.5, row.y_range(), stroke);
+    }
+    if let Some(x) = end {
+        painter.vline(x - 0.5, row.y_range(), stroke);
+    }
 }
 
 /// The rules where each band starts and ends, across `row`: a 1px `border` line a gap before a
@@ -2643,8 +2657,8 @@ impl<'a> DataTable<'a> {
         if self.actions.is_some() && !self.fits { 0.0 } else { pad }
     }
 
-    /// Each column's start and width within a row from `left` to `right`.
-    fn layout(&self, left: f32, right: f32) -> Vec<(f32, f32)> {
+    /// Each column's start and width within a row from `left` to `right`, as unscrolled.
+    fn unscrolled(&self, left: f32, right: f32) -> Vec<(f32, f32)> {
         let lead = if self.reorder { GRIP } else { 0.0 };
         let hidden = |i: usize| self.state.hidden.contains(&i);
         let widths: Vec<f32> = self
@@ -2727,6 +2741,68 @@ impl<'a> DataTable<'a> {
             .collect()
     }
 
+    /// Each column's start and width within a row from `left` to `right`, scrolled sideways: the
+    /// columns running past the room move under the pinned ones by the reader's offset, as the
+    /// web's table wider than its box; a table's first column stays, a list's scrolls with the rest.
+    fn layout(&self, left: f32, right: f32) -> Vec<(f32, f32)> {
+        let mut places = self.unscrolled(left, right);
+        let shift = self.state.scroll_x.clamp(0.0, self.overflow_of(&places, right));
+        if shift > 0.0 {
+            let first = self.pinned_first();
+            for (i, place) in places.iter_mut().enumerate() {
+                if Some(i) != first {
+                    place.0 -= shift;
+                }
+            }
+        }
+        places
+    }
+
+    /// Where a table's pinned first column ends and its pinned end column starts in `row`, as
+    /// the web's sticky first and last cells; a list pins none, and a table with neither a menu
+    /// nor a chevron has no end column.
+    fn pinned_edges(&self, row: Rect, pad: f32, places: &[(f32, f32)]) -> (Option<f32>, Option<f32>) {
+        if self.variant != TableVariant::Table {
+            return (None, None);
+        }
+        let start = self.pinned_first().map(|f| places[f].0 + places[f].1 + GAP / 2.0);
+        let chevron = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
+        // the end column starts where the menu's does, or with the chevron alone after the last
+        // cell's own padding
+        let end = if self.actions.is_some() {
+            Some(row.right() - self.end_pad(pad) - chevron - ACTIONS)
+        } else if self.chevron {
+            Some(row.right() - chevron)
+        } else {
+            None
+        };
+        (start, end)
+    }
+
+    /// How far the columns laid out from `left` to `right` run past their room, unscrolled.
+    fn overflow(&self, left: f32, right: f32) -> f32 {
+        self.overflow_of(&self.unscrolled(left, right), right)
+    }
+
+    /// How far the shown columns in `places` run past their room ending at `right`, before the
+    /// actions' column.
+    fn overflow_of(&self, places: &[(f32, f32)], right: f32) -> f32 {
+        let right = right - if self.actions.is_some() { ACTIONS + GAP } else { 0.0 };
+        let end = (0..self.columns.len())
+            .filter(|i| !self.state.hidden.contains(i))
+            .map(|i| places[i].0 + places[i].1)
+            .fold(f32::NEG_INFINITY, f32::max);
+        (end - right).max(0.0)
+    }
+
+    /// The column pinned at a table's start as the rest scroll under it: its first shown one; a
+    /// list pins none.
+    fn pinned_first(&self) -> Option<usize> {
+        (self.variant == TableVariant::Table)
+            .then(|| (0..self.columns.len()).find(|i| !self.state.hidden.contains(i)))
+            .flatten()
+    }
+
     /// A placeholder row in `rect` while rows load, the `line`th: a `muted` bar 12 tall at 60
     /// percent of each shown cell (a stacked row's title and facts lines), pulsing unless motion
     /// is off, and the row's rule.
@@ -2766,6 +2842,8 @@ impl<'a> DataTable<'a> {
                 let left = if column.numeric { x + w - width } else { x };
                 bar(left, width, rect.center().y);
             }
+            let row = Rect::from_x_y_ranges(rect.x_range(), rect.top()..=rect.bottom() - 1.0);
+            pinned_rules(painter, t, row, self.pinned_edges(rect, pad, &places));
         }
         painter.hline(rect.x_range(), rect.bottom() - 0.5, Stroke::new(1.0, t.color("border")));
     }
@@ -2993,6 +3071,22 @@ impl<'a> DataTable<'a> {
                     self.labeled_cards(ui, &t, &order, (&keys, pad + select_width), &mut out);
                     return;
                 }
+                // columns running past the room scroll sideways under the pointer, as the web's
+                // table wider than its box, the offset kept within what runs past
+                if !stacked {
+                    let room = ui.available_rect_before_wrap();
+                    let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
+                    let over = self.overflow(room.left() + pad + select_width, room.right() - self.end_pad(pad) - end);
+                    let mut x = self.state.scroll_x.clamp(0.0, over);
+                    if over > 0.0 && ui.rect_contains_pointer(room) {
+                        let dx = ui.input(|i| i.smooth_scroll_delta.x);
+                        if dx != 0.0 {
+                            x = (x - dx).clamp(0.0, over);
+                            ui.input_mut(|i| i.smooth_scroll_delta.x = 0.0);
+                        }
+                    }
+                    self.state.scroll_x = x;
+                }
                 // the head, which a stacked table has none of
                 // a head's name too wide for its column wraps onto a second line, and the head row
                 // grows to hold it: one line padded by half of what the row leaves over it
@@ -3108,10 +3202,21 @@ impl<'a> DataTable<'a> {
                         }
                     }
                     let last = self.columns.len().saturating_sub(1);
+                    // the heads scrolled sideways show only between the pinned columns
+                    let (pin_start, pin_end) = self.pinned_edges(head, pad, &places);
+                    let head_clip = ui.clip_rect();
+                    let scrolled_clip = Rect::from_x_y_ranges(
+                        pin_start.unwrap_or(head.left())..=pin_end.unwrap_or(head.right()),
+                        head.y_range(),
+                    )
+                    .intersect(head_clip);
+                    let first = self.pinned_first();
                     for (index, column) in self.columns.iter().enumerate() {
                         if self.state.hidden.contains(&index) {
                             continue;
                         }
+                        ui.set_clip_rect(if Some(index) != first { scrolled_clip } else { head_clip });
+
                         let (x, w) = places[index];
                         let cell = Rect::from_min_size(pos2(x, head.top()), vec2(w, head.height()));
                         let hit = ui.interact(
@@ -3189,6 +3294,8 @@ impl<'a> DataTable<'a> {
                             }
                         }
                     }
+                    ui.set_clip_rect(head_clip);
+                    pinned_rules(ui.painter(), &t, head, (pin_start, pin_end));
                 }
 
                 // a failed read in place of the rows under the heads, unframed inside the frame
@@ -3408,9 +3515,14 @@ impl<'a> DataTable<'a> {
                                 };
                                 let rect = ui.available_rect_before_wrap();
                                 let pressed = group_head(ui, &t, &head, &self.words);
+                                let row = Rect::from_min_size(rect.min, vec2(rect.width(), t.density("row")));
                                 if !stacked && self.columns.iter().any(|c| c.band.is_some()) {
-                                    let row = Rect::from_min_size(rect.min, vec2(rect.width(), t.density("row")));
                                     band_rules(ui.painter(), &t, self.columns, &self.state.hidden, &places, row);
+                                }
+                                // the label spans the columns; the end column stays pinned beside it
+                                if !stacked {
+                                    let (_, end) = self.pinned_edges(row, pad, &places);
+                                    pinned_rules(ui.painter(), &t, row, (None, end));
                                 }
                                 if pressed {
                                     if shut {
@@ -3574,9 +3686,16 @@ impl<'a> DataTable<'a> {
                         }
                         let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
                         if self.chevron && !stacked {
+                            // a table's chevron alone stands in the middle of its pinned end column,
+                            // as the web's; beside a menu, or in a list, after the row's padding
+                            let inset = if self.variant == TableVariant::Table && self.actions.is_none() {
+                                0.0
+                            } else {
+                                self.end_pad(pad)
+                            };
                             icons::paint(
                                 ui.painter(),
-                                pos2(rect.right() - self.end_pad(pad) - 16.0, rect.center().y),
+                                pos2(rect.right() - inset - 16.0, rect.center().y),
                                 Icon::ChevronRight,
                                 16.0,
                                 t.color("faint"),
@@ -3588,10 +3707,20 @@ impl<'a> DataTable<'a> {
                             band_rules(ui.painter(), &t, self.columns, &self.state.hidden, &places, rect);
                         }
                         let edges = band_edges(self.columns, &self.state.hidden);
+                        // the cells scrolled sideways show only between the pinned columns
+                        let (pin_start, pin_end) = self.pinned_edges(rect, pad, &places);
+                        let row_clip = ui.clip_rect();
+                        let scrolled_clip = Rect::from_x_y_ranges(
+                            pin_start.unwrap_or(rect.left())..=pin_end.unwrap_or(rect.right()),
+                            rect.y_range(),
+                        )
+                        .intersect(row_clip);
+                        let first = self.pinned_first();
                         for (c, column) in self.columns.iter().enumerate().filter(|_| !stacked) {
                             if self.state.hidden.contains(&c) {
                                 continue;
                             }
+                            ui.set_clip_rect(if Some(c) != first { scrolled_clip } else { row_clip });
                             let (x, w) = places[c];
                             let mut cell = Rect::from_min_size(pos2(x, rect.top()), vec2(w, rect.height()));
                             // the cell's whole box, as the web's cell with its padding: to the row's
@@ -3749,6 +3878,10 @@ impl<'a> DataTable<'a> {
                                 }
                             }
                         }
+                        ui.set_clip_rect(row_clip);
+                        if !stacked {
+                            pinned_rules(ui.painter(), &t, rect, (pin_start, pin_end));
+                        }
                         if let Some(actions) = &self.actions {
                             let place = Rect::from_min_size(
                                 pos2(rect.right() - self.end_pad(pad) - ACTIONS, rect.top()),
@@ -3875,6 +4008,39 @@ impl<'a> DataTable<'a> {
                     }
                     None => {
                         area.show_rows(ui, row_height, count + more, body);
+                    }
+                }
+                // columns running past the room: a thin bar along the rows' foot, dragged or
+                // scrolled, showing how far they are scrolled, while the pointer is over them
+                if !stacked {
+                    let body = Rect::from_x_y_ranges(ui.max_rect().x_range(), ui.min_rect().y_range());
+                    let end = if self.chevron { 32.0 + self.chevron_gap() } else { 0.0 };
+                    let over = self.overflow(body.left() + pad + select_width, body.right() - self.end_pad(pad) - end);
+                    let bar_id = self.id.with("sideways");
+                    let held = ui.ctx().is_being_dragged(bar_id);
+                    if over > 0.0 && (ui.rect_contains_pointer(body) || held) {
+                        let places =
+                            self.layout(body.left() + pad + select_width, body.right() - self.end_pad(pad) - end);
+                        let (start, finish) = self.pinned_edges(body, pad, &places);
+                        let track = Rect::from_x_y_ranges(
+                            start.unwrap_or(body.left()) + 2.0..=finish.unwrap_or(body.right()) - 2.0,
+                            body.bottom() - t.length("scrollbar-width") + 2.0..=body.bottom() - 2.0,
+                        );
+                        let seen = track.width();
+                        let handle_w = (seen * seen / (seen + over)).max(24.0).min(seen);
+                        let at = track.left() + (seen - handle_w) * (self.state.scroll_x / over);
+                        let handle = Rect::from_min_size(pos2(at, track.top()), vec2(handle_w, track.height()));
+                        let grip = ui.interact(handle.expand(4.0), bar_id, Sense::drag());
+                        if grip.dragged() && seen > handle_w {
+                            let dx = grip.drag_delta().x * over / (seen - handle_w);
+                            self.state.scroll_x = (self.state.scroll_x + dx).clamp(0.0, over);
+                        }
+                        let ink = if grip.hovered() || grip.dragged() {
+                            t.color("muted-foreground")
+                        } else {
+                            t.color("border")
+                        };
+                        ui.painter().rect_filled(handle, t.radius("thumb"), ink);
                     }
                 }
                 // a dragged row: the line where it lands, and its move on release

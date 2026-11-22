@@ -46,6 +46,20 @@ fn every_screen() {
     harness.get_by_label("Log").click();
     harness.run_steps(4);
     results.add(harness.try_snapshot("runs_run_panel_log"));
+    // back on Details, the table narrower than its columns scrolls sideways under the pointer,
+    // its first and end columns pinned, a bar along its rows' foot
+    harness.get_by_label("Details").click();
+    harness.run_steps(4);
+    harness.hover_at(eframe::egui::pos2(640.0, 500.0));
+    harness.event(eframe::egui::Event::MouseWheel {
+        unit: eframe::egui::MouseWheelUnit::Point,
+        delta: eframe::egui::vec2(-1000.0, 0.0),
+        phase: eframe::egui::TouchPhase::Move,
+        source: eframe::egui::MouseWheelSource::Unknown,
+        modifiers: eframe::egui::Modifiers::NONE,
+    });
+    harness.run_steps(30);
+    results.add(harness.try_snapshot("runs_run_panel_scrolled"));
 
     let mut harness = render("jobs");
     results.add(harness.try_snapshot("runs_jobs"));

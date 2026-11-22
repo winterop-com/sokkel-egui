@@ -65,5 +65,9 @@ screens are shot into `parity/runs/web/` by `bun scripts/parity.ts web runs`.
   a taller row, as the web's chart does (`legend_height`, and a chart body's room in a stretched
   row, new in the charts crate). Open: a chart panel's body keeps 8 over and under it where the
   web's has none, so the overview's rows stand some 24 taller.
-- Open: the bulk actions on the selected runs; a table narrower than its
-  least width scrolls sideways on the web and is cut short here; the log's wrapping.
+- A table narrower than its least width scrolls sideways as the web's (the runs with a run open
+  beside them): its first column and its end column stay pinned, each with the web's 1px line
+  beside it on every table that is not a list, the columns between scrolling under them by a
+  sideways wheel or the thin bar along the rows' foot. A chevron alone stands in the middle of
+  its end column.
+- Open: the bulk actions on the selected runs; the log's wrapping.
