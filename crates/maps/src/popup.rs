@@ -101,6 +101,15 @@ impl MapPopup {
     /// Draws the card at the map's chosen marker, after the map has been drawn this frame; nothing
     /// when no marker is chosen.
     pub fn show(self, ui: &mut Ui, map: &mut MapView) -> MapPopupResponse {
+        // in the scheme the map wears, dark over a dark basemap
+        if map.dark_ground() {
+            let theme = tokens(ui.ctx()).theme.clone();
+            return sokkel_egui::scope(ui, &theme, Some(true), |ui| self.draw(ui, map));
+        }
+        self.draw(ui, map)
+    }
+
+    fn draw(self, ui: &mut Ui, map: &mut MapView) -> MapPopupResponse {
         let mut answer = MapPopupResponse::default();
         let Some(point) = map.selected.as_deref().and_then(|id| map.point_of(id)) else {
             return answer;

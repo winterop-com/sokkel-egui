@@ -78,6 +78,17 @@ impl Marker {
     }
 }
 
+/// Where a map keeps the tokens it wore on the last frame, by its response's id.
+fn worn_id(map: egui::Id) -> egui::Id {
+    map.with("sokkel-map-worn")
+}
+
+/// The page's theme in a scheme, read in a child of `ui` so the page's layout keeps no room for it.
+fn in_scheme(ui: &mut Ui, theme: &str, dark: bool) -> std::sync::Arc<Tokens> {
+    let mut aside = ui.new_child(egui::UiBuilder::new());
+    sokkel_egui::scope(&mut aside, theme, Some(dark), |ui| tokens(ui.ctx()))
+}
+
 /// What a map's corner says its points' colors mean, after sokkel-ui's `MapLegend`: a title, a
 /// line under it, and a row per class with its dot, its words and how many points are in it.
 #[derive(Clone, Debug)]
@@ -146,8 +157,12 @@ impl MapLegend {
     /// [`MapView::show`] returned, so the legend stands in the map's layer, full screen too.
     pub fn show(self, ui: &Ui, map: &Response) {
         let painter = ui.ctx().layer_painter(map.layer_id).with_clip_rect(map.rect);
+        let worn = worn_id(map.id);
         let map = map.rect;
-        let t = tokens(ui.ctx());
+        let t = ui
+            .ctx()
+            .data(|d| d.get_temp::<std::sync::Arc<Tokens>>(worn))
+            .unwrap_or_else(|| tokens(ui.ctx()));
         let font = TextRole::Help.font(&t);
         let line = t.text("help").line_height;
         let rows = self.rows.len() as f32;
@@ -403,6 +418,9 @@ pub struct MapView {
     pub full: bool,
     /// The layer the map was drawn in on the last frame, which its legend and card draw in too.
     layer: egui::LayerId,
+    /// Whether the map wore the dark scheme over a dark basemap in the light scheme on the last
+    /// frame, so its legend and card wear it too.
+    dark_ground: bool,
     /// The basemap chosen; the street map by the scheme when none is.
     pub basemap: Option<Basemap>,
     /// NASA's Blue Marble, once it is drawn.
@@ -437,6 +455,7 @@ impl MapView {
             fitted: None,
             full: false,
             layer: egui::LayerId::background(),
+            dark_ground: false,
             basemap: None,
             satellite: None,
             switching: false,
@@ -578,6 +597,12 @@ impl MapView {
         self.layer
     }
 
+    /// Whether the map wore the dark scheme on the last frame where the page wears the light one:
+    /// over a dark basemap, as its parts read on that ground.
+    pub fn dark_ground(&self) -> bool {
+        self.dark_ground
+    }
+
     fn draw(&mut self, ui: &mut Ui, size: Vec2, markers: &[Marker], routes: &[Route]) -> Response {
         let t = tokens(ui.ctx());
         let dark = ui.visuals().dark_mode;
@@ -602,22 +627,27 @@ impl MapView {
             let _ = self.memory.set_zoom(least);
         }
         let home = self.home;
-        // the street map light or dark whatever the page's scheme, in that scheme's colors: the
-        // page's tokens, or the same theme's other scheme's
-        let wants_dark = match shown {
-            Basemap::Light => Some(false),
-            Basemap::Dark => Some(true),
-            _ => None,
-        };
-        let map_t = match wants_dark {
-            Some(want) if want != t.dark => sokkel_egui::scope(ui, &t.theme, Some(want), |ui| tokens(ui.ctx())),
-            _ => t.clone(),
+        // over a dark basemap (the dark street map, the satellite's) in the light scheme the map
+        // wears the dark scheme, in the page's theme, so its layers, labels, chips and controls read
+        // on its ground; a light basemap in the dark scheme keeps the page's scheme
+        let dark_ground = !t.dark && matches!(shown, Basemap::Dark | Basemap::Satellite);
+        let map_t = if dark_ground {
+            in_scheme(ui, &t.theme, true)
+        } else {
+            t.clone()
         };
         let t_page = t;
         let t = map_t;
         let tiles = match shown {
             Basemap::Light | Basemap::Dark => {
-                self.tiles_for(&t, shown == Basemap::Dark);
+                // the street map is styled in its own scheme's colors whatever the page's
+                let dark_tiles = shown == Basemap::Dark;
+                let style_t = if dark_tiles == t.dark {
+                    t.clone()
+                } else {
+                    in_scheme(ui, &t.theme, dark_tiles)
+                };
+                self.tiles_for(&style_t, dark_tiles);
                 self.tiles.as_mut().map(|tiles| tiles as &mut dyn Tiles)
             }
             Basemap::Satellite => {
@@ -718,16 +748,26 @@ impl MapView {
         self.points.extend(anchors);
         self.room = rect;
         self.layer = response.layer_id;
-        let t = t_page;
+        self.dark_ground = dark_ground;
+        // the tokens the map wears, for its legend, which knows the map by its response
+        ui.ctx().data_mut(|d| d.insert_temp(worn_id(response.id), t.clone()));
         if self.framed && !self.full {
             ui.painter().rect_stroke(
                 rect,
-                t.radius("surface"),
-                Stroke::new(1.0, t.color("border")),
+                t_page.radius("surface"),
+                Stroke::new(1.0, t_page.color("border")),
                 StrokeKind::Inside,
             );
         }
-        self.controls(ui, &t, rect, markers, shown);
+        // the controls in the scheme the map wears, as its layers are
+        if dark_ground {
+            let mut over = ui.new_child(egui::UiBuilder::new().max_rect(rect));
+            sokkel_egui::scope(&mut over, &t.theme, Some(true), |ui| {
+                self.controls(ui, &t, rect, markers, shown)
+            });
+        } else {
+            self.controls(ui, &t, rect, markers, shown);
+        }
         response
     }
 
