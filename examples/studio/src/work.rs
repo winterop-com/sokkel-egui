@@ -513,7 +513,11 @@ impl StudioApp {
         let id = file.id.clone();
         let mut text = self.backend.doc_for(&id).unwrap_or_default().to_owned();
         if self.view(&id).outcome.is_none() {
-            let outcome = execute(&text, tables);
+            let mut outcome = execute(&text, tables);
+            // a held clock (the tests, the screenshots) times the first run as it times the rest
+            if let (true, Outcome::Done(result, _)) = (self.held, &mut outcome) {
+                result.ms = 1.0;
+            }
             self.view(&id).outcome = Some(outcome);
         }
         let words = table_words(tables);
