@@ -2,7 +2,7 @@
 //! them, a toolbar for the theme, the scheme and the density, and the chosen story on a canvas.
 
 use eframe::egui::{self, Align, ComboBox, Frame, Layout, Margin, Sense, Stroke, Ui, vec2};
-use sokkel_egui::{Appearance, Scheme, TextRole, densities, install, themes, tokens};
+use sokkel_egui::{Appearance, Scheme, TextRole, densities, install, text_sizes, themes, tokens};
 
 pub mod stories;
 
@@ -224,6 +224,15 @@ impl Storybook {
                     })
                     .response
                     .accessible_name("Density");
+                ComboBox::from_id_salt("text-size")
+                    .selected_text(self.appearance.text_size.clone())
+                    .show_ui(ui, |ui| {
+                        for level in text_sizes() {
+                            ui.selectable_value(&mut self.appearance.text_size, level.to_owned(), level);
+                        }
+                    })
+                    .response
+                    .accessible_name("Text size");
                 for (scheme, label) in [
                     (Scheme::System, "System"),
                     (Scheme::Dark, "Dark"),

@@ -163,6 +163,11 @@ pub const STORIES: &[Story] = &[
         show: foundations::density,
     },
     Story {
+        path: "Foundations/Text size",
+        doc: "Each text role's size over its line height at each text size; the default answers from the md width up, and a phone keeps large, the theme's own sizes.",
+        show: foundations::text_size,
+    },
+    Story {
         path: "Foundations/Icons",
         doc: "The one icon set: Lucide. These are the icons sokkel-ui's packages import; press one to copy its name.",
         show: foundations::icons,

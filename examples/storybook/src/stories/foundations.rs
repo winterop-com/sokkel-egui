@@ -1,5 +1,5 @@
 use eframe::egui::{self, Color32, CornerRadius, FontFamily, FontId, RichText, Sense, Stroke, StrokeKind, Ui, vec2};
-use sokkel_egui::{Appearance, TextRole, densities, density_level, hex, icons, tokens};
+use sokkel_egui::{Appearance, TextRole, Tokens, densities, density_level, hex, icons, text_sizes, tokens};
 
 use super::icon_list::LIBRARY_ICONS;
 use super::{State, section};
@@ -292,9 +292,55 @@ pub fn density(_: &mut State, ui: &mut Ui) {
         });
 }
 
+pub fn text_size(_: &mut State, ui: &mut Ui) {
+    let t = tokens(ui.ctx());
+    let default = Appearance::default();
+    let levels: Vec<(&str, Tokens)> = text_sizes()
+        .into_iter()
+        .map(|level| {
+            let appearance = Appearance {
+                theme: t.theme.clone(),
+                text_size: level.to_owned(),
+                ..Default::default()
+            };
+            (level, Tokens::resolve(&appearance, t.dark))
+        })
+        .collect();
+    section(ui, "Size over line height per level");
+    egui::Grid::new("text-size")
+        .num_columns(1 + levels.len())
+        .spacing(vec2(24.0, 10.0))
+        .show(ui, |ui| {
+            ui.label(TextRole::Head.rich(&t, "Role").color(t.color("muted-foreground")));
+            for (level, _) in &levels {
+                let mark = if *level == default.text_size { " (default)" } else { "" };
+                ui.label(
+                    TextRole::Head
+                        .rich(&t, format!("{level}{mark}"))
+                        .color(t.color("muted-foreground")),
+                );
+            }
+            ui.end_row();
+            for role in TextRole::ALL {
+                ui.label(RichText::new(role.key()).font(mono(13.0)).color(t.color("foreground")));
+                for (_, level) in &levels {
+                    let spec = level.text(role.key());
+                    ui.label(
+                        RichText::new(format!("{}/{}", spec.size, spec.line_height))
+                            .font(mono(12.0))
+                            .color(t.color("muted-foreground")),
+                    );
+                }
+                ui.end_row();
+            }
+        });
+}
+
 pub fn code_colors(_: &mut State, ui: &mut Ui) {
     let t = tokens(ui.ctx());
     section(ui, "A code block");
+    // the code face at the body's size, as a code block sets it
+    let code_size = sokkel_egui::mono_size(&t, t.text("body").size);
     // a small program, cut by hand into the kinds of word the code-* tokens color
     let lines: &[&[(&str, &str)]] = &[
         &[("code-comment", "// Send the digest once the export has run.")],
@@ -351,7 +397,7 @@ pub fn code_colors(_: &mut State, ui: &mut Ui) {
                     } else {
                         t.color(token)
                     };
-                    job.append(text, 0.0, egui::TextFormat::simple(mono(13.5), color));
+                    job.append(text, 0.0, egui::TextFormat::simple(mono(code_size), color));
                 }
                 ui.label(job);
             }

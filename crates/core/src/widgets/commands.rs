@@ -1,5 +1,6 @@
 //! Palette groups built from what an app already has, after sokkel-ui's `lib/commands`: its places
-//! from the rail's groups, and the look's parts (scheme, density, theme) with the one in use hinted.
+//! from the rail's groups, and the look's parts (scheme, density, text size, theme) with the one in
+//! use hinted.
 
 use crate::{Appearance, CommandGroup, Icon, MenuItem, RailGroup, Scheme, ThemeInfo};
 
@@ -41,6 +42,11 @@ pub struct AppearanceCommandWords {
     pub density: String,
     pub regular: String,
     pub compact: String,
+    pub text_size: String,
+    pub small: String,
+    pub normal: String,
+    pub large: String,
+    pub larger: String,
     pub theme: String,
     /// The hint on the choice in use.
     pub current: String,
@@ -56,14 +62,19 @@ impl Default for AppearanceCommandWords {
             density: "Density".into(),
             regular: "Regular".into(),
             compact: "Compact".into(),
+            text_size: "Text size".into(),
+            small: "Small".into(),
+            normal: "Normal".into(),
+            large: "Large".into(),
+            larger: "Larger".into(),
             theme: "Theme".into(),
             current: "in use".into(),
         }
     }
 }
 
-/// The look's palette groups: Scheme (light, dark, the system's), Density (regular, compact) and
-/// Theme (the `themes` given), the choice in use hinted. Run one with [`run_appearance_command`].
+/// The look's palette groups: Scheme (light, dark, the system's), Density (regular, compact), Text
+/// size (small, normal, large, larger) and Theme (the `themes` given), the choice in use hinted. Run one with [`run_appearance_command`].
 pub fn appearance_commands(
     appearance: &Appearance,
     themes: &[&ThemeInfo],
@@ -76,6 +87,12 @@ pub fn appearance_commands(
         (Scheme::System, "system", &words.system, Icon::Monitor),
     ];
     let densities = [("regular", &words.regular), ("compact", &words.compact)];
+    let sizes = [
+        ("small", &words.small),
+        ("normal", &words.normal),
+        ("large", &words.large),
+        ("larger", &words.larger),
+    ];
     vec![
         CommandGroup::new(
             &words.scheme,
@@ -95,6 +112,16 @@ pub fn appearance_commands(
                     .id(format!("density-{id}"))
                     .keywords([&words.density]);
                 hint(item, appearance.density == id)
+            }),
+        ),
+        CommandGroup::new(
+            &words.text_size,
+            sizes.map(|(id, label)| {
+                let item = MenuItem::action(label)
+                    .icon(Icon::ALargeSmall)
+                    .id(format!("text-size-{id}"))
+                    .keywords([words.text_size.as_str(), "font"]);
+                hint(item, appearance.text_size == id)
             }),
         ),
         CommandGroup::new(
@@ -118,6 +145,8 @@ pub fn run_appearance_command(appearance: &mut Appearance, command: &str) -> boo
             "dark" => Scheme::Dark,
             _ => Scheme::System,
         };
+    } else if let Some(size) = command.strip_prefix("text-size-") {
+        appearance.text_size = size.to_owned();
     } else if let Some(density) = command.strip_prefix("density-") {
         appearance.density = density.to_owned();
     } else if let Some(theme) = command.strip_prefix("theme-") {

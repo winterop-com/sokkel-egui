@@ -29,7 +29,8 @@ pub use icons::Icon;
 pub use reactions::{Reaction, toggle_reaction};
 pub use text::TextRole;
 pub use tokens::{
-    Appearance, Motion, Scheme, Swatch, TextSpec, ThemeInfo, Tokens, densities, density_level, hex, swatch, themes,
+    Appearance, Motion, Scheme, Swatch, TextSpec, ThemeInfo, Tokens, densities, density_level, hex, swatch, text_sizes,
+    themes,
 };
 pub use widgets::*;
 
@@ -154,7 +155,11 @@ pub fn tokens(ctx: &Context) -> Arc<Tokens> {
 
 /// Resolved tokens for theme scopes, kept so a scope drawn every frame resolves once.
 #[derive(Clone, Default)]
-struct ScopeCache(std::collections::HashMap<(String, bool, String), Arc<Tokens>>);
+struct ScopeCache(std::collections::HashMap<(String, bool, String, Option<String>), Arc<Tokens>>);
+
+/// What [`install`] last wore: the appearance, whether the system was dark, and whether the window
+/// was wide (from md up), which decides the text size.
+type Installed = (Appearance, bool, bool);
 
 /// Draw `add` in another theme or scheme, as sokkel-ui's `data-theme-scope` themes one element: its
 /// widgets read the scope's tokens and egui's own visuals follow them, and the page's come back
@@ -163,11 +168,11 @@ pub fn scope<R>(ui: &mut egui::Ui, theme: &str, dark: Option<bool>, add: impl Fn
     let ctx = ui.ctx().clone();
     let outer = tokens(&ctx);
     let dark = dark.unwrap_or(outer.dark);
-    let density = ctx
-        .data(|d| d.get_temp::<(Appearance, bool)>(installed_id()))
-        .map(|(appearance, _)| appearance.density)
-        .unwrap_or_else(|| Appearance::default().density);
-    let key = (theme.to_owned(), dark, density.clone());
+    let (page, _, wide) = ctx
+        .data(|d| d.get_temp::<Installed>(installed_id()))
+        .unwrap_or_else(|| (Appearance::default(), false, true));
+    let (density, text_size) = (page.density, page.text_size);
+    let key = (theme.to_owned(), dark, density.clone(), outer.text_size.clone());
     let inner = ctx.data_mut(|d| {
         let cache = d.get_temp_mut_or_default::<ScopeCache>(Id::unique("sokkel-egui/scopes"));
         cache
@@ -175,14 +180,16 @@ pub fn scope<R>(ui: &mut egui::Ui, theme: &str, dark: Option<bool>, add: impl Fn
             .entry(key)
             .or_insert_with(|| {
                 let scheme = if dark { Scheme::Dark } else { Scheme::Light };
-                Arc::new(Tokens::resolve(
+                Arc::new(Tokens::resolve_at(
                     &Appearance {
                         theme: theme.to_owned(),
                         scheme,
                         density,
+                        text_size,
                         ..Default::default()
                     },
                     dark,
+                    wide,
                 ))
             })
             .clone()
@@ -202,16 +209,17 @@ pub fn scope<R>(ui: &mut egui::Ui, theme: &str, dark: Option<bool>, add: impl Fn
 /// widget reads. Cheap when nothing changed, so an app may call it every frame.
 pub fn install(ctx: &Context, appearance: &Appearance) {
     let system_dark = ctx.system_theme() == Some(Theme::Dark);
-    let key = (appearance.clone(), system_dark);
-    if ctx.data(|d| d.get_temp::<(Appearance, bool)>(installed_id())).as_ref() == Some(&key) {
+    let wide = !is_phone(ctx);
+    let key: Installed = (appearance.clone(), system_dark, wide);
+    if ctx.data(|d| d.get_temp::<Installed>(installed_id())).as_ref() == Some(&key) {
         return;
     }
-    if ctx.data(|d| d.get_temp::<(Appearance, bool)>(installed_id())).is_none() {
+    if ctx.data(|d| d.get_temp::<Installed>(installed_id())).is_none() {
         install_fonts(ctx);
         // SVG marks and pictures, drawn by resvg
         egui_extras::install_image_loaders(ctx);
     }
-    let tokens = Arc::new(Tokens::resolve(appearance, system_dark));
+    let tokens = Arc::new(Tokens::resolve_at(appearance, system_dark, wide));
     let theme = if tokens.dark { Theme::Dark } else { Theme::Light };
     ctx.set_theme(theme);
     ctx.style_mut_of(theme, |style| {

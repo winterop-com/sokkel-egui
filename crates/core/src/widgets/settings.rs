@@ -6,7 +6,7 @@ use egui::{Align, Context, CornerRadius, Frame, Id, Layout, Margin, Rect, Sense,
 
 use crate::{
     Appearance, Button, ButtonVariant, Icon, Motion, Scheme, Segmented, SegmentedVariant, Select, TextRole, densities,
-    icons, swatch, themes, tokens,
+    icons, swatch, text_sizes, themes, tokens,
 };
 
 /// One section of the settings: an id the app keeps, a label and, when given, an icon in the column.
@@ -674,6 +674,12 @@ pub struct ThemeWords {
     pub system: String,
     pub density: String,
     pub density_hint: String,
+    pub text_size: String,
+    pub text_size_hint: String,
+    pub small: String,
+    pub normal: String,
+    pub large: String,
+    pub larger: String,
     pub motion: String,
     pub motion_hint: String,
     pub motion_system: String,
@@ -694,6 +700,12 @@ impl Default for ThemeWords {
             system: "System".into(),
             density: "Density".into(),
             density_hint: "How much fits on a screen.".into(),
+            text_size: "Text size".into(),
+            text_size_hint: "How large the text is.".into(),
+            small: "Small".into(),
+            normal: "Normal".into(),
+            large: "Large".into(),
+            larger: "Larger".into(),
             motion: "Motion".into(),
             motion_hint: "Whether parts move as they open and change.".into(),
             motion_system: "System".into(),
@@ -818,6 +830,33 @@ fn theme_rows(
             .changed()
         {
             appearance.density = levels[chosen].to_owned();
+        }
+    });
+    let sizes: Vec<(&str, &str)> = text_sizes()
+        .into_iter()
+        .map(|size| {
+            let label = match size {
+                "small" => words.small.as_str(),
+                "large" => words.large.as_str(),
+                "larger" => words.larger.as_str(),
+                _ => words.normal.as_str(),
+            };
+            (size, label)
+        })
+        .collect();
+    let size_words: Vec<&str> = std::iter::once("font")
+        .chain(sizes.iter().map(|(_, label)| *label))
+        .collect();
+    setting_row_found_by(ui, &words.text_size, &words.text_size_hint, &size_words, |ui| {
+        let mut chosen = sizes
+            .iter()
+            .position(|(size, _)| *size == appearance.text_size)
+            .unwrap_or(0);
+        if ui
+            .add(Segmented::new(&mut chosen, sizes.iter().map(|(_, label)| *label)).variant(SegmentedVariant::Track))
+            .changed()
+        {
+            appearance.text_size = sizes[chosen].0.to_owned();
         }
     });
     let motions = [

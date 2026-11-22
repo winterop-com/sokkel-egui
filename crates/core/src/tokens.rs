@@ -15,6 +15,10 @@ struct Source {
     default: Defaults,
     themes: serde_json::Map<String, serde_json::Value>,
     density: HashMap<String, HashMap<String, f32>>,
+    /// Each text size's steps of the scale, in the order the tokens list the levels; only the
+    /// levels' names and order are read here, each theme carries its roles at every level.
+    #[serde(default, rename = "textSize")]
+    text_size: serde_json::Map<String, serde_json::Value>,
     /// Each part's paints in each state, resolved per theme and scheme by sokkel-design.
     #[serde(default)]
     paints: HashMap<String, HashMap<String, HashMap<String, serde_json::Value>>>,
@@ -24,6 +28,8 @@ struct Source {
 struct Defaults {
     theme: String,
     density: String,
+    #[serde(default, rename = "textSize")]
+    text_size: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -42,6 +48,9 @@ struct SchemeSource {
     numbers: HashMap<String, f32>,
     words: HashMap<String, String>,
     text: HashMap<String, TextSpec>,
+    /// Every text role at each text size, by level (`normal`, ...); the theme's own is `text`.
+    #[serde(default, rename = "textSizes")]
+    text_sizes: HashMap<String, HashMap<String, TextSpec>>,
     /// Box shadows as layers, the way sokkel-design resolves them (`elevation-pop`, ...).
     #[serde(default)]
     elevations: HashMap<String, Vec<Layer>>,
@@ -81,6 +90,9 @@ pub struct ThemeInfo {
 struct Catalog {
     default_theme: String,
     default_density: String,
+    default_text_size: String,
+    /// The text sizes, smallest first, as the tokens list them.
+    text_sizes: Vec<String>,
     themes: Vec<(ThemeInfo, ThemeSource)>,
     density: HashMap<String, HashMap<String, f32>>,
     /// Theme, then `light` or `dark`, then the paint's key.
@@ -156,6 +168,8 @@ fn catalog() -> &'static Catalog {
         Catalog {
             default_theme: source.default.theme,
             default_density: source.default.density,
+            default_text_size: source.default.text_size.unwrap_or_default(),
+            text_sizes: source.text_size.keys().cloned().collect(),
             themes,
             density: source.density,
             paints: source
@@ -206,6 +220,15 @@ pub fn densities() -> Vec<&'static str> {
     levels
 }
 
+/// Every text size, by name, smallest first: what a person may pick in Settings.
+pub fn text_sizes() -> Vec<&'static str> {
+    catalog().text_sizes.iter().map(String::as_str).collect()
+}
+
+fn default_text_size() -> String {
+    catalog().default_text_size.clone()
+}
+
 /// Light, dark, or whichever the system shows.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Scheme {
@@ -224,13 +247,16 @@ pub enum Motion {
     Off,
 }
 
-/// What an app picks: a theme, a scheme, a density and the motion, as sokkel-ui's `ThemeSettings`
-/// holds them.
+/// What an app picks: a theme, a scheme, a density, the text size and the motion, as sokkel-ui's
+/// `ThemeSettings` holds them.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Appearance {
     pub theme: String,
     pub scheme: Scheme,
     pub density: String,
+    /// The text size from the md width up (`normal` by default); a phone keeps the theme's own.
+    #[serde(default = "default_text_size")]
+    pub text_size: String,
     #[serde(default)]
     pub motion: Motion,
 }
@@ -241,16 +267,20 @@ impl Default for Appearance {
             theme: catalog().default_theme.clone(),
             scheme: Scheme::System,
             density: catalog().default_density.clone(),
+            text_size: catalog().default_text_size.clone(),
             motion: Motion::System,
         }
     }
 }
 
-/// One theme in one scheme at one density, every value ready to paint with.
+/// One theme in one scheme at one density and text size, every value ready to paint with.
 #[derive(Debug)]
 pub struct Tokens {
     pub theme: String,
     pub dark: bool,
+    /// The text size the text roles were resolved at: the appearance's from the md width up, none
+    /// (the theme's own sizes) below it.
+    pub text_size: Option<String>,
     colors: HashMap<String, Color32>,
     lengths: HashMap<String, f32>,
     /// Every color and length in the order the tokens define them, for listing them.
@@ -266,9 +296,15 @@ pub struct Tokens {
 }
 
 impl Tokens {
-    /// The tokens an appearance wears. An unknown theme or density falls back to the default one;
-    /// `system_dark` answers `Scheme::System`.
+    /// The tokens an appearance wears from the md width up. An unknown theme, density or text size
+    /// falls back to the default one; `system_dark` answers `Scheme::System`.
     pub fn resolve(appearance: &Appearance, system_dark: bool) -> Self {
+        Self::resolve_at(appearance, system_dark, true)
+    }
+
+    /// The tokens an appearance wears, `wide` from the md width up: below it the text keeps the
+    /// theme's own sizes, as the web's text size answers only from md.
+    pub fn resolve_at(appearance: &Appearance, system_dark: bool, wide: bool) -> Self {
         let catalog = catalog();
         let (info, theme) = catalog
             .themes
@@ -292,9 +328,14 @@ impl Tokens {
             .get(&appearance.density)
             .or_else(|| catalog.density.get(&catalog.default_density))
             .expect("the tokens have their default density");
+        let level = [appearance.text_size.as_str(), catalog.default_text_size.as_str()]
+            .into_iter()
+            .find(|level| wide && scheme.text_sizes.contains_key(*level));
+        let text = level.map_or(&scheme.text, |level| &scheme.text_sizes[level]);
         Self {
             theme: info.name.clone(),
             dark,
+            text_size: level.map(str::to_owned),
             colors: scheme
                 .colors
                 .iter()
@@ -316,7 +357,7 @@ impl Tokens {
                 .cloned()
                 .unwrap_or_default(),
             words: scheme.words.clone(),
-            text: scheme.text.clone(),
+            text: text.clone(),
             density: density.clone(),
             elevations: scheme
                 .elevations
@@ -547,5 +588,33 @@ mod tests {
     #[test]
     fn densities_list_the_default_first() {
         assert_eq!(densities(), ["regular", "compact"]);
+    }
+
+    #[test]
+    fn the_text_size_answers_from_md_up() {
+        assert_eq!(text_sizes(), ["small", "normal", "large", "larger"]);
+        let appearance = Appearance::default();
+        assert_eq!(appearance.text_size, "normal");
+        let wide = Tokens::resolve_at(&appearance, false, true);
+        let body = wide.text("body");
+        assert_eq!(
+            (wide.text_size.as_deref(), body.size, body.line_height),
+            (Some("normal"), 14.0, 20.0)
+        );
+        let label = wide.text("label");
+        assert_eq!((label.size, label.line_height), (14.0, 20.0));
+        let phone = Tokens::resolve_at(&appearance, false, false);
+        let body = phone.text("body");
+        assert_eq!((phone.text_size, body.size, body.line_height), (None, 15.0, 22.0));
+        let larger = Appearance {
+            text_size: "larger".into(),
+            ..Default::default()
+        };
+        assert_eq!(Tokens::resolve(&larger, false).text("body").size, 16.0);
+        let unknown = Appearance {
+            text_size: "huge".into(),
+            ..Default::default()
+        };
+        assert_eq!(Tokens::resolve(&unknown, false).text_size.as_deref(), Some("normal"));
     }
 }
