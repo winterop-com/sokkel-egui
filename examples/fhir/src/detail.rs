@@ -241,143 +241,156 @@ pub fn resource_panel(ui: &mut Ui, app: &App, kind: &str, id: &str, views: &mut 
     let chosen = views.tab.unwrap_or(look.default);
     let mut index = look.tabs.iter().position(|tab| tab.id == chosen).unwrap_or(0);
     let rows = app.rows();
-    SidePanel::new("resource-panel", &words, &mut index).show(ui, |index, ui| {
-        let Some(tab) = look.tabs.get(index) else { return };
-        match tab.id {
-            "problems" => panel_section(ui, "Problems", |ui| {
-                let columns = [
-                    Column::new("Kind", 32.0).stack(StackPlace::Lead),
-                    Column::new("Problem", 160.0).fill().stack(StackPlace::Primary),
-                    Column::new("Where", 128.0).stack(StackPlace::Secondary),
-                ];
-                let cells: Vec<Vec<Cell>> = views
-                    .problems
-                    .iter()
-                    .map(|one| {
-                        let (token, word) = match one.tone {
-                            MarkTone::Error => ("critical", "Error"),
-                            MarkTone::Warning => ("warning", "Warning"),
-                            MarkTone::Info => ("info", "Note"),
-                        };
-                        vec![
-                            Cell::Dot(token.to_owned(), word.to_owned()),
-                            Cell::Text(one.message.clone()),
-                            Cell::Mono(format!("line {}", one.line)),
-                        ]
-                    })
-                    .collect();
-                let empty = "The resource checks. The server checks it again, references included, as it is saved.";
-                if let Some(at) = panel_list(ui, "problems", &columns, &cells, &mut views.panel[0], empty)
-                    && let Some(one) = views.problems.get(at)
-                {
-                    views.reveal = Some(one.line);
-                }
-            }),
-            "history" => {
-                let versions = pages::versions_of(app.backend.history.seen(), &key);
-                let chosen = app.panel.as_ref().and_then(|panel| panel.chosen);
-                let picked = versions
-                    .iter()
-                    .find(|one| Some(one.version_id) == chosen)
-                    .or(versions.get(1))
-                    .or(versions.first())
-                    .cloned();
-                panel_section(ui, "Versions", |ui| {
+    // each tab's icon, as the web's tabs carry them
+    let marks: Vec<Icon> = look
+        .tabs
+        .iter()
+        .map(|tab| match tab.id {
+            "history" => Icon::GitCompare,
+            "references" => Icon::Link2,
+            "vitals" => Icon::Activity,
+            _ => Icon::TriangleAlert,
+        })
+        .collect();
+    SidePanel::new("resource-panel", &words, &mut index)
+        .icons(&marks)
+        .show(ui, |index, ui| {
+            let Some(tab) = look.tabs.get(index) else { return };
+            match tab.id {
+                "problems" => panel_section(ui, "Problems", |ui| {
                     let columns = [
-                        Column::new("Version", 48.0).stack(StackPlace::Lead),
-                        Column::new("Change", 96.0).stack(StackPlace::Primary),
-                        Column::new("By", 128.0).fill().stack(StackPlace::Secondary),
+                        Column::new("Kind", 32.0).stack(StackPlace::Lead),
+                        Column::new("Problem", 160.0).fill().stack(StackPlace::Primary),
+                        Column::new("Where", 128.0).stack(StackPlace::Secondary),
                     ];
-                    let cells: Vec<Vec<Cell>> = versions
+                    let cells: Vec<Vec<Cell>> = views
+                        .problems
                         .iter()
                         .map(|one| {
+                            let (token, word) = match one.tone {
+                                MarkTone::Error => ("critical", "Error"),
+                                MarkTone::Warning => ("warning", "Warning"),
+                                MarkTone::Info => ("info", "Note"),
+                            };
                             vec![
-                                Cell::Mono(format!("v{}", one.version_id)),
-                                chip(one.change.key()),
-                                Cell::Text(format!("{}, {}", one.by, when(Some(&one.at)))),
+                                Cell::Dot(token.to_owned(), word.to_owned()),
+                                Cell::Text(one.message.clone()),
+                                Cell::Mono(format!("line {}", one.line)),
                             ]
                         })
                         .collect();
-                    let empty = "No versions yet: it is saved as version 1.";
-                    if let Some(at) = panel_list(ui, "versions", &columns, &cells, &mut views.panel[1], empty)
-                        && let Some(one) = versions.get(at)
+                    let empty = "The resource checks. The server checks it again, references included, as it is saved.";
+                    if let Some(at) = panel_list(ui, "problems", &columns, &cells, &mut views.panel[0], empty)
+                        && let Some(one) = views.problems.get(at)
                     {
-                        let version = one.version_id;
-                        acts.push(Act::new(move |app| {
-                            if let Some(panel) = &mut app.app.panel {
-                                panel.chosen = Some(version);
-                            }
-                        }));
+                        views.reveal = Some(one.line);
                     }
-                });
-                if let Some(one) = picked {
-                    let before = one.resource.as_ref().map(pretty).unwrap_or_default();
-                    let after = pages::panel_current(app, &key);
-                    panel_section(ui, &format!("Version {} against the editor", one.version_id), |ui| {
-                        DiffView::new(("resource-diff", &key), &before, &after)
-                            .small(true)
-                            .words(DiffViewWords {
-                                unchanged: "The editor holds this version.".to_owned(),
-                                ..Default::default()
-                            })
-                            .show(ui);
-                    });
-                }
-            }
-            "references" => {
-                let columns = [
-                    Column::new("Resource", 128.0).fill().stack(StackPlace::Primary),
-                    Column::new("Key", 160.0).stack(StackPlace::Secondary),
-                ];
-                for (at, section) in tab.sections.iter().enumerate() {
-                    let Some(table) = &section.table else { continue };
-                    panel_section(ui, &section.title, |ui| {
-                        let cells: Vec<Vec<Cell>> = table
-                            .cells
+                }),
+                "history" => {
+                    let versions = pages::versions_of(app.backend.history.seen(), &key);
+                    let chosen = app.panel.as_ref().and_then(|panel| panel.chosen);
+                    let picked = versions
+                        .iter()
+                        .find(|one| Some(one.version_id) == chosen)
+                        .or(versions.get(1))
+                        .or(versions.first())
+                        .cloned();
+                    panel_section(ui, "Versions", |ui| {
+                        let columns = [
+                            Column::new("Version", 48.0).stack(StackPlace::Lead),
+                            Column::new("Change", 96.0).stack(StackPlace::Primary),
+                            Column::new("By", 128.0).fill().stack(StackPlace::Secondary),
+                        ];
+                        let cells: Vec<Vec<Cell>> = versions
                             .iter()
-                            .map(|one| vec![Cell::Text(one[0].clone()), Cell::Mono(one[1].clone())])
+                            .map(|one| {
+                                vec![
+                                    Cell::Mono(format!("v{}", one.version_id)),
+                                    chip(one.change.key()),
+                                    Cell::Text(format!("{}, {}", one.by, when(Some(&one.at)))),
+                                ]
+                            })
                             .collect();
-                        let empty = table.empty.clone().unwrap_or_default();
-                        if let Some(row) =
-                            panel_list(ui, &section.title, &columns, &cells, &mut views.panel[2 + at], &empty)
-                            && let Some(key) = table.ids.get(row)
+                        let empty = "No versions yet: it is saved as version 1.";
+                        if let Some(at) = panel_list(ui, "versions", &columns, &cells, &mut views.panel[1], empty)
+                            && let Some(one) = versions.get(at)
                         {
-                            acts.push(Act::go(format!("resources/{key}")));
+                            let version = one.version_id;
+                            acts.push(Act::new(move |app| {
+                                if let Some(panel) = &mut app.app.panel {
+                                    panel.chosen = Some(version);
+                                }
+                            }));
+                        }
+                    });
+                    if let Some(one) = picked {
+                        let before = one.resource.as_ref().map(pretty).unwrap_or_default();
+                        let after = pages::panel_current(app, &key);
+                        panel_section(ui, &format!("Version {} against the editor", one.version_id), |ui| {
+                            DiffView::new(("resource-diff", &key), &before, &after)
+                                .small(true)
+                                .words(DiffViewWords {
+                                    unchanged: "The editor holds this version.".to_owned(),
+                                    ..Default::default()
+                                })
+                                .show(ui);
+                        });
+                    }
+                }
+                "references" => {
+                    let columns = [
+                        Column::new("Resource", 128.0).fill().stack(StackPlace::Primary),
+                        Column::new("Key", 160.0).stack(StackPlace::Secondary),
+                    ];
+                    for (at, section) in tab.sections.iter().enumerate() {
+                        let Some(table) = &section.table else { continue };
+                        panel_section(ui, &section.title, |ui| {
+                            let cells: Vec<Vec<Cell>> = table
+                                .cells
+                                .iter()
+                                .map(|one| vec![Cell::Text(one[0].clone()), Cell::Mono(one[1].clone())])
+                                .collect();
+                            let empty = table.empty.clone().unwrap_or_default();
+                            if let Some(row) =
+                                panel_list(ui, &section.title, &columns, &cells, &mut views.panel[2 + at], &empty)
+                                && let Some(key) = table.ids.get(row)
+                            {
+                                acts.push(Act::go(format!("resources/{key}")));
+                            }
+                        });
+                    }
+                }
+                _ => {
+                    let _ = rows;
+                    Stack::new(Gap::Md).show(ui, |ui| {
+                        for chart in &tab.charts {
+                            use sokkel_egui_charts::data::{Cell as Figure, Row};
+                            let points: Vec<Row> = chart
+                                .rows
+                                .iter()
+                                .map(|one| {
+                                    Row::of([
+                                        ("day", Figure::from(one["day"].as_str().unwrap_or_default())),
+                                        ("value", Figure::Number(one["value"].as_f64().unwrap_or(0.0))),
+                                    ])
+                                })
+                                .collect();
+                            let spec = ChartSpec::new(points)
+                                .x("day")
+                                .y("value")
+                                .unit(&chart.subtitle)
+                                .fit(true);
+                            ChartPanel::new(&chart.title, ChartKind::Line, &spec)
+                                .subtitle(&chart.subtitle)
+                                .empty(chart.empty)
+                                .legend(false)
+                                .height(160.0)
+                                .show(ui);
                         }
                     });
                 }
             }
-            _ => {
-                let _ = rows;
-                Stack::new(Gap::Md).show(ui, |ui| {
-                    for chart in &tab.charts {
-                        use sokkel_egui_charts::data::{Cell as Figure, Row};
-                        let points: Vec<Row> = chart
-                            .rows
-                            .iter()
-                            .map(|one| {
-                                Row::of([
-                                    ("day", Figure::from(one["day"].as_str().unwrap_or_default())),
-                                    ("value", Figure::Number(one["value"].as_f64().unwrap_or(0.0))),
-                                ])
-                            })
-                            .collect();
-                        let spec = ChartSpec::new(points)
-                            .x("day")
-                            .y("value")
-                            .unit(&chart.subtitle)
-                            .fit(true);
-                        ChartPanel::new(&chart.title, ChartKind::Line, &spec)
-                            .subtitle(&chart.subtitle)
-                            .empty(chart.empty)
-                            .legend(false)
-                            .height(160.0)
-                            .show(ui);
-                    }
-                });
-            }
-        }
-    });
+        });
     if look.tabs.get(index).map(|tab| tab.id) != Some(chosen) {
         views.tab = look.tabs.get(index).map(|tab| tab.id);
     }

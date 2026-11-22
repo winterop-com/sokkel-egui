@@ -1268,39 +1268,63 @@ impl Widget for StatusLine {
             StatusTone::Warn => t.color("warning"),
             StatusTone::Error => t.color("destructive"),
         };
-        // the facts first, from the end, 12 in and 12 apart, in at most 70% of the line (`max-w-[70%]`),
-        // a value cut short only where they would pass it; the note takes what they leave
-        let mut right = rect.right() - 12.0;
-        let least = rect.right() - 12.0 - rect.width() * 0.7;
-        for (label, value, code) in self.items.iter().rev() {
-            let label_width = galley(ui, TextRole::Help, label, 160.0).size().x;
-            let room = (right - least - label_width - 6.0).max(48.0);
-            let value = if *code {
-                let rich = egui::RichText::new(value).font(crate::mono_font(
+        // the facts at the end, 12 in and 12 apart, in at most 70% of the line (`max-w-[70%]`): each
+        // keeps its whole width but the last, which alone gives way, its value cut short in its own
+        // box; the note takes what they leave
+        let value_galley = |text: &str, code: bool, room: f32| {
+            if code {
+                let rich = egui::RichText::new(text).font(crate::mono_font(
                     ui.ctx(),
                     crate::mono_small_size(&t, TextRole::Help.font(&t).size),
                     400.0,
                 ));
                 WidgetText::from(rich).into_galley(ui, Some(TextWrapMode::Truncate), room, TextRole::Help.font(&t))
             } else {
-                galley(ui, TextRole::Help, value, room)
+                galley(ui, TextRole::Help, text, room)
+            }
+        };
+        // in reading order: the plain facts, then the labelled ones
+        let facts: Vec<(Option<&str>, &str, bool)> = self
+            .facts
+            .iter()
+            .map(|fact| (None, fact.as_str(), false))
+            .chain(
+                self.items
+                    .iter()
+                    .map(|(l, v, code)| (Some(l.as_str()), v.as_str(), *code)),
+            )
+            .collect();
+        let labels: Vec<f32> = facts
+            .iter()
+            .map(|(label, _, _)| label.map_or(0.0, |l| galley(ui, TextRole::Help, l, f32::INFINITY).size().x + 6.0))
+            .collect();
+        let values: Vec<f32> = facts
+            .iter()
+            .map(|(_, value, code)| value_galley(value, *code, f32::INFINITY).size().x)
+            .collect();
+        let whole: f32 =
+            labels.iter().sum::<f32>() + values.iter().sum::<f32>() + 12.0 * facts.len().saturating_sub(1) as f32;
+        let over = (whole - rect.width() * 0.7).max(0.0);
+        let mut right = rect.right() - 12.0;
+        for (i, (label, value, code)) in facts.iter().enumerate().rev() {
+            let room = if i + 1 == facts.len() {
+                (values[i] - over).max(1.0)
+            } else {
+                f32::INFINITY
             };
+            let value = value_galley(value, *code, room);
             right -= value.size().x;
             let value_ink = if *code { t.color("foreground") } else { quiet };
             painter.galley(pos2(right, rect.center().y - value.size().y / 2.0), value, value_ink);
-            let label = galley(ui, TextRole::Help, label, 160.0);
-            right -= 6.0 + label.size().x;
-            painter.galley(
-                pos2(right, rect.center().y - label.size().y / 2.0),
-                label,
-                t.color("faint"),
-            );
-            right -= 12.0;
-        }
-        for fact in self.facts.iter().rev() {
-            let text = galley(ui, TextRole::Help, fact, 240.0);
-            right -= text.size().x;
-            painter.galley(pos2(right, rect.center().y - text.size().y / 2.0), text, quiet);
+            if let Some(label) = label {
+                let label = galley(ui, TextRole::Help, label, f32::INFINITY);
+                right -= 6.0 + label.size().x;
+                painter.galley(
+                    pos2(right, rect.center().y - label.size().y / 2.0),
+                    label,
+                    t.color("faint"),
+                );
+            }
             right -= 12.0;
         }
         let mut x = rect.left() + 12.0;

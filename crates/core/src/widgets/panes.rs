@@ -237,10 +237,13 @@ pub fn inspector_section(ui: &mut Ui, title: &str, body: impl FnOnce(&mut Ui)) {
 
 /// A side panel's content, after sokkel-ui's `SidePanel`, filling the shell's panel column: its
 /// head as tall as the top bar with a rule under it, holding its tabs (or the one tab's title), 48
-/// clear at its end for the shell's toggle; under it the chosen tab's content, scrolling.
+/// clear at its end for the shell's toggle; under it the chosen tab's content, scrolling. When the
+/// tabs' labels do not fit that room and every tab has an icon, each tab stands as its icon, its
+/// label in a tooltip; tabs without icons keep their labels and scroll sideways.
 pub struct SidePanel<'a> {
     id: egui::Id,
     tabs: &'a [&'a str],
+    icons: &'a [Icon],
     active: &'a mut usize,
 }
 
@@ -249,8 +252,15 @@ impl<'a> SidePanel<'a> {
         Self {
             id: egui::Id::unique(id),
             tabs,
+            icons: &[],
             active,
         }
+    }
+
+    /// Each tab's icon, in the tabs' order: the tabs stand as these when their labels do not fit.
+    pub fn icons(mut self, icons: &'a [Icon]) -> Self {
+        self.icons = icons;
+        self
     }
 
     /// Draws the panel, `content` asked for the chosen tab by its index.
@@ -280,43 +290,78 @@ impl<'a> SidePanel<'a> {
                 t.color("foreground"),
             );
         } else {
-            let mut x = head.left() + 8.0;
-            for (index, label) in self.tabs.iter().enumerate() {
-                let on = *self.active == index;
+            // the tabs take the head's room before the toggle's 48, 8 in from the start
+            let room_rect = Rect::from_min_max(
+                pos2(head.left() + 8.0, head.top()),
+                pos2(head.right() - 48.0, head.bottom()),
+            );
+            let label_galley = |ui: &Ui, label: &str, on: bool| {
                 let rich = if on {
-                    TextRole::Body.rich(&t, *label).variation("wght", 500.0)
+                    TextRole::Body.rich(&t, label).variation("wght", 500.0)
                 } else {
-                    TextRole::Body.rich(&t, *label)
+                    TextRole::Body.rich(&t, label)
                 };
-                let galley = WidgetText::from(rich).into_galley(
+                WidgetText::from(rich).into_galley(
                     ui,
                     Some(TextWrapMode::Extend),
                     f32::INFINITY,
                     TextRole::Body.font(&t),
-                );
-                let tab = Rect::from_min_size(pos2(x, head.center().y - 14.0), vec2(galley.size().x + 20.0, 28.0));
-                let hit = ui.interact(tab, self.id.with(("tab", index)), Sense::click());
-                hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Tab, true, on, *label));
-                let ink = if on || hit.hovered() {
-                    t.color("foreground")
-                } else {
-                    t.color("muted-foreground")
-                };
-                if on {
-                    ui.painter().rect_filled(tab, t.radius("md"), t.color("secondary"));
-                } else if hit.hovered() {
-                    ui.painter().rect_filled(tab, t.radius("md"), t.color("hover"));
-                }
-                ui.painter().galley(
-                    pos2(tab.left() + 10.0, tab.center().y - galley.size().y / 2.0),
-                    galley,
-                    ink,
-                );
-                if hit.clicked() {
-                    *self.active = index;
-                }
-                x = tab.right() + 4.0;
-            }
+                )
+            };
+            let labels_width = self
+                .tabs
+                .iter()
+                .map(|label| label_galley(ui, label, false).size().x + 20.0)
+                .sum::<f32>()
+                + 4.0 * self.tabs.len().saturating_sub(1) as f32;
+            let as_icons = labels_width > room_rect.width() && self.icons.len() == self.tabs.len();
+            let mut strip = ui.new_child(
+                egui::UiBuilder::new()
+                    .max_rect(room_rect)
+                    .layout(egui::Layout::left_to_right(egui::Align::Center)),
+            );
+            egui::ScrollArea::horizontal()
+                .id_salt(self.id.with("tabs"))
+                .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
+                .auto_shrink([false, true])
+                .show(&mut strip, |ui| {
+                    ui.spacing_mut().item_spacing.x = 4.0;
+                    ui.set_min_height(room_rect.height());
+                    for (index, label) in self.tabs.iter().enumerate() {
+                        let on = *self.active == index;
+                        let galley = (!as_icons).then(|| label_galley(ui, label, on));
+                        let width = galley.as_ref().map_or(32.0, |g| g.size().x + 20.0);
+                        let (tab, hit) = ui.allocate_exact_size(vec2(width, 28.0), Sense::click());
+                        hit.widget_info(|| egui::WidgetInfo::selected(egui::Role::Tab, true, on, *label));
+                        let ink = if on || hit.hovered() {
+                            t.color("foreground")
+                        } else {
+                            t.color("muted-foreground")
+                        };
+                        if on {
+                            ui.painter().rect_filled(tab, t.radius("md"), t.color("secondary"));
+                        } else if hit.hovered() {
+                            ui.painter().rect_filled(tab, t.radius("md"), t.color("hover"));
+                        }
+                        let hit = match galley {
+                            Some(galley) => {
+                                ui.painter().galley(
+                                    pos2(tab.left() + 10.0, tab.center().y - galley.size().y / 2.0),
+                                    galley,
+                                    ink,
+                                );
+                                hit
+                            }
+                            None => {
+                                icons::paint(ui.painter(), tab.center(), self.icons[index], 16.0, ink);
+                                super::tooltip(hit, *label)
+                            }
+                        };
+                        if hit.clicked() {
+                            *self.active = index;
+                        }
+                    }
+                });
         }
         let active = (*self.active).min(self.tabs.len().saturating_sub(1));
         egui::ScrollArea::vertical()

@@ -413,6 +413,16 @@ pub const STORIES: &[Story] = &[
         show: settings::settings_dialog,
     },
     Story {
+        path: "Patterns/Side panel",
+        doc: "The panel at the page's end: its tabs in the head, 48 clear for the shell's toggle. When the labels do not fit and every tab has an icon, each tab stands as its icon; without icons the labels scroll.",
+        show: frame::side_panel_story,
+    },
+    Story {
+        path: "Patterns/Status line",
+        doc: "The foot strip: a note at the start and facts at the end in at most 70 percent of the line, each fact whole but the last, which alone gives way.",
+        show: frame::status_line_story,
+    },
+    Story {
         path: "Patterns/Shell",
         doc: "The frame every app has: the rail of its places, the top bar with the trail, the page, and the status line across the bottom. Press a place to go there.",
         show: frame::shell,

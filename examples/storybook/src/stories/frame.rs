@@ -1,7 +1,7 @@
-use eframe::egui::{Sense, Ui, vec2};
+use eframe::egui::{Id, Sense, Stroke, Ui, UiBuilder, vec2};
 use sokkel_egui::{
-    Button, ButtonSize, ButtonVariant, Chip, ChipTone, Icon, Rail, RailEntry, RailGroup, Shell, ShellPart, StatusLine,
-    StatusTone, TextRole, TopBar, tokens,
+    Button, ButtonSize, ButtonVariant, Chip, ChipTone, Icon, Rail, RailEntry, RailGroup, Shell, ShellPart, SidePanel,
+    StatusLine, StatusTone, TextRole, TopBar, panel_section, tokens,
 };
 
 use super::{State, section};
@@ -91,6 +91,65 @@ fn frame(state: &mut State, ui: &mut Ui, size: eframe::egui::Vec2, collapsed: bo
                 );
             }
         });
+}
+
+/// One side panel `width` wide and 200 tall, its tabs `tabs` with `icons`, the shown tab held in
+/// memory under `id`.
+fn side_panel(ui: &mut Ui, id: &str, width: f32, tabs: &[&str], icons: &[Icon]) {
+    let t = tokens(ui.ctx());
+    let key = Id::unique(("story-side-panel", id));
+    let mut active = ui.data(|d| d.get_temp::<usize>(key)).unwrap_or(1);
+    let (rect, _) = ui.allocate_exact_size(vec2(width, 200.0), Sense::hover());
+    ui.painter().rect_filled(rect, 0.0, t.color("sidebar"));
+    ui.painter().rect_stroke(
+        rect,
+        0.0,
+        Stroke::new(1.0, t.color("border-strong")),
+        eframe::egui::StrokeKind::Inside,
+    );
+    let mut inner = ui.new_child(UiBuilder::new().max_rect(rect));
+    inner.set_clip_rect(rect);
+    SidePanel::new(id, tabs, &mut active)
+        .icons(icons)
+        .show(&mut inner, |tab, ui| {
+            panel_section(ui, tabs[tab], |ui| {
+                ui.label(
+                    TextRole::Body
+                        .rich(&t, "nightly-export ran at 02:00 UTC")
+                        .color(t.color("foreground")),
+                );
+            });
+        });
+    ui.data_mut(|d| d.insert_temp(key, active));
+}
+
+pub fn side_panel_story(_: &mut State, ui: &mut Ui) {
+    let tabs = ["Details", "Steps", "Log", "Outputs"];
+    let icons = [Icon::Info, Icon::ListChecks, Icon::ScrollText, Icon::Package];
+    section(ui, "Labels that fit");
+    side_panel(ui, "wide", 352.0, &tabs, &icons);
+    section(ui, "Too narrow: each tab its icon, its label in a tooltip");
+    side_panel(ui, "icons", 220.0, &tabs, &icons);
+    section(ui, "Too narrow without icons: the labels scroll");
+    side_panel(ui, "scroll", 220.0, &tabs, &[]);
+}
+
+pub fn status_line_story(_: &mut State, ui: &mut Ui) {
+    let line = |ui: &mut Ui, width: f32| {
+        let (rect, _) = ui.allocate_exact_size(vec2(width, 28.0), Sense::hover());
+        let mut inner = ui.new_child(UiBuilder::new().max_rect(rect));
+        inner.add(
+            StatusLine::new("sync-inventory is running")
+                .tone(StatusTone::Live)
+                .fact("api, worker, scheduler")
+                .item("next", "send-digest at 09:15 UTC")
+                .item_code("version", "v2.4.0-rc.3+build.20261122"),
+        );
+    };
+    section(ui, "Room for every fact");
+    line(ui, 960.0);
+    section(ui, "Narrow: the last fact alone gives way");
+    line(ui, 560.0);
 }
 
 pub fn shell(state: &mut State, ui: &mut Ui) {
