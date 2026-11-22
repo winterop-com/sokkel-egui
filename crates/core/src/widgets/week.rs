@@ -331,7 +331,7 @@ fn paint_block(ui: &Ui, t: &crate::Tokens, block: Rect, event: &CalendarEvent, h
             TextRole::Help.font(t),
         )
     };
-    let title = line(&event.title, 500.0);
+    let title = line(&event.title, t.weight(crate::Weight::Medium));
     let mut y = if roomy {
         block.top() + 4.0
     } else {

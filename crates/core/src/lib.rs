@@ -29,8 +29,8 @@ pub use icons::Icon;
 pub use reactions::{Reaction, toggle_reaction};
 pub use text::TextRole;
 pub use tokens::{
-    Appearance, Motion, Scheme, Swatch, TextSpec, ThemeInfo, Tokens, densities, density_level, hex, swatch, text_sizes,
-    themes,
+    Appearance, Motion, Scheme, Swatch, TextSpec, ThemeInfo, Tokens, Weight, densities, density_level, hex, swatch,
+    text_sizes, themes,
 };
 pub use widgets::*;
 

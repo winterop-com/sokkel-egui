@@ -510,7 +510,7 @@ fn title_galley(painter: &Painter, t: &Tokens, text: &str, named: bool, zoom: f3
             .rich(t, text)
             .size(size * zoom)
             .line_height(Some(t.text("graph-title").line_height * zoom))
-            .variation("wght", 600.0);
+            .variation("wght", t.weight(sokkel_egui::Weight::Semibold));
         let ctx = painter.ctx();
         egui::WidgetText::from(rich).into_galley_impl(
             ctx,
@@ -522,7 +522,7 @@ fn title_galley(painter: &Painter, t: &Tokens, text: &str, named: bool, zoom: f3
     } else {
         painter.layout_no_wrap(
             text.to_owned(),
-            mono_font(painter.ctx(), size * zoom, 600.0),
+            mono_font(painter.ctx(), size * zoom, t.weight(sokkel_egui::Weight::Semibold)),
             Color32::PLACEHOLDER,
         )
     }

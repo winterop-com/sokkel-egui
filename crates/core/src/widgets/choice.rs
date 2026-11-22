@@ -614,7 +614,11 @@ impl<'a> ChoiceList<'a> {
                 let text = (width - 20.0 - 28.0).max(1.0);
                 let sample = self.swatches.as_ref().map(|all| all.get(index).copied().flatten());
                 let lead = if sample.is_some() { 28.0 + 8.0 } else { 0.0 };
-                let weight = if sample.is_some() { 400.0 } else { 500.0 };
+                let weight = if sample.is_some() {
+                    400.0
+                } else {
+                    t.weight(crate::Weight::Medium)
+                };
                 let sm = t.text("sm");
                 let label = egui::WidgetText::from(
                     egui::RichText::new(choice.label)
@@ -730,7 +734,11 @@ pub fn checkbox_list<R>(ui: &mut egui::Ui, label: &str, boxes: impl FnOnce(&mut 
     let t = crate::tokens(ui.ctx());
     ui.vertical(|ui| {
         ui.spacing_mut().item_spacing.y = 0.0;
-        ui.label(crate::TextRole::Body.rich(&t, label).variation("wght", 500.0));
+        ui.label(
+            crate::TextRole::Body
+                .rich(&t, label)
+                .variation("wght", t.weight(crate::Weight::Medium)),
+        );
         ui.add_space(6.0);
         boxes(ui)
     })

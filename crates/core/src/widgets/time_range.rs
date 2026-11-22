@@ -124,7 +124,7 @@ impl<'a> TimeRangePicker<'a> {
                                 ui.label(
                                     TextRole::Help
                                         .rich(&t, &words.custom)
-                                        .variation("wght", 500.0)
+                                        .variation("wght", t.weight(crate::Weight::Medium))
                                         .color(t.color("muted-foreground")),
                                 );
                             });
@@ -190,7 +190,11 @@ fn preset_rows(ui: &mut Ui, t: &crate::Tokens, presets: &[(&str, &str)], chosen:
             ui.painter().rect_filled(row, t.radius("md"), ground);
         }
         let rich = TextRole::Body.rich(t, *label);
-        let rich = if is_chosen { rich.variation("wght", 500.0) } else { rich };
+        let rich = if is_chosen {
+            rich.variation("wght", t.weight(crate::Weight::Medium))
+        } else {
+            rich
+        };
         let galley = egui::WidgetText::from(rich).into_galley(
             ui,
             Some(egui::TextWrapMode::Truncate),

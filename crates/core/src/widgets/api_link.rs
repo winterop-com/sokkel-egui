@@ -110,7 +110,7 @@ impl Widget for ApiLink {
                 font,
             )
         };
-        let method = lay(ui, &self.method, 500.0, f32::INFINITY);
+        let method = lay(ui, &self.method, t.weight(crate::Weight::Medium), f32::INFINITY);
         let copy_side = t.density("control-xs");
         let room = ui.available_width();
         // 8 in, the method, 6, the path, then 6 and the copy button, or with open 6, the arrow, 8;

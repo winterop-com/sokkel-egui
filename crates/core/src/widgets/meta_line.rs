@@ -83,7 +83,8 @@ impl MetaLine {
         let role = if self.sm { TextRole::Body } else { TextRole::Help };
         let rich = role.rich(&t, self.text());
         let rich = if self.strong {
-            rich.variation("wght", 500.0).color(t.color("foreground"))
+            rich.variation("wght", t.weight(crate::Weight::Medium))
+                .color(t.color("foreground"))
         } else {
             rich.color(t.color("muted-foreground"))
         };
@@ -105,7 +106,7 @@ impl MetaLine {
         let rich = |text: &str| {
             let rich = role.rich(&t, text);
             if self.strong {
-                rich.variation("wght", 500.0)
+                rich.variation("wght", t.weight(crate::Weight::Medium))
             } else {
                 rich
             }

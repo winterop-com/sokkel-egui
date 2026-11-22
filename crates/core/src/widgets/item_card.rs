@@ -177,7 +177,7 @@ impl<'a> ItemCard<'a> {
             None => {
                 let code = self.code.clone().unwrap_or_default();
                 let size = crate::mono_size(&t, t.text("section-title").size);
-                let font = crate::mono_font(ui.ctx(), size, 500.0);
+                let font = crate::mono_font(ui.ctx(), size, t.weight(crate::Weight::Medium));
                 (code.clone(), egui::RichText::new(code).font(font.clone()), font)
             }
         };

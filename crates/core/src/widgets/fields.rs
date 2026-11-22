@@ -486,8 +486,8 @@ impl DueText {
         };
         let text = self.date.map_or(self.none.clone(), Day::short);
         let (ink, weight) = match state {
-            DueState::Overdue => (t.color("critical-ink"), 500.0),
-            DueState::Near => (t.color("warning-ink"), 500.0),
+            DueState::Overdue => (t.color("critical-ink"), t.weight(crate::Weight::Medium)),
+            DueState::Near => (t.color("warning-ink"), t.weight(crate::Weight::Medium)),
             DueState::Later => (t.color("muted-foreground"), 400.0),
         };
         (self.role.rich(t, text).variation("wght", weight).color(ink), ink)

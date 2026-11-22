@@ -307,7 +307,7 @@ impl Metrics {
         let headings = match scale {
             MarkdownScale::Message => [
                 (TextRole::DetailTitle, (20.0, 8.0), 0.0),
-                (TextRole::SectionTitle, (16.0, 8.0), 600.0),
+                (TextRole::SectionTitle, (16.0, 8.0), t.weight(crate::Weight::Semibold)),
                 (TextRole::SectionTitle, (12.0, 6.0), 0.0),
                 (TextRole::Head, (12.0, 4.0), 0.0),
             ],
@@ -615,7 +615,7 @@ impl Draw<'_> {
                     ui.vertical(|ui| {
                         let style = Style {
                             role: TextRole::Body,
-                            wght: 500.0,
+                            wght: t.weight(crate::Weight::Medium),
                             ink: t.color(ink),
                             line_height: Some(self.metrics.relaxed),
                         };
@@ -785,7 +785,7 @@ impl Draw<'_> {
                         rich = rich.line_height(Some(line_height));
                     }
                     if run.bold {
-                        rich = rich.variation("wght", 600.0);
+                        rich = rich.variation("wght", t.weight(crate::Weight::Semibold));
                     } else if style.wght > 0.0 {
                         rich = rich.variation("wght", style.wght);
                     }

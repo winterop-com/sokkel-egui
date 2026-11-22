@@ -1687,7 +1687,7 @@ impl<'a> DataTable<'a> {
                         ui.label(
                             TextRole::Help
                                 .rich(t, &self.words.columns)
-                                .variation("wght", 500.0)
+                                .variation("wght", t.weight(crate::Weight::Medium))
                                 .color(t.color("muted-foreground")),
                         );
                     });
@@ -4378,7 +4378,9 @@ fn paint_cell(
         }
         Cell::Strong(label) => text(
             ui,
-            TextRole::Body.rich(t, label).variation("wght", 500.0),
+            TextRole::Body
+                .rich(t, label)
+                .variation("wght", t.weight(crate::Weight::Medium)),
             t.color("foreground"),
         ),
         Cell::Struck(label) => text(
@@ -4427,12 +4429,12 @@ fn paint_cell(
                 16.0,
                 t.color("muted-foreground"),
             );
-            let galley = WidgetText::from(TextRole::Body.rich(t, name).variation("wght", 500.0)).into_galley(
-                ui,
-                Some(mode),
-                (room - 20.0).max(1.0),
-                TextRole::Body.font(t),
-            );
+            let galley = WidgetText::from(
+                TextRole::Body
+                    .rich(t, name)
+                    .variation("wght", t.weight(crate::Weight::Medium)),
+            )
+            .into_galley(ui, Some(mode), (room - 20.0).max(1.0), TextRole::Body.font(t));
             ui.painter().galley(
                 pos2(rect.left() + 20.0, rect.center().y - galley.size().y / 2.0),
                 galley,
@@ -4447,12 +4449,12 @@ fn paint_cell(
                 16.0,
                 t.color("muted-foreground"),
             );
-            let galley = WidgetText::from(TextRole::Body.rich(t, name).variation("wght", 500.0)).into_galley(
-                ui,
-                Some(mode),
-                (room - 22.0).max(1.0),
-                TextRole::Body.font(t),
-            );
+            let galley = WidgetText::from(
+                TextRole::Body
+                    .rich(t, name)
+                    .variation("wght", t.weight(crate::Weight::Medium)),
+            )
+            .into_galley(ui, Some(mode), (room - 22.0).max(1.0), TextRole::Body.font(t));
             ui.painter().galley(
                 pos2(rect.left() + 22.0, rect.center().y - galley.size().y / 2.0),
                 galley,
@@ -4501,7 +4503,11 @@ fn paint_cell(
             let lay = |ui: &mut Ui, rich: egui::RichText, role: TextRole| {
                 WidgetText::from(rich).into_galley(ui, Some(mode), room, role.font(t))
             };
-            let weight = if *strong { 500.0 } else { 400.0 };
+            let weight = if *strong {
+                t.weight(crate::Weight::Medium)
+            } else {
+                400.0
+            };
             let first = lay(
                 ui,
                 TextRole::Body.rich(t, name).variation("wght", weight),
@@ -4520,7 +4526,9 @@ fn paint_cell(
             };
             let name = lay(
                 ui,
-                TextRole::Body.rich(t, title).variation("wght", 500.0),
+                TextRole::Body
+                    .rich(t, title)
+                    .variation("wght", t.weight(crate::Weight::Medium)),
                 TextRole::Body,
             );
             let small = lay(ui, TextRole::Help.rich(t, detail), TextRole::Help);

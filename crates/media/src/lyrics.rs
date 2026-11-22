@@ -141,7 +141,7 @@ impl<'a> Lyrics<'a> {
                     let current = Some(index) == at;
                     let rich = |ink| {
                         role.rich(&t, &line.text)
-                            .variation("wght", 600.0)
+                            .variation("wght", t.weight(sokkel_egui::Weight::Semibold))
                             .extra_letter_spacing(-0.025 * size.size)
                             .color(ink)
                     };

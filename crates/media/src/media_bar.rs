@@ -1145,7 +1145,7 @@ fn eyebrow(ui: &Ui, deck: &Deck, width: f32, large: bool) -> Option<std::sync::A
     let size = t.text(role.key()).size;
     let rich = role
         .rich(&t, line.to_uppercase())
-        .variation("wght", 500.0)
+        .variation("wght", t.weight(sokkel_egui::Weight::Medium))
         .extra_letter_spacing(size * 0.025)
         .color(t.color("primary-ink"));
     Some(one_line(ui.painter(), ui.style(), rich, width))
@@ -1162,7 +1162,7 @@ fn words(ui: &Ui, deck: &Deck, tier: Tier, rect: Rect, center: bool) {
             let mut job = LayoutJob::default();
             TextRole::Body
                 .rich(&t, &deck.title)
-                .variation("wght", 600.0)
+                .variation("wght", t.weight(sokkel_egui::Weight::Semibold))
                 .color(t.color("foreground"))
                 .append_to(&mut job, ui.style(), FontSelection::Default, Align::Min);
             if let Some(by) = deck.by() {
@@ -1205,7 +1205,7 @@ fn words(ui: &Ui, deck: &Deck, tier: Tier, rect: Rect, center: bool) {
                 painter,
                 ui.style(),
                 role.rich(&t, &deck.title)
-                    .variation("wght", 600.0)
+                    .variation("wght", t.weight(sokkel_egui::Weight::Semibold))
                     .extra_letter_spacing(-0.025 * size)
                     .color(t.color("foreground")),
                 width,
@@ -1814,14 +1814,39 @@ impl Room<'_, '_> {
         };
         let sizes: Vec<RichText> = if phone {
             vec![
-                title(TextRole::PageTitle, "page", 600.0, true),
-                title(TextRole::DetailTitle, "detail-title", 600.0, false),
+                title(
+                    TextRole::PageTitle,
+                    "page",
+                    t.weight(sokkel_egui::Weight::Semibold),
+                    true,
+                ),
+                title(
+                    TextRole::DetailTitle,
+                    "detail-title",
+                    t.weight(sokkel_egui::Weight::Semibold),
+                    false,
+                ),
             ]
         } else {
             vec![
-                title(TextRole::MediaTitle, "media-title", 600.0, true),
-                title(TextRole::Statistic, "stat", 600.0, true),
-                title(TextRole::PageTitle, "page", 600.0, true),
+                title(
+                    TextRole::MediaTitle,
+                    "media-title",
+                    t.weight(sokkel_egui::Weight::Semibold),
+                    true,
+                ),
+                title(
+                    TextRole::Statistic,
+                    "stat",
+                    t.weight(sokkel_egui::Weight::Semibold),
+                    true,
+                ),
+                title(
+                    TextRole::PageTitle,
+                    "page",
+                    t.weight(sokkel_egui::Weight::Semibold),
+                    true,
+                ),
             ]
         };
         let most = if phone { 3 } else { 2 };

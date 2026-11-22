@@ -273,6 +273,15 @@ impl Default for Appearance {
     }
 }
 
+/// A font weight the contract names, read by [`Tokens::weight`]: text set heavier than its role
+/// asks for, as the web's `font-medium`, `font-semibold` and `font-bold`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Weight {
+    Medium,
+    Semibold,
+    Bold,
+}
+
 /// One theme in one scheme at one density and text size, every value ready to paint with.
 #[derive(Debug)]
 pub struct Tokens {
@@ -453,6 +462,17 @@ impl Tokens {
     /// A plain number token, such as `mono-x-height`.
     pub fn number(&self, key: &str) -> Option<f32> {
         self.numbers.get(key).copied()
+    }
+
+    /// A named font weight on the variable face's `wght` axis, from the theme's
+    /// `font-weight-medium`, `font-weight-semibold` and `font-weight-bold`.
+    pub fn weight(&self, weight: Weight) -> f32 {
+        let (key, before) = match weight {
+            Weight::Medium => ("font-weight-medium", 500.0),
+            Weight::Semibold => ("font-weight-semibold", 600.0),
+            Weight::Bold => ("font-weight-bold", 700.0),
+        };
+        self.number(key).unwrap_or(before)
     }
 
     /// A word token, such as `typeface-sans` or `table-head-transform`.

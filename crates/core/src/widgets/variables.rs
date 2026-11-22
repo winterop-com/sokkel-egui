@@ -12,12 +12,12 @@ pub fn variable_select(ui: &mut Ui, label: &str, chosen: &mut usize, options: &[
     let t = tokens(ui.ctx());
     let height = t.density("control-sm");
     let font = TextRole::Help.font(&t);
-    let name = WidgetText::from(TextRole::Help.rich(&t, label).variation("wght", 500.0)).into_galley(
-        ui,
-        Some(egui::TextWrapMode::Extend),
-        f32::INFINITY,
-        font.clone(),
-    );
+    let name = WidgetText::from(
+        TextRole::Help
+            .rich(&t, label)
+            .variation("wght", t.weight(crate::Weight::Medium)),
+    )
+    .into_galley(ui, Some(egui::TextWrapMode::Extend), f32::INFINITY, font.clone());
     let shown = options.get(*chosen).map_or(0.0, |o| {
         ui.painter()
             .layout_no_wrap(o.clone(), font.clone(), t.color("foreground"))
@@ -66,7 +66,12 @@ pub fn variable_select(ui: &mut Ui, label: &str, chosen: &mut usize, options: &[
 pub fn variable_toggle(ui: &mut Ui, label: &str, on: &mut bool) -> Response {
     let t = tokens(ui.ctx());
     let height = t.density("control-sm");
-    let name = WidgetText::from(TextRole::Help.rich(&t, label).variation("wght", 500.0)).into_galley(
+    let name = WidgetText::from(
+        TextRole::Help
+            .rich(&t, label)
+            .variation("wght", t.weight(crate::Weight::Medium)),
+    )
+    .into_galley(
         ui,
         Some(egui::TextWrapMode::Extend),
         f32::INFINITY,

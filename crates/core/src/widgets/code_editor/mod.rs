@@ -1148,7 +1148,7 @@ impl CodeEditor<'_> {
             CodeSize::Lg => (t.text("base").size, t.text("base").line_height),
         };
         let regular = crate::mono_font(&ctx, size, 400.0);
-        let bold = crate::mono_font(&ctx, size, 600.0);
+        let bold = crate::mono_font(&ctx, size, t.weight(crate::Weight::Semibold));
         let char_width = ui.fonts_mut(|f| f.glyph_width(&regular, '0'));
 
         let focused = ctx.memory(|m| m.has_focus(text_id));

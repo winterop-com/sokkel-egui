@@ -420,7 +420,12 @@ fn chart_frame_with(ui: &mut Ui, head_of: Head<'_>, actions: Option<HeadActions<
             }
             let taken = tools.min_rect().width();
             let inner = width - 2.0 - 18.0 - if taken > 1.0 { taken + 4.0 } else { 0.0 };
-            let title = WidgetText::from(TextRole::Help.rich(&t, title).variation("wght", 500.0)).into_galley(
+            let title = WidgetText::from(
+                TextRole::Help
+                    .rich(&t, title)
+                    .variation("wght", t.weight(sokkel_egui::Weight::Medium)),
+            )
+            .into_galley(
                 ui,
                 Some(TextWrapMode::Truncate),
                 inner.max(1.0),
@@ -661,7 +666,7 @@ impl<'a> BarGauge<'a> {
         let value_font = sokkel_egui::mono_font(
             ui.ctx(),
             sokkel_egui::mono_size(&t, TextRole::Help.font(&t).size),
-            500.0,
+            t.weight(sokkel_egui::Weight::Medium),
         );
         chart_frame(ui, Head::new(&self.title), |ui| {
             ui.add_space(4.0);
@@ -1192,7 +1197,7 @@ impl FunnelPanel {
                 painter.add(egui::Shape::convex_polygon(shape, fill, Stroke::new(1.0, card)));
                 let mut label = TextRole::Help.rich(&t, format!("{name}  {} · {}", written(*value), share(*value)));
                 if over {
-                    label = label.variation("wght", 600.0);
+                    label = label.variation("wght", t.weight(sokkel_egui::Weight::Semibold));
                 }
                 let galley =
                     WidgetText::from(label).into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, font.clone());
@@ -1340,7 +1345,7 @@ impl DonutPanel {
                     TextRole::Statistic
                         .rich(&t, written(total))
                         .size(t.length("chart-stat-size"))
-                        .variation("wght", 600.0),
+                        .variation("wght", t.weight(sokkel_egui::Weight::Semibold)),
                 )
                 .into_galley(
                     ui,

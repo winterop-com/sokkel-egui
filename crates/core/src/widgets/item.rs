@@ -140,7 +140,7 @@ impl<'a> Item<'a> {
                             ui.spacing_mut().item_spacing.y = if self.size == ItemSize::Xs { 0.0 } else { 4.0 };
                             let title = TextRole::Body
                                 .rich(&t, &self.title)
-                                .variation("wght", 500.0)
+                                .variation("wght", t.weight(crate::Weight::Medium))
                                 .line_height(Some((TextRole::Body.font(&t).size * 1.375).round()));
                             let galley = WidgetText::from(title).into_galley(
                                 ui,

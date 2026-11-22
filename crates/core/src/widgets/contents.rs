@@ -76,7 +76,7 @@ impl<'a> TableOfContents<'a> {
             let indent = (entry.level - top) as f32 * 12.0 + 12.0;
             let mut rich = role.rich(&t, &entry.label).line_height(Some(line));
             if on {
-                rich = rich.variation("wght", 500.0);
+                rich = rich.variation("wght", t.weight(crate::Weight::Medium));
             }
             let galley = WidgetText::from(rich).into_galley(
                 ui,

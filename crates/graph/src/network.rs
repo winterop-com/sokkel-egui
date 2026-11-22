@@ -501,7 +501,14 @@ impl<'a> NetworkGraph<'a> {
                 .rich(&t, &node.label)
                 .size(title.size * view.zoom)
                 .line_height(Some(title.line_height * view.zoom))
-                .variation("wght", if strong { 600.0 } else { title.weight })
+                .variation(
+                    "wght",
+                    if strong {
+                        t.weight(sokkel_egui::Weight::Semibold)
+                    } else {
+                        title.weight
+                    },
+                )
                 .color(t.color(ink).gamma_multiply(shade));
             let mut job = egui::text::LayoutJob::default();
             rich.append_to(&mut job, ui.style(), egui::FontSelection::Default, egui::Align::Center);

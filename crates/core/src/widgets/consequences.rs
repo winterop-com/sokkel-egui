@@ -116,7 +116,12 @@ impl<'a> ConsequenceList<'a> {
         } else {
             t.color("muted-foreground")
         };
-        ui.label(TextRole::Help.rich(&t, heading).variation("wght", 500.0).color(ink));
+        ui.label(
+            TextRole::Help
+                .rich(&t, heading)
+                .variation("wght", t.weight(crate::Weight::Medium))
+                .color(ink),
+        );
         let width = ui.available_width();
         let rows: Vec<(f32, Option<std::sync::Arc<egui::Galley>>, std::sync::Arc<egui::Galley>)> =
             self.items

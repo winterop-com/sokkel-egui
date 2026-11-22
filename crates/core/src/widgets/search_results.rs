@@ -412,7 +412,7 @@ impl<'a> SearchResults<'a> {
             &result.title,
             query,
             TextRole::Body,
-            500.0,
+            t.weight(crate::Weight::Medium),
             t.color("foreground"),
             room,
         ));

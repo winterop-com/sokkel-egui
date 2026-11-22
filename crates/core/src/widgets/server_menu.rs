@@ -249,7 +249,11 @@ impl<'a> ServerMenu<'a> {
                 role.font(&t),
             )
         };
-        let mono = crate::mono_font(ui.ctx(), crate::mono_size(&t, t.text("badge").size), 500.0);
+        let mono = crate::mono_font(
+            ui.ctx(),
+            crate::mono_size(&t, t.text("badge").size),
+            t.weight(crate::Weight::Medium),
+        );
         let version = (!quiet_face).then_some(self.version).flatten().map(|v| {
             WidgetText::from(egui::RichText::new(v).font(mono.clone())).into_galley(
                 ui,
@@ -374,7 +378,12 @@ impl<'a> ServerMenu<'a> {
         ui.spacing_mut().item_spacing = vec2(6.0, 4.0);
         ui.spacing_mut().interact_size.y = 0.0;
         ui.horizontal(|ui| {
-            ui.label(TextRole::Help.rich(t, self.name).variation("wght", 500.0).color(ink));
+            ui.label(
+                TextRole::Help
+                    .rich(t, self.name)
+                    .variation("wght", t.weight(crate::Weight::Medium))
+                    .color(ink),
+            );
             if let Some(environment) = self.environment {
                 ui.label(TextRole::Help.rich(t, environment).color(ink.gamma_multiply(0.8)));
             }
@@ -403,7 +412,12 @@ impl<'a> ServerMenu<'a> {
                 ui.horizontal_wrapped(|ui| {
                     let (dot, _) = ui.allocate_exact_size(vec2(8.0, t.text("help").line_height), Sense::hover());
                     ui.painter().circle_filled(dot.center(), 4.0, said.color);
-                    ui.label(TextRole::Help.rich(t, check.name).variation("wght", 500.0).color(ink));
+                    ui.label(
+                        TextRole::Help
+                            .rich(t, check.name)
+                            .variation("wght", t.weight(crate::Weight::Medium))
+                            .color(ink),
+                    );
                     ui.label(TextRole::Help.rich(t, &said.words).color(quiet));
                     if let Some(detail) = check.detail {
                         ui.label(TextRole::Help.rich(t, detail).color(quiet));
@@ -460,7 +474,7 @@ impl<'a> ServerMenu<'a> {
                             ui.label(
                                 TextRole::Help
                                     .rich(&t, self.name)
-                                    .variation("wght", 500.0)
+                                    .variation("wght", t.weight(crate::Weight::Medium))
                                     .color(t.color("foreground")),
                             );
                             if let Some(environment) = self.environment {

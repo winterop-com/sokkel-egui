@@ -326,12 +326,12 @@ impl<'a> StatPanel<'a> {
                 Some(true) => t.color("good"),
                 Some(false) => t.color("critical"),
             };
-            let galley = WidgetText::from(TextRole::Help.rich(&t, delta).variation("wght", 500.0)).into_galley(
-                ui,
-                Some(TextWrapMode::Extend),
-                f32::INFINITY,
-                TextRole::Help.font(&t),
-            );
+            let galley = WidgetText::from(
+                TextRole::Help
+                    .rich(&t, delta)
+                    .variation("wght", t.weight(crate::Weight::Medium)),
+            )
+            .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Help.font(&t));
             let x = end - galley.size().x;
             painter.galley(pos2(x, head.center().y - galley.size().y / 2.0), galley, color);
             let arrow = if delta.starts_with('-') {
@@ -342,7 +342,12 @@ impl<'a> StatPanel<'a> {
             icons::paint(&painter, pos2(x - 9.0, head.center().y), arrow, 14.0, color);
             end = x - 20.0;
         }
-        let title = WidgetText::from(TextRole::Help.rich(&t, &self.title).variation("wght", 500.0)).into_galley(
+        let title = WidgetText::from(
+            TextRole::Help
+                .rich(&t, &self.title)
+                .variation("wght", t.weight(crate::Weight::Medium)),
+        )
+        .into_galley(
             ui,
             Some(TextWrapMode::Truncate),
             (end - head.left()).max(1.0),
@@ -376,7 +381,12 @@ impl<'a> StatPanel<'a> {
                     TextRole::Statistic.font(&t),
                 );
                 let unit = self.unit.as_ref().map(|u| {
-                    WidgetText::from(TextRole::Body.rich(&t, u).variation("wght", 500.0)).into_galley(
+                    WidgetText::from(
+                        TextRole::Body
+                            .rich(&t, u)
+                            .variation("wght", t.weight(crate::Weight::Medium)),
+                    )
+                    .into_galley(
                         ui,
                         Some(TextWrapMode::Extend),
                         f32::INFINITY,

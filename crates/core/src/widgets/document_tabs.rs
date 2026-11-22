@@ -128,7 +128,8 @@ impl<'a> DocumentTabs<'a> {
             let shown = self.active == Some(tab.id.as_str());
             let role = TextRole::Body;
             let rich = if shown {
-                role.rich(&t, &tab.label).variation("wght", 500.0)
+                role.rich(&t, &tab.label)
+                    .variation("wght", t.weight(crate::Weight::Medium))
             } else {
                 role.rich(&t, &tab.label)
             };

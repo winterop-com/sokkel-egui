@@ -663,7 +663,7 @@ fn slices_chart(ui: &mut Ui, t: &Arc<Tokens>, spec: &ChartSpec, hole: bool, heig
             TextRole::Statistic
                 .rich(t, spec.written(Some(total)))
                 .size(t.length("chart-stat-size"))
-                .variation("wght", 600.0),
+                .variation("wght", t.weight(sokkel_egui::Weight::Semibold)),
         )
         .into_galley(
             ui,

@@ -197,7 +197,7 @@ impl<'a> Transcript<'a> {
                         let galley = WidgetText::from(
                             TextRole::Help
                                 .rich(&t, who)
-                                .variation("wght", 500.0)
+                                .variation("wght", t.weight(sokkel_egui::Weight::Medium))
                                 .color(t.color("foreground")),
                         )
                         .into_galley(

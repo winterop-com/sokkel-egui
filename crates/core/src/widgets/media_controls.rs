@@ -340,7 +340,7 @@ pub fn paint_skip(ui: &Ui, center: Pos2, seconds: f64, back: bool, size: Transpo
     let spec = t.text(role);
     let text = egui::RichText::new(format!("{}", seconds.round() as i64))
         .font(egui::FontId::proportional(spec.size))
-        .variation("wght", 600.0);
+        .variation("wght", t.weight(crate::Weight::Semibold));
     let galley = egui::WidgetText::from(text).into_galley(
         ui,
         Some(egui::TextWrapMode::Extend),

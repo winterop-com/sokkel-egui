@@ -182,7 +182,7 @@ impl Stat {
                 egui::RichText::new(&self.value)
                     .size(page.size)
                     .line_height(Some(page.line_height))
-                    .variation("wght", 600.0),
+                    .variation("wght", t.weight(crate::Weight::Semibold)),
                 page.size,
                 TextWrapMode::Extend,
                 width,
@@ -202,7 +202,9 @@ impl Stat {
         });
         let change = self.change.as_ref().map(|(change, _)| {
             lay(
-                TextRole::Help.rich(&t, change).variation("wght", 500.0),
+                TextRole::Help
+                    .rich(&t, change)
+                    .variation("wght", t.weight(crate::Weight::Medium)),
                 t.text("help").size,
                 TextWrapMode::Extend,
                 f32::INFINITY,

@@ -108,7 +108,7 @@ impl Problem {
                         egui::Label::new(
                             TextRole::Body
                                 .rich(&t, &self.title)
-                                .variation("wght", 500.0)
+                                .variation("wght", t.weight(crate::Weight::Medium))
                                 .color(t.color("foreground")),
                         )
                         .wrap(),

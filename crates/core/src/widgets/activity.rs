@@ -183,7 +183,7 @@ impl<'a> ActivityList<'a> {
             let room = (width - left - right).max(1.0);
             let mut words = TextRole::Body.rich(&t, &item.text);
             if item.unread {
-                words = words.variation("wght", 500.0);
+                words = words.variation("wght", t.weight(crate::Weight::Medium));
             }
             let text = WidgetText::from(words).into_galley(ui, Some(TextWrapMode::Wrap), room, TextRole::Body.font(&t));
             let when = WidgetText::from(TextRole::Help.rich(&t, &item.when)).into_galley(
@@ -293,7 +293,7 @@ impl<'a> BarList<'a> {
             .map(|i| {
                 let mut rich = TextRole::Body.rich(&t, &i.label);
                 if i.chosen {
-                    rich = rich.variation("wght", 500.0);
+                    rich = rich.variation("wght", t.weight(crate::Weight::Medium));
                 }
                 WidgetText::from(rich)
                     .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Body.font(&t))
@@ -340,7 +340,7 @@ impl<'a> BarList<'a> {
             let mut x = row.left() + 6.0;
             let mut label = TextRole::Body.rich(&t, &item.label);
             if item.chosen {
-                label = label.variation("wght", 500.0);
+                label = label.variation("wght", t.weight(crate::Weight::Medium));
             }
             let galley = WidgetText::from(label).into_galley(
                 ui,

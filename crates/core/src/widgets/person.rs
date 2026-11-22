@@ -112,7 +112,7 @@ fn paint_avatar_in(ui: &Ui, t: &Tokens, rect: Rect, name: &str, size: AvatarSize
     painter.circle_filled(rect.center(), rect.width() / 2.0, ground);
     let rich = egui::RichText::new(initials(name, letters))
         .size(text)
-        .variation("wght", 600.0);
+        .variation("wght", t.weight(crate::Weight::Semibold));
     let galley = egui::WidgetText::from(rich).into_galley(
         ui,
         Some(egui::TextWrapMode::Extend),

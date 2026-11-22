@@ -32,7 +32,7 @@ fn now_playing(ui: &mut Ui, here: &Here) {
                     egui::Label::new(
                         TextRole::Body
                             .rich(&t, &song.title)
-                            .variation("wght", 500.0)
+                            .variation("wght", t.weight(sokkel_egui::Weight::Medium))
                             .color(t.color("foreground")),
                     )
                     .truncate(),

@@ -358,7 +358,7 @@ impl<'a> CommentThread<'a> {
                     ui.label(
                         TextRole::Help
                             .rich(&t, &comment.author)
-                            .variation("wght", 500.0)
+                            .variation("wght", t.weight(crate::Weight::Medium))
                             .color(t.color("foreground")),
                     );
                     if comment.creator {

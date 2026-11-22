@@ -382,13 +382,17 @@ impl<'a> IssueCount<'a> {
         .into_iter()
         .filter(|(count, ..)| *count > 0)
         .map(|(count, icon, ink)| {
-            let digits = WidgetText::from(TextRole::Help.rich(&t, count.to_string()).variation("wght", 500.0))
-                .into_galley(
-                    ui,
-                    Some(egui::TextWrapMode::Extend),
-                    f32::INFINITY,
-                    TextRole::Help.font(&t),
-                );
+            let digits = WidgetText::from(
+                TextRole::Help
+                    .rich(&t, count.to_string())
+                    .variation("wght", t.weight(crate::Weight::Medium)),
+            )
+            .into_galley(
+                ui,
+                Some(egui::TextWrapMode::Extend),
+                f32::INFINITY,
+                TextRole::Help.font(&t),
+            );
             (icon, t.color(ink), digits)
         })
         .collect();
@@ -690,7 +694,7 @@ impl RepeatedGroup {
                             ui.label(
                                 TextRole::Help
                                     .rich(&t, &name)
-                                    .variation("wght", 500.0)
+                                    .variation("wght", t.weight(crate::Weight::Medium))
                                     .color(t.color("muted-foreground")),
                             );
                             if self.rows > self.min {

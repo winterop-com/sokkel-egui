@@ -1515,9 +1515,10 @@ impl StatusApp {
                                                         ui.horizontal(|ui| {
                                                             // the title and its chip `gap-xs` apart
                                                             ui.spacing_mut().item_spacing.x = 6.0;
-                                                            ui.label(
-                                                                TextRole::Body.rich(&t, title).variation("wght", 500.0),
-                                                            );
+                                                            ui.label(TextRole::Body.rich(&t, title).variation(
+                                                                "wght",
+                                                                t.weight(sokkel_egui::Weight::Medium),
+                                                            ));
                                                             ui.add(
                                                                 sokkel_egui::Chip::new(
                                                                     state_words(state).to_lowercase(),
@@ -2699,7 +2700,11 @@ fn uptime_list(
                 ui.spacing_mut().item_spacing.y = 4.0;
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 8.0;
-                    ui.label(TextRole::Body.rich(&t, service.id).variation("wght", 500.0));
+                    ui.label(
+                        TextRole::Body
+                            .rich(&t, service.id)
+                            .variation("wght", t.weight(sokkel_egui::Weight::Medium)),
+                    );
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         let h = health[index];
                         ui.add(sokkel_egui::Chip::new(h.words().to_lowercase()).tone(health_tone(h)));

@@ -470,7 +470,7 @@ impl<'a> Tree<'a> {
             }
             let mut label = TextRole::Body.rich(&t, &row.node.label);
             if chosen {
-                label = label.variation("wght", 500.0);
+                label = label.variation("wght", t.weight(crate::Weight::Medium));
             }
             let galley = WidgetText::from(label).into_galley(
                 ui,

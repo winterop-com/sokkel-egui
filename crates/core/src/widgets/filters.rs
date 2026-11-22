@@ -551,7 +551,7 @@ impl<'a, 'f, T> FilterBar<'a, 'f, T> {
                 };
                 let facet = galley(ui, &field.label, 400.0);
                 let said_operator = (set && !operator.is_empty()).then(|| galley(ui, &operator, 400.0));
-                let said_value = set.then(|| galley(ui, &value, 500.0));
+                let said_value = set.then(|| galley(ui, &value, t.weight(crate::Weight::Medium)));
                 let icon_room = if field.icon.is_some() { 16.0 + 6.0 } else { 0.0 };
                 let mut face_width = 10.0 + icon_room + facet.size().x + 10.0;
                 if let Some(g) = &said_operator {
@@ -1129,7 +1129,7 @@ impl<'a> FilterChip<'a> {
                 ui,
                 TextRole::Body
                     .rich(&t, s)
-                    .variation("wght", 500.0)
+                    .variation("wght", t.weight(crate::Weight::Medium))
                     .color(t.color("foreground")),
             )
         });

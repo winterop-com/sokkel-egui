@@ -785,7 +785,7 @@ impl<'a> Unfoldable<'a> {
                     egui::RichText::new(&self.heading)
                         .size(sm.size)
                         .line_height(Some(sm.line_height))
-                        .variation("wght", 500.0),
+                        .variation("wght", t.weight(crate::Weight::Medium)),
                     ink,
                 )
             };

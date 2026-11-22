@@ -199,12 +199,12 @@ impl MapLegend {
         let muted = t.color("muted-foreground");
         let x = card.left() + 12.0;
         let mut y = card.top() + 12.0;
-        let title = WidgetText::from(TextRole::Help.rich(&t, &self.title).variation("wght", 500.0)).into_galley(
-            ui,
-            Some(egui::TextWrapMode::Truncate),
-            width - 24.0,
-            font.clone(),
-        );
+        let title = WidgetText::from(
+            TextRole::Help
+                .rich(&t, &self.title)
+                .variation("wght", t.weight(sokkel_egui::Weight::Medium)),
+        )
+        .into_galley(ui, Some(egui::TextWrapMode::Truncate), width - 24.0, font.clone());
         painter.galley(pos2(x, y + (line - title.size().y) / 2.0), title, ink);
         y += line;
         if let Some(description) = &self.description {
@@ -918,7 +918,12 @@ impl MapView {
             Stroke::new(1.0, t.color("border")),
             StrokeKind::Inside,
         );
-        let label = WidgetText::from(TextRole::Help.rich(t, "Basemap").variation("wght", 500.0)).into_galley(
+        let label = WidgetText::from(
+            TextRole::Help
+                .rich(t, "Basemap")
+                .variation("wght", t.weight(sokkel_egui::Weight::Medium)),
+        )
+        .into_galley(
             ui,
             Some(egui::TextWrapMode::Extend),
             f32::INFINITY,

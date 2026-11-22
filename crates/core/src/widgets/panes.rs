@@ -224,7 +224,12 @@ pub fn inspector_section(ui: &mut Ui, title: &str, body: impl FnOnce(&mut Ui)) {
     let t = tokens(ui.ctx());
     ui.vertical(|ui| {
         ui.spacing_mut().item_spacing.y = 12.0;
-        let galley = WidgetText::from(TextRole::Help.rich(&t, title).variation("wght", 600.0)).into_galley(
+        let galley = WidgetText::from(
+            TextRole::Help
+                .rich(&t, title)
+                .variation("wght", t.weight(crate::Weight::Semibold)),
+        )
+        .into_galley(
             ui,
             Some(TextWrapMode::Truncate),
             ui.available_width(),
@@ -278,7 +283,12 @@ impl<'a> SidePanel<'a> {
             Stroke::new(1.0, t.color("border-strong")),
         );
         if self.tabs.len() == 1 {
-            let galley = WidgetText::from(TextRole::Body.rich(&t, self.tabs[0]).variation("wght", 500.0)).into_galley(
+            let galley = WidgetText::from(
+                TextRole::Body
+                    .rich(&t, self.tabs[0])
+                    .variation("wght", t.weight(crate::Weight::Medium)),
+            )
+            .into_galley(
                 ui,
                 Some(TextWrapMode::Truncate),
                 head.width() - 64.0,
@@ -297,7 +307,9 @@ impl<'a> SidePanel<'a> {
             );
             let label_galley = |ui: &Ui, label: &str, on: bool| {
                 let rich = if on {
-                    TextRole::Body.rich(&t, label).variation("wght", 500.0)
+                    TextRole::Body
+                        .rich(&t, label)
+                        .variation("wght", t.weight(crate::Weight::Medium))
                 } else {
                     TextRole::Body.rich(&t, label)
                 };
@@ -423,7 +435,7 @@ pub fn group_label_text(t: &crate::Tokens, title: &str) -> egui::RichText {
     let spec = t.text("help");
     TextRole::Help
         .rich(t, title.to_uppercase())
-        .variation("wght", 500.0)
+        .variation("wght", t.weight(crate::Weight::Medium))
         .extra_letter_spacing(spec.size * 0.025)
         .color(t.color("faint"))
 }

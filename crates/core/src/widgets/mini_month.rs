@@ -119,7 +119,7 @@ impl<'a> MiniMonth<'a> {
         let title_galley = egui::WidgetText::from(
             TextRole::Body
                 .rich(&t, format!("{} {year}", self.words.months[(month - 1) as usize]))
-                .variation("wght", 500.0),
+                .variation("wght", t.weight(crate::Weight::Medium)),
         )
         .into_galley(
             ui,
@@ -220,7 +220,7 @@ impl<'a> MiniMonth<'a> {
             let number = egui::WidgetText::from(
                 TextRole::Help
                     .rich(&t, day.ymd().2.to_string())
-                    .variation("wght", if today { 500.0 } else { 400.0 }),
+                    .variation("wght", if today { t.weight(crate::Weight::Medium) } else { 400.0 }),
             )
             .into_galley(ui, None, f32::INFINITY, small.clone());
             painter.galley(center - number.size() / 2.0, number, ink);

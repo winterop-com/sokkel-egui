@@ -299,7 +299,7 @@ impl Widget for Rail<'_> {
             let rich = egui::RichText::new(&self.name)
                 .size(spec.size)
                 .line_height(Some(spec.line_height))
-                .variation("wght", 600.0)
+                .variation("wght", t.weight(crate::Weight::Semibold))
                 .extra_letter_spacing(-0.025 * spec.size);
             let name = egui::WidgetText::from(rich).into_galley(
                 ui,
@@ -436,7 +436,9 @@ impl Widget for Rail<'_> {
                 // tall lines, wrapped beside the count as the web's `text-pretty` wraps them
                 let described = !narrow && entry.description.is_some();
                 let count_room = entry.count.filter(|count| *count > 0).map_or(0.0, |count| {
-                    let rich = TextRole::Badge.rich(&t, count.to_string()).variation("wght", 600.0);
+                    let rich = TextRole::Badge
+                        .rich(&t, count.to_string())
+                        .variation("wght", t.weight(crate::Weight::Semibold));
                     WidgetText::from(rich)
                         .into_galley(ui, Some(TextWrapMode::Extend), f32::INFINITY, TextRole::Badge.font(&t))
                         .size()
@@ -590,7 +592,7 @@ impl Widget for Rail<'_> {
                         let rich = egui::RichText::new(words)
                             .size(spec.size)
                             .line_height(Some(spec.line_height))
-                            .variation("wght", 600.0);
+                            .variation("wght", t.weight(crate::Weight::Semibold));
                         let figure = WidgetText::from(rich).into_galley(
                             ui,
                             Some(TextWrapMode::Extend),
@@ -639,7 +641,9 @@ impl Widget for Rail<'_> {
                         .filter(|count| *count > 0 && !matches!(nested, Nested::Parent { .. }))
                     {
                         // the count at 600
-                        let rich = TextRole::Badge.rich(&t, count.to_string()).variation("wght", 600.0);
+                        let rich = TextRole::Badge
+                            .rich(&t, count.to_string())
+                            .variation("wght", t.weight(crate::Weight::Semibold));
                         let figure = WidgetText::from(rich).into_galley(
                             ui,
                             Some(TextWrapMode::Truncate),

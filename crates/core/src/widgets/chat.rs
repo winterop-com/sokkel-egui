@@ -548,9 +548,11 @@ impl<'a> AssistantReply<'a> {
             let name = self.name.clone().unwrap_or_else(|| self.words.name.clone());
             let body = TextRole::Body.font(t).size;
             let rich = if self.code_name {
-                egui::RichText::new(name).font(mono_font(ui.ctx(), mono_size(t, body), 500.0))
+                egui::RichText::new(name).font(mono_font(ui.ctx(), mono_size(t, body), t.weight(crate::Weight::Medium)))
             } else {
-                TextRole::Body.rich(t, name).variation("wght", 500.0)
+                TextRole::Body
+                    .rich(t, name)
+                    .variation("wght", t.weight(crate::Weight::Medium))
             };
             ui.add(egui::Label::new(rich.color(t.color("foreground"))).truncate());
             if let Some(time) = &self.time {
@@ -1199,7 +1201,11 @@ impl<'a> AnswerColumn<'a> {
                                 ui.spacing_mut().item_spacing.y = 0.0;
                                 let size = TextRole::Head.font(&t).size;
                                 let name = egui::RichText::new(&self.model)
-                                    .font(mono_font(ui.ctx(), mono_size(&t, size), 600.0))
+                                    .font(mono_font(
+                                        ui.ctx(),
+                                        mono_size(&t, size),
+                                        t.weight(crate::Weight::Semibold),
+                                    ))
                                     .color(t.color_or("section-head-ink", t.color("foreground")));
                                 ui.add(egui::Label::new(name).truncate());
                                 if let Some(detail) = &self.detail {

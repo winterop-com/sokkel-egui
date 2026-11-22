@@ -1258,7 +1258,12 @@ impl Widget for Gauge {
         } else {
             "-".to_owned()
         };
-        let figure = egui::WidgetText::from(TextRole::Statistic.rich(&t, shown).variation("wght", 600.0)).into_galley(
+        let figure = egui::WidgetText::from(
+            TextRole::Statistic
+                .rich(&t, shown)
+                .variation("wght", t.weight(sokkel_egui::Weight::Semibold)),
+        )
+        .into_galley(
             ui,
             Some(egui::TextWrapMode::Extend),
             f32::INFINITY,

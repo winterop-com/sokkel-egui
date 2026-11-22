@@ -1019,7 +1019,7 @@ impl RowPaint<'_> {
         let title = if self.now {
             TextRole::Body
                 .rich(t, &track.title)
-                .variation("wght", 500.0)
+                .variation("wght", t.weight(sokkel_egui::Weight::Medium))
                 .color(t.color("primary-ink"))
         } else {
             TextRole::Body.rich(t, &track.title).color(t.color("foreground"))
