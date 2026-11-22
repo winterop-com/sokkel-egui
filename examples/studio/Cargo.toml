@@ -12,7 +12,7 @@ sokkel-egui-graph.workspace = true
 tidevann-shared = { path = "../shared" }
 eframe.workspace = true
 serde.workspace = true
-serde_json.workspace = true
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 url = "2.5"
 
 [dev-dependencies]
