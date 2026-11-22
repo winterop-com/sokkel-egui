@@ -100,10 +100,23 @@ pub struct Rail<'a> {
     active: &'a mut String,
     collapsed: bool,
     toggle: Option<&'a mut bool>,
+    collapse_with: RailCollapse,
     mark: Option<&'static str>,
     words: RailWords,
     body: Option<RailBody<'a>>,
     drops: Option<&'a mut Option<RailDrop>>,
+}
+
+/// What collapses an expanded rail, as the web's `collapseWith`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum RailCollapse {
+    /// The control at the head's end.
+    #[default]
+    Button,
+    /// The mark's tile, the toggle in both states: expanded, it shows the collapse icon under the
+    /// pointer and no control stands at the head's end. In the drawer, and with no mark, the head
+    /// keeps its control.
+    Mark,
 }
 
 /// A thing let go on a rail entry that takes it: what was dragged, and the entry's id.
@@ -151,6 +164,7 @@ impl<'a> Rail<'a> {
             active,
             collapsed: false,
             toggle: None,
+            collapse_with: RailCollapse::Button,
             mark: None,
             words: RailWords::default(),
             body: None,
@@ -182,6 +196,13 @@ impl<'a> Rail<'a> {
     pub fn collapsible(mut self, collapsed: &'a mut bool) -> Self {
         self.collapsed = *collapsed;
         self.toggle = Some(collapsed);
+        self
+    }
+
+    /// What collapses the expanded rail: the control at the head's end (the default), or the
+    /// mark's tile, as the web's `collapseWith="mark"`.
+    pub fn collapse_with(mut self, with: RailCollapse) -> Self {
+        self.collapse_with = with;
         self
     }
 
@@ -253,35 +274,49 @@ impl Widget for Rail<'_> {
         } else {
             mark
         };
-        // collapsed and collapsible, the mark is the button that widens the rail again
-        let expand = (narrow && self.toggle.is_some()).then(|| {
+        // the mark collapses the expanded rail too, given collapse_with Mark and a mark of its own;
+        // in the drawer the head keeps its control
+        let mark_toggles =
+            self.collapse_with == RailCollapse::Mark && self.mark.is_some() && !in_drawer && self.toggle.is_some();
+        // collapsed and collapsible, the mark is the button that widens the rail again; expanded,
+        // with mark_toggles, the one that narrows it
+        let toggle_hit = ((narrow && self.toggle.is_some()) || (!narrow && mark_toggles)).then(|| {
             let hit = ui.interact(mark, response.id.with("expand"), Sense::click());
-            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &self.words.expand));
+            let word = if narrow {
+                &self.words.expand
+            } else {
+                &self.words.collapse
+            };
+            hit.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, word));
             hit
         });
         painter.rect_filled(mark, t.radius("md"), t.color("primary"));
-        if let Some(hit) = &expand {
+        if let Some(hit) = &toggle_hit {
             super::focus_ring(&painter, &t, mark, t.radius("md"), hit);
         }
-        if let Some(hit) = expand.as_ref().filter(|hit| hit.hovered()) {
+        if let Some(hit) = toggle_hit.as_ref().filter(|hit| hit.hovered()) {
             icons::paint(
                 &painter,
                 mark.center(),
-                Icon::PanelLeftOpen,
+                if narrow {
+                    Icon::PanelLeftOpen
+                } else {
+                    Icon::PanelLeftClose
+                },
                 16.0,
                 t.color("primary-foreground"),
             );
             if hit.clicked()
                 && let Some(toggle) = self.toggle.as_deref_mut()
             {
-                *toggle = false;
+                *toggle = !narrow;
             }
         } else {
             paint_mark(ui, &painter, &t, mark, self.mark, &self.name);
         }
         // open and collapsible, a button at the head's end narrows the rail (in the drawer, the
-        // drawer's close stands there instead)
-        let collapse = (!narrow && !in_drawer && self.toggle.is_some())
+        // drawer's close stands there instead; with mark_toggles, none does)
+        let collapse = (!narrow && !in_drawer && self.toggle.is_some() && !mark_toggles)
             .then(|| Rect::from_center_size(pos2(head.right() - 12.0 - 16.0, head.center().y), vec2(32.0, 32.0)));
         if let Some(button) = collapse {
             let hit = ui.interact(button, response.id.with("collapse"), Sense::click());

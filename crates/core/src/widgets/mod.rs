@@ -163,8 +163,8 @@ pub use form_fields::{
     read_time,
 };
 pub use frame::{
-    AppBar, DesktopWindow, Rail, RailBody, RailDrop, RailEntry, RailGroup, RailWords, Shell, ShellPart, ShellWords,
-    StatusLine, StatusTone, TopBar, desktop_viewport, is_phone,
+    AppBar, DesktopWindow, Rail, RailBody, RailCollapse, RailDrop, RailEntry, RailGroup, RailWords, Shell, ShellPart,
+    ShellWords, StatusLine, StatusTone, TopBar, desktop_viewport, is_phone,
 };
 pub use info::info_tip;
 pub use inline_code::{InlineCode, InlineCodeTone};
