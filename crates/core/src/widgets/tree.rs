@@ -478,6 +478,10 @@ impl<'a> Tree<'a> {
                 (right - x).max(1.0),
                 TextRole::Body.font(&t),
             );
+            // a label cut short gives its whole text on hover; one that fits gives none
+            if galley.elided {
+                super::tooltip(hit.clone(), &row.node.label);
+            }
             let ink = if chosen {
                 t.color("primary-ink")
             } else {
