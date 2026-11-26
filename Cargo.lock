@@ -957,7 +957,7 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui_kittest",
- "miniz_oxide 0.8.9",
+ "miniz_oxide 0.9.1",
  "serde",
  "serde_json",
  "sokkel-egui",
