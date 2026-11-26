@@ -1720,7 +1720,7 @@ dependencies = [
  "rand 0.10.3",
  "rand_pcg",
  "robust",
- "rstar",
+ "rstar 0.12.2",
  "sif-itree",
 ]
 
@@ -1732,7 +1732,7 @@ checksum = "777d18aa0f12f8b285331cd867133ee14422b3f023f6d388034c47d43e28786a"
 dependencies = [
  "approx",
  "num-traits",
- "rstar",
+ "rstar 0.12.2",
  "serde",
  "thiserror 2.0.21",
 ]
@@ -2337,12 +2337,23 @@ checksum = "85ab80394333c02fe689eaf900ab500fbd0c2213da414687ebf995a65d5a6104"
 dependencies = [
  "bytemuck",
  "byteorder-lite",
+ "image-webp",
  "moxcms",
  "num-traits",
  "png 0.18.1",
  "tiff",
  "zune-core",
  "zune-jpeg",
+]
+
+[[package]]
+name = "image-webp"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "525e9ff3e1a4be2fbea1fdf0e98686a6d98b4d8f937e1bf7402245af1909e8c3"
+dependencies = [
+ "byteorder-lite",
+ "quick-error",
 ]
 
 [[package]]
@@ -4154,6 +4165,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "rstar"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90e7279515baf3838062fa9c495a408bc2f3abbf9cd2ac8c2d4108b90fa29b89"
+dependencies = [
+ "heapless",
+ "num-traits",
+ "smallvec",
+]
+
+[[package]]
 name = "runs"
 version = "0.1.0"
 dependencies = [
@@ -5496,9 +5518,9 @@ dependencies = [
 
 [[package]]
 name = "walkers"
-version = "0.65.0"
+version = "0.66.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61dbac136e6160135b75ceab738fcc1bb45796d3e6cc1573cc09adb480556b5d"
+checksum = "2e17df59b08039a518fab732bd202869dca5cfbcc7e8b2d442e7b7e630466f6d"
 dependencies = [
  "bytemuck",
  "bytes",
@@ -5520,6 +5542,7 @@ dependencies = [
  "mvt-reader",
  "reqwest",
  "reqwest-middleware",
+ "rstar 0.13.1",
  "rustls",
  "serde",
  "serde_json",
