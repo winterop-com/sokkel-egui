@@ -2652,9 +2652,9 @@ checksum = "4050469837a6ff301cd14c1f8f24f88549e6d548f24f64e2148eb0f72cebc51f"
 
 [[package]]
 name = "lucide-icons"
-version = "1.79.0"
+version = "1.81.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34cd431cb3b420c618c2e915059b7b9f102c0bf77db6eac3fcb91b6281bac700"
+checksum = "b33bf42f63a33a82b8eb867447181aa170217c615307227f66e25de9f61c6573"
 
 [[package]]
 name = "lyon_geom"
