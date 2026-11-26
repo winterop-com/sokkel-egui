@@ -64,8 +64,16 @@ fn opens_tag(c: char) -> bool {
     c.is_whitespace() || "([{\"'\u{201c}\u{2018}".contains(c)
 }
 
+/// A letter with its combining marks (so `#हिंदी` and `#नमस्ते` are one tag each), a digit, `_`, `/`
+/// or `-`, as sokkel-design's markdown tree reads a tag.
 fn tag_char(c: char) -> bool {
-    c.is_alphanumeric() || matches!(c, '_' | '/' | '-')
+    use unicode_general_category::{GeneralCategory as G, get_general_category};
+    c.is_alphanumeric()
+        || matches!(c, '_' | '/' | '-')
+        || matches!(
+            get_general_category(c),
+            G::NonspacingMark | G::SpacingMark | G::EnclosingMark
+        )
 }
 
 /// The marks that may stand before a bare address.
@@ -469,6 +477,26 @@ mod tests {
         );
         assert!(read.iter().any(|r| r.code && r.text == "[[code]]"));
         assert!(read.iter().any(|r| r.text.contains("#1")));
+    }
+
+    #[test]
+    fn a_tag_reads_letters_with_their_combining_marks() {
+        let read = super::read(
+            "Tags: #हिंदी, #ภาษาไทย and #नमस्ते.",
+            Reading {
+                notes: false,
+                tags: true,
+            },
+        );
+        let tags: Vec<&RunLink> = read.iter().filter_map(|r| r.link.as_ref()).collect();
+        assert_eq!(
+            tags,
+            [
+                &RunLink::Tag("हिंदी".into()),
+                &RunLink::Tag("ภาษาไทย".into()),
+                &RunLink::Tag("नमस्ते".into()),
+            ]
+        );
     }
 
     #[test]
